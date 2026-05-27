@@ -1,66 +1,82 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
 
-export default function Home() {
+import SideNav from '../components/SideNav'
+import TopBar from '../components/TopBar'
+import TourTiles from '../components/TourTiles'
+import ThisWeek from '../components/ThisWeek'
+
+export default function Dashboard() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <SideNav />
+      <div style={{
+        marginLeft: 'var(--nav-width)',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+      }}>
+        <TopBar title="Dashboard">
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            May 2026
+          </div>
+          <div style={{
+            display: 'flex',
+            background: 'rgba(255,255,255,0.05)',
+            border: '0.5px solid var(--glass-border)',
+            borderRadius: 7,
+            padding: 3,
+            gap: 2,
+          }}>
+            <button style={{
+              fontFamily: 'Rubik, sans-serif',
+              fontSize: 11.5,
+              padding: '4px 11px',
+              borderRadius: 5,
+              border: 'none',
+              cursor: 'pointer',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'var(--text-primary)',
+              fontWeight: 500,
+            }}>This Week</button>
+            <button style={{
+              fontFamily: 'Rubik, sans-serif',
+              fontSize: 11.5,
+              padding: '4px 11px',
+              borderRadius: 5,
+              border: 'none',
+              cursor: 'pointer',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+            }}>All Events</button>
+          </div>
+          <button className="btn-primary">
+            + New Tour
+          </button>
+        </TopBar>
+
+        {/* Content */}
+        <div style={{
+          marginTop: 'var(--topbar-height)',
+          flex: 1,
+          overflowY: 'auto',
+          padding: 24,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 24,
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '300px 1fr',
+            gap: 20,
+          }}>
+            <ThisWeek />
+            <TourTiles />
+          </div>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+      </div>
     </div>
-  );
+  )
 }
