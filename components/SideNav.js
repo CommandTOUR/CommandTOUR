@@ -46,9 +46,9 @@ export default function SideNav() {
         alignItems: 'center',
       }}>
         <img
-          src="/CommandTourLogo-2.png"
+          src="/CommandTourLogo-new copy.png"
           alt="CommandTOUR"
-          style={{ height: 32, width: 'auto', maxWidth: '184px' }}
+          style={{ height: 33, width: 'auto', maxWidth: '184px' }}
         />
       </div>
 
