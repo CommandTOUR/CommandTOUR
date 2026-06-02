@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import { getSupabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function Login() {
@@ -16,6 +16,7 @@ export default function Login() {
   const handleLogin = async () => {
     setLoading(true)
     setError('')
+    const supabase = getSupabase()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
@@ -42,7 +43,6 @@ export default function Login() {
         gap: 24,
       }}>
 
-        {/* Logo */}
         <img
           src="/CommandTOUR-Logo-Dark.png"
           alt="CommandTOUR"
@@ -50,7 +50,6 @@ export default function Login() {
         />
 
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Email */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
               Email
@@ -74,7 +73,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Password */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
               Password
@@ -98,14 +96,12 @@ export default function Login() {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 4 }}>
               {error}
             </div>
           )}
 
-          {/* Button */}
           <button
             onClick={handleLogin}
             disabled={loading}
