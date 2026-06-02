@@ -3,39 +3,27 @@
 const TOURS = [
   {
     id: 1,
-    name: 'Hot Wheels Stunt Show',
-    region: 'North America · 2026',
+    name: 'Tour A',
+    region: 'Region · 2026',
     color: '#C9A84C',
     status: 'active',
     total: 18,
     completed: 11,
-    director: 'M. Reyes',
-    directorInitials: 'MR',
-    nextEvent: 'Chicago · May 27',
+    director: 'T. Director',
+    directorInitials: 'TD',
+    nextEvent: 'City · Jun 1',
   },
   {
     id: 2,
-    name: 'Monster Trucks World Tour',
-    region: 'Europe · 2026',
+    name: 'Tour B',
+    region: 'Region · 2026',
     color: '#33FF99',
     status: 'active',
     total: 24,
     completed: 4,
-    director: 'T. Nakamura',
-    directorInitials: 'TN',
-    nextEvent: 'London · May 28',
-  },
-  {
-    id: 3,
-    name: 'HWSS Asia Pacific',
-    region: 'Asia Pacific · 2026',
-    color: '#FFCC00',
-    status: 'upcoming',
-    total: 14,
-    completed: 0,
-    director: 'S. Lee',
-    directorInitials: 'SL',
-    nextEvent: 'Sydney · Aug 3',
+    director: 'T. Director',
+    directorInitials: 'TD',
+    nextEvent: 'City · Jun 3',
   },
 ]
 
@@ -76,13 +64,10 @@ export default function TourTiles() {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
             >
-              {/* Color bar */}
               <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0, height: 3,
                 background: tour.color, borderRadius: '14px 14px 0 0',
               }} />
-
-              {/* Header */}
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>{tour.name}</div>
@@ -92,8 +77,6 @@ export default function TourTiles() {
                   {tour.status === 'active' ? 'Active' : 'Upcoming'}
                 </span>
               </div>
-
-              {/* Counts */}
               <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
                 {[
                   { val: tour.total, lbl: 'Total' },
@@ -106,11 +89,7 @@ export default function TourTiles() {
                   </div>
                 ))}
               </div>
-
-              {/* Divider */}
               <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 14 }} />
-
-              {/* Progress */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Progress</span>
                 <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>{pct}%</span>
@@ -118,8 +97,6 @@ export default function TourTiles() {
               <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${pct}%`, background: tour.color, borderRadius: 2 }} />
               </div>
-
-              {/* Footer */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <div style={{
@@ -138,7 +115,6 @@ export default function TourTiles() {
                   {tour.nextEvent}
                 </div>
               </div>
-
             </div>
           )
         })}
