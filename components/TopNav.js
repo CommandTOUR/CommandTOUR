@@ -41,8 +41,8 @@ export default function TopNav() {
 
       {/* Logo */}
       <div style={{ marginRight: 36, flexShrink: 0 }}>
-        <span style={{ fontSize: 20, fontWeight: 300, color: '#FFFFFF', letterSpacing: '0.01em' }}>Command</span>
-        <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--mint)', letterSpacing: '0.01em' }}>TOUR</span>
+        <span style={{ fontSize: 30, fontWeight: 300, color: '#FFFFFF', letterSpacing: '0.01em' }}>Command</span>
+        <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--mint)', letterSpacing: '0.01em' }}>TOUR</span>
       </div>
 
       {/* Nav links */}
