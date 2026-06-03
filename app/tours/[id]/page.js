@@ -14,19 +14,18 @@ const STATUS_STYLES = {
   cancelled: { color: '#888', background: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.35)' },
 }
 
-const COL = {
-  showDates: '140px',
-  city: '220px',
-  shows: '80px',
-  status: '110px',
-  loadIn: '90px',
-  loadOut: '90px',
-  alert: '28px',
-}
+const COLS = [
+  { key: 'showDates', label: 'Show Dates', width: '175px', align: 'left' },
+  { key: 'city', label: 'City', width: '250px', align: 'left' },
+  { key: 'venue', label: 'Venue', width: '250px', align: 'left' },
+  { key: 'shows', label: 'Shows', width: '100px', align: 'center' },
+  { key: 'status', label: 'Status', width: '150px', align: 'center' },
+  { key: 'loadIn', label: 'Load-In', width: '125px', align: 'center' },
+  { key: 'loadOut', label: 'Load-Out', width: '125px', align: 'center' },
+  { key: 'alert', label: '', width: '50px', align: 'center' },
+]
 
-function ColDivider() {
-  return <div style={{ width: 0.5, height: 40, background: 'var(--glass-border)', flexShrink: 0 }} />
-}
+const GRID_TEMPLATE = COLS.map(c => c.width).join(' ')
 
 export default function TourPage() {
   const router = useRouter()
@@ -67,12 +66,7 @@ export default function TourPage() {
   const color = tour.color || '#C9A84C'
   const tabs = ['Events', 'Staffing', 'Travel', 'Schedule', 'Venues', 'Files', 'Notes']
 
-  const gridStyle = {
-    display: 'grid',
-    gridTemplateColumns: `${COL.showDates} 1px ${COL.city} 1px ${COL.shows} 1px ${COL.status} 1px ${COL.loadIn} 1px ${COL.loadOut} ${COL.alert}`,
-    alignItems: 'center',
-    gap: '0 16px',
-  }
+  const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
@@ -84,14 +78,7 @@ export default function TourPage() {
         <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '24px 28px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <button
-                onClick={() => router.push('/tours')}
-                style={{
-                  fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '6px 12px',
-                  borderRadius: 7, border: '0.5px solid var(--glass-border)',
-                  background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-                }}
-              >
+              <button onClick={() => router.push('/tours')} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 ← Tours
               </button>
               <div>
@@ -109,14 +96,7 @@ export default function TourPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => router.push(`/tours/${id}/edit`)}
-                style={{
-                  fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px',
-                  borderRadius: 7, border: '0.5px solid var(--glass-border)',
-                  background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-                }}
-              >
+              <button onClick={() => router.push(`/tours/${id}/edit`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 Edit Tour
               </button>
               <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>
@@ -127,23 +107,11 @@ export default function TourPage() {
 
           <div style={{ height: 3, background: color, borderRadius: 2 }} />
 
-          <div style={{ display: 'flex', gap: 0 }}>
+          <div style={{ display: 'flex' }}>
             {tabs.map(tab => {
               const active = activeTab === tab.toLowerCase()
               return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab.toLowerCase())}
-                  style={{
-                    fontFamily: 'Rubik, sans-serif', fontSize: 14,
-                    fontWeight: active ? 500 : 400, padding: '14px 18px',
-                    border: 'none', background: 'transparent',
-                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    borderBottom: active ? `2px solid ${color}` : '2px solid transparent',
-                    transition: 'all 0.15s',
-                  }}
-                >
+                <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '14px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
                   {tab}
                 </button>
               )
@@ -151,50 +119,29 @@ export default function TourPage() {
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
+        {/* Scrollable area */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           {activeTab === 'events' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-
-              {/* Sticky header block */}
-              <div style={{
-                position: 'sticky',
-                top: 0,
-                background: 'var(--bg)',
-                zIndex: 10,
-                borderBottom: '0.5px solid var(--glass-border)',
-              }}>
-                <div style={{ padding: '16px 28px 10px' }}>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>
-                    Events <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400 }}>({events.length})</span>
-                  </div>
+            <>
+              {/* Sticky header */}
+              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)' }}>
+                <div style={{ padding: '14px 24px 6px', fontSize: 15, fontWeight: 600 }}>
+                  Events <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>({events.length})</span>
                 </div>
-
                 {events.length > 0 && (
-                  <div style={{ ...gridStyle, padding: '0 28px 10px' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Show Dates</div>
-                    <div />
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>City / Venue</div>
-                    <div />
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>Shows</div>
-                    <div />
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>Status</div>
-                    <div />
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Load-In</div>
-                    <div />
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Load-Out</div>
-                    <div />
+                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 16px', padding: '6px 24px 10px' }}>
+                    {COLS.map(col => (
+                      <div key={col.key} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align }}>
+                        {col.label}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
               {/* Empty state */}
               {events.length === 0 && (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  justifyContent: 'center', padding: '60px 0', gap: 14,
-                }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 14 }}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect width="40" height="40" rx="10" fill="rgba(255,255,255,0.05)"/>
                     <rect x="10" y="13" width="20" height="17" rx="2" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
@@ -202,111 +149,86 @@ export default function TourPage() {
                   </svg>
                   <div style={{ fontSize: 16, fontWeight: 600 }}>No events yet</div>
                   <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Add your first event to this tour</div>
-                  <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>
-                    + Add Event
-                  </button>
+                  <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>+ Add Event</button>
                 </div>
               )}
 
               {/* Event rows */}
               {events.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 28px 28px' }}>
-                  {events.map(event => {
-                    const statusStyle = STATUS_STYLES[event.status] || STATUS_STYLES.tentative
+                <div>
+                  {events.map((event, i) => {
+                    const s = STATUS_STYLES[event.status] || STATUS_STYLES.tentative
                     return (
                       <div
                         key={event.id}
-                        className="glass-card"
                         onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
                         style={{
-                          ...gridStyle,
-                          padding: '14px 20px',
+                          display: 'grid',
+                          gridTemplateColumns: GRID_TEMPLATE,
+                          gap: '0 16px',
+                          padding: '13px 24px',
                           cursor: 'pointer',
+                          borderBottom: '0.5px solid var(--glass-border)',
                           transition: 'background 0.15s',
+                          alignItems: 'center',
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         {/* Show Dates */}
-                        <div>
-                          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>TBC</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>TBC</div>
+
+                        {/* City */}
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {event.city}{event.country && `, ${event.country}`}
                         </div>
 
-                        <ColDivider />
-
-                        {/* City + Venue */}
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {event.city}{event.country && `, ${event.country}`}
-                          </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {event.venue_name || 'Venue TBC'}
-                          </div>
+                        {/* Venue */}
+                        <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {event.venue_name || 'TBC'}
                         </div>
-
-                        <ColDivider />
 
                         {/* # Shows */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{event.num_shows || '—'}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>shows</div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>{event.num_shows || '—'}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>shows</div>
                         </div>
-
-                        <ColDivider />
 
                         {/* Status */}
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <div style={{
-                            fontSize: 12, fontWeight: 500,
-                            padding: '4px 12px', borderRadius: 20,
-                            color: statusStyle.color,
-                            background: statusStyle.background,
-                            border: `0.5px solid ${statusStyle.border}`,
-                          }}>
+                          <div style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20, color: s.color, background: s.background, border: `0.5px solid ${s.border}`, whiteSpace: 'nowrap' }}>
                             {event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative'}
                           </div>
                         </div>
 
-                        <ColDivider />
-
                         {/* Load-In */}
-                        <div>
-                          <div style={{ fontSize: 15, fontWeight: 600 }}>
-                            {event.load_in_date ? new Date(event.load_in_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Load-In</div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 14, fontWeight: 500 }}>{fmt(event.load_in_date)}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Load-In</div>
                         </div>
-
-                        <ColDivider />
 
                         {/* Load-Out */}
-                        <div>
-                          <div style={{ fontSize: 15, fontWeight: 600 }}>
-                            {event.load_out_date ? new Date(event.load_out_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Load-Out</div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 14, fontWeight: 500 }}>{fmt(event.load_out_date)}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Load-Out</div>
                         </div>
 
-                        {/* Needs attention */}
+                        {/* Alert */}
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                           {event.status !== 'confirmed' && (
-                            <div title="Needs attention">
-                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                                <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
-                                <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
-                                <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
-                              </svg>
-                            </div>
+                            <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+                              <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
+                              <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
+                              <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
+                            </svg>
                           )}
                         </div>
-
                       </div>
                     )
                   })}
                 </div>
               )}
-
-            </div>
+            </>
           )}
 
           {activeTab !== 'events' && (
@@ -314,7 +236,6 @@ export default function TourPage() {
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
           )}
-
         </div>
       </div>
     </div>
