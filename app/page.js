@@ -1,25 +1,29 @@
 'use client'
 
-import SideNav from '../components/SideNav'
-import TopBar from '../components/TopBar'
+import TopNav from '../components/TopNav'
 import TourTiles from '../components/TourTiles'
 import ThisWeek from '../components/ThisWeek'
 
 export default function Dashboard() {
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <SideNav />
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <TopNav />
+
       <div style={{
-        marginLeft: 'var(--nav-width)',
-        flex: 1,
+        marginTop: 62,
+        padding: 28,
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
+        gap: 28,
       }}>
-        <TopBar title="Dashboard">
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            May 2026
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 26, fontWeight: 600 }}>Dashboard</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>June 2026</div>
           </div>
           <div style={{
             display: 'flex',
@@ -31,8 +35,8 @@ export default function Dashboard() {
           }}>
             <button style={{
               fontFamily: 'Rubik, sans-serif',
-              fontSize: 11.5,
-              padding: '4px 11px',
+              fontSize: 13,
+              padding: '6px 14px',
               borderRadius: 5,
               border: 'none',
               cursor: 'pointer',
@@ -42,8 +46,8 @@ export default function Dashboard() {
             }}>This Week</button>
             <button style={{
               fontFamily: 'Rubik, sans-serif',
-              fontSize: 11.5,
-              padding: '4px 11px',
+              fontSize: 13,
+              padding: '6px 14px',
               borderRadius: 5,
               border: 'none',
               cursor: 'pointer',
@@ -51,31 +55,17 @@ export default function Dashboard() {
               color: 'var(--text-muted)',
             }}>All Events</button>
           </div>
-          <button className="btn-primary">
-            + New Tour
-          </button>
-        </TopBar>
-
-        {/* Content */}
-        <div style={{
-          marginTop: 'var(--topbar-height)',
-          flex: 1,
-          overflowY: 'auto',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '300px 1fr',
-            gap: 20,
-          }}>
-            <ThisWeek />
-            <TourTiles />
-          </div>
         </div>
 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '340px 1fr',
+          gap: 24,
+          alignItems: 'start',
+        }}>
+          <ThisWeek />
+          <TourTiles />
+        </div>
       </div>
     </div>
   )

@@ -32,20 +32,20 @@ export default function TourTiles() {
     <div>
       <div style={{
         display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', marginBottom: 14,
+        justifyContent: 'space-between', marginBottom: 16,
       }}>
-        <div style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
           Active Tours
         </div>
-        <div style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer' }}>
+        <div style={{ fontSize: 14, color: 'var(--mint)', cursor: 'pointer' }}>
           All Tours →
         </div>
       </div>
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-        gap: 12,
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: 14,
       }}>
         {TOURS.map(tour => {
           const pct = Math.round((tour.completed / tour.total) * 100)
@@ -54,7 +54,7 @@ export default function TourTiles() {
 
           return (
             <div key={tour.id} className="glass-card" style={{
-              padding: '18px 19px',
+              padding: '20px 22px',
               cursor: 'pointer',
               opacity: isUpcoming ? 0.75 : 1,
               position: 'relative',
@@ -68,39 +68,44 @@ export default function TourTiles() {
                 position: 'absolute', top: 0, left: 0, right: 0, height: 3,
                 background: tour.color, borderRadius: '14px 14px 0 0',
               }} />
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>{tour.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>{tour.region}</div>
+                  <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{tour.name}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{tour.region}</div>
                 </div>
                 <span className={`badge badge-${tour.status}`} style={{ marginLeft: 8, flexShrink: 0 }}>
                   {tour.status === 'active' ? 'Active' : 'Upcoming'}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
+
+              <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
                 {[
                   { val: tour.total, lbl: 'Total' },
                   { val: tour.completed, lbl: 'Done', color: 'var(--mint)' },
                   { val: remaining, lbl: 'Left' },
                 ].map(item => (
                   <div key={item.lbl}>
-                    <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>{item.lbl}</div>
+                    <div style={{ fontSize: 26, fontWeight: 600, lineHeight: 1, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 14 }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Progress</span>
-                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>{pct}%</span>
+
+              <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 16 }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Progress</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{pct}%</span>
               </div>
               <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${pct}%`, background: tour.color, borderRadius: 2 }} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 13 }}>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <div style={{
-                    width: 24, height: 24, borderRadius: '50%',
+                    width: 26, height: 26, borderRadius: '50%',
                     background: `${tour.color}22`,
                     border: `0.5px solid ${tour.color}66`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -108,13 +113,14 @@ export default function TourTiles() {
                   }}>
                     {tour.directorInitials}
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{tour.director}</span>
+                  <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.director}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--text-muted)' }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />
                   {tour.nextEvent}
                 </div>
               </div>
+
             </div>
           )
         })}
