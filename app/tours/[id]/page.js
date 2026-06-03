@@ -65,7 +65,6 @@ export default function TourPage() {
 
   const color = tour.color || '#C9A84C'
   const tabs = ['Events', 'Staffing', 'Travel', 'Schedule', 'Venues', 'Files', 'Notes']
-
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
 
   return (
@@ -176,7 +175,7 @@ export default function TourPage() {
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         {/* Show Dates */}
-                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>TBC</div>
+                        <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-muted)' }}>TBC</div>
 
                         {/* City */}
                         <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -184,14 +183,13 @@ export default function TourPage() {
                         </div>
 
                         {/* Venue */}
-                        <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {event.venue_name || 'TBC'}
                         </div>
 
                         {/* # Shows */}
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>{event.num_shows || '—'}</div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>shows</div>
+                          <div style={{ fontSize: 15, fontWeight: 500 }}>{event.num_shows || '—'}</div>
                         </div>
 
                         {/* Status */}
@@ -203,14 +201,12 @@ export default function TourPage() {
 
                         {/* Load-In */}
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 14, fontWeight: 500 }}>{fmt(event.load_in_date)}</div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Load-In</div>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{fmt(event.load_in_date)}</div>
                         </div>
 
                         {/* Load-Out */}
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 14, fontWeight: 500 }}>{fmt(event.load_out_date)}</div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>Load-Out</div>
+                          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{fmt(event.load_out_date)}</div>
                         </div>
 
                         {/* Alert */}
