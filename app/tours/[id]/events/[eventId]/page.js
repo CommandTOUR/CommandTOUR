@@ -11,6 +11,8 @@ export default function EventPage() {
   const [event, setEvent] = useState(null)
   const [tour, setTour] = useState(null)
   const [shows, setShows] = useState([])
+  const [venue, setVenue] = useState(null)
+  const [venueContacts, setVenueContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [addingShow, setAddingShow] = useState(false)
@@ -27,7 +29,18 @@ export default function EventPage() {
         supabase.from('tours').select('*').eq('id', id).single(),
         supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }),
       ])
-      if (!eventRes.error) setEvent(eventRes.data)
+      if (!eventRes.error) {
+        setEvent(eventRes.data)
+        // If event has a venue_id, fetch venue and contacts
+        if (eventRes.data.venue_id) {
+          const [venueRes, contactsRes] = await Promise.all([
+            supabase.from('venues').select('*').eq('id', eventRes.data.venue_id).single(),
+            supabase.from('venue_contacts').select('*').eq('venue_id', eventRes.data.venue_id).order('created_at', { ascending: true }),
+          ])
+          if (!venueRes.error) setVenue(venueRes.data)
+          if (!contactsRes.error) setVenueContacts(contactsRes.data)
+        }
+      }
       if (!tourRes.error) setTour(tourRes.data)
       if (!showsRes.error) setShows(showsRes.data)
       setLoading(false)
@@ -133,6 +146,10 @@ export default function EventPage() {
 
   const completedShows = shows.filter(s => s.completed).length
 
+  const mapsUrl = venue
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address, venue.city, venue.country].filter(Boolean).join(', '))}`
+    : null
+
   const inputStyle = {
     fontFamily: 'Rubik, sans-serif',
     fontSize: 14,
@@ -181,7 +198,7 @@ export default function EventPage() {
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
                   {event.venue_name && `${event.venue_name} · `}
-                  {fmt(event.load_in_date)} — {fmt(event.load_out_date)}
+                  {fmt(event.load_in_date)}
                   {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
                 </div>
               </div>
@@ -216,7 +233,7 @@ export default function EventPage() {
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
 
-          {/* ── OVERVIEW ── */}
+          {/* OVERVIEW */}
           {activeTab === 'overview' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
@@ -224,21 +241,23 @@ export default function EventPage() {
               <div style={{ display: 'flex', gap: 14 }}>
                 {statCard(
                   daysUntil === null ? '—' : daysUntil <= 0 ? 'Now' : daysUntil,
-                  daysUntil <= 0 ? 'Event in progress' : 'Days to Load-In',
-                  daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
+                  daysUntil !== null && daysUntil <= 0 ? 'Event in progress' : 'Days to Load-In',
+                  daysUntil !== null && daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
                   daysUntil !== null && daysUntil <= 7 ? 'var(--red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--yellow)' : 'var(--mint)'
                 )}
                 {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', shows.length > 0 ? 'var(--text-primary)' : 'var(--text-muted)')}
-                {statCard(event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative', 'Booking Status', null,
+                {statCard(
+                  event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative',
+                  'Booking Status', null,
                   event.status === 'confirmed' ? 'var(--mint)' : event.status === 'cancelled' ? 'var(--red)' : 'var(--yellow)'
                 )}
-                {statCard(event.venue_name || 'TBC', 'Venue', event.venue_address || event.city || null, event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)')}
+                {statCard(event.venue_name || 'TBC', 'Venue', event.city || null, event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)')}
               </div>
 
               {/* Two column layout */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
 
-                {/* Show dates summary */}
+                {/* Show dates */}
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>Show Dates</div>
@@ -252,12 +271,7 @@ export default function EventPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {shows.map((show, i) => (
                         <div key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                            background: show.completed ? 'var(--mint)' : 'transparent',
-                            border: show.completed ? 'none' : '1.5px solid var(--glass-border)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
+                          <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, background: show.completed ? 'var(--mint)' : 'transparent', border: show.completed ? 'none' : '1.5px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {show.completed && (
                               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                                 <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -273,59 +287,114 @@ export default function EventPage() {
                   )}
                 </div>
 
-                {/* Alerts / outstanding */}
+                {/* Outstanding items */}
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14 }}>Outstanding Items</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {shows.length === 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-                          <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
-                          <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
-                          <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
-                        </svg>
+                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#FFCC00"/></svg>
                         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No show dates added</div>
                       </div>
                     )}
                     {!event.venue_name && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-                          <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
-                          <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
-                          <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
-                        </svg>
+                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#FFCC00"/></svg>
                         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Venue not confirmed</div>
                       </div>
                     )}
-                    {event.status !== 'confirmed' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-                          <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
-                          <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
-                          <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
-                        </svg>
-                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Booking not confirmed</div>
-                      </div>
-                    )}
-                    {shows.length > 0 && event.venue_name && event.status === 'confirmed' && (
+                    {shows.length > 0 && event.venue_name && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ width: 15, height: 15, borderRadius: '50%', background: 'var(--mint)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                            <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
                         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>All clear — nothing outstanding</div>
                       </div>
                     )}
                   </div>
                 </div>
-
               </div>
+
+              {/* Venue card — only shows if venue is linked */}
+              {venue && (
+                <div className="glass-card" style={{ padding: '20px 22px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Venue</div>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      {mapsUrl && (
+                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>
+                          Open in Maps ↗
+                        </a>
+                      )}
+                      <div onClick={() => router.push(`/venues/${venue.id}`)} style={{ fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--mint)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                      >
+                        Full Profile →
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: venueContacts.length > 0 ? 20 : 0 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                        {venue.address && <>{venue.address}<br /></>}
+                        {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                      {venue.floor_size && (
+                        <div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Floor Size</div>
+                          <div style={{ fontSize: 14 }}>{venue.floor_size}</div>
+                        </div>
+                      )}
+                      {venue.max_height && (
+                        <div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Max Height</div>
+                          <div style={{ fontSize: 14 }}>{venue.max_height}</div>
+                        </div>
+                      )}
+                      {venue.union_status && (
+                        <div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Union</div>
+                          <div style={{ fontSize: 14 }}>{venue.union_status}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Venue contacts */}
+                  {venueContacts.length > 0 && (
+                    <>
+                      <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 16 }} />
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {venueContacts.map(contact => (
+                          <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
+                              {contact.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 500 }}>{contact.name}{contact.title && <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}</div>
+                              <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
+                                {contact.phone && <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>}
+                                {contact.email && <a href={`mailto:${contact.email}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.email}</a>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
             </div>
           )}
 
-          {/* ── SHOWS ── */}
+          {/* SHOWS */}
           {activeTab === 'shows' && (
             <div style={{ maxWidth: 600 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -415,7 +484,10 @@ export default function EventPage() {
                             </div>
                             {show.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{show.notes}</div>}
                           </div>
-                          <div onClick={() => handleDeleteShow(show.id)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '0 4px', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
+                          <div onClick={() => handleDeleteShow(show.id)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                          >×</div>
                         </div>
                       )}
                     </div>
