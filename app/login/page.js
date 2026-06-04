@@ -1,52 +1,94 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
-import TopNav from '../components/TopNav'
-import TourTiles from '../components/TourTiles'
-import ThisWeek from '../components/ThisWeek'
+import { getSupabase } from '../../lib/supabase'
+import { useRouter } from 'next/navigation'
 
-export default function Dashboard() {
-  const [view, setView] = useState('week') // 'week' | 'all'
+export default function Login() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const now = new Date()
-  const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const handleLogin = async () => {
+    setLoading(true)
+    setError('')
+    const supabase = getSupabase()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    } else {
+      router.push('/')
+    }
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <TopNav />
-
-      <div style={{ marginTop: 62, padding: 28, display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 26, fontWeight: 600 }}>Dashboard</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>{monthLabel}</div>
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg)',
+    }}>
+      <div className="glass-card" style={{
+        width: 380,
+        padding: '40px 36px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 24,
+      }}>
+        <img
+          src="/CommandTourLogo-DARKMODE.png"
+          alt="CommandTOUR"
+          style={{ height: 28, width: 'auto', marginBottom: 8 }}
+        />
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              style={{
+                fontFamily: 'Rubik, sans-serif', fontSize: 14,
+                padding: '10px 14px', borderRadius: 8,
+                border: '0.5px solid var(--glass-border)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)', outline: 'none', width: '100%',
+              }}
+            />
           </div>
-          <div style={{
-            display: 'flex', background: 'rgba(255,255,255,0.05)',
-            border: '0.5px solid var(--glass-border)', borderRadius: 7, padding: 3, gap: 2,
-          }}>
-            {['week', 'all'].map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  fontFamily: 'Rubik, sans-serif', fontSize: 13,
-                  padding: '6px 14px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                  background: view === v ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  color: view === v ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontWeight: view === v ? 500 : 400,
-                  transition: 'background 0.15s',
-                }}
-              >
-                {v === 'week' ? 'This Week' : 'All Events'}
-              </button>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              style={{
+                fontFamily: 'Rubik, sans-serif', fontSize: 14,
+                padding: '10px 14px', borderRadius: 8,
+                border: '0.5px solid var(--glass-border)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)', outline: 'none', width: '100%',
+              }}
+            />
           </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24, alignItems: 'start' }}>
-          <ThisWeek showAll={view === 'all'} />
-          <TourTiles />
+          {error && <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 4 }}>{error}</div>}
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="btn-primary"
+            style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '11px', fontSize: 14 }}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
         </div>
       </div>
     </div>
