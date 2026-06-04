@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import TopNav from '../../../../components/TopNav'
-import { getSupabase } from '../../../../lib/supabase'
+import TopNav from '../../../components/TopNav'
+import { getSupabase } from '../../../lib/supabase'
 
 export default function VenuePage() {
   const router = useRouter()
