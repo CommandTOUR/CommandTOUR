@@ -17,7 +17,6 @@ export default function NewEvent() {
     status: 'tentative',
     load_in_date: '',
     load_out_date: '',
-    num_shows: 1,
     notes: '',
   })
 
@@ -32,7 +31,6 @@ export default function NewEvent() {
     const { error } = await supabase.from('events').insert([{
       ...form,
       tour_id: id,
-      num_shows: parseInt(form.num_shows),
     }])
     if (error) {
       setError(error.message)
@@ -159,18 +157,6 @@ export default function NewEvent() {
                 onChange={e => set('load_out_date', e.target.value)}
               />
             </div>
-          </div>
-
-          {/* Number of shows */}
-          <div>
-            <label style={labelStyle}>Number of Shows</label>
-            <input
-              style={{ ...inputStyle, width: 120 }}
-              type="number"
-              min="1"
-              value={form.num_shows}
-              onChange={e => set('num_shows', e.target.value)}
-            />
           </div>
 
           {/* Notes */}

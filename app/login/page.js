@@ -46,7 +46,7 @@ export default function Login() {
         <img
           src="/CommandTourLogo-DARKMODE.png"
           alt="CommandTOUR"
-          style={{ height: 52, width: 'auto', marginBottom: 8 }}
+          style={{ height: 28, width: 'auto', marginBottom: 8 }}
         />
 
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
