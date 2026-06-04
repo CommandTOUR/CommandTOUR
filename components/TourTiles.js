@@ -4,19 +4,20 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 
+const STATUS_ORDER = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
+
 export default function TourTiles() {
   const [tours, setTours] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showArchived, setShowArchived] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     async function fetchTours() {
       const supabase = getSupabase()
-
       const { data: toursData, error } = await supabase
         .from('tours')
         .select('id, name, region, year, color, status, director_name')
-        .order('year', { ascending: false })
 
       if (error || !toursData) { setLoading(false); return }
 
@@ -28,13 +29,10 @@ export default function TourTiles() {
           .order('load_in_date', { ascending: true })
 
         const totalEvents = events?.length ?? 0
-
         const now = new Date()
         const completedEvents = events?.filter(e => new Date(e.load_in_date) < now).length ?? 0
-
         const nextEvent = events?.find(e => new Date(e.load_in_date) >= now)
 
-        // Build initials from director_name
         const nameParts = (tour.director_name || '').trim().split(' ')
         const initials = nameParts.length >= 2
           ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
@@ -53,134 +51,136 @@ export default function TourTiles() {
         }
       }))
 
+      // Sort: active first, then upcoming by year asc, then completed/cancelled
+      enriched.sort((a, b) => {
+        const sa = STATUS_ORDER[a.status] ?? 1
+        const sb = STATUS_ORDER[b.status] ?? 1
+        if (sa !== sb) return sa - sb
+        // Within same status group, sort by year ascending
+        return (a.year || 9999) - (b.year || 9999)
+      })
+
       setTours(enriched)
       setLoading(false)
     }
-
     fetchTours()
   }, [])
 
   if (loading) return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>
-        Tours
-      </div>
+      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Tours</div>
       <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   if (!tours.length) return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>
-        Tours
-      </div>
+      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Tours</div>
       <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 14 }}>
         No tours yet. <span style={{ color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours/new')}>Create one →</span>
       </div>
     </div>
   )
 
+  const activeTours = tours.filter(t => t.status === 'active' || t.status === 'upcoming')
+  const archivedTours = tours.filter(t => t.status === 'completed' || t.status === 'cancelled')
+
+  const renderTile = (tour) => {
+    const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
+    const remaining = tour.total - tour.completed
+    const tileColor = tour.color || 'var(--mint)'
+    const statusLabel = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }[tour.status] || tour.status
+
+    return (
+      <div
+        key={tour.id}
+        className="glass-card"
+        onClick={() => router.push(`/tours/${tour.id}`)}
+        style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+      >
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: tileColor, borderRadius: '14px 14px 0 0' }} />
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{tour.name}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
+              {tour.region ? `${tour.region} · ` : ''}{tour.year}
+            </div>
+          </div>
+          <span className={`badge badge-${tour.status}`} style={{ marginLeft: 8, flexShrink: 0 }}>{statusLabel}</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
+          {[
+            { val: tour.total, lbl: 'Total' },
+            { val: tour.completed, lbl: 'Done', color: 'var(--mint)' },
+            { val: remaining, lbl: 'Left' },
+          ].map(item => (
+            <div key={item.lbl}>
+              <div style={{ fontSize: 26, fontWeight: 600, lineHeight: 1, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 16 }} />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Progress</span>
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{pct}%</span>
+        </div>
+        <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${tileColor}22`, border: `0.5px solid ${tileColor}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: tileColor, flexShrink: 0 }}>
+              {tour.directorInitials}
+            </div>
+            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.director_name || '—'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--text-muted)' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />
+            {tour.nextEvent}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-          Tours
-        </div>
-        <div style={{ fontSize: 14, color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours')}>
-          All Tours →
-        </div>
+        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Tours</div>
+        <div style={{ fontSize: 14, color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours')}>All Tours →</div>
       </div>
 
+      {/* Active + Upcoming tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-        {tours.map(tour => {
-          const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
-          const remaining = tour.total - tour.completed
-          const tileColor = tour.color || 'var(--mint)'
-
-          const statusLabel = {
-            active: 'Active',
-            upcoming: 'Upcoming',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
-          }[tour.status] || tour.status
-
-          return (
-            <div
-              key={tour.id}
-              className="glass-card"
-              onClick={() => router.push(`/tours/${tour.id}`)}
-              style={{
-                padding: '20px 22px', cursor: 'pointer',
-                position: 'relative', overflow: 'hidden',
-                transition: 'background 0.15s, border-color 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
-            >
-              {/* Color bar across top of card */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: tileColor, borderRadius: '14px 14px 0 0' }} />
-
-              {/* Tour name + status badge */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3 }}>{tour.name}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
-                    {tour.region ? `${tour.region} · ` : ''}{tour.year}
-                  </div>
-                </div>
-                <span className={`badge badge-${tour.status}`} style={{ marginLeft: 8, flexShrink: 0 }}>
-                  {statusLabel}
-                </span>
-              </div>
-
-              {/* Total / Done / Left numbers */}
-              <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
-                {[
-                  { val: tour.total, lbl: 'Total' },
-                  { val: tour.completed, lbl: 'Done', color: 'var(--mint)' },
-                  { val: remaining, lbl: 'Left' },
-                ].map(item => (
-                  <div key={item.lbl}>
-                    <div style={{ fontSize: 26, fontWeight: 600, lineHeight: 1, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 16 }} />
-
-              {/* Progress bar */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Progress</span>
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{pct}%</span>
-              </div>
-              <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
-              </div>
-
-              {/* Director + next event */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: '50%',
-                    background: `${tileColor}22`, border: `0.5px solid ${tileColor}66`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 600, color: tileColor, flexShrink: 0,
-                  }}>
-                    {tour.directorInitials}
-                  </div>
-                  <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.director_name || '—'}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--text-muted)' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />
-                  {tour.nextEvent}
-                </div>
-              </div>
-
-            </div>
-          )
-        })}
+        {activeTours.map(renderTile)}
       </div>
+
+      {/* Archived section */}
+      {archivedTours.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <div
+            onClick={() => setShowArchived(!showArchived)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: showArchived ? 14 : 0 }}
+          >
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {showArchived ? '▾' : '▸'} Completed & Cancelled ({archivedTours.length})
+            </span>
+          </div>
+          {showArchived && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+              {archivedTours.map(renderTile)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
