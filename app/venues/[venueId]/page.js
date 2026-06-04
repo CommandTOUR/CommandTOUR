@@ -55,10 +55,6 @@ export default function VenuePage() {
     setDeletingId(null)
   }
 
-  const mapsUrl = venue
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address, venue.city, venue.country].filter(Boolean).join(', '))}`
-    : '#'
-
   const inputStyle = {
     fontFamily: 'Rubik, sans-serif',
     fontSize: 14,
@@ -101,7 +97,7 @@ export default function VenuePage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, maxWidth: 900 }}>
+      <div style={{ marginTop: 62, padding: 28 }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
@@ -116,22 +112,12 @@ export default function VenuePage() {
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', textDecoration: 'none' }}
-            >
-              Open in Maps ↗
-            </a>
-            <button
-              onClick={() => router.push(`/venues/${venueId}/edit`)}
-              style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-            >
-              Edit Venue
-            </button>
-          </div>
+          <button
+            onClick={() => router.push(`/venues/${venueId}/edit`)}
+            style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+          >
+            Edit Venue
+          </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -194,7 +180,6 @@ export default function VenuePage() {
               )}
             </div>
 
-            {/* Add contact form */}
             {addingContact && (
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--glass-border)', borderRadius: 10, padding: '16px', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -232,7 +217,6 @@ export default function VenuePage() {
               </div>
             )}
 
-            {/* Contact list */}
             {contacts.length === 0 && !addingContact && (
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No contacts added yet.</div>
             )}
