@@ -4,12 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 
-const STATUS_ORDER = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
-
 export default function TourTiles() {
   const [tours, setTours] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showArchived, setShowArchived] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -18,6 +15,8 @@ export default function TourTiles() {
       const { data: toursData, error } = await supabase
         .from('tours')
         .select('id, name, region, year, color, status, director_name')
+        .eq('status', 'active')
+        .order('year', { ascending: true })
 
       if (error || !toursData) { setLoading(false); return }
 
@@ -51,15 +50,6 @@ export default function TourTiles() {
         }
       }))
 
-      // Sort: active first, then upcoming by year asc, then completed/cancelled
-      enriched.sort((a, b) => {
-        const sa = STATUS_ORDER[a.status] ?? 1
-        const sb = STATUS_ORDER[b.status] ?? 1
-        if (sa !== sb) return sa - sb
-        // Within same status group, sort by year ascending
-        return (a.year || 9999) - (b.year || 9999)
-      })
-
       setTours(enriched)
       setLoading(false)
     }
@@ -68,28 +58,24 @@ export default function TourTiles() {
 
   if (loading) return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Tours</div>
+      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
       <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   if (!tours.length) return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Tours</div>
+      <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
       <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 14 }}>
-        No tours yet. <span style={{ color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours/new')}>Create one →</span>
+        No active tours. <span style={{ color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours/new')}>Create one →</span>
       </div>
     </div>
   )
-
-  const activeTours = tours.filter(t => t.status === 'active' || t.status === 'upcoming')
-  const archivedTours = tours.filter(t => t.status === 'completed' || t.status === 'cancelled')
 
   const renderTile = (tour) => {
     const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
     const remaining = tour.total - tour.completed
     const tileColor = tour.color || 'var(--mint)'
-    const statusLabel = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }[tour.status] || tour.status
 
     return (
       <div
@@ -109,7 +95,7 @@ export default function TourTiles() {
               {tour.region ? `${tour.region} · ` : ''}{tour.year}
             </div>
           </div>
-          <span className={`badge badge-${tour.status}`} style={{ marginLeft: 8, flexShrink: 0 }}>{statusLabel}</span>
+          <span className="badge badge-active" style={{ marginLeft: 8, flexShrink: 0 }}>Active</span>
         </div>
 
         <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
@@ -154,33 +140,12 @@ export default function TourTiles() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Tours</div>
+        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active Tours</div>
         <div style={{ fontSize: 14, color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/tours')}>All Tours →</div>
       </div>
-
-      {/* Active + Upcoming tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-        {activeTours.map(renderTile)}
+        {tours.map(renderTile)}
       </div>
-
-      {/* Archived section */}
-      {archivedTours.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <div
-            onClick={() => setShowArchived(!showArchived)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: showArchived ? 14 : 0 }}
-          >
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {showArchived ? '▾' : '▸'} Completed & Cancelled ({archivedTours.length})
-            </span>
-          </div>
-          {showArchived && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-              {archivedTours.map(renderTile)}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
