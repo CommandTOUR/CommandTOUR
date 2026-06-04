@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import TopNav from '../../../../../components/TopNav'
-import { getSupabase } from '../../../../../lib/supabase'
+import TopNav from '../../../../../../components/TopNav'
+import { getSupabase } from '../../../../../../lib/supabase'
 
-export default function NewEvent() {
+export default function EditEvent() {
   const router = useRouter()
-  const { id } = useParams()
+  const { id, eventId } = useParams()
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [extendedLoadOut, setExtendedLoadOut] = useState(false)
@@ -23,6 +24,31 @@ export default function NewEvent() {
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const supabase = getSupabase()
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single()
+      if (!error && data) {
+        setForm({
+          city: data.city || '',
+          country: data.country || '',
+          venue_name: data.venue_name || '',
+          status: data.status || 'tentative',
+          load_in_date: data.load_in_date || '',
+          load_out_date: data.load_out_date || '',
+          notes: data.notes || '',
+        })
+        if (data.load_out_date) setExtendedLoadOut(true)
+      }
+      setLoading(false)
+    }
+    fetchEvent()
+  }, [eventId])
+
   const handleSave = async () => {
     if (!form.city.trim()) { setError('City is required'); return }
     if (!form.load_in_date) { setError('Load-in date is required'); return }
@@ -36,17 +62,14 @@ export default function NewEvent() {
       status: form.status,
       load_in_date: form.load_in_date,
       notes: form.notes,
-      tour_id: id,
+      load_out_date: extendedLoadOut && form.load_out_date ? form.load_out_date : null,
     }
-    if (extendedLoadOut && form.load_out_date) {
-      payload.load_out_date = form.load_out_date
-    }
-    const { error } = await supabase.from('events').insert([payload])
+    const { error } = await supabase.from('events').update(payload).eq('id', eventId)
     if (error) {
       setError(error.message)
       setSaving(false)
     } else {
-      router.push(`/tours/${id}`)
+      router.push(`/tours/${id}/events/${eventId}`)
     }
   }
 
@@ -70,16 +93,26 @@ export default function NewEvent() {
     display: 'block',
   }
 
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <TopNav />
+      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+    </div>
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
       <div style={{ marginTop: 62, padding: 28, maxWidth: 600 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button onClick={() => router.push(`/tours/${id}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button
+            onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
+            style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+          >
             ← Back
           </button>
-          <div style={{ fontSize: 26, fontWeight: 600 }}>Add Event</div>
+          <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Event</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -135,7 +168,8 @@ export default function NewEvent() {
                 position: 'relative', transition: 'background 0.2s', flexShrink: 0,
               }}>
                 <div style={{
-                  position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2,
+                  position: 'absolute', top: 2,
+                  left: extendedLoadOut ? 18 : 2,
                   width: 16, height: 16, borderRadius: '50%',
                   background: extendedLoadOut ? '#0a1628' : 'rgba(255,255,255,0.4)',
                   transition: 'left 0.2s',
@@ -156,17 +190,25 @@ export default function NewEvent() {
           {/* Notes */}
           <div>
             <label style={labelStyle}>Notes</label>
-            <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this event..." value={form.notes} onChange={e => set('notes', e.target.value)} />
+            <textarea
+              style={{ ...inputStyle, height: 80, resize: 'vertical' }}
+              placeholder="Any notes about this event..."
+              value={form.notes}
+              onChange={e => set('notes', e.target.value)}
+            />
           </div>
 
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button onClick={() => router.push(`/tours/${id}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button
+              onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
+              style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
               Cancel
             </button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Add Event'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 
