@@ -31,7 +31,6 @@ export default function EventPage() {
       ])
       if (!eventRes.error) {
         setEvent(eventRes.data)
-        // If event has a venue_id, fetch venue and contacts
         if (eventRes.data.venue_id) {
           const [venueRes, contactsRes] = await Promise.all([
             supabase.from('venues').select('*').eq('id', eventRes.data.venue_id).single(),
@@ -146,10 +145,6 @@ export default function EventPage() {
 
   const completedShows = shows.filter(s => s.completed).length
 
-  const mapsUrl = venue
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address, venue.city, venue.country].filter(Boolean).join(', '))}`
-    : null
-
   const inputStyle = {
     fontFamily: 'Rubik, sans-serif',
     fontSize: 14,
@@ -161,8 +156,14 @@ export default function EventPage() {
     outline: 'none',
   }
 
-  const statCard = (value, label, sub, valueColor) => (
-    <div className="glass-card" style={{ padding: '18px 20px', flex: 1 }}>
+  const statCard = (value, label, sub, valueColor, onClick) => (
+    <div
+      className="glass-card"
+      onClick={onClick}
+      style={{ padding: '18px 20px', flex: 1, cursor: onClick ? 'pointer' : 'default', transition: 'background 0.15s' }}
+      onMouseEnter={e => { if (onClick) e.currentTarget.style.background = 'var(--glass-hover)' }}
+      onMouseLeave={e => { if (onClick) e.currentTarget.style.background = 'var(--glass-bg)' }}
+    >
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: valueColor || 'var(--text-primary)' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{sub}</div>}
@@ -237,7 +238,7 @@ export default function EventPage() {
           {activeTab === 'overview' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-              {/* Stat tiles */}
+              {/* Stat tiles — venue tile clickable if linked */}
               <div style={{ display: 'flex', gap: 14 }}>
                 {statCard(
                   daysUntil === null ? '—' : daysUntil <= 0 ? 'Now' : daysUntil,
@@ -251,7 +252,13 @@ export default function EventPage() {
                   'Booking Status', null,
                   event.status === 'confirmed' ? 'var(--mint)' : event.status === 'cancelled' ? 'var(--red)' : 'var(--yellow)'
                 )}
-                {statCard(event.venue_name || 'TBC', 'Venue', event.city || null, event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)')}
+                {statCard(
+                  event.venue_name || 'TBC',
+                  'Venue',
+                  venue ? [venue.city, venue.country].filter(Boolean).join(', ') : event.city || null,
+                  event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)',
+                  venue ? () => router.push(`/venues/${venue.id}`) : null
+                )}
               </div>
 
               {/* Two column layout */}
@@ -315,35 +322,29 @@ export default function EventPage() {
                 </div>
               </div>
 
-              {/* Venue card — only shows if venue is linked */}
+              {/* Venue information card */}
               {venue && (
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Venue</div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      {mapsUrl && (
-                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>
-                          Open in Maps ↗
-                        </a>
-                      )}
-                      <div onClick={() => router.push(`/venues/${venue.id}`)} style={{ fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'var(--mint)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                      >
-                        Full Profile →
-                      </div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>Venue Information</div>
+                    <div
+                      onClick={() => router.push(`/venues/${venue.id}`)}
+                      style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
+                    >
+                      Full Profile →
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: venueContacts.length > 0 ? 20 : 0 }}>
+                  {/* Address + specs side by side */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
                     <div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div>
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Address</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
                         {venue.address && <>{venue.address}<br /></>}
                         {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                       {venue.floor_size && (
                         <div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Floor Size</div>
@@ -365,19 +366,22 @@ export default function EventPage() {
                     </div>
                   </div>
 
-                  {/* Venue contacts */}
+                  {/* Contacts — always shown if they exist */}
                   {venueContacts.length > 0 && (
                     <>
                       <div style={{ height: 0.5, background: 'var(--glass-border)', marginBottom: 16 }} />
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
                         {venueContacts.map(contact => (
                           <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
                               {contact.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 500 }}>{contact.name}{contact.title && <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}</div>
+                              <div style={{ fontSize: 13, fontWeight: 500 }}>
+                                {contact.name}
+                                {contact.title && <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}
+                              </div>
                               <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
                                 {contact.phone && <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>}
                                 {contact.email && <a href={`mailto:${contact.email}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.email}</a>}

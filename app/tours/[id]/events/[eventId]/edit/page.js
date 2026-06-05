@@ -12,10 +12,15 @@ export default function EditEvent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [extendedLoadOut, setExtendedLoadOut] = useState(false)
+  const [venues, setVenues] = useState([])
+  const [venueSearch, setVenueSearch] = useState('')
+  const [showVenueList, setShowVenueList] = useState(false)
+  const [selectedVenue, setSelectedVenue] = useState(null)
   const [form, setForm] = useState({
     city: '',
     country: '',
     venue_name: '',
+    venue_id: null,
     status: 'tentative',
     load_in_date: '',
     load_out_date: '',
@@ -25,29 +30,66 @@ export default function EditEvent() {
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
   useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchData = async () => {
       const supabase = getSupabase()
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', eventId)
-        .single()
-      if (!error && data) {
+      const [eventRes, venuesRes] = await Promise.all([
+        supabase.from('events').select('*').eq('id', eventId).single(),
+        supabase.from('venues').select('id, name, city, country, address').order('name', { ascending: true }),
+      ])
+
+      if (!eventRes.error && eventRes.data) {
+        const data = eventRes.data
         setForm({
           city: data.city || '',
           country: data.country || '',
           venue_name: data.venue_name || '',
+          venue_id: data.venue_id || null,
           status: data.status || 'tentative',
           load_in_date: data.load_in_date || '',
           load_out_date: data.load_out_date || '',
           notes: data.notes || '',
         })
         if (data.load_out_date) setExtendedLoadOut(true)
+
+        // If event already has a linked venue, pre-select it
+        if (data.venue_id && venuesRes.data) {
+          const linked = venuesRes.data.find(v => v.id === data.venue_id)
+          if (linked) {
+            setSelectedVenue(linked)
+            setVenueSearch(linked.name)
+          }
+        }
       }
+
+      if (!venuesRes.error) setVenues(venuesRes.data || [])
       setLoading(false)
     }
-    fetchEvent()
+    fetchData()
   }, [eventId])
+
+  const filteredVenues = venues.filter(v =>
+    v.name?.toLowerCase().includes(venueSearch.toLowerCase()) ||
+    v.city?.toLowerCase().includes(venueSearch.toLowerCase())
+  )
+
+  const handleSelectVenue = (venue) => {
+    setSelectedVenue(venue)
+    setForm(prev => ({
+      ...prev,
+      venue_id: venue.id,
+      venue_name: venue.name,
+      city: venue.city || prev.city,
+      country: venue.country || prev.country,
+    }))
+    setVenueSearch(venue.name)
+    setShowVenueList(false)
+  }
+
+  const handleClearVenue = () => {
+    setSelectedVenue(null)
+    setVenueSearch('')
+    setForm(prev => ({ ...prev, venue_id: null, venue_name: '' }))
+  }
 
   const handleSave = async () => {
     if (!form.city.trim()) { setError('City is required'); return }
@@ -59,6 +101,7 @@ export default function EditEvent() {
       city: form.city,
       country: form.country,
       venue_name: form.venue_name,
+      venue_id: form.venue_id || null,
       status: form.status,
       load_in_date: form.load_in_date,
       notes: form.notes,
@@ -103,7 +146,7 @@ export default function EditEvent() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, maxWidth: 600 }}>
+      <div style={{ marginTop: 62, padding: 28 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
@@ -117,6 +160,63 @@ export default function EditEvent() {
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
+          {/* Venue picker */}
+          <div>
+            <label style={labelStyle}>Venue</label>
+            {selectedVenue ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(51,255,153,0.35)', background: 'rgba(51,255,153,0.06)' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mint)' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}
+                  </div>
+                </div>
+                <div
+                  onClick={handleClearVenue}
+                  style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  ✕ Clear
+                </div>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <input
+                  style={inputStyle}
+                  placeholder="Search venues or leave blank to enter manually..."
+                  value={venueSearch}
+                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true) }}
+                  onFocus={() => setShowVenueList(true)}
+                  onBlur={() => setTimeout(() => setShowVenueList(false), 150)}
+                />
+                {showVenueList && filteredVenues.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                    background: '#0d1f3a', border: '0.5px solid var(--glass-border)',
+                    borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                  }}>
+                    {filteredVenues.map(venue => (
+                      <div
+                        key={venue.id}
+                        onMouseDown={() => handleSelectVenue(venue)}
+                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{venue.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
+                          {[venue.city, venue.country].filter(Boolean).join(', ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* City + Country */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
@@ -127,12 +227,6 @@ export default function EditEvent() {
               <label style={labelStyle}>Country</label>
               <input style={inputStyle} placeholder="e.g. United Kingdom" value={form.country} onChange={e => set('country', e.target.value)} />
             </div>
-          </div>
-
-          {/* Venue */}
-          <div>
-            <label style={labelStyle}>Venue Name</label>
-            <input style={inputStyle} placeholder="e.g. Co-op Live" value={form.venue_name} onChange={e => set('venue_name', e.target.value)} />
           </div>
 
           {/* Status */}

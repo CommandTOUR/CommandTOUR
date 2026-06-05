@@ -10,6 +10,7 @@ export default function VenuePage() {
   const { venueId } = useParams()
   const [venue, setVenue] = useState(null)
   const [contacts, setContacts] = useState([])
+  const [pastEvents, setPastEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [addingContact, setAddingContact] = useState(false)
   const [savingContact, setSavingContact] = useState(false)
@@ -19,12 +20,14 @@ export default function VenuePage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [venueRes, contactsRes] = await Promise.all([
+      const [venueRes, contactsRes, eventsRes] = await Promise.all([
         supabase.from('venues').select('*').eq('id', venueId).single(),
         supabase.from('venue_contacts').select('*').eq('venue_id', venueId).order('created_at', { ascending: true }),
+        supabase.from('events').select('id, city, country, load_in_date, status, tour_id, tours(name, color)').eq('venue_id', venueId).order('load_in_date', { ascending: false }),
       ])
       if (!venueRes.error) setVenue(venueRes.data)
       if (!contactsRes.error) setContacts(contactsRes.data)
+      if (!eventsRes.error) setPastEvents(eventsRes.data || [])
       setLoading(false)
     }
     fetchData()
@@ -54,6 +57,8 @@ export default function VenuePage() {
     if (!error) setContacts(prev => prev.filter(c => c.id !== contactId))
     setDeletingId(null)
   }
+
+  const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   const inputStyle = {
     fontFamily: 'Rubik, sans-serif',
@@ -120,51 +125,20 @@ export default function VenuePage() {
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Top row — Address + Contacts side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
 
           {/* Address */}
-          {venue.address && (
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              {sectionLabel('Address')}
-              <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
-                {venue.address}<br />
-                {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+          <div className="glass-card" style={{ padding: '20px 24px' }}>
+            {sectionLabel('Address')}
+            {venue.address || venue.city ? (
+              <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.8 }}>
+                {venue.address && <div>{venue.address}</div>}
+                <div>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
               </div>
-            </div>
-          )}
-
-          {/* Floor & Structure */}
-          <div className="glass-card" style={{ padding: '20px 24px' }}>
-            {sectionLabel('Floor & Structure')}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
-              {field('Floor Size', venue.floor_size)}
-              {field('Surface Coating', venue.surface_coating)}
-              {field('Max Height', venue.max_height)}
-              {field('Floor Weight Capacity', venue.floor_weight_capacity)}
-              {field('Slope Angle', venue.slope_angle)}
-              {field('Video Board Location', venue.video_board_location)}
-            </div>
-          </div>
-
-          {/* Access & Logistics */}
-          <div className="glass-card" style={{ padding: '20px 24px' }}>
-            {sectionLabel('Access & Logistics')}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
-              {field('Tunnel Dimensions', venue.tunnel_dims)}
-              {field('Tunnel Position', venue.tunnel_position)}
-              {field('Loading Docks', venue.loading_docks)}
-              {field('Pit / Trailer Parking', venue.pit_trailer_parking)}
-            </div>
-          </div>
-
-          {/* Rules & Restrictions */}
-          <div className="glass-card" style={{ padding: '20px 24px' }}>
-            {sectionLabel('Rules & Restrictions')}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
-              {field('Union Status', venue.union_status)}
-              {field('Permits Required', venue.permits)}
-              {field('Noise Restrictions', venue.noise_restrictions)}
-            </div>
+            ) : (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No address added yet.</div>
+            )}
           </div>
 
           {/* Contacts */}
@@ -222,23 +196,19 @@ export default function VenuePage() {
             )}
 
             {contacts.map(contact => (
-              <div key={contact.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 0', borderBottom: '0.5px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
+              <div key={contact.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 0', borderBottom: '0.5px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
                     {contact.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{contact.name}</div>
                     {contact.title && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{contact.title}</div>}
-                    <div style={{ display: 'flex', gap: 16, marginTop: 6 }}>
-                      {contact.phone && (
-                        <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>
-                      )}
-                      {contact.email && (
-                        <a href={`mailto:${contact.email}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.email}</a>
-                      )}
+                    <div style={{ display: 'flex', gap: 14, marginTop: 4 }}>
+                      {contact.phone && <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>}
+                      {contact.email && <a href={`mailto:${contact.email}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.email}</a>}
                     </div>
-                    {contact.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{contact.notes}</div>}
+                    {contact.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>{contact.notes}</div>}
                   </div>
                 </div>
                 <div
@@ -250,16 +220,92 @@ export default function VenuePage() {
               </div>
             ))}
           </div>
-
-          {/* Notes */}
-          {venue.notes && (
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              {sectionLabel('Notes')}
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{venue.notes}</div>
-            </div>
-          )}
-
         </div>
+
+        {/* Second row — Floor & Structure + Access & Logistics side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+          <div className="glass-card" style={{ padding: '20px 24px' }}>
+            {sectionLabel('Floor & Structure')}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {field('Floor Size', venue.floor_size)}
+              {field('Surface Coating', venue.surface_coating)}
+              {field('Max Height', venue.max_height)}
+              {field('Floor Weight Capacity', venue.floor_weight_capacity)}
+              {field('Slope Angle', venue.slope_angle)}
+              {field('Video Board Location', venue.video_board_location)}
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: '20px 24px' }}>
+            {sectionLabel('Access & Logistics')}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {field('Tunnel Dimensions', venue.tunnel_dims)}
+              {field('Tunnel Position', venue.tunnel_position)}
+              {field('Loading Docks', venue.loading_docks)}
+              {field('Pit / Trailer Parking', venue.pit_trailer_parking)}
+            </div>
+          </div>
+        </div>
+
+        {/* Third row — Rules & Restrictions full width */}
+        <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 20 }}>
+          {sectionLabel('Rules & Restrictions')}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+            {field('Union Status', venue.union_status)}
+            {field('Permits Required', venue.permits)}
+            {field('Noise Restrictions', venue.noise_restrictions)}
+          </div>
+        </div>
+
+        {/* Previously played events */}
+        {pastEvents.length > 0 && (
+          <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 20 }}>
+            {sectionLabel(`Event History (${pastEvents.length})`)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {pastEvents.map((ev, i) => (
+                <div
+                  key={ev.id}
+                  onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 0', cursor: 'pointer',
+                    borderBottom: i < pastEvents.length - 1 ? '0.5px solid var(--glass-border)' : 'none',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tours?.color || 'var(--mint)', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>{ev.tours?.name || '—'}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{ev.city}{ev.country && `, ${ev.country}`}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{fmt(ev.load_in_date)}</div>
+                    <span style={{
+                      fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20,
+                      color: ev.status === 'confirmed' ? '#33FF99' : 'rgba(255,255,255,0.5)',
+                      background: ev.status === 'confirmed' ? 'rgba(51,255,153,0.1)' : 'rgba(255,255,255,0.06)',
+                      border: `0.5px solid ${ev.status === 'confirmed' ? 'rgba(51,255,153,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                    }}>
+                      {ev.status ? ev.status.charAt(0).toUpperCase() + ev.status.slice(1) : '—'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        {venue.notes && (
+          <div className="glass-card" style={{ padding: '20px 24px' }}>
+            {sectionLabel('Notes')}
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{venue.notes}</div>
+          </div>
+        )}
+
       </div>
     </div>
   )
