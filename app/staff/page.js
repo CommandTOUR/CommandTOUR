@@ -111,7 +111,7 @@ export default function StaffPage() {
                       )}
                     </div>
                     {s.email && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
-                    {s.home_airport && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>Home: {s.home_airport}</div>}
+                    {s.phone && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{s.phone}</div>}
                   </div>
                 </div>
               </div>

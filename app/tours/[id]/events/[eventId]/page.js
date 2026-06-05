@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
+import StaffingTab from '../../../../../components/StaffingTab'
 
 export default function EventPage() {
   const router = useRouter()
@@ -501,7 +502,11 @@ export default function EventPage() {
             </div>
           )}
 
-          {activeTab !== 'overview' && activeTab !== 'shows' && (
+          {activeTab === 'staffing' && (
+            <StaffingTab eventId={eventId} event={event} />
+          )}
+
+          {activeTab !== 'overview' && activeTab !== 'shows' && activeTab !== 'staffing' && (
             <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
