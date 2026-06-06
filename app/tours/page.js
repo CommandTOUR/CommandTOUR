@@ -37,9 +37,8 @@ export default function Tours() {
             return { ...e, completedShows: count ?? 0 }
           }))
 
-          const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
+          const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
           const nextEvent = eventCompletions.find(e => !(e.num_shows > 0 && e.completedShows >= e.num_shows))
-
           const nameParts = (tour.director_name || '').trim().split(' ')
           const initials = nameParts.length >= 2
             ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
