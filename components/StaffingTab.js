@@ -351,12 +351,12 @@ export default function StaffingTab({ eventId, event }) {
 
   const fetchAssignments = async () => {
     const supabase = getSupabase()
-    const { data } = await supabase
-      .from('event_staff')
-      .select('*, staff(id, first_name, last_name, attention_flag, attention_note)')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: true })
-    setAssignments(data || [])
+    const [staffRes, eventRes] = await Promise.all([
+      supabase.from('event_staff').select('*, staff(id, first_name, last_name, attention_flag, attention_note)').eq('event_id', eventId).order('created_at', { ascending: true }),
+      supabase.from('events').select('hidden_positions').eq('id', eventId).single(),
+    ])
+    setAssignments(staffRes.data || [])
+    setHiddenTemplatePositions(eventRes.data?.hidden_positions || [])
     setLoading(false)
   }
 
@@ -406,15 +406,18 @@ export default function StaffingTab({ eventId, event }) {
 
   const handleRemovePosition = async (position) => {
     const assignment = getAssignment(position)
+    const supabase = getSupabase()
     if (assignment) {
-      const supabase = getSupabase()
       await supabase.from('event_staff').delete().eq('id', assignment.id)
-      await fetchAssignments()
     }
     if (templatePositions.includes(position)) {
-      setHiddenTemplatePositions(prev => [...prev, position])
+      const { data: eventData } = await supabase.from('events').select('hidden_positions').eq('id', eventId).single()
+      const current = eventData?.hidden_positions || []
+      const updated = [...current, position]
+      await supabase.from('events').update({ hidden_positions: updated }).eq('id', eventId)
     }
-  }
+  fetchAssignments()
+}
 
   const handleSetStatus = async (position, newStatus) => {
     const assignment = getAssignment(position)
