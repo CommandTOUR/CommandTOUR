@@ -26,13 +26,22 @@ export default function TourTiles() {
     const enriched = await Promise.all(toursData.map(async (tour) => {
       const { data: events } = await supabase
         .from('events')
-        .select('id, city, load_in_date, status')
+        .select('id, city, load_in_date, load_out_date, status, num_shows')
         .eq('tour_id', tour.id)
         .order('load_in_date', { ascending: true })
 
       const totalEvents = events?.length ?? 0
-      const completedEvents = events?.filter(e => new Date(e.load_out_date + 'T23:59:59') < now).length ?? 0
-      const nextEvent = events?.find(e => new Date(e.load_out_date + 'T23:59:59') >= now)
+      const eventCompletions = await Promise.all((events || []).map(async (e) => {
+        const { count } = await supabase
+          .from('show_list')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', e.id)
+          .eq('completed', true)
+        return { ...e, completedShows: count ?? 0 }
+      }))
+
+      const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
+      const nextEvent = eventCompletions.find(e => !(e.num_shows > 0 && e.completedShows >= e.num_shows))
 
       const nameParts = (tour.director_name || '').trim().split(' ')
       const initials = nameParts.length >= 2
