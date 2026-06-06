@@ -160,7 +160,7 @@ export default function StaffProfile() {
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
                     <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
                       {person.address && <div>{person.address}</div>}
-                      <div>{[person.city, person.state, person.zip].filter(Boolean).join(', ')}</div>
+                      <div>{[person.city, person.state, person.zip, person.country].filter(Boolean).join(', ')}</div>
                     </div>
                   </div>
                 )}

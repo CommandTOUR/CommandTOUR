@@ -13,7 +13,7 @@ export default function NewStaff() {
   const [form, setForm] = useState({
     first_name: '', middle_name: '', last_name: '', suffix: '',
     cell_phone: '', email: '', dob: '',
-    address: '', city: '', state: '', zip: '',
+    address: '', city: '', state: '', zip: '', country: '',
     home_airport: '', passport_nationality: '', passport_number: '', passport_expiry: '',
     allergies: '', notes: '',
   })
@@ -45,6 +45,7 @@ export default function NewStaff() {
         city: form.city || null,
         state: form.state || null,
         zip: form.zip || null,
+        country: form.country || null,
         home_airport: form.home_airport || null,
         passport_nationality: form.passport_nationality || null,
         passport_number: form.passport_number || null,
@@ -146,7 +147,7 @@ export default function NewStaff() {
                 <input style={inputStyle} type="date" value={form.dob} onChange={e => set('dob', e.target.value)} />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.6fr 0.8fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.6fr 0.8fr 1fr', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Mailing Address</label>
                 <input style={inputStyle} placeholder="Street address" value={form.address} onChange={e => set('address', e.target.value)} />
@@ -162,6 +163,10 @@ export default function NewStaff() {
               <div>
                 <label style={labelStyle}>ZIP</label>
                 <input style={inputStyle} placeholder="ZIP" value={form.zip} onChange={e => set('zip', e.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>Country</label>
+                <input style={inputStyle} placeholder="Country" value={form.country} onChange={e => set('country', e.target.value)} />
               </div>
             </div>
           </div>
