@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
 import StaffingTab from '../../../../../components/StaffingTab'
+import TravelHotelTab from '../../../../../components/TravelHotelTab'
 
 export default function EventPage() {
   const router = useRouter()
@@ -121,7 +122,7 @@ export default function EventPage() {
   )
 
   const color = tour?.color || '#C9A84C'
-  const tabs = ['Overview', 'Shows', 'Staffing', 'Travel', 'Schedule', 'Tasks', 'Notes', 'Files']
+  const tabs = ['Overview', 'Shows', 'Staffing', 'Travel & Hotel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
@@ -506,7 +507,11 @@ export default function EventPage() {
             <StaffingTab eventId={eventId} event={event} />
           )}
 
-          {activeTab !== 'overview' && activeTab !== 'shows' && activeTab !== 'staffing' && (
+          {activeTab === 'travel & hotel' && (
+            <TravelHotelTab eventId={eventId} event={event} />
+          )}
+
+          {activeTab !== 'overview' && activeTab !== 'shows' && activeTab !== 'staffing' && activeTab !== 'travel & hotel' && (
             <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
