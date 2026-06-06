@@ -137,7 +137,7 @@ function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDi
   }
 
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
+    <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{title}</div>
         <div style={{ display: 'flex', gap: 8 }}>
