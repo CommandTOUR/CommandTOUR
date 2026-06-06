@@ -103,7 +103,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
 
 function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDir, onSort, type }) {
   // Removed notes column — grid is now: name | date | flight | time | transport | remove
-  const GRID = '1fr 90px 100px 90px 140px 32px'
+  const GRID = '1fr 90px 100px 90px 100 140px 32px'
 
   const grouped = {}
   rows.forEach(r => {
@@ -152,7 +152,9 @@ function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDi
           <SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} />
           <SortHeader label="Flight #" field="flight_number" sortField={sortField} sortDir={sortDir} onSort={onSort} />
           <SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} />
+          <SortHeader label="Airport" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
           <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+          <div />
           <div />
         </div>
 
@@ -183,6 +185,7 @@ function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDi
                 <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />
                 <EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder="Flight #" />
                 <EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} />
+                <EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder="Airport" />
                 <EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" />
                 <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }}
                   onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }}
