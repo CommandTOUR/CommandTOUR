@@ -158,7 +158,7 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
       >
         <input type="date" value={value} onChange={e => setValue(e.target.value)} autoFocus
           onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
-          style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none' }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none' }}
         />
         <div onClick={handleSave} style={{ fontSize: 11, color: 'var(--mint)', cursor: 'pointer' }}>✓</div>
         <div onClick={() => setEditing(false)} style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>✕</div>
@@ -244,7 +244,7 @@ export default function TourPage() {
         <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '24px 32px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <button onClick={() => router.push('/tours')} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button onClick={() => router.push('/tours')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 ← Tours
               </button>
               <div>
@@ -262,7 +262,7 @@ export default function TourPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => router.push(`/tours/${id}/edit`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button onClick={() => router.push(`/tours/${id}/edit`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 Edit Tour
               </button>
               <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>
@@ -278,7 +278,7 @@ export default function TourPage() {
               const active = activeTab === tab.toLowerCase()
               return (
                 <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())}
-                  style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '14px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '14px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
                   {tab}
                 </button>
               )

@@ -40,7 +40,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+        style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
         value={val}
         onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
@@ -79,7 +79,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
       <div style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
         <div style={{ fontSize: 15, fontWeight: 600 }}>Select Staff</div>
         <input ref={inputRef}
-          style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
           placeholder="Search by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -95,7 +95,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
             </div>
           ))}
         </div>
-        <button onClick={onClose} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
       </div>
     </div>
   )
@@ -297,8 +297,8 @@ export default function TravelHotelTab({ eventId, event }) {
         {count !== null && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({count})</span>}
       </div>
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
-        {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
-        {onExport && <button onClick={onExport} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>}
+        {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
+        {onExport && <button onClick={onExport} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>}
       </div>
     </div>
   )
@@ -339,7 +339,7 @@ export default function TravelHotelTab({ eventId, event }) {
                 <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_out_date)}</div></div>
                 {hotel.notes && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 14 }}>{hotel.notes}</div></div>}
                 <div style={{ marginLeft: 'auto' }}>
-                  <button onClick={() => setEditingHotel(true)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Edit</button>
+                  <button onClick={() => setEditingHotel(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Edit</button>
                 </div>
               </div>
             )}
@@ -363,7 +363,7 @@ export default function TravelHotelTab({ eventId, event }) {
                   <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--text-muted)' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                     {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
                   </div>
-                  <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', width: '100%' }}>
+                  <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', width: '100%' }}>
                     {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                   <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
@@ -399,11 +399,11 @@ export default function TravelHotelTab({ eventId, event }) {
             {[{ label: 'Hotel Name', key: 'hotel_name', type: 'text' }, { label: 'Address', key: 'address', type: 'text' }, { label: 'Check In', key: 'check_in_date', type: 'date' }, { label: 'Check Out', key: 'check_out_date', type: 'date' }, { label: 'Notes', key: 'notes', type: 'text' }].map(f => (
               <div key={f.key}>
                 <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
-                <input type={f.type} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
+                <input type={f.type} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setEditingHotel(false)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setEditingHotel(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
               <button className="btn-primary" onClick={handleSaveHotel}>Save</button>
             </div>
           </div>

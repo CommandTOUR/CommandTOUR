@@ -118,7 +118,7 @@ export default function EditStaff() {
   }
 
   const inputStyle = {
-    fontFamily: 'Rubik, sans-serif', fontSize: 14,
+    fontFamily: 'Inter, sans-serif', fontSize: 14,
     padding: '10px 14px', borderRadius: 8,
     border: '0.5px solid var(--glass-border)',
     background: 'rgba(255,255,255,0.05)',
@@ -149,7 +149,7 @@ export default function EditStaff() {
       <div style={{ marginTop: 62, padding: '28px 32px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
             ← Back
           </button>
           <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Profile</div>
@@ -247,7 +247,7 @@ export default function EditStaff() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>Airlines & Frequent Flyer Numbers</label>
-                <button onClick={addAirline} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>
+                <button onClick={addAirline} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>
                   + Add Airline
                 </button>
               </div>
@@ -306,7 +306,7 @@ export default function EditStaff() {
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
-            <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
               Cancel
             </button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>

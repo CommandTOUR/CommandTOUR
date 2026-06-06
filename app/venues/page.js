@@ -55,7 +55,7 @@ export default function Venues() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            fontFamily: 'Rubik, sans-serif',
+            fontFamily: 'Inter, sans-serif',
             fontSize: 14,
             padding: '10px 16px',
             borderRadius: 8,

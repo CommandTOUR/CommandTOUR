@@ -104,7 +104,7 @@ export default function EditEvent() {
   }
 
   const inputStyle = {
-    fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
+    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
     border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)',
     color: 'var(--text-primary)', outline: 'none', width: '100%',
   }
@@ -124,7 +124,7 @@ export default function EditEvent() {
       <div style={{ marginTop: 62, padding: 28 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
             ← Back
           </button>
           <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Event</div>
@@ -240,7 +240,7 @@ export default function EditEvent() {
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
               Cancel
             </button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>

@@ -61,7 +61,7 @@ export default function VenuePage() {
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   const inputStyle = {
-    fontFamily: 'Rubik, sans-serif',
+    fontFamily: 'Inter, sans-serif',
     fontSize: 14,
     padding: '8px 12px',
     borderRadius: 7,
@@ -107,7 +107,7 @@ export default function VenuePage() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => router.push('/venues')} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button onClick={() => router.push('/venues')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
               ← Venues
             </button>
             <div>
@@ -119,7 +119,7 @@ export default function VenuePage() {
           </div>
           <button
             onClick={() => router.push(`/venues/${venueId}/edit`)}
-            style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
           >
             Edit Venue
           </button>
@@ -181,7 +181,7 @@ export default function VenuePage() {
                   <input style={inputStyle} placeholder="Optional notes" value={newContact.notes} onChange={e => setNewContact(p => ({ ...p, notes: e.target.value }))} />
                 </div>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                  <button onClick={() => { setAddingContact(false); setNewContact({ name: '', title: '', phone: '', email: '', notes: '' }) }} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <button onClick={() => { setAddingContact(false); setNewContact({ name: '', title: '', phone: '', email: '', notes: '' }) }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
                     Cancel
                   </button>
                   <button className="btn-primary" onClick={handleAddContact} disabled={savingContact}>

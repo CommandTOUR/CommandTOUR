@@ -48,7 +48,7 @@ export default function DashboardMap() {
 
           const popup = new mapboxgl.default.Popup({ offset: 14, closeButton: false })
             .setHTML(`
-              <div style="font-family:'Rubik',sans-serif;font-size:12px;font-weight:500;
+              <div style="font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
                 color:#fff;background:#0d1f3a;border:0.5px solid rgba(255,255,255,0.15);
                 border-radius:7px;padding:6px 10px;white-space:nowrap;">
                 <div style="color:${ev.color};font-size:10px;text-transform:uppercase;

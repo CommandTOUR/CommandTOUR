@@ -74,7 +74,7 @@ export default function TopNav() {
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
         <Link href="/tours/new" style={{
-          fontFamily: 'Rubik, sans-serif',
+          fontFamily: 'Inter, sans-serif',
           fontSize: 14,
           fontWeight: 500,
           padding: '8px 16px',

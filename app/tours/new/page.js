@@ -48,7 +48,7 @@ export default function NewTour() {
   }
 
   const inputStyle = {
-    fontFamily: 'Rubik, sans-serif',
+    fontFamily: 'Inter, sans-serif',
     fontSize: 14,
     padding: '10px 14px',
     borderRadius: 8,
@@ -77,7 +77,7 @@ export default function NewTour() {
           <button
             onClick={() => router.push('/tours')}
             style={{
-              fontFamily: 'Rubik, sans-serif',
+              fontFamily: 'Inter, sans-serif',
               fontSize: 13,
               padding: '7px 14px',
               borderRadius: 7,
@@ -238,7 +238,7 @@ export default function NewTour() {
             <button
               onClick={() => router.push('/tours')}
               style={{
-                fontFamily: 'Rubik, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 fontSize: 14,
                 padding: '9px 20px',
                 borderRadius: 8,

@@ -77,7 +77,7 @@ function NotesCell({ assignment, onSave }) {
   if (editing) {
     return (
       <input ref={inputRef}
-        style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+        style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
         value={value} onChange={e => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setValue(assignment.notes || '') } }}
@@ -105,7 +105,7 @@ function DateCell({ value, onSave }) {
   if (editing) {
     return (
       <input ref={inputRef} type="date"
-        style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '108px' }}
+        style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '108px' }}
         value={val} onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
@@ -233,7 +233,7 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
 
       <div style={{ padding: '8px 12px', borderBottom: '0.5px solid var(--glass-border)' }}>
         <input ref={inputRef}
-          style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '6px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
           placeholder="Type 3+ letters to search..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -491,7 +491,7 @@ export default function StaffingTab({ eventId, event }) {
       {addingPosition && (
         <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
           <input
-            style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', flex: 1 }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', flex: 1 }}
             placeholder="Position title..."
             value={newPosition}
             onChange={e => setNewPosition(e.target.value)}
@@ -499,7 +499,7 @@ export default function StaffingTab({ eventId, event }) {
             autoFocus
           />
           <button className="btn-primary" onClick={handleAddPosition} style={{ fontSize: 13 }}>Add</button>
-          <button onClick={() => { setAddingPosition(false); setNewPosition('') }} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={() => { setAddingPosition(false); setNewPosition('') }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
         </div>
       )}
 
@@ -576,7 +576,7 @@ export default function StaffingTab({ eventId, event }) {
               <div>
                 {assignment ? (
                   <select value={assignment.travel_type || ''} onChange={e => handleSaveTravelType(assignment.id, e.target.value)}
-                    style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: assignment.travel_type ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none', cursor: 'pointer', width: '100%' }}
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: assignment.travel_type ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none', cursor: 'pointer', width: '100%' }}
                   >
                     <option value="">—</option>
                     <option value="flying">Flying</option>
@@ -631,8 +631,8 @@ export default function StaffingTab({ eventId, event }) {
               }
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmOverride(null)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => doAssign(confirmOverride.staffMember, confirmOverride.position)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
+              <button onClick={() => setConfirmOverride(null)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => doAssign(confirmOverride.staffMember, confirmOverride.position)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
             </div>
           </div>
         </div>

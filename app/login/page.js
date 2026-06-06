@@ -56,7 +56,7 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               style={{
-                fontFamily: 'Rubik, sans-serif', fontSize: 14,
+                fontFamily: 'Inter, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
                 border: '0.5px solid var(--glass-border)',
                 background: 'rgba(255,255,255,0.05)',
@@ -72,7 +72,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               style={{
-                fontFamily: 'Rubik, sans-serif', fontSize: 14,
+                fontFamily: 'Inter, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
                 border: '0.5px solid var(--glass-border)',
                 background: 'rgba(255,255,255,0.05)',

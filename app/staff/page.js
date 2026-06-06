@@ -56,7 +56,7 @@ export default function StaffPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            fontFamily: 'Rubik, sans-serif', fontSize: 14,
+            fontFamily: 'Inter, sans-serif', fontSize: 14,
             padding: '10px 16px', borderRadius: 8,
             border: '0.5px solid var(--glass-border)',
             background: 'rgba(255,255,255,0.05)',

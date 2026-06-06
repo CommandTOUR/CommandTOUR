@@ -86,7 +86,7 @@ export default function EditVenue() {
   }
 
   const inputStyle = {
-    fontFamily: 'Rubik, sans-serif',
+    fontFamily: 'Inter, sans-serif',
     fontSize: 14,
     padding: '10px 14px',
     borderRadius: 8,
@@ -131,7 +131,7 @@ export default function EditVenue() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push(`/venues/${venueId}`)}
-            style={{ fontFamily: 'Rubik, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
           >
             ← Back
           </button>
@@ -263,7 +263,7 @@ export default function EditVenue() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}
-              style={{ fontFamily: 'Rubik, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
             >
               Cancel
             </button>
