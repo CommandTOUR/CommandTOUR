@@ -101,9 +101,8 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
   )
 }
 
-function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDir, onSort, type }) {
-  // Removed notes column — grid is now: name | date | flight | time | transport | remove
-  const GRID = '1fr 100px 110px 100px 120px 160px 36px'
+function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
+  const GRID = '200px 100px 110px 90px 110px 150px 1fr 36px'
 
   const grouped = {}
   rows.forEach(r => {
@@ -112,89 +111,57 @@ function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDi
     grouped[key].push(r)
   })
 
-  const handleExportPDF = () => {
-    const win = window.open('', '_blank')
-    const tableRows = rows.map(r => `
-      <tr>
-        <td>${r.staff_name || '—'}</td>
-        <td>${fmtDate(r.travel_date)}</td>
-        <td>${r.flight_number || '—'}</td>
-        <td>${type === 'arrival' ? fmtTime(r.arrival_time) : fmtTime(r.departure_time)}</td>
-        <td>${r.transport || '—'}</td>
-      </tr>
-    `).join('')
-    win.document.write(`
-      <html><head><title>${title}</title>
-      <style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style>
-      </head><body>
-      <h2>${title}</h2>
-      <table><thead><tr><th>Name</th><th>Date</th><th>Flight #</th><th>Time</th><th>Transport</th></tr></thead>
-      <tbody>${tableRows}</tbody></table>
-      </body></html>
-    `)
-    win.document.close()
-    win.print()
-  }
-
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{title}</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onAdd} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>
-          <button onClick={handleExportPDF} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>
-        </div>
+    <div className="glass-card" style={{ overflow: 'visible' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 10px', padding: '8px 14px', borderBottom: '0.5px solid var(--glass-border)' }}>
+        <SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <SortHeader label="Flight #" field="flight_number" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <SortHeader label="Airport" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
+        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Notes</div>
+        <div />
       </div>
 
-      <div className="glass-card" style={{ overflow: 'visible' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 10px', padding: '8px 14px', borderBottom: '0.5px solid var(--glass-border)' }}>
-          <SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <SortHeader label="Flight #" field="flight_number" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <SortHeader label="Airport" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-          <div />
+      {rows.length === 0 && (
+        <div style={{ padding: '20px 14px', fontSize: 13, color: 'var(--text-muted)' }}>
+          No {type === 'arrival' ? 'arrivals' : 'departures'} yet. Confirm staff on the Staffing tab to auto-populate.
         </div>
+      )}
 
-        {rows.length === 0 && (
-          <div style={{ padding: '20px 14px', fontSize: 13, color: 'var(--text-muted)' }}>
-            No {type === 'arrival' ? 'arrivals' : 'departures'} yet. Confirm staff on the Staffing tab to auto-populate.
-          </div>
-        )}
-
-        {Object.entries(grouped).map(([group, groupRows]) => (
-          <div key={group}>
-            {group !== '__none__' && groupRows.length > 1 && (
-              <div style={{ padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderBottom: '0.5px solid var(--glass-border)', fontSize: 11, color: 'var(--mint)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                {group}
+      {Object.entries(grouped).map(([group, groupRows]) => (
+        <div key={group}>
+          {group !== '__none__' && groupRows.length > 1 && (
+            <div style={{ padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderBottom: '0.5px solid var(--glass-border)', fontSize: 11, color: 'var(--mint)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              {group}
+            </div>
+          )}
+          {groupRows.map((row) => (
+            <div key={row.id} style={{
+              display: 'grid', gridTemplateColumns: GRID, gap: '0 10px',
+              padding: '10px 14px', alignItems: 'center',
+              borderBottom: '0.5px solid var(--glass-border)',
+              background: row.flagged ? 'rgba(255,51,51,0.05)' : 'transparent',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {row.flagged && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', flexShrink: 0 }} title="Staff no longer confirmed" />}
+                <span style={{ fontSize: 13, color: row.flagged ? 'var(--red)' : 'var(--text-primary)', whiteSpace: 'nowrap' }}>{row.staff_name || '—'}</span>
               </div>
-            )}
-            {groupRows.map((row) => (
-              <div key={row.id} style={{
-                display: 'grid', gridTemplateColumns: GRID, gap: '0 10px',
-                padding: '10px 14px', alignItems: 'center',
-                borderBottom: '0.5px solid var(--glass-border)',
-                background: row.flagged ? 'rgba(255,51,51,0.05)' : 'transparent',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {row.flagged && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', flexShrink: 0 }} title="Staff no longer confirmed" />}
-                  <span style={{ fontSize: 13, color: row.flagged ? 'var(--red)' : 'var(--text-primary)' }}>{row.staff_name || '—'}</span>
-                </div>
-                <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />
-                <EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder="Flight #" />
-                <EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} />
-                <EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder="Airport" />
-                <EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" />
-                <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = '0.4' }}
-                >×</div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+              <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />
+              <EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder="Flight #" />
+              <EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} />
+              <EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder="Airport" />
+              <EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" />
+              <EditableCell value={row.notes} onSave={v => onUpdate(row.id, 'notes', v)} placeholder="Notes" />
+              <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = '0.4' }}
+              >×</div>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
@@ -213,6 +180,9 @@ export default function TravelHotelTab({ eventId, event }) {
   const [roomStaffPicker, setRoomStaffPicker] = useState(null)
   const [editingHotel, setEditingHotel] = useState(false)
   const [hotelForm, setHotelForm] = useState({ hotel_name: '', address: '', check_in_date: '', check_out_date: '', notes: '' })
+  const [arrivalsOpen, setArrivalsOpen] = useState(true)
+  const [departuresOpen, setDeparturesOpen] = useState(true)
+  const [hotelOpen, setHotelOpen] = useState(true)
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -295,8 +265,19 @@ export default function TravelHotelTab({ eventId, event }) {
     fetchAll()
   }
 
-  const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
-  const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
+  const handleExportArrivalsPDF = () => {
+    const win = window.open('', '_blank')
+    const tableRows = arrivals.map(r => `<tr><td>${r.staff_name || '—'}</td><td>${fmtDate(r.travel_date)}</td><td>${r.flight_number || '—'}</td><td>${fmtTime(r.arrival_time)}</td><td>${r.airport || '—'}</td><td>${r.transport || '—'}</td><td>${r.notes || '—'}</td></tr>`).join('')
+    win.document.write(`<html><head><title>Arrivals</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body><h2>Arrivals</h2><table><thead><tr><th>Name</th><th>Date</th><th>Flight #</th><th>Time</th><th>Airport</th><th>Transport</th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`)
+    win.document.close(); win.print()
+  }
+
+  const handleExportDeparturesPDF = () => {
+    const win = window.open('', '_blank')
+    const tableRows = departures.map(r => `<tr><td>${r.staff_name || '—'}</td><td>${fmtDate(r.travel_date)}</td><td>${r.flight_number || '—'}</td><td>${fmtTime(r.departure_time)}</td><td>${r.airport || '—'}</td><td>${r.transport || '—'}</td><td>${r.notes || '—'}</td></tr>`).join('')
+    win.document.write(`<html><head><title>Departures</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body><h2>Departures</h2><table><thead><tr><th>Name</th><th>Date</th><th>Flight #</th><th>Time</th><th>Airport</th><th>Transport</th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`)
+    win.document.close(); win.print()
+  }
 
   const handleExportRoomingPDF = () => {
     const win = window.open('', '_blank')
@@ -305,75 +286,112 @@ export default function TravelHotelTab({ eventId, event }) {
     win.document.close(); win.print()
   }
 
+  const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
+  const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
+
+  const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{isOpen ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{label}</span>
+        {count !== null && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({count})</span>}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
+        {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
+        {onExport && <button onClick={onExport} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>}
+      </div>
+    </div>
+  )
+
   if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
 
   const ROOM_GRID = '180px 180px 110px 100px 100px 1fr 36px'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <TravelTable title="Arrivals" rows={sortRows(arrivals, arrivalSort)} onUpdate={handleUpdateArrival} onRemove={handleRemoveArrival} onAdd={() => setAddingArrival(true)} sortField={arrivalSort.field} sortDir={arrivalSort.dir} onSort={(f) => handleSort('arrival', f)} type="arrival" />
-        <TravelTable title="Departures" rows={sortRows(departures, departureSort)} onUpdate={handleUpdateDeparture} onRemove={handleRemoveDeparture} onAdd={() => setAddingDeparture(true)} sortField={departureSort.field} sortDir={departureSort.dir} onSort={(f) => handleSort('departure', f)} type="departure" />
 
+      {/* ARRIVALS */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Hotel</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setEditingHotel(true)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>{hotel ? 'Edit Hotel' : '+ Add Hotel'}</button>
-            <button onClick={handleExportRoomingPDF} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>
-          </div>
-        </div>
-
-        {hotel && (
-          <div className="glass-card" style={{ padding: '14px 18px', marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Hotel</div><div style={{ fontSize: 14, fontWeight: 500 }}>{hotel.hotel_name || '—'}</div></div>
-            {hotel.address && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div><div style={{ fontSize: 14 }}>{hotel.address}</div></div>}
-            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check In</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_in_date)}</div></div>
-            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_out_date)}</div></div>
-            {hotel.notes && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 14 }}>{hotel.notes}</div></div>}
-          </div>
+        {sectionHeader('Arrivals', arrivals.length, arrivalsOpen, () => setArrivalsOpen(p => !p), () => setAddingArrival(true), handleExportArrivalsPDF)}
+        {arrivalsOpen && (
+          <TravelTable rows={sortRows(arrivals, arrivalSort)} onUpdate={handleUpdateArrival} onRemove={handleRemoveArrival} sortField={arrivalSort.field} sortDir={arrivalSort.dir} onSort={(f) => handleSort('arrival', f)} type="arrival" />
         )}
-
-        <div className="glass-card" style={{ overflow: 'visible' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '8px 14px', borderBottom: '0.5px solid var(--glass-border)' }}>
-            {['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
-            ))}
-          </div>
-          {rooms.length === 0 && <div style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>}
-          {rooms.map((room, i) => (
-            <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '0.5px solid var(--glass-border)' : 'none' }}>
-              <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--mint)' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
-              </div>
-              <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--text-muted)' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
-              </div>
-              <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', width: '100%' }}>
-                {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
-              <EditableCell value={room.check_out_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
-              <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
-              <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = '0.4' }}>×</div>
-            </div>
-          ))}
-          <div style={{ padding: '10px 14px', borderTop: rooms.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}>
-            <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer' }}>+ Add Room</span>
-          </div>
-        </div>
       </div>
 
-      {unroomedStaff.length > 0 && (
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 12 }}>Unroomed Staff ({unroomedStaff.length})</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {unroomedStaff.map(s => (
-              <div key={s.id} className="glass-card" style={{ padding: '6px 14px', fontSize: 13 }}>{s.first_name} {s.last_name}</div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* DEPARTURES */}
+      <div>
+        {sectionHeader('Departures', departures.length, departuresOpen, () => setDeparturesOpen(p => !p), () => setAddingDeparture(true), handleExportDeparturesPDF)}
+        {departuresOpen && (
+          <TravelTable rows={sortRows(departures, departureSort)} onUpdate={handleUpdateDeparture} onRemove={handleRemoveDeparture} sortField={departureSort.field} sortDir={departureSort.dir} onSort={(f) => handleSort('departure', f)} type="departure" />
+        )}
+      </div>
 
+      {/* HOTEL */}
+      <div>
+        {sectionHeader('Hotel', null, hotelOpen, () => setHotelOpen(p => !p), () => setEditingHotel(true), handleExportRoomingPDF)}
+        {hotelOpen && (
+          <>
+            {hotel && (
+              <div className="glass-card" style={{ padding: '14px 18px', marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Hotel</div><div style={{ fontSize: 14, fontWeight: 500 }}>{hotel.hotel_name || '—'}</div></div>
+                {hotel.address && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div><div style={{ fontSize: 14 }}>{hotel.address}</div></div>}
+                <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check In</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_in_date)}</div></div>
+                <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_out_date)}</div></div>
+                {hotel.notes && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 14 }}>{hotel.notes}</div></div>}
+                <div style={{ marginLeft: 'auto' }}>
+                  <button onClick={() => setEditingHotel(true)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Edit</button>
+                </div>
+              </div>
+            )}
+
+            {!hotel && (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>No hotel added yet.</div>
+            )}
+
+            <div className="glass-card" style={{ overflow: 'visible' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '8px 14px', borderBottom: '0.5px solid var(--glass-border)' }}>
+                {['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
+                  <div key={i} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+                ))}
+              </div>
+              {rooms.length === 0 && <div style={{ padding: '16px 14px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>}
+              {rooms.map((room, i) => (
+                <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '0.5px solid var(--glass-border)' : 'none' }}>
+                  <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--mint)' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                    {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
+                  </div>
+                  <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--text-muted)' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                    {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
+                  </div>
+                  <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={{ fontFamily: 'Rubik, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', width: '100%' }}>
+                    {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
+                  <EditableCell value={room.check_out_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
+                  <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
+                  <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }} onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }} onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = '0.4' }}>×</div>
+                </div>
+              ))}
+              <div style={{ padding: '10px 14px', borderTop: rooms.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}>
+                <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer' }}>+ Add Room</span>
+              </div>
+            </div>
+
+            {unroomedStaff.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 12 }}>Unroomed Staff ({unroomedStaff.length})</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {unroomedStaff.map(s => (
+                    <div key={s.id} className="glass-card" style={{ padding: '6px 14px', fontSize: 13 }}>{s.first_name} {s.last_name}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* HOTEL EDIT MODAL */}
       {editingHotel && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditingHotel(false)}>
           <div style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
