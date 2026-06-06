@@ -103,7 +103,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
 
 function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDir, onSort, type }) {
   // Removed notes column — grid is now: name | date | flight | time | transport | remove
-  const GRID = '175px 90px 75px 90px 60px 140px 32px'
+  const GRID = '1fr 100px 110px 100px 120px 160px 36px'
 
   const grouped = {}
   rows.forEach(r => {
