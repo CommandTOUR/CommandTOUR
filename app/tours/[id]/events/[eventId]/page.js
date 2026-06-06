@@ -29,7 +29,7 @@ export default function EventPage() {
       const [eventRes, tourRes, showsRes] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
         supabase.from('tours').select('*').eq('id', id).single(),
-        supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }),
+        supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }).order('show_time', { ascending: true }),
       ])
       if (!eventRes.error) {
         setEvent(eventRes.data)
@@ -61,7 +61,7 @@ export default function EventPage() {
       completed: false,
     }]).select().single()
     if (!error) {
-      const updated = [...shows, data].sort((a, b) => new Date(a.show_date) - new Date(b.show_date))
+      const updated = [...shows, data].sort((a, b) => new Date(`${a.show_date}T${a.show_time || '00:00'}`) - new Date(`${b.show_date}T${b.show_time || '00:00'}`))
       setShows(updated)
       const lastShowDate = updated[updated.length - 1].show_date
       await supabase.from('events').update({
@@ -83,8 +83,8 @@ export default function EventPage() {
     }).eq('id', showId)
     if (!error) {
       setShows(prev => prev.map(s => s.id === showId ? { ...s, ...editForm } : s)
-        .sort((a, b) => new Date(a.show_date) - new Date(b.show_date)))
-      setEditingId(null)
+        .sort((a, b) => new Date(`${a.show_date}T${a.show_time || '00:00'}`) - new Date(`${b.show_date}T${b.show_time || '00:00'}`)))
+        setEditingId(null)
     }
   }
 
