@@ -155,7 +155,6 @@ function TravelTable({ title, rows, onUpdate, onRemove, onAdd, sortField, sortDi
           <SortHeader label="Airport" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
           <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
           <div />
-          <div />
         </div>
 
         {rows.length === 0 && (
