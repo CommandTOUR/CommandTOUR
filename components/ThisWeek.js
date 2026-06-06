@@ -47,19 +47,21 @@ export default function ThisWeek({ showAll = false }) {
         const day = today.getDay()
         const mon = new Date(today)
         mon.setDate(today.getDate() - ((day + 6) % 7))
-        mon.setHours(0, 0, 0, 0)
         const sun = new Date(mon)
         sun.setDate(mon.getDate() + 6)
-        sun.setHours(23, 59, 59, 999)
-        start = mon.toISOString()
-        end = sun.toISOString()
+
+        // Use plain YYYY-MM-DD strings to avoid timezone issues
+        const pad = (n) => String(n).padStart(2, '0')
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+        start = fmt(mon)
+        end = fmt(sun)
       }
 
       const { data, error } = await supabase
         .from('events')
         .select('id, city, load_in_date, load_out_date, tour_id, tours(name, color)')
-        .gte('load_out_date', start)
-        .lte('load_in_date', end)
+        .gte('load_out_date', start)   // event ends on or after Monday
+        .lte('load_in_date', end)      // event starts on or before Sunday
         .order('load_in_date', { ascending: true })
 
       if (error || !data) { setLoading(false); return }

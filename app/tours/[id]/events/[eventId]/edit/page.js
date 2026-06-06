@@ -51,7 +51,7 @@ export default function EditEvent() {
           load_out_date: data.load_out_date || '',
           notes: data.notes || '',
         })
-        if (data.load_out_date) setExtendedLoadOut(true)
+        if (data.load_out_date && data.load_out_date !== data.load_in_date) setExtendedLoadOut(true)
         if (data.venue_id && venuesRes.data) {
           const linked = venuesRes.data.find(v => v.id === data.venue_id)
           if (linked) { setSelectedVenue(linked); setVenueSearch(linked.name) }
@@ -96,7 +96,7 @@ export default function EditEvent() {
       event_type: form.event_type || null,
       load_in_date: form.load_in_date,
       notes: form.notes,
-      load_out_date: extendedLoadOut && form.load_out_date ? form.load_out_date : null,
+      load_out_date: extendedLoadOut && form.load_out_date ? form.load_out_date : undefined,
     }
     const { error } = await supabase.from('events').update(payload).eq('id', eventId)
     if (error) { setError(error.message); setSaving(false) }

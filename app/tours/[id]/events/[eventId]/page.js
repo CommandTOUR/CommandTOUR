@@ -63,7 +63,11 @@ export default function EventPage() {
     if (!error) {
       const updated = [...shows, data].sort((a, b) => new Date(a.show_date) - new Date(b.show_date))
       setShows(updated)
-      await supabase.from('events').update({ num_shows: updated.length }).eq('id', eventId)
+      const lastShowDate = updated[updated.length - 1].show_date
+      await supabase.from('events').update({
+        num_shows: updated.length,
+        load_out_date: event.load_out_date || lastShowDate,
+      }).eq('id', eventId)
       setNewShow({ show_date: '', show_time: '', notes: '' })
       setAddingShow(false)
     }
@@ -96,7 +100,11 @@ export default function EventPage() {
     if (!error) {
       const updated = shows.filter(s => s.id !== showId)
       setShows(updated)
-      await supabase.from('events').update({ num_shows: updated.length }).eq('id', eventId)
+      const lastShowDate = updated.length > 0 ? updated[updated.length - 1].show_date : null
+      await supabase.from('events').update({
+        num_shows: updated.length,
+        load_out_date: lastShowDate,
+      }).eq('id', eventId)
     }
   }
 
@@ -280,7 +288,7 @@ export default function EventPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {shows.map((show, i) => (
                         <div key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, background: show.completed ? 'var(--mint)' : 'transparent', border: show.completed ? 'none' : '1.5px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div onClick={() => handleToggleComplete(show)} style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', background: show.completed ? 'var(--mint)' : 'transparent', border: show.completed ? 'none' : '1.5px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                             {show.completed && (
                               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                                 <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>

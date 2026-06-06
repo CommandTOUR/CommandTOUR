@@ -31,8 +31,8 @@ export default function TourTiles() {
         .order('load_in_date', { ascending: true })
 
       const totalEvents = events?.length ?? 0
-      const completedEvents = events?.filter(e => new Date(e.load_in_date) < now).length ?? 0
-      const nextEvent = events?.find(e => new Date(e.load_in_date) >= now)
+      const completedEvents = events?.filter(e => new Date(e.load_out_date + 'T23:59:59') < now).length ?? 0
+      const nextEvent = events?.find(e => new Date(e.load_out_date + 'T23:59:59') >= now)
 
       const nameParts = (tour.director_name || '').trim().split(' ')
       const initials = nameParts.length >= 2
@@ -53,7 +53,7 @@ export default function TourTiles() {
           .select('id, show_date, show_time, completed')
           .eq('event_id', nextEvent.id)
           .order('show_date', { ascending: true }).order('show_time', { ascending: true })
-        upcomingShows = shows || []
+        upcomingShows = (shows || []).map((s, i) => ({ ...s, displayNum: i + 1 }))
       }
 
       return {
@@ -187,7 +187,7 @@ export default function TourTiles() {
                     )}
                   </div>
                   <span style={{ fontSize: 12, color: show.completed ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                    Show #{i + 1} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
+                    Show #{show.displayNum} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
                   </span>
                 </div>
               ))}
