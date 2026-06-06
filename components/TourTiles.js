@@ -166,7 +166,7 @@ export default function TourTiles() {
         {tour.upcomingShows.length > 0 && (
           <>
             <div style={{ height: 0.5, background: 'var(--glass-border)', margin: '14px 0 12px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }} onClick={e => { e.preventDefault(); e.stopPropagation() }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }} onClick={e => { e.preventDefault(); e.stopPropagation() }}>
               {tour.upcomingShows.map((show, i) => (
                 <div
                   key={show.id}
