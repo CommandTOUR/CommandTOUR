@@ -9,52 +9,93 @@ export default function TourTiles() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    async function fetchTours() {
-      const supabase = getSupabase()
-      const { data: toursData, error } = await supabase
-        .from('tours')
-        .select('id, name, region, year, color, status, director_name')
-        .eq('status', 'active')
-        .order('year', { ascending: true })
+  useEffect(() => { fetchTours() }, [])
 
-      if (error || !toursData) { setLoading(false); return }
+  const fetchTours = async () => {
+    const supabase = getSupabase()
+    const { data: toursData, error } = await supabase
+      .from('tours')
+      .select('id, name, region, year, color, status, director_name')
+      .eq('status', 'active')
+      .order('year', { ascending: true })
 
-      const enriched = await Promise.all(toursData.map(async (tour) => {
-        const { data: events } = await supabase
-          .from('events')
-          .select('id, city, load_in_date, status')
-          .eq('tour_id', tour.id)
-          .order('load_in_date', { ascending: true })
+    if (error || !toursData) { setLoading(false); return }
 
-        const totalEvents = events?.length ?? 0
-        const now = new Date()
-        const completedEvents = events?.filter(e => new Date(e.load_in_date) < now).length ?? 0
-        const nextEvent = events?.find(e => new Date(e.load_in_date) >= now)
+    const now = new Date()
 
-        const nameParts = (tour.director_name || '').trim().split(' ')
-        const initials = nameParts.length >= 2
-          ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
-          : (nameParts[0]?.[0] ?? '?')
+    const enriched = await Promise.all(toursData.map(async (tour) => {
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, city, load_in_date, status')
+        .eq('tour_id', tour.id)
+        .order('load_in_date', { ascending: true })
 
-        const nextLabel = nextEvent
-          ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-          : 'No upcoming events'
+      const totalEvents = events?.length ?? 0
+      const completedEvents = events?.filter(e => new Date(e.load_in_date) < now).length ?? 0
+      const nextEvent = events?.find(e => new Date(e.load_in_date) >= now)
 
-        return {
-          ...tour,
-          total: totalEvents,
-          completed: completedEvents,
-          directorInitials: initials.toUpperCase(),
-          nextEvent: nextLabel,
-        }
-      }))
+      const nameParts = (tour.director_name || '').trim().split(' ')
+      const initials = nameParts.length >= 2
+        ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
+        : (nameParts[0]?.[0] ?? '?')
 
-      setTours(enriched)
-      setLoading(false)
-    }
-    fetchTours()
-  }, [])
+      const nextLabel = nextEvent
+        ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : 'No upcoming events'
+
+      // Get shows for the next upcoming event
+      let upcomingShows = []
+      let activeEventId = null
+      if (nextEvent) {
+        activeEventId = nextEvent.id
+        const { data: shows } = await supabase
+          .from('show_list')
+          .select('id, show_date, show_time, completed')
+          .eq('event_id', nextEvent.id)
+          .order('show_date', { ascending: true }).order('show_time', { ascending: true })
+        upcomingShows = shows || []
+      }
+
+      return {
+        ...tour,
+        total: totalEvents,
+        completed: completedEvents,
+        directorInitials: initials.toUpperCase(),
+        nextEvent: nextLabel,
+        activeEventId,
+        upcomingShows,
+      }
+    }))
+
+    setTours(enriched)
+    setLoading(false)
+  }
+
+  const handleToggleShow = async (e, tourId, showId, currentCompleted) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const supabase = getSupabase()
+    await supabase.from('show_list').update({ completed: !currentCompleted }).eq('id', showId)
+    setTours(prev => prev.map(t => {
+      if (t.id !== tourId) return t
+      return {
+        ...t,
+        upcomingShows: t.upcomingShows.map(s =>
+          s.id === showId ? { ...s, completed: !s.completed } : s
+        )
+      }
+    }))
+  }
+
+  const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+  const fmtTime = (t) => {
+    if (!t) return null
+    const [h, m] = t.split(':')
+    const hour = parseInt(h)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const h12 = hour % 12 || 12
+    return `${h12}:${m} ${ampm}`
+  }
 
   if (loading) return (
     <div>
@@ -120,6 +161,39 @@ export default function TourTiles() {
         <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
         </div>
+
+        {/* Shows list with clickable checkboxes */}
+        {tour.upcomingShows.length > 0 && (
+          <>
+            <div style={{ height: 0.5, background: 'var(--glass-border)', margin: '14px 0 12px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }} onClick={e => { e.preventDefault(); e.stopPropagation() }}></div>
+              {tour.upcomingShows.map((show, i) => (
+                <div
+                  key={show.id}
+                  onClick={(e) => handleToggleShow(e, tour.id, show.id, show.completed)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                >
+                  <div style={{
+                    width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                    background: show.completed ? 'var(--mint)' : 'transparent',
+                    border: show.completed ? 'none' : '1.5px solid var(--glass-border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}>
+                    {show.completed && (
+                      <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 12, color: show.completed ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
+                    Show #{i + 1} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
