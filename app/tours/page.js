@@ -16,22 +16,29 @@ export default function Tours() {
   useEffect(() => {
     const fetchTours = async () => {
       const supabase = getSupabase()
-      const { data, error } = await supabase
-        .from('tours')
-        .select('*')
+      const { data, error } = await supabase.from('tours').select('*')
 
       if (!error) {
         const enriched = await Promise.all(data.map(async (tour) => {
           const { data: events } = await supabase
             .from('events')
-            .select('id, city, load_in_date')
+            .select('id, city, load_in_date, num_shows')
             .eq('tour_id', tour.id)
             .order('load_in_date', { ascending: true })
 
           const totalEvents = events?.length ?? 0
-          const now = new Date()
-          const completedEvents = events?.filter(e => new Date(e.load_in_date) < now).length ?? 0
-          const nextEvent = events?.find(e => new Date(e.load_in_date) >= now)
+
+          const eventCompletions = await Promise.all((events || []).map(async (e) => {
+            const { count } = await supabase
+              .from('show_list')
+              .select('id', { count: 'exact', head: true })
+              .eq('event_id', e.id)
+              .eq('completed', true)
+            return { ...e, completedShows: count ?? 0 }
+          }))
+
+          const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
+          const nextEvent = eventCompletions.find(e => !(e.num_shows > 0 && e.completedShows >= e.num_shows))
 
           const nameParts = (tour.director_name || '').trim().split(' ')
           const initials = nameParts.length >= 2
