@@ -4,29 +4,36 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 
-const TYPE_STYLES = {
-  show:    { background: 'rgba(51,255,153,0.1)',   color: '#33FF99' },
+const PILL_STYLES = {
   loadin:  { background: 'rgba(255,204,0,0.1)',    color: '#FFCC00' },
   loadout: { background: 'rgba(255,204,0,0.1)',    color: '#FFCC00' },
-  travel:  { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)' },
+  show:    { background: 'rgba(51,255,153,0.1)',   color: '#33FF99' },
 }
 
-function getEventType(event, today) {
-  const loadIn  = new Date(event.load_in_date)
-  const loadOut = new Date(event.load_out_date)
-  if (today >= loadIn && today <= loadOut) {
-    if (today.toDateString() === loadIn.toDateString())  return { type: 'loadin',  label: 'Load-In' }
-    if (today.toDateString() === loadOut.toDateString()) return { type: 'loadout', label: 'Load-Out' }
-    return { type: 'show', label: 'Show' }
+function getPills(event, today, todayShows) {
+  const pills = []
+  const todayStr = today.toDateString()
+
+  if (event.load_in_date && new Date(event.load_in_date + 'T00:00:00').toDateString() === todayStr) {
+    pills.push({ type: 'loadin', label: 'Load-In' })
   }
-  return { type: 'travel', label: 'Travel' }
+
+  if (todayShows > 0) {
+    pills.push({ type: 'show', label: todayShows === 1 ? '1 Show' : `${todayShows} Shows` })
+  }
+
+  if (event.load_out_date && new Date(event.load_out_date + 'T00:00:00').toDateString() === todayStr) {
+    pills.push({ type: 'loadout', label: 'Load-Out' })
+  }
+
+  return pills
 }
 
 function formatDateRange(loadIn, loadOut) {
   const opts = { month: 'short', day: 'numeric' }
-  const s = new Date(loadIn).toLocaleDateString('en-US', opts)
-  const e = new Date(loadOut).toLocaleDateString('en-US', opts)
-  return `${s} – ${e}`
+  const s = new Date(loadIn + 'T00:00:00').toLocaleDateString('en-US', opts)
+  const e = loadOut ? new Date(loadOut + 'T00:00:00').toLocaleDateString('en-US', opts) : null
+  return e ? `${s} – ${e}` : s
 }
 
 export default function ThisWeek({ showAll = false }) {
@@ -41,16 +48,16 @@ export default function ThisWeek({ showAll = false }) {
 
       let start, end
       if (showAll) {
-        start = today.toISOString()
-        end = new Date(today.getFullYear(), today.getMonth() + 3, 1).toISOString()
+        const pad = (n) => String(n).padStart(2, '0')
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+        start = fmt(today)
+        end = fmt(new Date(today.getFullYear(), today.getMonth() + 3, 1))
       } else {
         const day = today.getDay()
         const mon = new Date(today)
         mon.setDate(today.getDate() - ((day + 6) % 7))
         const sun = new Date(mon)
         sun.setDate(mon.getDate() + 6)
-
-        // Use plain YYYY-MM-DD strings to avoid timezone issues
         const pad = (n) => String(n).padStart(2, '0')
         const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
         start = fmt(mon)
@@ -60,26 +67,36 @@ export default function ThisWeek({ showAll = false }) {
       const { data, error } = await supabase
         .from('events')
         .select('id, city, load_in_date, load_out_date, tour_id, tours(name, color)')
-        .gte('load_out_date', start)   // event ends on or after Monday
-        .lte('load_in_date', end)      // event starts on or before Sunday
+        .gte('load_out_date', start)
+        .lte('load_in_date', end)
         .order('load_in_date', { ascending: true })
 
       if (error || !data) { setLoading(false); return }
 
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+
       const enriched = await Promise.all(data.map(async (ev) => {
-        const { count } = await supabase
+        // Count total shows
+        const { count: totalShows } = await supabase
           .from('show_list')
           .select('id', { count: 'exact', head: true })
           .eq('event_id', ev.id)
 
-        const typeInfo = getEventType(ev, today)
+        // Count shows today specifically
+        const { count: todayShows } = await supabase
+          .from('show_list')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', ev.id)
+          .eq('show_date', todayStr)
+
+        const pills = getPills(ev, today, todayShows ?? 0)
 
         return {
           ...ev,
           tourName:  ev.tours?.name  ?? '—',
           tourColor: ev.tours?.color ?? '#33FF99',
-          showCount: count ?? 0,
-          ...typeInfo,
+          showCount: totalShows ?? 0,
+          pills,
         }
       }))
 
@@ -133,11 +150,20 @@ export default function ThisWeek({ showAll = false }) {
               {ev.showCount === 1 ? '1 show' : `${ev.showCount} shows`}
             </div>
           </div>
-          <div style={{
-            fontSize: 12, fontWeight: 500, padding: '4px 11px', borderRadius: 20, flexShrink: 0,
-            ...(TYPE_STYLES[ev.type] ?? TYPE_STYLES.travel),
-          }}>
-            {ev.label}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end', flexShrink: 0 }}>
+            {ev.pills.map((pill, i) => (
+              <div key={i} style={{
+                fontSize: 12, fontWeight: 500, padding: '4px 11px', borderRadius: 20,
+                ...(PILL_STYLES[pill.type] ?? PILL_STYLES.show),
+              }}>
+                {pill.label}
+              </div>
+            ))}
+            {ev.pills.length === 0 && (
+              <div style={{ fontSize: 12, fontWeight: 500, padding: '4px 11px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)' }}>
+                In Progress
+              </div>
+            )}
           </div>
         </div>
       ))}

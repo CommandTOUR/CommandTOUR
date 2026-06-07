@@ -21,8 +21,6 @@ export default function TourTiles() {
 
     if (error || !toursData) { setLoading(false); return }
 
-    const now = new Date()
-
     const enriched = await Promise.all(toursData.map(async (tour) => {
       const { data: events } = await supabase
         .from('events')
@@ -31,6 +29,7 @@ export default function TourTiles() {
         .order('load_in_date', { ascending: true })
 
       const totalEvents = events?.length ?? 0
+
       const eventCompletions = await Promise.all((events || []).map(async (e) => {
         const { count } = await supabase
           .from('show_list')
@@ -49,21 +48,8 @@ export default function TourTiles() {
         : (nameParts[0]?.[0] ?? '?')
 
       const nextLabel = nextEvent
-        ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
         : 'No upcoming events'
-
-      // Get shows for the next upcoming event
-      let upcomingShows = []
-      let activeEventId = null
-      if (nextEvent) {
-        activeEventId = nextEvent.id
-        const { data: shows } = await supabase
-          .from('show_list')
-          .select('id, show_date, show_time, completed')
-          .eq('event_id', nextEvent.id)
-          .order('show_date', { ascending: true }).order('show_time', { ascending: true })
-        upcomingShows = (shows || []).map((s, i) => ({ ...s, displayNum: i + 1 }))
-      }
 
       return {
         ...tour,
@@ -71,39 +57,11 @@ export default function TourTiles() {
         completed: completedEvents,
         directorInitials: initials.toUpperCase(),
         nextEvent: nextLabel,
-        activeEventId,
-        upcomingShows,
       }
     }))
 
     setTours(enriched)
     setLoading(false)
-  }
-
-  const handleToggleShow = async (e, tourId, showId, currentCompleted) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const supabase = getSupabase()
-    await supabase.from('show_list').update({ completed: !currentCompleted }).eq('id', showId)
-    setTours(prev => prev.map(t => {
-      if (t.id !== tourId) return t
-      return {
-        ...t,
-        upcomingShows: t.upcomingShows.map(s =>
-          s.id === showId ? { ...s, completed: !s.completed } : s
-        )
-      }
-    }))
-  }
-
-  const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
-  const fmtTime = (t) => {
-    if (!t) return null
-    const [h, m] = t.split(':')
-    const hour = parseInt(h)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const h12 = hour % 12 || 12
-    return `${h12}:${m} ${ampm}`
   }
 
   if (loading) return (
@@ -171,49 +129,12 @@ export default function TourTiles() {
           <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
         </div>
 
-        {/* Shows list with clickable checkboxes */}
-        {tour.upcomingShows.length > 0 && (
-          <>
-            <div style={{ height: 0.5, background: 'var(--glass-border)', margin: '14px 0 12px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }} onClick={e => { e.preventDefault(); e.stopPropagation() }}>
-              {tour.upcomingShows.map((show, i) => (
-                <div
-                  key={show.id}
-                  onClick={(e) => handleToggleShow(e, tour.id, show.id, show.completed)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                >
-                  <div style={{
-                    width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                    background: show.completed ? 'var(--mint)' : 'transparent',
-                    border: show.completed ? 'none' : '1.5px solid var(--glass-border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s',
-                  }}>
-                    {show.completed && (
-                      <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 12, color: show.completed ? 'var(--text-muted)' : 'var(--text-secondary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                    Show #{show.displayNum} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${tileColor}22`, border: `0.5px solid ${tileColor}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: tileColor, flexShrink: 0 }}>
               {tour.directorInitials}
             </div>
             <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.director_name || '—'}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--text-muted)' }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />
-            {tour.nextEvent}
           </div>
         </div>
       </div>
