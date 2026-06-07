@@ -49,8 +49,13 @@ export default function TopNav() {
       {/* Nav links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
         {navLinks.map(link => {
-          const active = pathname === link.href ||
-            (link.href !== '/' && pathname.startsWith(link.href))
+          // Exact match for root, exact match for staffing-grid, startsWith for others
+          const active =
+            link.href === '/' ? pathname === '/' :
+            link.href === '/staffing-grid' ? pathname === '/staffing-grid' :
+            link.href === '/staff' ? pathname === '/staff' || pathname.startsWith('/staff/') :
+            pathname.startsWith(link.href)
+
           return (
             <Link key={link.href} href={link.href} style={{
               fontSize: 15,
