@@ -183,6 +183,7 @@ export default function TravelHotelTab({ eventId, event }) {
   const [arrivalsOpen, setArrivalsOpen] = useState(true)
   const [departuresOpen, setDeparturesOpen] = useState(true)
   const [hotelOpen, setHotelOpen] = useState(true)
+  const [selectedUnroomed, setSelectedUnroomed] = useState([]) 
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -288,6 +289,14 @@ export default function TravelHotelTab({ eventId, event }) {
 
   const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
   const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
+  const handleAddSelectedToRooming = async () => {
+      const supabase = getSupabase()
+      await Promise.all(selectedUnroomed.map(staffId =>
+        supabase.from('event_hotel_rooms').insert([{ event_id: eventId, staff_id_1: staffId, room_type: 'Single' }])
+      ))
+      setSelectedUnroomed([])
+      fetchAll()
+    }
 
   const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
@@ -379,11 +388,52 @@ export default function TravelHotelTab({ eventId, event }) {
 
             {unroomedStaff.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 12 }}>Unroomed Staff ({unroomedStaff.length})</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
+                    Unroomed Staff ({unroomedStaff.length})
+                  </div>
+                  {selectedUnroomed.length > 0 && (
+                    <button
+                      onClick={handleAddSelectedToRooming}
+                      className="btn-primary"
+                      style={{ fontSize: 12, padding: '5px 12px' }}
+                    >
+                      Add {selectedUnroomed.length} to Rooming List
+                    </button>
+                  )}
+                </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {unroomedStaff.map(s => (
-                    <div key={s.id} className="glass-card" style={{ padding: '6px 14px', fontSize: 13 }}>{s.first_name} {s.last_name}</div>
-                  ))}
+                  {unroomedStaff.map(s => {
+                    const selected = selectedUnroomed.includes(s.id)
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                        className="glass-card"
+                        style={{
+                          padding: '6px 14px', fontSize: 13, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          border: selected ? '0.5px solid var(--mint)' : '0.5px solid var(--glass-border)',
+                          background: selected ? 'rgba(51,255,153,0.08)' : 'var(--glass-bg)',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <div style={{
+                          width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+                          background: selected ? 'var(--mint)' : 'transparent',
+                          border: selected ? 'none' : '1.5px solid var(--glass-border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {selected && (
+                            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        {s.first_name} {s.last_name}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
