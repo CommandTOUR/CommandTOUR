@@ -59,7 +59,7 @@ function buildPositionKeys(departments) {
   departments.forEach(dept => {
     dept.positions.forEach(pos => {
       counts[pos] = (counts[pos] || 0) + 1
-      const key = `${pos}__${counts[pos]}`
+      const key = `${dept.name}__${pos}__${counts[pos]}`
       keys.push({ dept: dept.name, position: pos, key })
     })
   })

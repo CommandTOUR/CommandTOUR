@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Tours', href: '/tours' },
   { label: 'Staff', href: '/staff' },
   { label: 'Calendar', href: '/calendar' },
+  { label: 'Staffing Grid', href: '/staffing-grid' },
   { label: 'Venues', href: '/venues' },
   { label: 'Reports', href: '/reports' },
 ]
@@ -41,8 +42,8 @@ export default function TopNav() {
 
       {/* Logo */}
       <div style={{ marginRight: 36, flexShrink: 0 }}>
-        <span style={{ fontSize: 30, fontWeight: 300, color: '#FFFFFF', letterSpacing: '0.01em' }}>Command</span>
-        <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--mint)', letterSpacing: '0.01em' }}>TOUR</span>
+        <span style={{ fontSize: 30, fontWeight: 300, color: '#FFFFFF', letterSpacing: '0.01em', fontFamily: 'Rubik, sans-serif' }}>Command</span>
+        <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--mint)', letterSpacing: '0.01em', fontFamily: 'Rubik, sans-serif' }}>TOUR</span>
       </div>
 
       {/* Nav links */}
