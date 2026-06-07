@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
+import TourCalendar from '../../../components/TourCalendar'
 
 const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
 
@@ -378,7 +379,11 @@ export default function TourPage() {
             </>
           )}
 
-          {activeTab !== 'events' && (
+          {activeTab === 'calendar' && (
+            <TourCalendar tourId={id} tourColor={color} />
+          )}
+
+          {activeTab !== 'schedule' && activeTab !== 'calendar' && (
             <div style={{ padding: '28px 32px', fontSize: 14, color: 'var(--text-muted)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
