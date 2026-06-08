@@ -43,7 +43,7 @@ export default function TopNav() {
       {/* Logo */}
       <div style={{ marginRight: 36, flexShrink: 0 }}>
         <img
-          src="/CommandTOURLogo-DarkMode.png"
+          src="/CommandTOURLogo-DARKMODE.png"
           alt="CommandTOUR"
           style={{ height: 32, width: 'auto', display: 'block' }}
         />
