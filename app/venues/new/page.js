@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 
-// Fields that get autocomplete from previously used venue values
 const AUTOCOMPLETE_FIELDS = [
   'city', 'state', 'country', 'floor_size', 'surface_coating',
   'max_height', 'floor_weight_capacity', 'slope_angle', 'video_board_location',
@@ -13,8 +12,11 @@ const AUTOCOMPLETE_FIELDS = [
   'permits', 'noise_restrictions',
 ]
 
+const REGIONS = ['North America', 'Europe', 'Latin America', 'Asia-Pacific', 'Middle East', 'Africa']
+
 function AutoInput({ fieldKey, label, placeholder, value, onChange, suggestions, inputStyle, labelStyle }) {
   const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const ref = useRef(null)
   const filtered = (suggestions[fieldKey] || []).filter(s =>
     s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()
@@ -26,6 +28,14 @@ function AutoInput({ fieldKey, label, placeholder, value, onChange, suggestions,
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  const handleKeyDown = (e) => {
+    if (!show || filtered.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, filtered.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); onChange(filtered[activeIndex]); setShow(false); setActiveIndex(-1) }
+    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+  }
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       {label && <label style={labelStyle}>{label}</label>}
@@ -33,17 +43,139 @@ function AutoInput({ fieldKey, label, placeholder, value, onChange, suggestions,
         style={inputStyle}
         placeholder={placeholder}
         value={value}
-        onChange={e => { onChange(e.target.value); setShow(true) }}
+        onChange={e => { onChange(e.target.value); setShow(true); setActiveIndex(-1) }}
         onFocus={() => setShow(true)}
+        onKeyDown={handleKeyDown}
       />
       {show && filtered.length > 0 && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-          {filtered.map(s => (
-            <div key={s} onMouseDown={() => { onChange(s); setShow(false) }}
-              style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          {filtered.map((s, i) => (
+            <div key={s}
+              onMouseDown={() => { onChange(s); setShow(false); setActiveIndex(-1) }}
+              style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}>
               {s}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PlacesAutocomplete({ value, onChange, onPlaceSelect, inputStyle, labelStyle }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [sessionToken, setSessionToken] = useState(null)
+  const ref = useRef(null)
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setShow(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    if (window.google && !sessionToken) {
+      setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+    }
+  }, [])
+
+  const fetchSuggestions = useCallback((input) => {
+    if (!input || input.length < 2 || !window.google) { setSuggestions([]); return }
+    const service = new window.google.maps.places.AutocompleteService()
+    service.getPlacePredictions(
+      { input, types: ['establishment'], sessionToken },
+      (predictions, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setSuggestions(predictions)
+          setShow(true)
+        } else {
+          setSuggestions([])
+        }
+      }
+    )
+  }, [sessionToken])
+
+  const handleChange = (e) => {
+    const val = e.target.value
+    onChange(val)
+    setActiveIndex(-1)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 250)
+  }
+
+  const handleSelect = (prediction) => {
+    if (!window.google) return
+    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
+    placesService.getDetails(
+      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'geometry', 'place_id'] },
+      (place, status) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
+        const get = (type) => place.address_components?.find(c => c.types.includes(type))
+        const streetNum = get('street_number')?.long_name || ''
+        const route = get('route')?.long_name || ''
+        const city = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
+        const state = get('administrative_area_level_1')?.short_name || ''
+        const country = get('country')?.long_name || ''
+        const zip = get('postal_code')?.long_name || ''
+        const streetAddress = [streetNum, route].filter(Boolean).join(' ')
+        const fullAddress = place.formatted_address || ''
+        const lat = place.geometry?.location?.lat()
+        const lng = place.geometry?.location?.lng()
+        const placeId = place.place_id
+
+        onPlaceSelect({
+          name: place.name || '',
+          address: streetAddress,
+          city,
+          state,
+          country,
+          full_address: fullAddress,
+          zip,
+          place_id: placeId,
+          latitude: lat,
+          longitude: lng,
+        })
+        setShow(false)
+        setSuggestions([])
+        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+      }
+    )
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, suggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelect(suggestions[activeIndex]) }
+    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label style={labelStyle}>Venue Name *</label>
+      <input
+        style={inputStyle}
+        placeholder="Search venue name..."
+        value={value}
+        onChange={handleChange}
+        onFocus={() => suggestions.length > 0 && setShow(true)}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+      {show && suggestions.length > 0 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {suggestions.map((p, i) => (
+            <div key={p.place_id}
+              onMouseDown={() => handleSelect(p)}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+              <div style={{ color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)', fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
             </div>
           ))}
         </div>
@@ -57,15 +189,30 @@ export default function NewVenue() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState({})
+  const [mapsLoaded, setMapsLoaded] = useState(false)
   const [form, setForm] = useState({
     name: '', address: '', city: '', state: '', country: '',
+    full_address: '', place_id: '', latitude: null, longitude: null,
     floor_size: '', surface_coating: '', max_height: '', floor_weight_capacity: '',
     loading_docks: '', tunnel_dims: '', tunnel_position: '', slope_angle: '',
     video_board_location: '', pit_trailer_parking: '', union_status: '',
-    noise_restrictions: '', permits: '', notes: '',
+    noise_restrictions: '', permits: '', notes: '', region: '',
   })
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (window.google) { setMapsLoaded(true); return }
+    const existing = document.querySelector('script[data-gmaps]')
+    if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.async = true
+    script.dataset.gmaps = 'true'
+    script.onload = () => setMapsLoaded(true)
+    document.head.appendChild(script)
+  }, [])
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -80,6 +227,10 @@ export default function NewVenue() {
     }
     fetchSuggestions()
   }, [])
+
+  const handlePlaceSelect = (placeData) => {
+    setForm(prev => ({ ...prev, ...placeData }))
+  }
 
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Venue name is required'); return }
@@ -129,19 +280,50 @@ export default function NewVenue() {
           {/* Basic Info */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {sectionLabel('Basic Info')}
+
+            {/* Places autocomplete + Region */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+              {mapsLoaded ? (
+                <PlacesAutocomplete
+                  value={form.name}
+                  onChange={val => set('name', val)}
+                  onPlaceSelect={handlePlaceSelect}
+                  inputStyle={inputStyle}
+                  labelStyle={labelStyle}
+                />
+              ) : (
+                <div>
+                  <label style={labelStyle}>Venue Name *</label>
+                  <input style={inputStyle} placeholder="Loading search..." value={form.name} onChange={e => set('name', e.target.value)} />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Region</label>
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.region} onChange={e => set('region', e.target.value)}>
+                  <option value="">Select region...</option>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Address fields — auto-filled by Google, still editable */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 16 }}>
               <div>
-                <label style={labelStyle}>Venue Name *</label>
-                <input style={inputStyle} placeholder="e.g. MEO Arena" value={form.name} onChange={e => set('name', e.target.value)} />
+                <label style={labelStyle}>Street Address</label>
+                <input style={inputStyle} placeholder="Auto-filled from search" value={form.address} onChange={e => set('address', e.target.value)} />
               </div>
               {ai('city', 'City', 'City')}
-              {ai('state', 'State / Province', 'State (if applicable)')}
+              {ai('state', 'State / Province', 'State')}
               {ai('country', 'Country', 'Country')}
             </div>
-            <div>
-              <label style={labelStyle}>Street Address</label>
-              <input style={inputStyle} placeholder="Street address" value={form.address} onChange={e => set('address', e.target.value)} />
-            </div>
+
+            {/* Full address display */}
+            {form.full_address && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 7, border: '0.5px solid var(--glass-border)' }}>
+                <span style={{ color: 'var(--text-muted)', marginRight: 8 }}>Full address:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{form.full_address}</span>
+              </div>
+            )}
           </div>
 
           {/* Floor & Structure */}

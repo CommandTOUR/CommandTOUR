@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
@@ -16,6 +16,10 @@ export default function VenuePage() {
   const [savingContact, setSavingContact] = useState(false)
   const [newContact, setNewContact] = useState({ name: '', title: '', phone: '', email: '', notes: '' })
   const [deletingId, setDeletingId] = useState(null)
+  const [copied, setCopied] = useState(false)
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+  const mapRef = useRef(null)
+  const mapInstanceRef = useRef(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,6 +36,72 @@ export default function VenuePage() {
     }
     fetchData()
   }, [venueId])
+
+  // Load Google Maps
+  useEffect(() => {
+    if (window.google) { setMapsLoaded(true); return }
+    const existing = document.querySelector('script[data-gmaps]')
+    if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.async = true
+    script.dataset.gmaps = 'true'
+    script.onload = () => setMapsLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  // Initialize map once venue + maps are ready
+  useEffect(() => {
+    if (!mapsLoaded || !venue || !mapRef.current || mapInstanceRef.current) return
+    if (!venue.latitude && !venue.longitude && !venue.place_id) return
+
+    const initMap = () => {
+      const lat = venue.latitude || 0
+      const lng = venue.longitude || 0
+      const map = new window.google.maps.Map(mapRef.current, {
+        zoom: 15,
+        center: { lat, lng },
+        disableDefaultUI: true,
+        zoomControl: true,
+        styles: [
+          { elementType: 'geometry', stylers: [{ color: '#0a1628' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#0a1628' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#8a9bb5' }] },
+          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a2f52' }] },
+          { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0a1628' }] },
+          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#061020' }] },
+          { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#0d1f3a' }] },
+          { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#0d1f3a' }] },
+          { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1a2f52' }] },
+        ],
+      })
+
+      new window.google.maps.Marker({
+        position: { lat, lng },
+        map,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#33FF99',
+          fillOpacity: 1,
+          strokeColor: '#0a1628',
+          strokeWeight: 2,
+        },
+      })
+
+      mapInstanceRef.current = map
+    }
+
+    initMap()
+  }, [mapsLoaded, venue])
+
+  const handleCopyAddress = () => {
+    const addr = venue.full_address || [venue.address, venue.city, venue.state, venue.country].filter(Boolean).join(', ')
+    navigator.clipboard.writeText(addr).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   const handleAddContact = async () => {
     if (!newContact.name.trim()) return
@@ -61,15 +131,10 @@ export default function VenuePage() {
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif',
-    fontSize: 14,
-    padding: '8px 12px',
-    borderRadius: 7,
-    border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-primary)',
-    outline: 'none',
-    width: '100%',
+    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '8px 12px',
+    borderRadius: 7, border: '0.5px solid var(--glass-border)',
+    background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+    outline: 'none', width: '100%',
   }
 
   const sectionLabel = (title) => (
@@ -84,6 +149,8 @@ export default function VenuePage() {
       <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{value}</div>
     </div>
   ) : null
+
+  const hasMap = venue && (venue.latitude || venue.longitude)
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -114,6 +181,7 @@ export default function VenuePage() {
               <div style={{ fontSize: 26, fontWeight: 700 }}>{venue.name}</div>
               <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
                 {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                {venue.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{venue.region}</span>}
               </div>
             </div>
           </div>
@@ -125,32 +193,53 @@ export default function VenuePage() {
           </button>
         </div>
 
-        {/* Top row — Address + Contacts side by side */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+        {/* Top row — Address + Map + Contacts */}
+        <div style={{ display: 'grid', gridTemplateColumns: hasMap ? '1fr 1fr 1fr' : '1fr 1fr', gap: 20, marginBottom: 20 }}>
 
           {/* Address */}
           <div className="glass-card" style={{ padding: '20px 24px' }}>
             {sectionLabel('Address')}
             {venue.address || venue.city ? (
-              <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.8 }}>
-                {venue.address && <div>{venue.address}</div>}
-                <div>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
+              <div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.8, marginBottom: 12 }}>
+                  {venue.address && <div>{venue.address}</div>}
+                  <div>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
+                </div>
+                {venue.full_address && (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
+                    {venue.full_address}
+                  </div>
+                )}
+                <button
+                  onClick={handleCopyAddress}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: copied ? 'rgba(51,255,153,0.1)' : 'transparent', color: copied ? 'var(--mint)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.15s' }}
+                >
+                  {copied ? '✓ Copied' : 'Copy Address'}
+                </button>
               </div>
             ) : (
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No address added yet.</div>
             )}
           </div>
 
+          {/* Map */}
+          {hasMap && (
+            <div className="glass-card" style={{ padding: 0, overflow: 'hidden', borderRadius: 12, minHeight: 200 }}>
+              <div ref={mapRef} style={{ width: '100%', height: '100%', minHeight: 200 }} />
+              {!mapsLoaded && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-muted)', fontSize: 13 }}>
+                  Loading map...
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Contacts */}
           <div className="glass-card" style={{ padding: '20px 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
-                Contacts
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>Contacts</div>
               {!addingContact && (
-                <button className="btn-primary" onClick={() => setAddingContact(true)} style={{ fontSize: 12, padding: '5px 12px' }}>
-                  + Add Contact
-                </button>
+                <button className="btn-primary" onClick={() => setAddingContact(true)} style={{ fontSize: 12, padding: '5px 12px' }}>+ Add Contact</button>
               )}
             </div>
 
@@ -222,7 +311,7 @@ export default function VenuePage() {
           </div>
         </div>
 
-        {/* Second row — Floor & Structure + Access & Logistics side by side */}
+        {/* Second row — Floor & Structure + Access & Logistics */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
           <div className="glass-card" style={{ padding: '20px 24px' }}>
             {sectionLabel('Floor & Structure')}
@@ -247,7 +336,7 @@ export default function VenuePage() {
           </div>
         </div>
 
-        {/* Third row — Rules & Restrictions full width */}
+        {/* Rules & Restrictions */}
         <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 20 }}>
           {sectionLabel('Rules & Restrictions')}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
@@ -257,7 +346,7 @@ export default function VenuePage() {
           </div>
         </div>
 
-        {/* Previously played events */}
+        {/* Event History */}
         {pastEvents.length > 0 && (
           <div className="glass-card" style={{ padding: '20px 24px', marginBottom: 20 }}>
             {sectionLabel(`Event History (${pastEvents.length})`)}
@@ -266,11 +355,7 @@ export default function VenuePage() {
                 <div
                   key={ev.id}
                   onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '12px 0', cursor: 'pointer',
-                    borderBottom: i < pastEvents.length - 1 ? '0.5px solid var(--glass-border)' : 'none',
-                  }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', cursor: 'pointer', borderBottom: i < pastEvents.length - 1 ? '0.5px solid var(--glass-border)' : 'none' }}
                   onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
                   onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
@@ -283,12 +368,7 @@ export default function VenuePage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{fmt(ev.load_in_date)}</div>
-                    <span style={{
-                      fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20,
-                      color: ev.status === 'confirmed' ? '#33FF99' : 'rgba(255,255,255,0.5)',
-                      background: ev.status === 'confirmed' ? 'rgba(51,255,153,0.1)' : 'rgba(255,255,255,0.06)',
-                      border: `0.5px solid ${ev.status === 'confirmed' ? 'rgba(51,255,153,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                    }}>
+                    <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, color: ev.status === 'confirmed' ? '#33FF99' : 'rgba(255,255,255,0.5)', background: ev.status === 'confirmed' ? 'rgba(51,255,153,0.1)' : 'rgba(255,255,255,0.06)', border: `0.5px solid ${ev.status === 'confirmed' ? 'rgba(51,255,153,0.3)' : 'rgba(255,255,255,0.1)'}` }}>
                       {ev.status ? ev.status.charAt(0).toUpperCase() + ev.status.slice(1) : '—'}
                     </span>
                   </div>

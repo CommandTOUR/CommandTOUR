@@ -1,9 +1,187 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../components/TopNav'
 import { getSupabase } from '../../../../lib/supabase'
+
+const AUTOCOMPLETE_FIELDS = [
+  'city', 'state', 'country', 'floor_size', 'surface_coating',
+  'max_height', 'floor_weight_capacity', 'slope_angle', 'video_board_location',
+  'tunnel_dims', 'tunnel_position', 'loading_docks', 'pit_trailer_parking',
+  'permits', 'noise_restrictions',
+]
+
+const REGIONS = ['North America', 'Europe', 'Latin America', 'Asia-Pacific', 'Middle East', 'Africa']
+function AutoInput({ fieldKey, label, placeholder, value, onChange, suggestions, inputStyle, labelStyle }) {
+  const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const ref = useRef(null)
+  const filtered = (suggestions[fieldKey] || []).filter(s =>
+    s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()
+  )
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setShow(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const handleKeyDown = (e) => {
+    if (!show || filtered.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, filtered.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); onChange(filtered[activeIndex]); setShow(false); setActiveIndex(-1) }
+    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      {label && <label style={labelStyle}>{label}</label>}
+      <input
+        style={inputStyle}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => { onChange(e.target.value); setShow(true); setActiveIndex(-1) }}
+        onFocus={() => setShow(true)}
+        onKeyDown={handleKeyDown}
+      />
+      {show && filtered.length > 0 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+          {filtered.map((s, i) => (
+            <div key={s}
+              onMouseDown={() => { onChange(s); setShow(false); setActiveIndex(-1) }}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
+              {s}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PlacesAutocomplete({ value, onChange, onPlaceSelect, inputStyle, labelStyle }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [sessionToken, setSessionToken] = useState(null)
+  const ref = useRef(null)
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setShow(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    if (window.google && !sessionToken) {
+      setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+    }
+  }, [])
+
+  const fetchSuggestions = useCallback((input) => {
+    if (!input || input.length < 2 || !window.google) { setSuggestions([]); return }
+    const service = new window.google.maps.places.AutocompleteService()
+    service.getPlacePredictions(
+      { input, types: ['establishment'], sessionToken },
+      (predictions, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setSuggestions(predictions)
+          setShow(true)
+        } else {
+          setSuggestions([])
+        }
+      }
+    )
+  }, [sessionToken])
+
+  const handleChange = (e) => {
+    const val = e.target.value
+    onChange(val)
+    setActiveIndex(-1)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 250)
+  }
+
+  const handleSelect = (prediction) => {
+    if (!window.google) return
+    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
+    placesService.getDetails(
+      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'geometry', 'place_id'] },
+      (place, status) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
+        const get = (type) => place.address_components?.find(c => c.types.includes(type))
+        const streetNum = get('street_number')?.long_name || ''
+        const route = get('route')?.long_name || ''
+        const city = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
+        const state = get('administrative_area_level_1')?.short_name || ''
+        const country = get('country')?.long_name || ''
+        const zip = get('postal_code')?.long_name || ''
+        const streetAddress = [streetNum, route].filter(Boolean).join(' ')
+        const fullAddress = place.formatted_address || ''
+        const lat = place.geometry?.location?.lat()
+        const lng = place.geometry?.location?.lng()
+        const placeId = place.place_id
+
+        onPlaceSelect({
+          name: place.name || '',
+          address: streetAddress,
+          city,
+          state,
+          country,
+          full_address: fullAddress,
+          zip,
+          place_id: placeId,
+          latitude: lat,
+          longitude: lng,
+        })
+        setShow(false)
+        setSuggestions([])
+        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+      }
+    )
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, suggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelect(suggestions[activeIndex]) }
+    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label style={labelStyle}>Venue Name *</label>
+      <input
+        style={inputStyle}
+        placeholder="Search to re-link to Google, or edit directly..."
+        value={value}
+        onChange={handleChange}
+        onFocus={() => suggestions.length > 0 && setShow(true)}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+      {show && suggestions.length > 0 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {suggestions.map((p, i) => (
+            <div key={p.place_id}
+              onMouseDown={() => handleSelect(p)}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+              <div style={{ color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)', fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function EditVenue() {
   const router = useRouter()
@@ -11,38 +189,36 @@ export default function EditVenue() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+  const [suggestions, setSuggestions] = useState({})
   const [form, setForm] = useState({
-    name: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    floor_size: '',
-    surface_coating: '',
-    max_height: '',
-    floor_weight_capacity: '',
-    loading_docks: '',
-    tunnel_dims: '',
-    tunnel_position: '',
-    slope_angle: '',
-    video_board_location: '',
-    pit_trailer_parking: '',
-    union_status: '',
-    noise_restrictions: '',
-    permits: '',
-    notes: '',
+    name: '', address: '', city: '', state: '', country: '',
+    full_address: '', place_id: '', latitude: null, longitude: null,
+    floor_size: '', surface_coating: '', max_height: '', floor_weight_capacity: '',
+    loading_docks: '', tunnel_dims: '', tunnel_position: '', slope_angle: '',
+    video_board_location: '', pit_trailer_parking: '', union_status: '',
+    noise_restrictions: '', permits: '', notes: '', region: '',
   })
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
+  // Load Google Maps script
+  useEffect(() => {
+    if (window.google) { setMapsLoaded(true); return }
+    const existing = document.querySelector('script[data-gmaps]')
+    if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.async = true
+    script.dataset.gmaps = 'true'
+    script.onload = () => setMapsLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
   useEffect(() => {
     const fetchVenue = async () => {
       const supabase = getSupabase()
-      const { data, error } = await supabase
-        .from('venues')
-        .select('*')
-        .eq('id', venueId)
-        .single()
+      const { data, error } = await supabase.from('venues').select('*').eq('id', venueId).single()
       if (!error && data) {
         setForm({
           name: data.name || '',
@@ -50,6 +226,10 @@ export default function EditVenue() {
           city: data.city || '',
           state: data.state || '',
           country: data.country || '',
+          full_address: data.full_address || '',
+          place_id: data.place_id || '',
+          latitude: data.latitude || null,
+          longitude: data.longitude || null,
           floor_size: data.floor_size || '',
           surface_coating: data.surface_coating || '',
           max_height: data.max_height || '',
@@ -64,6 +244,7 @@ export default function EditVenue() {
           noise_restrictions: data.noise_restrictions || '',
           permits: data.permits || '',
           notes: data.notes || '',
+          region: data.region || '',
         })
       }
       setLoading(false)
@@ -71,49 +252,56 @@ export default function EditVenue() {
     fetchVenue()
   }, [venueId])
 
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const supabase = getSupabase()
+      const { data } = await supabase.from('venues').select(AUTOCOMPLETE_FIELDS.join(', '))
+      if (!data) return
+      const map = {}
+      AUTOCOMPLETE_FIELDS.forEach(field => {
+        map[field] = [...new Set(data.map(r => r[field]).filter(Boolean))].sort()
+      })
+      setSuggestions(map)
+    }
+    fetchSuggestions()
+  }, [])
+
+  const handlePlaceSelect = (placeData) => {
+    setForm(prev => ({ ...prev, ...placeData }))
+  }
+
   const handleSave = async () => {
     if (!form.name.trim()) { setError('Venue name is required'); return }
     setSaving(true)
     setError('')
     const supabase = getSupabase()
     const { error } = await supabase.from('venues').update(form).eq('id', venueId)
-    if (error) {
-      setError(error.message)
-      setSaving(false)
-    } else {
-      router.push(`/venues/${venueId}`)
-    }
+    if (error) { setError(error.message); setSaving(false) }
+    else router.push(`/venues/${venueId}`)
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif',
-    fontSize: 14,
-    padding: '10px 14px',
-    borderRadius: 8,
-    border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-primary)',
-    outline: 'none',
-    width: '100%',
+    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 14px',
+    borderRadius: 8, border: '0.5px solid var(--glass-border)',
+    background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+    outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12,
-    color: 'var(--text-muted)',
-    letterSpacing: '0.05em',
-    marginBottom: 6,
-    display: 'block',
+    fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em',
+    marginBottom: 6, display: 'block',
   }
 
   const sectionLabel = (title) => (
-    <div style={{
-      fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
-      textTransform: 'uppercase', letterSpacing: '0.09em',
-      paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)',
-      marginBottom: 4,
-    }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)', marginBottom: 4 }}>
       {title}
     </div>
+  )
+
+  const ai = (fieldKey, label, placeholder) => (
+    <AutoInput fieldKey={fieldKey} label={label} placeholder={placeholder}
+      value={form[fieldKey]} onChange={val => set(fieldKey, val)}
+      suggestions={suggestions} inputStyle={inputStyle} labelStyle={labelStyle} />
   )
 
   if (loading) return (
@@ -124,17 +312,12 @@ export default function EditVenue() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', overflowY: 'auto' }}>
       <TopNav />
       <div style={{ marginTop: 62, padding: '28px 32px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button
-            onClick={() => router.push(`/venues/${venueId}`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-          >
-            ← Back
-          </button>
+          <button onClick={() => router.push(`/venues/${venueId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>← Back</button>
           <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Venue</div>
         </div>
 
@@ -143,60 +326,61 @@ export default function EditVenue() {
           {/* Basic Info */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {sectionLabel('Basic Info')}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+              {mapsLoaded ? (
+                <PlacesAutocomplete
+                  value={form.name}
+                  onChange={val => set('name', val)}
+                  onPlaceSelect={handlePlaceSelect}
+                  inputStyle={inputStyle}
+                  labelStyle={labelStyle}
+                />
+              ) : (
+                <div>
+                  <label style={labelStyle}>Venue Name *</label>
+                  <input style={inputStyle} placeholder="Loading search..." value={form.name} onChange={e => set('name', e.target.value)} />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Region</label>
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.region} onChange={e => set('region', e.target.value)}>
+                  <option value="">Select region...</option>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 16 }}>
               <div>
-                <label style={labelStyle}>Venue Name *</label>
-                <input style={inputStyle} placeholder="e.g. MEO Arena" value={form.name} onChange={e => set('name', e.target.value)} />
+                <label style={labelStyle}>Street Address</label>
+                <input style={inputStyle} placeholder="Auto-filled from search" value={form.address} onChange={e => set('address', e.target.value)} />
               </div>
-              <div>
-                <label style={labelStyle}>City</label>
-                <input style={inputStyle} placeholder="City" value={form.city} onChange={e => set('city', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>State / Province</label>
-                <input style={inputStyle} placeholder="State (if applicable)" value={form.state} onChange={e => set('state', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Country</label>
-                <input style={inputStyle} placeholder="Country" value={form.country} onChange={e => set('country', e.target.value)} />
-              </div>
+              {ai('city', 'City', 'City')}
+              {ai('state', 'State / Province', 'State')}
+              {ai('country', 'Country', 'Country')}
             </div>
-            <div>
-              <label style={labelStyle}>Street Address</label>
-              <input style={inputStyle} placeholder="Street address" value={form.address} onChange={e => set('address', e.target.value)} />
-            </div>
+
+            {form.full_address && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 7, border: '0.5px solid var(--glass-border)' }}>
+                <span style={{ color: 'var(--text-muted)', marginRight: 8 }}>Full address:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{form.full_address}</span>
+              </div>
+            )}
           </div>
 
           {/* Floor & Structure */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {sectionLabel('Floor & Structure')}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Floor Size</label>
-                <input style={inputStyle} placeholder="e.g. 200ft x 100ft" value={form.floor_size} onChange={e => set('floor_size', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Surface Coating</label>
-                <input style={inputStyle} placeholder="e.g. Concrete" value={form.surface_coating} onChange={e => set('surface_coating', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Max Height</label>
-                <input style={inputStyle} placeholder="e.g. 40ft" value={form.max_height} onChange={e => set('max_height', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Floor Weight Capacity</label>
-                <input style={inputStyle} placeholder="e.g. 150 lbs/sqft" value={form.floor_weight_capacity} onChange={e => set('floor_weight_capacity', e.target.value)} />
-              </div>
+              {ai('floor_size', 'Floor Size', 'e.g. 200ft x 100ft')}
+              {ai('surface_coating', 'Surface Coating', 'e.g. Concrete')}
+              {ai('max_height', 'Max Height', 'e.g. 40ft')}
+              {ai('floor_weight_capacity', 'Floor Weight Capacity', 'e.g. 150 lbs/sqft')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Slope Angle</label>
-                <input style={inputStyle} placeholder="e.g. 2 degrees" value={form.slope_angle} onChange={e => set('slope_angle', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Video Board Location</label>
-                <input style={inputStyle} placeholder="e.g. Center hung" value={form.video_board_location} onChange={e => set('video_board_location', e.target.value)} />
-              </div>
+              {ai('slope_angle', 'Slope Angle', 'e.g. 2 degrees')}
+              {ai('video_board_location', 'Video Board Location', 'e.g. Center hung')}
             </div>
           </div>
 
@@ -204,22 +388,10 @@ export default function EditVenue() {
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {sectionLabel('Access & Logistics')}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Tunnel Dimensions</label>
-                <input style={inputStyle} placeholder="e.g. 14ft W x 16ft H" value={form.tunnel_dims} onChange={e => set('tunnel_dims', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Tunnel Position</label>
-                <input style={inputStyle} placeholder="e.g. North end" value={form.tunnel_position} onChange={e => set('tunnel_position', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Loading Docks</label>
-                <input style={inputStyle} placeholder="e.g. 4 docks, north side" value={form.loading_docks} onChange={e => set('loading_docks', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Pit / Trailer Parking</label>
-                <input style={inputStyle} placeholder="e.g. Lot B, 20 spaces" value={form.pit_trailer_parking} onChange={e => set('pit_trailer_parking', e.target.value)} />
-              </div>
+              {ai('tunnel_dims', 'Tunnel Dimensions', 'e.g. 14ft W x 16ft H')}
+              {ai('tunnel_position', 'Tunnel Position', 'e.g. North end')}
+              {ai('loading_docks', 'Loading Docks', 'e.g. 4 docks, north side')}
+              {ai('pit_trailer_parking', 'Pit / Trailer Parking', 'e.g. Lot B, 20 spaces')}
             </div>
           </div>
 
@@ -236,40 +408,24 @@ export default function EditVenue() {
                   <option value="Mixed">Mixed</option>
                 </select>
               </div>
-              <div>
-                <label style={labelStyle}>Permits Required</label>
-                <input style={inputStyle} placeholder="e.g. Fire, pyro, noise" value={form.permits} onChange={e => set('permits', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Noise Restrictions</label>
-                <input style={inputStyle} placeholder="e.g. No sound after 11pm" value={form.noise_restrictions} onChange={e => set('noise_restrictions', e.target.value)} />
-              </div>
+              {ai('permits', 'Permits Required', 'e.g. Fire, pyro, noise')}
+              {ai('noise_restrictions', 'Noise Restrictions', 'e.g. No sound after 11pm')}
             </div>
           </div>
 
           {/* Notes */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {sectionLabel('Notes')}
-            <textarea
-              style={{ ...inputStyle, height: 100, resize: 'vertical' }}
+            <textarea style={{ ...inputStyle, height: 100, resize: 'vertical' }}
               placeholder="Anything else worth noting about this venue..."
-              value={form.notes}
-              onChange={e => set('notes', e.target.value)}
-            />
+              value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
-            <button
-              onClick={() => router.push(`/venues/${venueId}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
-            <button className="btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            <button onClick={() => router.push(`/venues/${venueId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
           </div>
 
         </div>

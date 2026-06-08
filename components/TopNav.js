@@ -42,14 +42,16 @@ export default function TopNav() {
 
       {/* Logo */}
       <div style={{ marginRight: 36, flexShrink: 0 }}>
-        <span style={{ fontSize: 30, fontWeight: 300, color: '#FFFFFF', letterSpacing: '0.01em', fontFamily: 'Rubik, sans-serif' }}>Command</span>
-        <span style={{ fontSize: 30, fontWeight: 700, color: 'var(--mint)', letterSpacing: '0.01em', fontFamily: 'Rubik, sans-serif' }}>TOUR</span>
+        <img
+          src="/CommandTOURLogo-DarkMode.png"
+          alt="CommandTOUR"
+          style={{ height: 32, width: 'auto', display: 'block' }}
+        />
       </div>
 
       {/* Nav links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
         {navLinks.map(link => {
-          // Exact match for root, exact match for staffing-grid, startsWith for others
           const active =
             link.href === '/' ? pathname === '/' :
             link.href === '/staffing-grid' ? pathname === '/staffing-grid' :
