@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
@@ -15,11 +15,17 @@ export default function NewEvent() {
   const [venueSearch, setVenueSearch] = useState('')
   const [showVenueList, setShowVenueList] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState(null)
+  const [countrySuggestions, setCountrySuggestions] = useState([])
+  const [allCountries, setAllCountries] = useState([])
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const countryRef = useRef(null)
   const [form, setForm] = useState({
     city: '',
     country: '',
     venue_name: '',
     venue_id: null,
+    state: '',
+    event_type: '',
     status: 'tentative',
     load_in_date: '',
     load_out_date: '',
@@ -29,16 +35,37 @@ export default function NewEvent() {
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
   useEffect(() => {
-    const fetchVenues = async () => {
+    const fetchData = async () => {
       const supabase = getSupabase()
-      const { data } = await supabase
-        .from('venues')
-        .select('id, name, city, country, address')
-        .order('name', { ascending: true })
-      if (data) setVenues(data)
+      const [venuesRes, tourRes, countriesRes] = await Promise.all([
+        supabase.from('venues').select('id, name, city, state, country, address').order('name', { ascending: true }),
+        supabase.from('tours').select('tour_type').eq('id', id).single(),
+        supabase.from('events').select('country').not('country', 'is', null),
+      ])
+      if (venuesRes.data) setVenues(venuesRes.data)
+      // Auto-populate event_type from tour's tour_type
+      if (tourRes.data?.tour_type) {
+        setForm(prev => ({ ...prev, event_type: tourRes.data.tour_type }))
+      }
+      // Build unique country list
+      if (countriesRes.data) {
+        const unique = [...new Set(countriesRes.data.map(r => r.country).filter(Boolean))].sort()
+        setAllCountries(unique)
+      }
     }
-    fetchVenues()
-  }, [])
+    fetchData()
+  }, [id])
+
+  const handleCountryChange = (val) => {
+    set('country', val)
+    if (val.trim().length > 0) {
+      const filtered = allCountries.filter(c => c.toLowerCase().startsWith(val.toLowerCase()))
+      setCountrySuggestions(filtered)
+      setShowCountrySuggestions(filtered.length > 0)
+    } else {
+      setShowCountrySuggestions(false)
+    }
+  }
 
   const filteredVenues = venues.filter(v =>
     v.name?.toLowerCase().includes(venueSearch.toLowerCase()) ||
@@ -52,6 +79,7 @@ export default function NewEvent() {
       venue_id: venue.id,
       venue_name: venue.name,
       city: venue.city || prev.city,
+      state: venue.state || prev.state,
       country: venue.country || prev.country,
     }))
     setVenueSearch(venue.name)
@@ -75,6 +103,8 @@ export default function NewEvent() {
       country: form.country,
       venue_name: form.venue_name,
       venue_id: form.venue_id || null,
+      state: form.state,
+      event_type: form.event_type || null,
       status: form.status,
       load_in_date: form.load_in_date,
       notes: form.notes,
@@ -133,46 +163,31 @@ export default function NewEvent() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(51,255,153,0.35)', background: 'rgba(51,255,153,0.06)' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mint)' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}
-                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
                 <div onClick={handleClearVenue} style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                >
-                  ✕ Clear
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                  x Clear
                 </div>
               </div>
             ) : (
               <div style={{ position: 'relative' }}>
-                <input
-                  style={inputStyle}
-                  placeholder="Search venues or leave blank to enter manually..."
+                <input style={inputStyle} placeholder="Search venues or leave blank to enter manually..."
                   value={venueSearch}
                   onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true) }}
                   onFocus={() => setShowVenueList(true)}
                   onBlur={() => setTimeout(() => setShowVenueList(false), 150)}
                 />
                 {showVenueList && filteredVenues.length > 0 && (
-                  <div style={{
-                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                    background: '#0d1f3a', border: '0.5px solid var(--glass-border)',
-                    borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                  }}>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
                     {filteredVenues.map(venue => (
-                      <div
-                        key={venue.id}
-                        onMouseDown={() => handleSelectVenue(venue)}
+                      <div key={venue.id} onMouseDown={() => handleSelectVenue(venue)}
                         style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{venue.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                          {[venue.city, venue.country].filter(Boolean).join(', ')}
-                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.country].filter(Boolean).join(', ')}</div>
                       </div>
                     ))}
                   </div>
@@ -181,31 +196,61 @@ export default function NewEvent() {
             )}
           </div>
 
-          {/* City + Country */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* City + State + Country */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             <div>
               <label style={labelStyle}>City *</label>
               <input style={inputStyle} placeholder="e.g. Manchester" value={form.city} onChange={e => set('city', e.target.value)} />
             </div>
             <div>
+              <label style={labelStyle}>State / Province</label>
+              <input style={inputStyle} placeholder="e.g. CA" value={form.state} onChange={e => set('state', e.target.value)} />
+            </div>
+            <div ref={countryRef} style={{ position: 'relative' }}>
               <label style={labelStyle}>Country</label>
-              <input style={inputStyle} placeholder="e.g. United Kingdom" value={form.country} onChange={e => set('country', e.target.value)} />
+              <input style={inputStyle} placeholder="e.g. United Kingdom" value={form.country}
+                onChange={e => handleCountryChange(e.target.value)}
+                onFocus={() => { if (form.country.trim().length > 0 && countrySuggestions.length > 0) setShowCountrySuggestions(true) }}
+                onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
+              />
+              {showCountrySuggestions && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                  {countrySuggestions.map(c => (
+                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false) }}
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Status */}
-          <div>
-            <label style={labelStyle}>Status</label>
-            <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
-              <option value="tentative">Tentative</option>
-              <option value="1-hold">1-Hold</option>
-              <option value="2-hold">2-Hold</option>
-              <option value="3-hold">3-Hold</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="want">Want</option>
-              <option value="date-hold">Date Hold</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+          {/* Event Type + Status */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Event Type</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.event_type} onChange={e => set('event_type', e.target.value)}>
+                <option value="">— Select event type —</option>
+                <option value="hwss">Hot Wheels Stunt Show</option>
+                <option value="hwmt">Hot Wheels Monster Trucks Live</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Status</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
+                <option value="tentative">Tentative</option>
+                <option value="1-hold">1-Hold</option>
+                <option value="2-hold">2-Hold</option>
+                <option value="3-hold">3-Hold</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="want">Want</option>
+                <option value="date-hold">Date Hold</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
 
           {/* Load-In Date */}
@@ -214,27 +259,14 @@ export default function NewEvent() {
             <input style={inputStyle} type="date" value={form.load_in_date} onChange={e => set('load_in_date', e.target.value)} />
           </div>
 
-          {/* Extended Load-Out toggle */}
+          {/* Extended Load-Out */}
           <div>
-            <div
-              onClick={() => setExtendedLoadOut(!extendedLoadOut)}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
-            >
-              <div style={{
-                width: 36, height: 20, borderRadius: 10,
-                background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.1)',
-                position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-              }}>
-                <div style={{
-                  position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2,
-                  width: 16, height: 16, borderRadius: '50%',
-                  background: extendedLoadOut ? '#0a1628' : 'rgba(255,255,255,0.4)',
-                  transition: 'left 0.2s',
-                }} />
+            <div onClick={() => setExtendedLoadOut(!extendedLoadOut)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : 'rgba(255,255,255,0.4)', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                Extended Load-Out
-              </span>
+              <span style={{ fontSize: 13, color: extendedLoadOut ? 'var(--text-primary)' : 'var(--text-muted)' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -253,12 +285,8 @@ export default function NewEvent() {
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button onClick={() => router.push(`/tours/${id}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
-              Cancel
-            </button>
-            <button className="btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Add Event'}
-            </button>
+            <button onClick={() => router.push(`/tours/${id}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Add Event'}</button>
           </div>
 
         </div>

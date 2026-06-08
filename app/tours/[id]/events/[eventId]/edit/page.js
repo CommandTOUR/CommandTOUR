@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../../components/TopNav'
 import { getSupabase } from '../../../../../../lib/supabase'
@@ -16,8 +16,13 @@ export default function EditEvent() {
   const [venueSearch, setVenueSearch] = useState('')
   const [showVenueList, setShowVenueList] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState(null)
+  const [allCountries, setAllCountries] = useState([])
+  const [countrySuggestions, setCountrySuggestions] = useState([])
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const countryRef = useRef(null)
   const [form, setForm] = useState({
     city: '',
+    state: '',
     country: '',
     venue_name: '',
     venue_id: null,
@@ -33,15 +38,17 @@ export default function EditEvent() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [eventRes, venuesRes] = await Promise.all([
+      const [eventRes, venuesRes, countriesRes] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
-        supabase.from('venues').select('id, name, city, country, address').order('name', { ascending: true }),
+        supabase.from('venues').select('id, name, city, state, country, address').order('name', { ascending: true }),
+        supabase.from('events').select('country').not('country', 'is', null),
       ])
 
       if (!eventRes.error && eventRes.data) {
         const data = eventRes.data
         setForm({
           city: data.city || '',
+          state: data.state || '',
           country: data.country || '',
           venue_name: data.venue_name || '',
           venue_id: data.venue_id || null,
@@ -58,10 +65,25 @@ export default function EditEvent() {
         }
       }
       if (!venuesRes.error) setVenues(venuesRes.data || [])
+      if (countriesRes.data) {
+        const unique = [...new Set(countriesRes.data.map(r => r.country).filter(Boolean))].sort()
+        setAllCountries(unique)
+      }
       setLoading(false)
     }
     fetchData()
   }, [eventId])
+
+  const handleCountryChange = (val) => {
+    set('country', val)
+    if (val.trim().length > 0) {
+      const filtered = allCountries.filter(c => c.toLowerCase().startsWith(val.toLowerCase()))
+      setCountrySuggestions(filtered)
+      setShowCountrySuggestions(filtered.length > 0)
+    } else {
+      setShowCountrySuggestions(false)
+    }
+  }
 
   const filteredVenues = venues.filter(v =>
     v.name?.toLowerCase().includes(venueSearch.toLowerCase()) ||
@@ -70,7 +92,14 @@ export default function EditEvent() {
 
   const handleSelectVenue = (venue) => {
     setSelectedVenue(venue)
-    setForm(prev => ({ ...prev, venue_id: venue.id, venue_name: venue.name, city: venue.city || prev.city, country: venue.country || prev.country }))
+    setForm(prev => ({
+      ...prev,
+      venue_id: venue.id,
+      venue_name: venue.name,
+      city: venue.city || prev.city,
+      state: venue.state || prev.state,
+      country: venue.country || prev.country,
+    }))
     setVenueSearch(venue.name)
     setShowVenueList(false)
   }
@@ -89,6 +118,7 @@ export default function EditEvent() {
     const supabase = getSupabase()
     const payload = {
       city: form.city,
+      state: form.state,
       country: form.country,
       venue_name: form.venue_name,
       venue_id: form.venue_id || null,
@@ -108,7 +138,6 @@ export default function EditEvent() {
     border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)',
     color: 'var(--text-primary)', outline: 'none', width: '100%',
   }
-
   const labelStyle = { fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
 
   if (loading) return (
@@ -139,12 +168,13 @@ export default function EditEvent() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(51,255,153,0.35)', background: 'rgba(51,255,153,0.06)' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mint)' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.state, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
                 <div onClick={handleClearVenue} style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                >✕ Clear</div>
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                  x Clear
+                </div>
               </div>
             ) : (
               <div style={{ position: 'relative' }}>
@@ -160,10 +190,9 @@ export default function EditEvent() {
                       <div key={venue.id} onMouseDown={() => handleSelectVenue(venue)}
                         style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{venue.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.country].filter(Boolean).join(', ')}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
                       </div>
                     ))}
                   </div>
@@ -172,15 +201,35 @@ export default function EditEvent() {
             )}
           </div>
 
-          {/* City + Country */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* City + State + Country */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             <div>
               <label style={labelStyle}>City *</label>
               <input style={inputStyle} placeholder="e.g. Manchester" value={form.city} onChange={e => set('city', e.target.value)} />
             </div>
             <div>
+              <label style={labelStyle}>State / Province</label>
+              <input style={inputStyle} placeholder="e.g. CA" value={form.state} onChange={e => set('state', e.target.value)} />
+            </div>
+            <div ref={countryRef} style={{ position: 'relative' }}>
               <label style={labelStyle}>Country</label>
-              <input style={inputStyle} placeholder="e.g. United Kingdom" value={form.country} onChange={e => set('country', e.target.value)} />
+              <input style={inputStyle} placeholder="e.g. United Kingdom" value={form.country}
+                onChange={e => handleCountryChange(e.target.value)}
+                onFocus={() => { if (form.country.trim().length > 0 && countrySuggestions.length > 0) setShowCountrySuggestions(true) }}
+                onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
+              />
+              {showCountrySuggestions && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                  {countrySuggestions.map(c => (
+                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false) }}
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -240,12 +289,8 @@ export default function EditEvent() {
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
-            <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
-              Cancel
-            </button>
-            <button className="btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            <button onClick={() => router.push(`/tours/${id}/events/${eventId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
           </div>
 
         </div>

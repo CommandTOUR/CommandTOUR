@@ -296,6 +296,23 @@ function StaffSearch({ eventId, event, onAssign, onClose, onLock }) {
           </div>
         )
       })}
+      {search.trim().length >= 2 && (
+        <div
+          onMouseDown={async e => {
+            e.preventDefault()
+            const parts = search.trim().split(' ')
+            const firstName = parts[0]
+            const lastName = parts.length > 1 ? parts.slice(1).join(' ') : ''
+            const supabase = getSupabase()
+            const { data, error } = await supabase.from('staff').insert([{ first_name: firstName, last_name: lastName }]).select().single()
+            if (!error && data) onAssign(data, { status: 'free' })
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderTop: results.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.06)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+          <span style={{ color: 'var(--mint)' }}>+ Create "{search.trim()}" as new staff</span>
+        </div>
+      )}
       {onLock && (
         <>
           <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
@@ -522,7 +539,7 @@ export default function StaffingGrid() {
     const supabase = getSupabase()
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
-      supabase.from('events').select('id, city, venue_name, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
+      supabase.from('events').select('id, city, state, venue_name, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
       supabase.from('event_staff').select('*, staff(id, first_name, last_name)'),
     ])
     setTours(toursRes.data || [])
@@ -721,7 +738,7 @@ export default function StaffingGrid() {
                       style={{ fontSize: 12, fontWeight: 600, color: cityColor(ev.status), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.75' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
-                      {ev.city}
+                      {ev.city}{ev.state ? ', ' + ev.state : ''}
                     </span>
                   </th>
                 ))}
