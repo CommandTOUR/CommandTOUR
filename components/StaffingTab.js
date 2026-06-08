@@ -3,49 +3,18 @@
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 
-// ── TEMPLATES ────────────────────────────────────────────────────────────────
-
 const HWSS_DEPARTMENTS = [
-  {
-    name: 'Operations',
-    positions: [
-      'Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator',
-      'Registrar / GLT', 'Paddock Coordinator', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3',
-    ],
-  },
-  {
-    name: 'Lighting / Audio / Video',
-    positions: ['LAV 1', 'LAV 2', 'Lighting', 'Host (Male)', 'Host (Female)', 'Host Trainer'],
-  },
-  {
-    name: 'Stuntman Show Productions',
-    positions: Array(20).fill('Stunt Team'),
-  },
+  { name: 'Operations', positions: ['Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator', 'Registrar / GLT', 'Paddock Coordinator', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3'] },
+  { name: 'Lighting / Audio / Video', positions: ['LAV 1', 'LAV 2', 'Lighting', 'Host (Male)', 'Host (Female)', 'Host Trainer'] },
+  { name: 'Stuntman Show Productions', positions: Array(20).fill('Stunt Team') },
 ]
 
 const HWMTL_DEPARTMENTS = [
-  {
-    name: 'Operations',
-    positions: [
-      'Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator',
-      'Registrar / GLT', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3', 'Tech Official 4', 'Tech Official 5',
-    ],
-  },
-  {
-    name: 'Lighting / Audio / Video',
-    positions: ['LAV 1', 'LAV 2', 'Lighting', 'Host (Male)', 'Host (Female)', 'Host Trainer'],
-  },
-  {
-    name: 'Monster Truck Drivers',
-    positions: Array(7).fill('Driver'),
-  },
-  {
-    name: 'Side Acts',
-    positions: ['Robot Operator', 'FMX 1', 'FMX 2', 'FMX 3'],
-  },
+  { name: 'Operations', positions: ['Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator', 'Registrar / GLT', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3', 'Tech Official 4', 'Tech Official 5'] },
+  { name: 'Lighting / Audio / Video', positions: ['LAV 1', 'LAV 2', 'Lighting', 'Host (Male)', 'Host (Female)', 'Host Trainer'] },
+  { name: 'Monster Truck Drivers', positions: Array(7).fill('Driver') },
+  { name: 'Side Acts', positions: ['Robot Operator', 'FMX 1', 'FMX 2', 'FMX 3'] },
 ]
-
-const EXEC_DEPT = 'Executives & Visitors'
 
 function getDepartments(eventType) {
   if (eventType === 'hwss') return HWSS_DEPARTMENTS
@@ -59,14 +28,11 @@ function buildPositionKeys(departments) {
   departments.forEach(dept => {
     dept.positions.forEach(pos => {
       counts[pos] = (counts[pos] || 0) + 1
-      const key = `${dept.name}__${pos}__${counts[pos]}`
-      keys.push({ dept: dept.name, position: pos, key })
+      keys.push({ dept: dept.name, position: pos, key: `${dept.name}__${pos}__${counts[pos]}` })
     })
   })
   return keys
 }
-
-// ── STATUS ───────────────────────────────────────────────────────────────────
 
 const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Scheduled', color: '#FFCC00', bg: 'rgba(255,204,0,0.1)', border: 'rgba(255,204,0,0.35)' },
@@ -74,11 +40,7 @@ const STATUS_OPTIONS = [
   { value: 'attention', label: 'Attention', color: '#FF3333', bg: 'rgba(255,51,51,0.1)', border: 'rgba(255,51,51,0.35)' },
 ]
 
-function getStatusStyle(status) {
-  return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0]
-}
-
-// ── SMALL COMPONENTS ─────────────────────────────────────────────────────────
+function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
 
 function StatusPill({ status, onChange }) {
   const [open, setOpen] = useState(false)
@@ -165,8 +127,6 @@ function DateCell({ value, onSave }) {
   )
 }
 
-// ── INLINE STAFF SEARCH ───────────────────────────────────────────────────────
-
 function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssignment }) {
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
@@ -187,16 +147,13 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
     const timer = setTimeout(async () => {
       setLoading(true)
       const supabase = getSupabase()
-      const { data: staffData } = await supabase
-        .from('staff').select('id, first_name, last_name')
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name')
         .or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
         .order('last_name', { ascending: true }).limit(10)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
       setResults(staffData)
       const staffIds = staffData.map(s => s.id)
-      const { data: eventStaffData } = await supabase
-        .from('event_staff').select('staff_id, event_id, events(id, city, load_in_date, load_out_date)')
-        .in('staff_id', staffIds)
+      const { data: eventStaffData } = await supabase.from('event_staff').select('staff_id, event_id, events(id, city, load_in_date, load_out_date)').in('staff_id', staffIds)
       const avail = {}
       const loadIn = event?.load_in_date
       const loadOut = event?.load_out_date || loadIn
@@ -241,8 +198,7 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
   return (
     <div ref={ref} style={{ position: 'absolute', top: '100%', left: 0, zIndex: 200, width: 280, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', marginTop: 4, overflow: 'hidden' }}>
       {hasAssignment && (
-        <div onClick={onClear}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: 'rgba(255,51,51,0.05)' }}
+        <div onClick={onClear} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: 'rgba(255,51,51,0.05)' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,51,51,0.1)'}
           onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,51,51,0.05)'}>
           <span style={{ fontSize: 13, color: '#FF3333' }}>× Remove — open this position</span>
@@ -257,9 +213,7 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
         />
       </div>
       {loading && <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-muted)' }}>Searching...</div>}
-      {!loading && search.trim().length >= 3 && results.length === 0 && (
-        <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-muted)' }}>No staff found.</div>
-      )}
+      {!loading && search.trim().length >= 3 && results.length === 0 && <div style={{ padding: '10px 12px', fontSize: 12, color: 'var(--text-muted)' }}>No staff found.</div>}
       {results.map(s => {
         const color = dotColor(s.id)
         const tip = tooltip(s.id)
@@ -333,13 +287,34 @@ function AssignedCell({ assignment, staff, positionKey, eventId, event, onAssign
   )
 }
 
-// ── SHARED ROW ────────────────────────────────────────────────────────────────
+// Travel type dropdown — always rendered, disabled when no assignment
+function TravelTypeSelect({ assignment, onSave }) {
+  const hasAssignment = !!assignment?.id
+  return (
+    <select
+      value={assignment?.travel_type || ''}
+      onChange={e => { if (hasAssignment) onSave(assignment.id, e.target.value) }}
+      disabled={!hasAssignment}
+      style={{
+        fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5,
+        border: '0.5px solid var(--glass-border)',
+        background: hasAssignment ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+        color: assignment?.travel_type ? 'var(--text-primary)' : 'var(--text-muted)',
+        outline: 'none', cursor: hasAssignment ? 'pointer' : 'default', width: '100%',
+        opacity: hasAssignment ? 1 : 0.35,
+      }}>
+      <option value="">—</option>
+      <option value="flying">Flying</option>
+      <option value="driving">Driving</option>
+      <option value="other">Other</option>
+    </select>
+  )
+}
 
 function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, event, onAssign, onClear, onRemove, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, isLast, GRID, showTravelToGrid = true }) {
   const isOpen = !assignment?.staff_id
   return (
     <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '11px 16px', borderBottom: isLast ? 'none' : '0.5px solid var(--glass-border)', alignItems: 'center', background: 'var(--glass-bg)' }}>
-      {/* Flag */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isOpen && (
           <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
@@ -348,11 +323,8 @@ function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, even
           </svg>
         )}
       </div>
-      {/* Position */}
       <div style={{ fontSize: 13, color: isOpen ? 'var(--text-muted)' : 'var(--text-primary)' }}>{positionLabel}</div>
-      {/* Assigned */}
       <AssignedCell assignment={assignment} staff={staff} positionKey={positionKey} eventId={eventId} event={event} onAssign={onAssign} onClear={onClear} />
-      {/* Status */}
       <div>
         {assignment?.staff_id
           ? <StatusPill status={assignment.status || 'scheduled'} onChange={(s) => onSetStatus(positionKey, s)} />
@@ -362,21 +334,14 @@ function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, even
       <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_in_date} onSave={(d) => onSaveTravelIn(assignment.id, d)} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
       {/* Travel Out */}
       <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_out_date} onSave={(d) => onSaveTravelOut(assignment.id, d)} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
-      {/* Travel Type */}
+      {/* Travel Type — always a dropdown, disabled when no assignment */}
       <div>
-        {assignment && showTravelToGrid ? (
-          <select value={assignment.travel_type || ''} onChange={e => onSaveTravelType(assignment.id, e.target.value)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: assignment.travel_type ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none', cursor: 'pointer', width: '100%' }}>
-            <option value="">—</option>
-            <option value="flying">Flying</option>
-            <option value="driving">Driving</option>
-            <option value="other">Other</option>
-          </select>
-        ) : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}
+        {showTravelToGrid
+          ? <TravelTypeSelect assignment={assignment || {}} onSave={onSaveTravelType} />
+          : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}
       </div>
       {/* Notes */}
       <div>{assignment ? <NotesCell assignment={assignment} onSave={onSaveNotes} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
-      {/* Remove */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div onClick={() => onRemove(positionKey)}
           style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, opacity: 0.4 }}
@@ -387,13 +352,12 @@ function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, even
   )
 }
 
-// ── DEPARTMENT SECTION ────────────────────────────────────────────────────────
-
-function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePositions, eventId, event, onAssign, onClear, onRemovePosition, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, GRID }) {
+function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePositions, unlockedExtraRows, eventId, event, onAssign, onClear, onRemovePosition, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, GRID }) {
   const [open, setOpen] = useState(true)
-  const deptKeys = positionKeys.filter(p => p.dept === dept.name && !hiddenTemplatePositions.includes(p.key))
+  const templateKeys = positionKeys.filter(p => p.dept === dept.name && !hiddenTemplatePositions.includes(p.key))
+  const extraKeys = (unlockedExtraRows || []).filter(p => p.dept === dept.name)
+  const deptKeys = [...templateKeys, ...extraKeys]
   const filled = deptKeys.filter(p => assignments.find(a => a.position_key === p.key && a.staff_id)).length
-
   return (
     <div>
       <div onClick={() => setOpen(o => !o)}
@@ -407,39 +371,23 @@ function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePosi
       {open && deptKeys.map((pk, i) => {
         const assignment = assignments.find(a => a.position_key === pk.key)
         return (
-          <StaffRow
-            key={pk.key}
-            assignment={assignment}
-            staff={assignment?.staff}
-            positionLabel={pk.position}
-            positionKey={pk.key}
-            eventId={eventId}
-            event={event}
-            onAssign={onAssign}
-            onClear={onClear}
-            onRemove={onRemovePosition}
-            onSetStatus={onSetStatus}
-            onSaveNotes={onSaveNotes}
-            onSaveTravelIn={onSaveTravelIn}
-            onSaveTravelOut={onSaveTravelOut}
-            onSaveTravelType={onSaveTravelType}
-            isLast={i === deptKeys.length - 1}
-            GRID={GRID}
-            showTravelToGrid={true}
-          />
+          <StaffRow key={pk.key} assignment={assignment} staff={assignment?.staff} positionLabel={pk.position} positionKey={pk.key}
+            eventId={eventId} event={event} onAssign={onAssign} onClear={onClear} onRemove={onRemovePosition}
+            onSetStatus={onSetStatus} onSaveNotes={onSaveNotes} onSaveTravelIn={onSaveTravelIn}
+            onSaveTravelOut={onSaveTravelOut} onSaveTravelType={onSaveTravelType}
+            isLast={i === deptKeys.length - 1} GRID={GRID} showTravelToGrid={true} />
         )
       })}
     </div>
   )
 }
 
-// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-
 export default function StaffingTab({ eventId, event }) {
   const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [hiddenTemplatePositions, setHiddenTemplatePositions] = useState([])
+  const [unlockedPositions, setUnlockedPositions] = useState([])
   const [addingPosition, setAddingPosition] = useState(false)
   const [newPositionLabel, setNewPositionLabel] = useState('')
   const [newPositionDept, setNewPositionDept] = useState('')
@@ -449,16 +397,38 @@ export default function StaffingTab({ eventId, event }) {
   const positionKeys = buildPositionKeys(departments)
   const deptNames = departments.map(d => d.name)
 
+  // Build extra rows for positions unlocked from the master grid
+  // These exist in event_staff but not in the template
+  const unlockedExtraRows = unlockedPositions
+    .filter(key => {
+      // Not already in template
+      const inTemplate = positionKeys.find(p => p.key === key)
+      if (inTemplate) return false
+      // Must have an event_staff row (inserted when unlocked)
+      return true
+    })
+    .map(key => {
+      // Find the event_staff row to get position label and dept
+      const row = assignments.find(a => a.position_key === key)
+      if (!row) return null
+      // Determine dept from key: dept__position__N
+      const parts = key.split('__')
+      const dept = parts[0] || 'Operations'
+      return { dept, position: row.position, key, displayLabel: row.position, isUnlocked: true }
+    })
+    .filter(Boolean)
+
   useEffect(() => { fetchAssignments() }, [eventId])
 
   const fetchAssignments = async () => {
     const supabase = getSupabase()
     const [staffRes, eventRes] = await Promise.all([
       supabase.from('event_staff').select('*, staff(id, first_name, last_name)').eq('event_id', eventId).order('created_at', { ascending: true }),
-      supabase.from('events').select('hidden_positions').eq('id', eventId).single(),
+      supabase.from('events').select('hidden_positions, unlocked_positions').eq('id', eventId).single(),
     ])
     setAssignments(staffRes.data || [])
     setHiddenTemplatePositions(eventRes.data?.hidden_positions || [])
+    setUnlockedPositions(eventRes.data?.unlocked_positions || [])
     setLoading(false)
   }
 
@@ -520,7 +490,6 @@ export default function StaffingTab({ eventId, event }) {
     const confirmed = newStatus === 'confirmed'
     const isExec = positionKey.startsWith('exec__')
     await supabase.from('event_staff').update({ status: newStatus, confirmed }).eq('id', assignment.id)
-    // Only sync to travel grid if not exec/visitor
     if (assignment.staff_id && !isExec) {
       if (confirmed) {
         const existing = await supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle()
@@ -567,15 +536,10 @@ export default function StaffingTab({ eventId, event }) {
     fetchAssignments()
   }
 
-  // Separate exec/visitor rows
   const execAssignments = assignments.filter(a => a.position_key?.startsWith('exec__'))
-  // Custom (non-template, non-exec) rows grouped by dept
   const customAssignments = assignments.filter(a => a.position_key?.startsWith('custom__'))
-
-  // Count only non-exec filled
   const filledCount = assignments.filter(a => a.staff_id && !a.position_key?.startsWith('exec__')).length
-  const totalCount = positionKeys.filter(p => !hiddenTemplatePositions.includes(p.key)).length +
-    customAssignments.length
+  const totalCount = positionKeys.filter(p => !hiddenTemplatePositions.includes(p.key)).length + customAssignments.length
 
   const GRID = '28px 180px 160px 110px 100px 100px 110px 1fr 44px'
 
@@ -590,8 +554,6 @@ export default function StaffingTab({ eventId, event }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 15, fontWeight: 600 }}>
@@ -605,7 +567,6 @@ export default function StaffingTab({ eventId, event }) {
         <button className="btn-primary" onClick={() => setAddingPosition(true)} style={{ fontSize: 12, padding: '6px 14px' }}>+ Add Position</button>
       </div>
 
-      {/* Add position form */}
       {addingPosition && (
         <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
           <select value={newPositionDept} onChange={e => setNewPositionDept(e.target.value)}
@@ -626,10 +587,7 @@ export default function StaffingTab({ eventId, event }) {
         </div>
       )}
 
-      {/* Table */}
       <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '0.5px solid var(--glass-border)' }}>
-
-        {/* Sticky column headers */}
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '8px 16px', position: 'sticky', top: 0, zIndex: 10, background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)' }}>
           <div />
           {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Travel Type', 'Notes', ''].map((h, i) => (
@@ -637,57 +595,27 @@ export default function StaffingTab({ eventId, event }) {
           ))}
         </div>
 
-        {/* Template department sections */}
         {departments.map(dept => (
-          <DepartmentSection
-            key={dept.name}
-            dept={dept}
-            positionKeys={positionKeys}
-            assignments={assignments}
-            hiddenTemplatePositions={hiddenTemplatePositions}
-            eventId={eventId}
-            event={event}
-            onAssign={handleAssign}
-            onClear={handleClearPosition}
-            onRemovePosition={handleRemovePosition}
-            onSetStatus={handleSetStatus}
-            onSaveNotes={handleSaveNotes}
-            onSaveTravelIn={handleSaveTravelIn}
-            onSaveTravelOut={handleSaveTravelOut}
-            onSaveTravelType={handleSaveTravelType}
-            GRID={GRID}
-          />
+          <DepartmentSection key={dept.name} dept={dept} positionKeys={positionKeys} assignments={assignments}
+            hiddenTemplatePositions={hiddenTemplatePositions} unlockedExtraRows={unlockedExtraRows} eventId={eventId} event={event}
+            onAssign={handleAssign} onClear={handleClearPosition} onRemovePosition={handleRemovePosition}
+            onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes} onSaveTravelIn={handleSaveTravelIn}
+            onSaveTravelOut={handleSaveTravelOut} onSaveTravelType={handleSaveTravelType} GRID={GRID} />
         ))}
 
-        {/* Custom positions grouped by dept */}
         {deptNames.map(deptName => {
           const deptCustom = customAssignments.filter(a => a.position_key?.startsWith(`custom__${deptName}__`))
           if (deptCustom.length === 0) return null
           return deptCustom.map((assignment, i) => (
-            <StaffRow
-              key={assignment.id}
-              assignment={assignment}
-              staff={assignment?.staff}
-              positionLabel={assignment.position}
-              positionKey={assignment.position_key}
-              eventId={eventId}
-              event={event}
-              onAssign={handleAssign}
-              onClear={handleClearPosition}
-              onRemove={handleRemovePosition}
-              onSetStatus={handleSetStatus}
-              onSaveNotes={handleSaveNotes}
-              onSaveTravelIn={handleSaveTravelIn}
-              onSaveTravelOut={handleSaveTravelOut}
-              onSaveTravelType={handleSaveTravelType}
-              isLast={i === deptCustom.length - 1}
-              GRID={GRID}
-              showTravelToGrid={true}
-            />
+            <StaffRow key={assignment.id} assignment={assignment} staff={assignment?.staff}
+              positionLabel={assignment.position} positionKey={assignment.position_key}
+              eventId={eventId} event={event} onAssign={handleAssign} onClear={handleClearPosition}
+              onRemove={handleRemovePosition} onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes}
+              onSaveTravelIn={handleSaveTravelIn} onSaveTravelOut={handleSaveTravelOut}
+              onSaveTravelType={handleSaveTravelType} isLast={i === deptCustom.length - 1} GRID={GRID} showTravelToGrid={true} />
           ))
         })}
 
-        {/* Executives & Visitors */}
         <div>
           <div onClick={() => setExecOpen(o => !o)}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', borderBottom: '0.5px solid var(--glass-border)', userSelect: 'none' }}
@@ -698,50 +626,25 @@ export default function StaffingTab({ eventId, event }) {
             <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({execAssignments.length}) · not counted in total</span>
             {execOpen && (
               <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }} onClick={e => e.stopPropagation()}>
-                <button onClick={() => handleAddExec('Executive')}
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>
-                  + Executive
-                </button>
-                <button onClick={() => handleAddExec('Visitor')}
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                  + Visitor
-                </button>
+                <button onClick={() => handleAddExec('Executive')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Executive</button>
+                <button onClick={() => handleAddExec('Visitor')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>+ Visitor</button>
               </div>
             )}
           </div>
-
           {execOpen && execAssignments.map((assignment, i) => (
-            <StaffRow
-              key={assignment.id}
-              assignment={assignment}
-              staff={assignment?.staff}
-              positionLabel={assignment.position}
-              positionKey={assignment.position_key}
-              eventId={eventId}
-              event={event}
-              onAssign={handleAssign}
-              onClear={handleClearPosition}
-              onRemove={handleRemoveExec}
-              onSetStatus={handleSetStatus}
-              onSaveNotes={handleSaveNotes}
-              onSaveTravelIn={handleSaveTravelIn}
-              onSaveTravelOut={handleSaveTravelOut}
-              onSaveTravelType={handleSaveTravelType}
-              isLast={i === execAssignments.length - 1}
-              GRID={GRID}
-              showTravelToGrid={false}
-            />
+            <StaffRow key={assignment.id} assignment={assignment} staff={assignment?.staff}
+              positionLabel={assignment.position} positionKey={assignment.position_key}
+              eventId={eventId} event={event} onAssign={handleAssign} onClear={handleClearPosition}
+              onRemove={handleRemoveExec} onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes}
+              onSaveTravelIn={handleSaveTravelIn} onSaveTravelOut={handleSaveTravelOut}
+              onSaveTravelType={handleSaveTravelType} isLast={i === execAssignments.length - 1} GRID={GRID} showTravelToGrid={false} />
           ))}
-
           {execOpen && execAssignments.length === 0 && (
-            <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)', borderBottom: 'none' }}>
-              No executives or visitors added.
-            </div>
+            <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)' }}>No executives or visitors added.</div>
           )}
         </div>
       </div>
 
-      {/* Override confirmation */}
       {confirmOverride && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>

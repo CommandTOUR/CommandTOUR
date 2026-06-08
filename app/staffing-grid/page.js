@@ -39,7 +39,7 @@ function buildMasterPositions() {
     const hwmtPos = HWMTL_POSITIONS[dept] || []
     const max = Math.max(hwssPos.length, hwmtPos.length)
     if (dept === 'Executives & Visitors') {
-      for (let i = 0; i < 5; i++) rows.push({ dept, position: 'Executive / Visitor', key: `exec__slot__${i + 1}`, displayLabel: `Exec / Visitor ${i + 1}`, isExec: true, hwssIndex: i, hwmtIndex: i })
+      for (let i = 0; i < 5; i++) rows.push({ dept, position: 'Executive / Visitor', key: 'exec__slot__' + (i + 1), displayLabel: 'Exec / Visitor ' + (i + 1), isExec: true, hwssIndex: i, hwmtIndex: i })
       return
     }
     if (max === 0) return
@@ -48,11 +48,14 @@ function buildMasterPositions() {
     const isDuplicate = (uniqueHwss.length <= 1 && hwssPos.length > 1) || (uniqueHwmt.length <= 1 && hwmtPos.length > 1)
     if (isDuplicate) {
       const posLabel = hwssPos[0] || hwmtPos[0]
-      for (let i = 0; i < max; i++) rows.push({ dept, position: posLabel, key: `${dept}__${posLabel}__${i + 1}`, displayLabel: `${posLabel} ${i + 1}`, hwssIndex: i < hwssPos.length ? i : null, hwmtIndex: i < hwmtPos.length ? i : null })
+      for (let i = 0; i < max; i++) rows.push({ dept, position: posLabel, key: dept + '__' + posLabel + '__' + (i + 1), displayLabel: posLabel + ' ' + (i + 1), hwssIndex: i < hwssPos.length ? i : null, hwmtIndex: i < hwmtPos.length ? i : null })
     } else {
       const allPos = [...new Set([...hwssPos, ...hwmtPos])]
       const seen = {}
-      allPos.forEach(pos => { seen[pos] = (seen[pos] || 0) + 1; rows.push({ dept, position: pos, key: `${dept}__${pos}__${seen[pos]}`, displayLabel: pos, inHwss: hwssPos.includes(pos), inHwmt: hwmtPos.includes(pos) }) })
+      allPos.forEach(pos => {
+        seen[pos] = (seen[pos] || 0) + 1
+        rows.push({ dept, position: pos, key: dept + '__' + pos + '__' + seen[pos], displayLabel: pos, inHwss: hwssPos.includes(pos), inHwmt: hwmtPos.includes(pos) })
+      })
     }
   })
   return rows
@@ -62,7 +65,7 @@ const MASTER_POSITIONS = buildMasterPositions()
 
 function toYMD(date) {
   const pad = n => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
 }
 
 function getWeekendGroup(dateStr) {
@@ -81,7 +84,17 @@ function fmtWeekend(fridayStr) {
   const fri = new Date(fridayStr + 'T00:00:00')
   const sun = new Date(fri); sun.setDate(fri.getDate() + 2)
   const opts = { month: 'short', day: 'numeric' }
-  return `${fri.toLocaleDateString('en-US', opts)} \u2013 ${sun.toLocaleDateString('en-US', opts)}`
+  return fri.toLocaleDateString('en-US', opts) + ' \u2013 ' + sun.toLocaleDateString('en-US', opts)
+}
+
+function cityColor(status) {
+  if (status === 'confirmed') return '#33FF99'
+  if (status === 'tentative') return '#FF69B4'
+  if (status === '1-hold') return '#FFCC00'
+  if (status === '2-hold') return '#FF8C00'
+  if (status === '3-hold') return '#FF4500'
+  if (status === 'cancelled' || status === 'want' || status === 'date-hold') return 'rgba(255,255,255,0.3)'
+  return '#FFCC00'
 }
 
 const STATUS_OPTIONS = [
@@ -92,12 +105,38 @@ const STATUS_OPTIONS = [
 
 function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
 
+// Single consistent dot pattern for all locked/hatched cells
 const HATCH_BG = 'radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)'
+const HATCH_SIZE = '6px 6px'
 
-function isHatchedCell(posRow, event) {
+// SVG lock icon (locked = closed padlock, unlocked = open padlock)
+function LockIcon({ locked, size = 13 }) {
+  if (locked) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="7" width="10" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/>
+        <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/>
+        <circle cx="7" cy="11" r="1" fill="rgba(255,255,255,0.5)"/>
+      </svg>
+    )
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="7" width="10" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/>
+      <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="7" cy="11" r="1" fill="rgba(255,255,255,0.5)"/>
+    </svg>
+  )
+}
+
+function isHatchedCell(posRow, event, eventMeta) {
   if (posRow.isExec) return false
   const type = event && event.event_type
   if (!type) return false
+  const unlocked = (eventMeta && eventMeta.unlocked_positions) || []
+  if (unlocked.includes(posRow.key)) return false
+  const hidden = (eventMeta && eventMeta.hidden_positions) || []
+  if (hidden.includes(posRow.key)) return true // hidden = locked = hatched
   if (posRow.hwssIndex !== undefined || posRow.hwmtIndex !== undefined) {
     if (type === 'hwss') return posRow.hwssIndex === null
     if (type === 'hwmt') return posRow.hwmtIndex === null
@@ -107,7 +146,60 @@ function isHatchedCell(posRow, event) {
   return false
 }
 
-function StaffSearch({ eventId, event, onAssign, onClose }) {
+// ── CELL ACTION POPUP ─────────────────────────────────────────────────────────
+// Used for both hatched cells (lock/unlock) and open cells (lock option)
+
+function CellActionPopup({ isHatched, isLocked, isHiddenLocked, onUnlock, onLock, onOpenSearch, onClose }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
+  }, [onClose])
+
+  return (
+    <div ref={ref} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, width: 210, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 4, overflow: 'hidden' }}>
+      {isHatched ? (
+        // Hatched cell: unlock option
+        <div
+          onMouseDown={e => { e.preventDefault(); onUnlock(); onClose() }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+          <LockIcon locked={false} />
+          <span style={{ color: '#33FF99' }}>Unlock for this event</span>
+        </div>
+      ) : (
+        // Open cell: assign + lock options
+        <>
+          <div
+            onMouseDown={e => { e.preventDefault(); onOpenSearch(); onClose() }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/><path d="M10 10l2.5 2.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            <span style={{ color: 'var(--text-primary)' }}>Assign staff</span>
+          </div>
+          <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
+          <div
+            onMouseDown={e => { e.preventDefault(); onLock(); onClose() }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+            <LockIcon locked={true} />
+            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Lock this position</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── STAFF SEARCH ──────────────────────────────────────────────────────────────
+
+function StaffSearch({ eventId, event, onAssign, onClose, onLock }) {
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
@@ -204,9 +296,24 @@ function StaffSearch({ eventId, event, onAssign, onClose }) {
           </div>
         )
       })}
+      {onLock && (
+        <>
+          <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
+          <div
+            onMouseDown={e => { e.preventDefault(); onLock(); onClose() }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', fontSize: 13 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+            <LockIcon locked={true} size={12} />
+            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Lock this position</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
+
+// ── STATUS DROPDOWN ───────────────────────────────────────────────────────────
 
 function StatusDropdown({ assignment, onSetStatus, onRemove, onClose }) {
   const ref = useRef(null)
@@ -215,10 +322,7 @@ function StatusDropdown({ assignment, onSetStatus, onRemove, onClose }) {
     const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
     document.addEventListener('keydown', handleKey)
     document.addEventListener('mousedown', handleClick)
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.removeEventListener('mousedown', handleClick)
-    }
+    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
   }, [onClose])
 
   return (
@@ -245,6 +349,8 @@ function StatusDropdown({ assignment, onSetStatus, onRemove, onClose }) {
   )
 }
 
+// ── CONFIRM OVERRIDE ──────────────────────────────────────────────────────────
+
 function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
   const isSame = avail && avail.status === 'same_event'
   return (
@@ -267,13 +373,17 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
   )
 }
 
-function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, COL_WIDTH, ROW_HEIGHT, borderRight }) {
+// ── GRID CELL ─────────────────────────────────────────────────────────────────
+
+function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatched, onRefresh, onLockPosition, onUnlockPosition, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [mode, setMode] = useState(null)
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const isExec = positionRow.isExec
   const statusStyle = (!isExec && assignment && assignment.status) ? getStatusStyle(assignment.status) : null
   const staffName = assignment && assignment.staff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
+  const isHiddenLocked = ((eventMeta && eventMeta.hidden_positions) || []).includes(positionRow.key)
+  const isUnlockedOverride = ((eventMeta && eventMeta.unlocked_positions) || []).includes(positionRow.key)
 
   const doAssign = async (staffMember) => {
     setMode(null)
@@ -319,7 +429,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   }
 
   const cellBg = isHatched && !assignment ? HATCH_BG : 'transparent'
-  const cellBgSize = isHatched && !assignment ? '6px 6px' : 'auto'
+  const cellBgSize = isHatched && !assignment ? HATCH_SIZE : 'auto'
   const pillBg = isExec ? 'rgba(255,255,255,0.06)' : (statusStyle ? statusStyle.pill : 'rgba(255,255,255,0.06)')
   const pillBorder = isExec ? 'rgba(255,255,255,0.12)' : (statusStyle ? statusStyle.border : 'rgba(255,255,255,0.12)')
   const pillColor = isExec ? 'var(--text-secondary)' : (statusStyle ? statusStyle.color : 'var(--text-primary)')
@@ -331,17 +441,36 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => {
-          if (staffName) setMode(mode === 'status' ? null : 'status')
-          else setMode(mode === 'search' ? null : 'search')
+          if (staffName) { setMode(mode === 'status' ? null : 'status'); return }
+          if (isHatched) { setMode(mode === 'hatch' ? null : 'hatch'); return }
+          setMode(mode === 'search' ? null : 'search')
         }}>
         {staffName ? (
           <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, background: pillBg, border: '0.5px solid ' + pillBorder, maxWidth: COL_WIDTH - 12, opacity: hovered ? 0.82 : 1, transition: 'opacity 0.1s' }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
           </div>
+        ) : isHatched ? (
+          hovered ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LockIcon locked={true} size={12} />
+            </div>
+          ) : null
         ) : (
           hovered ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>+ Assign</span> : null
         )}
-        {mode === 'search' && <StaffSearch eventId={eventId} event={event} onAssign={handleAssign} onClose={() => setMode(null)} />}
+
+        {mode === 'search' && <StaffSearch eventId={eventId} event={event} onAssign={handleAssign} onClose={() => setMode(null)} onLock={() => { setMode(null); onLockPosition(positionRow.key) }} />}
+        {mode === 'hatch' && (
+          <CellActionPopup
+            isHatched={isHatched}
+            isHiddenLocked={isHiddenLocked}
+            isUnlockedOverride={isUnlockedOverride}
+            onUnlock={() => onUnlockPosition(positionRow.key)}
+            onLock={() => onLockPosition(positionRow.key)}
+            onOpenSearch={() => setMode('search')}
+            onClose={() => setMode(null)}
+          />
+        )}
         {mode === 'status' && assignment && <StatusDropdown assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} onClose={() => setMode(null)} />}
       </td>
       {confirmOverride && (
@@ -356,13 +485,18 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   )
 }
 
+// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
 export default function StaffingGrid() {
   const router = useRouter()
   const [events, setEvents] = useState([])
   const [tours, setTours] = useState([])
   const [assignments, setAssignments] = useState({})
+  const [eventMetas, setEventMetas] = useState({})
+  const [customPositions, setCustomPositions] = useState({})
   const [loading, setLoading] = useState(true)
   const [collapsedDepts, setCollapsedDepts] = useState({})
+  const [showPast, setShowPast] = useState(false)
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
@@ -372,7 +506,6 @@ export default function StaffingGrid() {
   const H2 = 32
   const H3 = 32
   const H4 = 32
-  const TOTAL_HDR = H1 + H2 + H3 + H4
 
   const B_INNER = '0.5px solid rgba(255,255,255,0.07)'
   const B_WEEKEND = '2px solid rgba(255,255,255,0.2)'
@@ -389,17 +522,32 @@ export default function StaffingGrid() {
     const supabase = getSupabase()
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
-      supabase.from('events').select('id, city, venue_name, num_shows, load_in_date, load_out_date, tour_id, event_type').order('load_in_date', { ascending: true }),
+      supabase.from('events').select('id, city, venue_name, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
       supabase.from('event_staff').select('*, staff(id, first_name, last_name)'),
     ])
     setTours(toursRes.data || [])
     setEvents(eventsRes.data || [])
+    const metas = {}
+    for (const ev of (eventsRes.data || [])) {
+      metas[ev.id] = { hidden_positions: ev.hidden_positions || [], unlocked_positions: ev.unlocked_positions || [] }
+    }
+    setEventMetas(metas)
     const aMap = {}
+    const customMap = {}
     for (const a of (assignmentsRes.data || [])) {
       if (!aMap[a.event_id]) aMap[a.event_id] = []
       aMap[a.event_id].push(a)
+      if (a.position_key && a.position_key.startsWith('custom__')) {
+        if (!customMap[a.event_id]) customMap[a.event_id] = []
+        if (!customMap[a.event_id].find(p => p.key === a.position_key)) {
+          const parts = a.position_key.split('__')
+          const dept = parts[1] || 'Operations'
+          customMap[a.event_id].push({ dept, position: a.position, key: a.position_key, displayLabel: a.position, isCustom: true })
+        }
+      }
     }
     setAssignments(aMap)
+    setCustomPositions(customMap)
     setLoading(false)
   }
 
@@ -408,15 +556,75 @@ export default function StaffingGrid() {
   const getTourName = (tourId) => { const t = tours.find(t => t.id === tourId); return t ? t.name : '\u2014' }
   const toggleDept = (dept) => setCollapsedDepts(prev => ({ ...prev, [dept]: !prev[dept] }))
 
+  // Lock an open position: add to hidden_positions → shows dots in grid, removed from event staffing tab
+  const handleLockPosition = async (eventId, positionKey) => {
+    const supabase = getSupabase()
+    const meta = eventMetas[eventId] || {}
+    const hidden = meta.hidden_positions || []
+    if (hidden.includes(positionKey)) return
+    const nextHidden = [...hidden, positionKey]
+    await supabase.from('events').update({ hidden_positions: nextHidden }).eq('id', eventId)
+    // Also delete any unassigned event_staff row for this position
+    await supabase.from('event_staff').delete().eq('event_id', eventId).eq('position_key', positionKey)
+    setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden } }))
+  }
+
+  // Unlock a position: handle two cases
+  // Case A: was in hidden_positions (locked from event tab or grid) → remove from hidden
+  // Case B: was template-hatched (not applicable to this show type) → add to unlocked_positions + insert blank event_staff row
+  const handleUnlockPosition = async (eventId, positionKey, positionRow, event) => {
+    const supabase = getSupabase()
+    const meta = eventMetas[eventId] || {}
+    const hidden = meta.hidden_positions || []
+    const unlocked = meta.unlocked_positions || []
+
+    if (hidden.includes(positionKey)) {
+      // Case A: remove from hidden
+      const nextHidden = hidden.filter(k => k !== positionKey)
+      await supabase.from('events').update({ hidden_positions: nextHidden }).eq('id', eventId)
+      // Re-insert blank event_staff row so it shows on event tab
+      const existing = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).maybeSingle()
+      if (!existing.data) {
+        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
+      }
+      setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden } }))
+    } else {
+      // Case B: template-hatched → add to unlocked + insert blank event_staff row
+      const nextUnlocked = [...unlocked, positionKey]
+      await supabase.from('events').update({ unlocked_positions: nextUnlocked }).eq('id', eventId)
+      const existing = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).maybeSingle()
+      if (!existing.data) {
+        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
+      }
+      setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], unlocked_positions: nextUnlocked } }))
+    }
+    fetchAll()
+  }
+
+  const today = toYMD(new Date())
+
+  // Build weekend groups from ALL events first (for past count)
+  const allWeekendGroups = []
+  const allWeekendMap = {}
+  events.forEach(ev => {
+    const wk = getWeekendGroup(ev.load_in_date) || ev.load_in_date
+    if (!allWeekendMap[wk]) { allWeekendMap[wk] = []; allWeekendGroups.push(wk) }
+    allWeekendMap[wk].push(ev)
+  })
+  allWeekendGroups.sort()
+  const allOrderedEvents = allWeekendGroups.flatMap(wk => allWeekendMap[wk])
+  const pastEvents = allOrderedEvents.filter(ev => (ev.load_out_date || ev.load_in_date) < today)
+
+  // Filter events first, then rebuild weekend groups from filtered set
+  const filteredEvents = showPast ? allOrderedEvents : allOrderedEvents.filter(ev => (ev.load_out_date || ev.load_in_date) >= today)
   const weekendGroups = []
   const weekendMap = {}
-  events.forEach(ev => {
+  filteredEvents.forEach(ev => {
     const wk = getWeekendGroup(ev.load_in_date) || ev.load_in_date
     if (!weekendMap[wk]) { weekendMap[wk] = []; weekendGroups.push(wk) }
     weekendMap[wk].push(ev)
   })
   weekendGroups.sort()
-
   const orderedEvents = weekendGroups.flatMap(wk => weekendMap[wk])
 
   const isLastInGroup = (ev) => {
@@ -430,6 +638,21 @@ export default function StaffingGrid() {
     return isLastInGroup(ev) ? B_WEEKEND : '0.5px solid rgba(255,255,255,0.06)'
   }
 
+  const getPositionRowsForDept = (dept) => {
+    const templateRows = MASTER_POSITIONS.filter(p => p.dept === dept)
+    const customRows = []
+    const seenKeys = new Set()
+    for (const eventId of Object.keys(customPositions)) {
+      for (const cp of (customPositions[eventId] || [])) {
+        if (cp.dept === dept && !seenKeys.has(cp.key)) {
+          seenKeys.add(cp.key)
+          customRows.push(cp)
+        }
+      }
+    }
+    return [...templateRows, ...customRows]
+  }
+
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
       <TopNav />
@@ -441,7 +664,16 @@ export default function StaffingGrid() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
       <TopNav />
       <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 12px', borderBottom: '0.5px solid var(--glass-border)', background: 'var(--bg)' }}>
-        <div style={{ fontSize: 22, fontWeight: 600 }}>Staffing Grid</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>Staffing Grid</div>
+          {pastEvents.length > 0 && (
+            <button
+              onClick={() => setShowPast(p => !p)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: showPast ? 'rgba(255,255,255,0.08)' : 'transparent', color: showPast ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}>
+              {showPast ? 'Hide Past Events' : 'Show Past Events (' + pastEvents.length + ')'}
+            </button>
+          )}
+        </div>
       </div>
 
       {events.length === 0 ? (
@@ -486,7 +718,7 @@ export default function StaffingGrid() {
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: HDR_BG, borderBottom: B_INNER, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                     <span
                       onClick={() => router.push('/tours/' + ev.tour_id + '/events/' + ev.id + '?tab=staffing')}
-                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--mint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                      style={{ fontSize: 12, fontWeight: 600, color: cityColor(ev.status), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.75' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
                       {ev.city}
@@ -508,7 +740,7 @@ export default function StaffingGrid() {
 
             <tbody>
               {DEPARTMENT_ORDER.map(dept => {
-                const deptRows = MASTER_POSITIONS.filter(p => p.dept === dept)
+                const deptRows = getPositionRowsForDept(dept)
                 const collapsed = collapsedDepts[dept]
                 return (
                   <React.Fragment key={dept}>
@@ -533,17 +765,21 @@ export default function StaffingGrid() {
                           {posRow.displayLabel}
                         </td>
                         {orderedEvents.map((ev, i) => {
+                          const meta = eventMetas[ev.id] || {}
                           const assignment = getAssignment(ev.id, posRow.key)
-                          const hatched = isHatchedCell(posRow, ev)
+                          const hatched = isHatchedCell(posRow, ev, meta)
                           return (
                             <GridCell
                               key={ev.id}
                               eventId={ev.id}
                               event={ev}
+                              eventMeta={meta}
                               positionRow={posRow}
                               assignment={assignment}
                               isHatched={hatched}
                               onRefresh={fetchAll}
+                              onLockPosition={(key) => handleLockPosition(ev.id, key)}
+                              onUnlockPosition={(key) => handleUnlockPosition(ev.id, key, posRow, ev)}
                               COL_WIDTH={COL_WIDTH}
                               ROW_HEIGHT={ROW_HEIGHT}
                               borderRight={cellBorderRight(ev, i)}
