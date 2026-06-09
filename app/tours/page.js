@@ -143,53 +143,58 @@ export default function Tours() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28 }}>
+      <div style={{ marginTop: 62 }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-          <div>
-            <div style={{ fontSize: 26, fontWeight: 600 }}>Tours</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
-              {tours.length} {tours.length === 1 ? 'tour' : 'tours'}
+        {/* Sticky page header */}
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 600 }}>Tours</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
+                {tours.length} {tours.length === 1 ? 'tour' : 'tours'}
+              </div>
             </div>
-          </div>
-          <button className="btn-primary" onClick={() => router.push('/tours/new')}>+ New Tour</button>
-        </div>
-
-        {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading tours...</div>}
-
-        {!loading && tours.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
-            <div style={{ fontSize: 20, fontWeight: 600 }}>No tours yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Create your first tour to get started</div>
             <button className="btn-primary" onClick={() => router.push('/tours/new')}>+ New Tour</button>
           </div>
-        )}
+        </div>
 
-        {/* Active + Upcoming */}
-        {!loading && activeTours.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 32 }}>
-            {activeTours.map(renderTile)}
-          </div>
-        )}
+        <div style={{ padding: 28 }}>
+          {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading tours...</div>}
 
-        {/* Archived — collapsible */}
-        {!loading && archivedTours.length > 0 && (
-          <div>
-            <div
-              onClick={() => setShowArchived(!showArchived)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: showArchived ? 16 : 0 }}
-            >
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {showArchived ? '▾' : '▸'} Completed & Cancelled ({archivedTours.length})
-              </span>
+          {!loading && tours.length === 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
+              <div style={{ fontSize: 20, fontWeight: 600 }}>No tours yet</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Create your first tour to get started</div>
+              <button className="btn-primary" onClick={() => router.push('/tours/new')}>+ New Tour</button>
             </div>
-            {showArchived && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {archivedTours.map(renderTile)}
+          )}
+
+          {/* Active + Upcoming */}
+          {!loading && activeTours.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 32 }}>
+              {activeTours.map(renderTile)}
+            </div>
+          )}
+
+          {/* Archived — collapsible */}
+          {!loading && archivedTours.length > 0 && (
+            <div>
+              <div
+                onClick={() => setShowArchived(!showArchived)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: showArchived ? 16 : 0 }}
+              >
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {showArchived ? '▾' : '▸'} Completed & Cancelled ({archivedTours.length})
+                </span>
               </div>
-            )}
-          </div>
-        )}
+              {showArchived && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                  {archivedTours.map(renderTile)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
       </div>
     </div>

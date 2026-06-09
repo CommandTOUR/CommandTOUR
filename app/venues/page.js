@@ -97,33 +97,36 @@ export default function Venues() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28 }}>
+      <div style={{ marginTop: 62 }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <div style={{ fontSize: 26, fontWeight: 600 }}>Venues</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
-              {venues.length} {venues.length === 1 ? 'venue' : 'venues'}
+        {/* Sticky page header */}
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 600 }}>Venues</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
+                {venues.length} {venues.length === 1 ? 'venue' : 'venues'}
+              </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {sections.length > 0 && (
-              <button
-                onClick={toggleAll}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-              >
-                {allExpanded ? 'Collapse All' : 'Expand All'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {sections.length > 0 && (
+                <button
+                  onClick={toggleAll}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >
+                  {allExpanded ? 'Collapse All' : 'Expand All'}
+                </button>
+              )}
+              <button className="btn-primary" onClick={() => router.push('/venues/new')}>
+                + Add Venue
               </button>
-            )}
-            <button className="btn-primary" onClick={() => router.push('/venues/new')}>
-              + Add Venue
-            </button>
+            </div>
           </div>
         </div>
 
+        <div style={{ padding: 28 }}>
         {/* Search */}
         <input
           type="text"
@@ -200,6 +203,7 @@ export default function Venues() {
             ))}
           </div>
         )}
+        </div>
 
       </div>
     </div>

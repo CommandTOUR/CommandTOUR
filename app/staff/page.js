@@ -34,21 +34,24 @@ export default function StaffPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28 }}>
+      <div style={{ marginTop: 62 }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <div style={{ fontSize: 26, fontWeight: 600 }}>Staff</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
-              {staff.length} {staff.length === 1 ? 'person' : 'people'}
+        {/* Sticky page header */}
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 600 }}>Staff</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
+                {staff.length} {staff.length === 1 ? 'person' : 'people'}
+              </div>
             </div>
+            <button className="btn-primary" onClick={() => router.push('/staff/new')}>
+              + Add Staff
+            </button>
           </div>
-          <button className="btn-primary" onClick={() => router.push('/staff/new')}>
-            + Add Staff
-          </button>
         </div>
 
+        <div style={{ padding: 28 }}>
         {/* Search */}
         <input
           type="text"
@@ -118,6 +121,7 @@ export default function StaffPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   )

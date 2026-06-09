@@ -27,8 +27,8 @@ export default function TopNav() {
   return (
     <nav style={{
       height: 62,
-      background: 'rgba(255,255,255,0.02)',
-      borderBottom: '0.5px solid var(--glass-border)',
+      background: '#0d1f38',
+      borderBottom: '0.5px solid rgba(255,255,255,0.12)',
       display: 'flex',
       alignItems: 'center',
       padding: '0 28px',
