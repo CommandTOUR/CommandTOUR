@@ -176,6 +176,50 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
   )
 }
 
+function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInUpdate, fmt }) {
+  const shows = eventShows[event.id] || []
+  const firstShow = shows.length > 0 ? shows[0].show_date : null
+  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
+  const alerts = getAlerts(event, shows)
+
+  return (
+    <div
+      onClick={() => router.push(`/tours/${tourId}/events/${event.id}`)}
+      style={{
+        display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
+        gap: '0 24px', padding: '16px 32px',
+        cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)',
+        transition: 'background 0.15s', alignItems: 'center',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} />
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {event.city}{event.country && `, ${event.country}`}
+      </div>
+      <div style={{ fontSize: 14, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {event.venue_name || 'TBC'}
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
+        {shows.length > 0 ? shows.length : (event.num_shows || '—')}
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+        {fmt(firstShow)}
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+        {fmt(lastShow)}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={onStatusUpdate} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <AlertIcon alerts={alerts} />
+      </div>
+    </div>
+  )
+}
+
 export default function TourPage() {
   const router = useRouter()
   const { id } = useParams()
@@ -184,6 +228,9 @@ export default function TourPage() {
   const [eventShows, setEventShows] = useState({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
+  const [pastExpanded, setPastExpanded] = useState(false)
+
+  const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -217,6 +264,10 @@ export default function TourPage() {
   }
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
+
+  // Split events into upcoming and past
+  const upcomingEvents = events.filter(e => !e.load_in_date || e.load_in_date >= today)
+  const pastEvents = events.filter(e => e.load_in_date && e.load_in_date < today)
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -294,7 +345,7 @@ export default function TourPage() {
               {/* Sticky column headers */}
               <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)' }}>
                 <div style={{ padding: '16px 32px 8px', fontSize: 15, fontWeight: 600 }}>
-                  Events <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>({events.length})</span>
+                  Events <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
                 </div>
                 {events.length > 0 && (
                   <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '6px 32px 12px' }}>
@@ -316,66 +367,54 @@ export default function TourPage() {
                 </div>
               )}
 
-              {/* Event rows */}
-              {events.map((event) => {
-                const shows = eventShows[event.id] || []
-                const firstShow = shows.length > 0 ? shows[0].show_date : null
-                const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
-                const alerts = getAlerts(event, shows)
+              {/* Upcoming event rows */}
+              {upcomingEvents.map((event) => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  eventShows={eventShows}
+                  tourId={id}
+                  router={router}
+                  onStatusUpdate={handleStatusUpdate}
+                  onLoadInUpdate={handleLoadInUpdate}
+                  fmt={fmt}
+                />
+              ))}
 
-                return (
+              {/* Past events — collapsible */}
+              {pastEvents.length > 0 && (
+                <div>
+                  {/* Past events toggle */}
                   <div
-                    key={event.id}
-                    onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
-                    style={{
-                      display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
-                      gap: '0 24px', padding: '16px 32px',
-                      cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)',
-                      transition: 'background 0.15s', alignItems: 'center',
-                    }}
+                    onClick={() => setPastExpanded(p => !p)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.01)', userSelect: 'none' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.01)'}
                   >
-                    {/* Load-In Date */}
-                    <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
-
-                    {/* City */}
-                    <div style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {event.city}{event.country && `, ${event.country}`}
-                    </div>
-
-                    {/* Venue */}
-                    <div style={{ fontSize: 14, fontWeight: 400, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {event.venue_name || 'TBC'}
-                    </div>
-
-                    {/* # Shows */}
-                    <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)' }}>
-                      {shows.length > 0 ? shows.length : (event.num_shows || '—')}
-                    </div>
-
-                    {/* First Show */}
-                    <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 400, color: firstShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
-                      {fmt(firstShow)}
-                    </div>
-
-                    {/* Last Show */}
-                    <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 400, color: lastShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
-                      {fmt(lastShow)}
-                    </div>
-
-                    {/* Status dropdown */}
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={handleStatusUpdate} />
-                    </div>
-
-                    {/* Alert */}
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <AlertIcon alerts={alerts} />
-                    </div>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
+                    </span>
                   </div>
-                )
-              })}
+
+                  {/* Past event rows */}
+                  {pastExpanded && pastEvents.map((event) => (
+                    <div key={event.id} style={{ opacity: 0.6 }}>
+                      <EventRow
+                        event={event}
+                        eventShows={eventShows}
+                        tourId={id}
+                        router={router}
+                        onStatusUpdate={handleStatusUpdate}
+                        onLoadInUpdate={handleLoadInUpdate}
+                        fmt={fmt}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
