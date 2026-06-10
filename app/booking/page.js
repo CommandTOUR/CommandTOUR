@@ -1,0 +1,670 @@
+'use client'
+
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import TopNav from '../../components/TopNav'
+import { getSupabase } from '../../lib/supabase'
+
+const STATUS_STYLES = {
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
+  tentative:   { color: '#FF69B4', background: 'rgba(255,105,180,0.1)', border: 'rgba(255,105,180,0.35)' },
+  '1-hold':    { color: '#FFCC00', background: 'rgba(255,204,0,0.1)',   border: 'rgba(255,204,0,0.35)' },
+  '2-hold':    { color: '#FF8C00', background: 'rgba(255,140,0,0.1)',   border: 'rgba(255,140,0,0.35)' },
+  '3-hold':    { color: '#FF3333', background: 'rgba(255,51,51,0.1)',   border: 'rgba(255,51,51,0.35)' },
+  cancelled:   { color: '#888',    background: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.35)' },
+  want:        { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
+  'date-hold': { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
+}
+
+const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
+
+const statusLabel = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+
+// ── TOUR ORDERING ─────────────────────────────────────────────────────────────
+
+const TOUR_ORDER = ['HWMTL Orange', 'HWMTL Blue', 'HWSS North America Red', 'HWMTL Purple', 'HWMTL Yellow', 'HWSS Gold']
+
+const COLOR_NAME_HEX = {
+  orange: '#FF8C00',
+  blue: '#0061FF',
+  red: '#FF3333',
+  purple: '#A855F7',
+  yellow: '#FFCC00',
+  gold: '#C9A84C',
+}
+
+function matchesTourLabel(tour, label) {
+  const words = label.toLowerCase().split(' ')
+  const colorWord = words.find(w => COLOR_NAME_HEX[w])
+  const nameWords = colorWord ? words.filter(w => w !== colorWord) : words
+  const nameLower = (tour.name || '').toLowerCase()
+  if (!nameWords.every(w => nameLower.includes(w))) return false
+  if (!colorWord) return true
+  const tourHex = (tour.color || '').toLowerCase()
+  return tourHex === COLOR_NAME_HEX[colorWord].toLowerCase() || nameLower.includes(colorWord)
+}
+
+function tourOrderIndex(tour) {
+  for (let i = 0; i < TOUR_ORDER.length; i++) {
+    if (matchesTourLabel(tour, TOUR_ORDER[i])) return i
+  }
+  return TOUR_ORDER.length
+}
+
+// ── DATE HELPERS ──────────────────────────────────────────────────────────────
+
+function pad(n) { return String(n).padStart(2, '0') }
+function toYMD(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) }
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  return toYMD(d)
+}
+
+// All Saturdays that fall within the given calendar year
+function getSaturdaysOfYear(year) {
+  const sats = []
+  const d = new Date(year, 0, 1)
+  while (d.getDay() !== 6) d.setDate(d.getDate() + 1)
+  while (d.getFullYear() === year) {
+    sats.push(toYMD(d))
+    d.setDate(d.getDate() + 7)
+  }
+  return sats
+}
+
+// The Saturday that begins the show weekend for a given load-in date
+function nextSaturdayOnOrAfter(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7))
+  return toYMD(d)
+}
+
+function fmtDay(dateStr, prefix) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return prefix + ', ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function getEventSaturday(ev) {
+  if (ev.saturday_date) return ev.saturday_date
+  if (ev.load_in_date) return nextSaturdayOnOrAfter(ev.load_in_date)
+  return null
+}
+
+// ── HOLIDAYS ──────────────────────────────────────────────────────────────────
+
+function nthWeekday(year, month, weekday, n) {
+  const d = new Date(year, month, 1)
+  let count = 0
+  while (true) {
+    if (d.getDay() === weekday) {
+      count++
+      if (count === n) return toYMD(d)
+    }
+    d.setDate(d.getDate() + 1)
+  }
+}
+
+function lastWeekday(year, month, weekday) {
+  const d = new Date(year, month + 1, 0)
+  while (d.getDay() !== weekday) d.setDate(d.getDate() - 1)
+  return toYMD(d)
+}
+
+function computeHolidays(year) {
+  return {
+    "New Year's Day": year + '-01-01',
+    "MLK Day": nthWeekday(year, 0, 1, 3),
+    "Presidents Day": nthWeekday(year, 1, 1, 3),
+    "Memorial Day": lastWeekday(year, 4, 1),
+    "Juneteenth": year + '-06-19',
+    "Independence Day": year + '-07-04',
+    "Labor Day": nthWeekday(year, 8, 1, 1),
+    "Columbus Day": nthWeekday(year, 9, 1, 2),
+    "Veterans Day": year + '-11-11',
+    "Thanksgiving": nthWeekday(year, 10, 4, 4),
+    "Christmas Day": year + '-12-25',
+    "New Year's Eve": year + '-12-31',
+  }
+}
+
+// Maps each holiday onto the nearest Saturday row for that year
+function buildHolidayMap(year, saturdays) {
+  const holidays = computeHolidays(year)
+  const map = {}
+  for (const [name, dateStr] of Object.entries(holidays)) {
+    const target = new Date(dateStr + 'T00:00:00').getTime()
+    let best = null
+    let bestDiff = Infinity
+    for (const sat of saturdays) {
+      const diff = Math.abs(new Date(sat + 'T00:00:00').getTime() - target)
+      if (diff < bestDiff) { bestDiff = diff; best = sat }
+    }
+    if (best) map[best] = map[best] ? map[best] + ' / ' + name : name
+  }
+  return map
+}
+
+// ── SHARED STYLES ─────────────────────────────────────────────────────────────
+
+const inputStyle = {
+  fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 10px',
+  borderRadius: 6, border: '0.5px solid var(--glass-border)',
+  background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+  outline: 'none', width: '100%', boxSizing: 'border-box',
+}
+
+const labelStyle = {
+  fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase',
+  letterSpacing: '0.06em', marginBottom: 4, display: 'block',
+}
+
+// ── PLACES AUTOCOMPLETE (same pattern as app/venues/new/page.js) ──────────────
+
+function PlacesAutocomplete({ value, onChange, onSelect, placeholder }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [sessionToken, setSessionToken] = useState(null)
+  const ref = useRef(null)
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setShow(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    if (window.google && !sessionToken) {
+      setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+    }
+  }, [])
+
+  const fetchSuggestions = useCallback((input) => {
+    if (!input || input.length < 2 || !window.google) { setSuggestions([]); return }
+    const service = new window.google.maps.places.AutocompleteService()
+    service.getPlacePredictions(
+      { input, types: ['establishment'], sessionToken },
+      (predictions, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setSuggestions(predictions)
+          setShow(true)
+        } else {
+          setSuggestions([])
+        }
+      }
+    )
+  }, [sessionToken])
+
+  const handleChange = (e) => {
+    const val = e.target.value
+    onChange(val)
+    setActiveIndex(-1)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 250)
+  }
+
+  const handleSelect = (prediction) => {
+    if (!window.google) return
+    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
+    placesService.getDetails(
+      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'place_id'] },
+      (place, status) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
+        const get = (type) => place.address_components?.find(c => c.types.includes(type))
+        const city = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
+        const state = get('administrative_area_level_1')?.short_name || ''
+        const country = get('country')?.long_name || ''
+        onSelect({
+          name: place.name || '',
+          city, state, country,
+          place_id: place.place_id || '',
+        })
+        setShow(false)
+        setSuggestions([])
+        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+      }
+    )
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, suggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelect(suggestions[activeIndex]) }
+    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <input
+        style={inputStyle}
+        placeholder={placeholder}
+        value={value}
+        onChange={handleChange}
+        onFocus={() => suggestions.length > 0 && setShow(true)}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+      />
+      {show && suggestions.length > 0 && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {suggestions.map((p, i) => (
+            <div key={p.place_id}
+              onMouseDown={() => handleSelect(p)}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+              <div style={{ color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)', fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── EVENT POPOVER (add / edit a booking cell) ──────────────────────────────────
+
+function EventPopover({ event, venues, mapsLoaded, onSave, onClose }) {
+  const [venueName, setVenueName] = useState(event?.venue_name || '')
+  const [city, setCity] = useState(event?.city || '')
+  const [venueId, setVenueId] = useState(event?.venue_id || null)
+  const [status, setStatus] = useState(event?.status || 'tentative')
+  const [note, setNote] = useState(event?.booking_note || '')
+  const [saving, setSaving] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
+  }, [onClose])
+
+  const handlePlaceSelect = (place) => {
+    setVenueName(place.name)
+    if (place.city) setCity(place.city)
+    const matched = venues.find(v => v.place_id && v.place_id === place.place_id)
+    setVenueId(matched ? matched.id : null)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    await onSave({ venue_name: venueName, city, venue_id: venueId, status, booking_note: note })
+    setSaving(false)
+  }
+
+  return (
+    <div ref={ref}
+      onClick={e => e.stopPropagation()}
+      style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, width: 270, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 4, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, cursor: 'default' }}>
+      <div>
+        <label style={labelStyle}>Venue</label>
+        {mapsLoaded ? (
+          <PlacesAutocomplete value={venueName} onChange={setVenueName} onSelect={handlePlaceSelect} placeholder="Search venue..." />
+        ) : (
+          <input style={inputStyle} value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="Venue name" />
+        )}
+      </div>
+      <div>
+        <label style={labelStyle}>City</label>
+        <input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
+      </div>
+      <div>
+        <label style={labelStyle}>Status</label>
+        <select style={{ ...inputStyle, cursor: 'pointer' }} value={status} onChange={e => setStatus(e.target.value)}>
+          {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{statusLabel(opt)}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={labelStyle}>Note</label>
+        <textarea style={{ ...inputStyle, height: 64, resize: 'vertical' }} value={note} onChange={e => setNote(e.target.value)} placeholder="Booking note..." />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 2 }}>
+        <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ── HOLIDAY CELL (auto-populated, manually editable) ───────────────────────────
+
+function HolidayCell({ value, onSave }) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(value)
+
+  useEffect(() => { setText(value) }, [value])
+
+  const commit = () => { setEditing(false); if (text !== value) onSave(text) }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={text}
+        onChange={e => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') commit()
+          else if (e.key === 'Escape') { setText(value); setEditing(false) }
+        }}
+        style={{ ...inputStyle, fontSize: 12, padding: '4px 6px' }}
+      />
+    )
+  }
+
+  return (
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {value || '—'}
+    </div>
+  )
+}
+
+// ── TOUR CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──────
+
+function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsLoaded, widths, isLast, rowHeight }) {
+  const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
+  const cellBase = {
+    height: rowHeight, padding: '0 8px', cursor: 'pointer',
+    borderBottom: '0.5px solid rgba(255,255,255,0.07)',
+    fontSize: 12, color: 'var(--text-secondary)',
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    verticalAlign: 'middle',
+  }
+  const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
+  const groupBorder = '2px solid rgba(255,255,255,0.18)'
+
+  return (
+    <>
+      <td
+        onClick={onOpen}
+        style={{ ...cellBase, position: 'relative', width: widths.city, minWidth: widths.city, borderRight: innerBorder, zIndex: isActive ? 1000 : 'auto' }}>
+        {event?.city || ''}
+        {isActive && (
+          <EventPopover event={event} venues={venues} mapsLoaded={mapsLoaded} onSave={onSave} onClose={onClose} />
+        )}
+      </td>
+      <td onClick={onOpen} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
+        {event?.venue_name || ''}
+      </td>
+      <td onClick={onOpen} style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder, textAlign: 'center' }}>
+        {statusStyle && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
+            {statusLabel(event.status)}
+          </div>
+        )}
+      </td>
+      <td onClick={onOpen} style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder, textAlign: 'center' }}>
+        {event?.booking_note ? (
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', display: 'inline-block' }} />
+        ) : null}
+      </td>
+    </>
+  )
+}
+
+// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
+const WEEK_W = 44
+const HOLIDAY_W = 160
+const SAT_W = 100
+const SUN_W = 100
+
+const CITY_W = 110
+const VENUE_W = 160
+const STATUS_W = 110
+const NOTE_W = 50
+
+const H1 = 40
+const H2 = 34
+const ROW_H = 36
+
+const HDR_BG = '#0a1628'
+const STICKY_BG = 'rgba(5,14,28,1)'
+const B_INNER = '0.5px solid rgba(255,255,255,0.07)'
+const B_HEADER_BOTTOM = '2px solid rgba(255,255,255,0.18)'
+const B_LEFT_COL = '2px solid rgba(255,255,255,0.18)'
+const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.18)'
+
+export default function BookingPage() {
+  const [tours, setTours] = useState([])
+  const [events, setEvents] = useState([])
+  const [venues, setVenues] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [year, setYear] = useState(2026)
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+  const [activeCell, setActiveCell] = useState(null)
+  const [holidayOverrides, setHolidayOverrides] = useState({})
+
+  // Load Google Maps script (same pattern as app/venues/new/page.js)
+  useEffect(() => {
+    if (window.google) { setMapsLoaded(true); return }
+    const existing = document.querySelector('script[data-gmaps]')
+    if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.async = true
+    script.dataset.gmaps = 'true'
+    script.onload = () => setMapsLoaded(true)
+    document.head.appendChild(script)
+  }, [])
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      const res = await fetch('/api/booking')
+      const data = await res.json()
+      setTours(data.tours || [])
+      setEvents(data.events || [])
+      setVenues(data.venues || [])
+      setLoading(false)
+    }
+    fetchAll()
+  }, [])
+
+  // Manual holiday overrides persist per-year in localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('booking_holidays_' + year)
+      setHolidayOverrides(raw ? JSON.parse(raw) : {})
+    } catch {
+      setHolidayOverrides({})
+    }
+  }, [year])
+
+  const saveHolidayOverride = (saturday, text) => {
+    setHolidayOverrides(prev => {
+      const next = { ...prev, [saturday]: text }
+      try { localStorage.setItem('booking_holidays_' + year, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  // Years available in the dropdown — always includes 2026
+  const yearsSet = new Set([2026])
+  events.forEach(ev => {
+    const sat = getEventSaturday(ev)
+    if (sat) yearsSet.add(new Date(sat + 'T00:00:00').getFullYear())
+  })
+  const years = [...yearsSet].sort((a, b) => a - b)
+
+  // Sat/Sun backbone for the selected year
+  const saturdays = getSaturdaysOfYear(year)
+  const satSet = new Set(saturdays)
+  const autoHolidays = buildHolidayMap(year, saturdays)
+  const rows = saturdays.map((sat, i) => ({
+    weekNum: i + 1,
+    saturday: sat,
+    sunday: addDays(sat, 1),
+    holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
+  }))
+
+  // Tours that have at least one event in the selected year
+  const tourIdsWithEvents = new Set(
+    events.filter(ev => satSet.has(getEventSaturday(ev))).map(ev => ev.tour_id)
+  )
+  const yearTours = tours
+    .filter(t => tourIdsWithEvents.has(t.id))
+    .sort((a, b) => {
+      const ai = tourOrderIndex(a)
+      const bi = tourOrderIndex(b)
+      if (ai !== bi) return ai - bi
+      return (a.name || '').localeCompare(b.name || '')
+    })
+
+  // Map of "tourId__saturday" -> event
+  const eventMap = {}
+  events.forEach(ev => {
+    const sat = getEventSaturday(ev)
+    if (!sat) return
+    eventMap[ev.tour_id + '__' + sat] = ev
+  })
+
+  const handleSaveCell = async (row, tour, existingEvent, formData) => {
+    const supabase = getSupabase()
+    if (existingEvent) {
+      const { data, error } = await supabase.from('events').update({
+        city: formData.city,
+        venue_name: formData.venue_name,
+        venue_id: formData.venue_id,
+        status: formData.status,
+        booking_note: formData.booking_note,
+      }).eq('id', existingEvent.id).select().single()
+      if (!error && data) {
+        setEvents(prev => prev.map(e => e.id === data.id ? data : e))
+      }
+    } else {
+      const { data, error } = await supabase.from('events').insert([{
+        tour_id: tour.id,
+        city: formData.city,
+        venue_name: formData.venue_name,
+        venue_id: formData.venue_id,
+        status: formData.status,
+        booking_note: formData.booking_note,
+        saturday_date: row.saturday,
+        sunday_date: row.sunday,
+        load_in_date: row.saturday,
+      }]).select().single()
+      if (!error && data) {
+        await supabase.from('show_list').insert([
+          { event_id: data.id, show_date: row.saturday },
+          { event_id: data.id, show_date: row.sunday },
+        ])
+        setEvents(prev => [...prev, data])
+      }
+    }
+    setActiveCell(null)
+  }
+
+  const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
+
+  const leftThStyle = (left, width, top) => ({
+    position: 'sticky', top, left, zIndex: 60, width, minWidth: width,
+    background: HDR_BG, padding: '0 10px', textAlign: 'left', verticalAlign: 'middle',
+    fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em',
+    borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
+  })
+
+  if (loading) return (
+    <div style={{ height: '100vh', background: 'var(--bg)' }}>
+      <TopNav />
+      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading booking grid...</div>
+    </div>
+  )
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
+      <TopNav />
+
+      <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 12px', borderBottom: '0.5px solid var(--glass-border)', background: 'var(--bg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>Booking</div>
+          <select
+            value={year}
+            onChange={e => setYear(Number(e.target.value))}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none' }}>
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {yearTours.length === 0 ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>No tours scheduled for {year}</div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
+            <thead>
+              <tr>
+                <th style={leftThStyle(0, WEEK_W, 0)} />
+                <th style={leftThStyle(WEEK_W, HOLIDAY_W, 0)} />
+                <th style={leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, 0)} />
+                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, 0), borderRight: B_LEFT_COL }} />
+                {yearTours.map((tour, ti) => (
+                  <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: HDR_BG, borderBottom: B_INNER, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--gold)' }}>
+                    {tour.name}
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                <th style={{ ...leftThStyle(0, WEEK_W, H1), top: H1 }}>Wk</th>
+                <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W, H1), top: H1 }}>Holiday</th>
+                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, H1), top: H1 }}>Sat</th>
+                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, H1), top: H1, borderRight: B_LEFT_COL }}>Sun</th>
+                {yearTours.map((tour, ti) => (
+                  <React.Fragment key={tour.id}>
+                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: CITY_W, minWidth: CITY_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</th>
+                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: VENUE_W, minWidth: VENUE_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</th>
+                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: STATUS_W, minWidth: STATUS_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Status</th>
+                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: NOTE_W, minWidth: NOTE_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, padding: '0 4px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Note</th>
+                  </React.Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(row => (
+                <tr key={row.saturday}>
+                  <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle' }}>
+                    {row.weekNum}
+                  </td>
+                  <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', verticalAlign: 'middle' }}>
+                    <HolidayCell value={row.holiday} onSave={(text) => saveHolidayOverride(row.saturday, text)} />
+                  </td>
+                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    {fmtDay(row.saturday, 'Sat')}
+                  </td>
+                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    {fmtDay(row.sunday, 'Sun')}
+                  </td>
+                  {yearTours.map((tour, ti) => {
+                    const event = eventMap[tour.id + '__' + row.saturday]
+                    const cellKey = row.saturday + '__' + tour.id
+                    const isActive = activeCell === cellKey
+                    return (
+                      <TourCellGroup
+                        key={tour.id}
+                        event={event}
+                        isActive={isActive}
+                        onOpen={() => setActiveCell(isActive ? null : cellKey)}
+                        onClose={() => setActiveCell(null)}
+                        onSave={(formData) => handleSaveCell(row, tour, event, formData)}
+                        venues={venues}
+                        mapsLoaded={mapsLoaded}
+                        widths={widths}
+                        isLast={ti === yearTours.length - 1}
+                        rowHeight={ROW_H}
+                      />
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
