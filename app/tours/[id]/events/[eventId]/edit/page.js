@@ -15,10 +15,12 @@ export default function EditEvent() {
   const [venues, setVenues] = useState([])
   const [venueSearch, setVenueSearch] = useState('')
   const [showVenueList, setShowVenueList] = useState(false)
+  const [venueActiveIndex, setVenueActiveIndex] = useState(-1)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [allCountries, setAllCountries] = useState([])
   const [countrySuggestions, setCountrySuggestions] = useState([])
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const [countryActiveIndex, setCountryActiveIndex] = useState(-1)
   const countryRef = useRef(null)
   const [form, setForm] = useState({
     city: '',
@@ -76,6 +78,7 @@ export default function EditEvent() {
 
   const handleCountryChange = (val) => {
     set('country', val)
+    setCountryActiveIndex(-1)
     if (val.trim().length > 0) {
       const filtered = allCountries.filter(c => c.toLowerCase().startsWith(val.toLowerCase()))
       setCountrySuggestions(filtered)
@@ -83,6 +86,14 @@ export default function EditEvent() {
     } else {
       setShowCountrySuggestions(false)
     }
+  }
+
+  const handleCountryKeyDown = (e) => {
+    if (!showCountrySuggestions) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setCountryActiveIndex(i => Math.min(i + 1, countrySuggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setCountryActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && countryActiveIndex >= 0) { e.preventDefault(); set('country', countrySuggestions[countryActiveIndex]); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }
+    else if (e.key === 'Escape') { setShowCountrySuggestions(false); setCountryActiveIndex(-1) }
   }
 
   const filteredVenues = venues.filter(v =>
@@ -102,6 +113,15 @@ export default function EditEvent() {
     }))
     setVenueSearch(venue.name)
     setShowVenueList(false)
+    setVenueActiveIndex(-1)
+  }
+
+  const handleVenueKeyDown = (e) => {
+    if (!showVenueList || filteredVenues.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setVenueActiveIndex(i => Math.min(i + 1, filteredVenues.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setVenueActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && venueActiveIndex >= 0) { e.preventDefault(); handleSelectVenue(filteredVenues[venueActiveIndex]) }
+    else if (e.key === 'Escape') { setShowVenueList(false); setVenueActiveIndex(-1) }
   }
 
   const handleClearVenue = () => {
@@ -180,18 +200,19 @@ export default function EditEvent() {
               <div style={{ position: 'relative' }}>
                 <input style={inputStyle} placeholder="Search venues or leave blank to enter manually..."
                   value={venueSearch}
-                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true) }}
+                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true); setVenueActiveIndex(-1) }}
                   onFocus={() => setShowVenueList(true)}
                   onBlur={() => setTimeout(() => setShowVenueList(false), 150)}
+                  onKeyDown={handleVenueKeyDown}
                 />
                 {showVenueList && filteredVenues.length > 0 && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                    {filteredVenues.map(venue => (
+                    {filteredVenues.map((venue, i) => (
                       <div key={venue.id} onMouseDown={() => handleSelectVenue(venue)}
-                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <div style={{ fontSize: 14, fontWeight: 500 }}>{venue.name}</div>
+                        onMouseEnter={() => setVenueActiveIndex(i)}
+                        onMouseLeave={() => setVenueActiveIndex(-1)}
+                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
                       </div>
                     ))}
@@ -217,14 +238,15 @@ export default function EditEvent() {
                 onChange={e => handleCountryChange(e.target.value)}
                 onFocus={() => { if (form.country.trim().length > 0 && countrySuggestions.length > 0) setShowCountrySuggestions(true) }}
                 onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
+                onKeyDown={handleCountryKeyDown}
               />
               {showCountrySuggestions && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                  {countrySuggestions.map(c => (
-                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false) }}
-                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  {countrySuggestions.map((c, i) => (
+                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }}
+                      onMouseEnter={() => setCountryActiveIndex(i)}
+                      onMouseLeave={() => setCountryActiveIndex(-1)}
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
                       {c}
                     </div>
                   ))}

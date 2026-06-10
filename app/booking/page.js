@@ -98,6 +98,28 @@ function formatCityState(ev) {
   return ev.city || ''
 }
 
+// Ensure show_list rows for an event match its saturday/sunday weekend dates
+async function syncShowDates(supabase, eventId, saturday, sunday) {
+  const { data: existing } = await supabase
+    .from('show_list')
+    .select('id, show_date')
+    .eq('event_id', eventId)
+    .order('show_date', { ascending: true })
+
+  if (!existing || existing.length === 0) {
+    await supabase.from('show_list').insert([
+      { event_id: eventId, show_date: saturday },
+      { event_id: eventId, show_date: sunday },
+    ])
+  } else if (existing.length === 1) {
+    await supabase.from('show_list').update({ show_date: saturday }).eq('id', existing[0].id)
+    await supabase.from('show_list').insert([{ event_id: eventId, show_date: sunday }])
+  } else {
+    await supabase.from('show_list').update({ show_date: saturday }).eq('id', existing[0].id)
+    await supabase.from('show_list').update({ show_date: sunday }).eq('id', existing[existing.length - 1].id)
+  }
+}
+
 // ── HOLIDAYS ──────────────────────────────────────────────────────────────────
 
 function nthWeekday(year, month, weekday, n) {
@@ -166,53 +188,96 @@ const labelStyle = {
   letterSpacing: '0.06em', marginBottom: 4, display: 'block',
 }
 
-// ── PLACES AUTOCOMPLETE (same pattern as app/venues/new/page.js) ──────────────
+// ── VENUE PICKER (DB search → Google Places fallback → inline create) ─────────
 
-function PlacesAutocomplete({ value, onChange, onSelect, placeholder }) {
-  const [suggestions, setSuggestions] = useState([])
+function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChange }) {
+  const [query, setQuery] = useState(value || '')
   const [show, setShow] = useState(false)
+  const [mode, setMode] = useState('search') // 'search' | 'google' | 'create'
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [googleResults, setGoogleResults] = useState([])
   const [sessionToken, setSessionToken] = useState(null)
   const ref = useRef(null)
+
+  // Inline create-venue form state
+  const [newVenue, setNewVenue] = useState(null)
+  const [savingVenue, setSavingVenue] = useState(false)
+  const [venueError, setVenueError] = useState('')
+  const [placeSuggestions, setPlaceSuggestions] = useState([])
+  const [showPlaceSuggestions, setShowPlaceSuggestions] = useState(false)
+  const [placeActiveIndex, setPlaceActiveIndex] = useState(-1)
   const debounceRef = useRef(null)
 
+  useEffect(() => { setQuery(value || '') }, [value])
+
   useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setShow(false) }
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setShow(false)
+        if (mode !== 'create') setMode('search')
+      }
+    }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  }, [mode])
 
   useEffect(() => {
-    if (window.google && !sessionToken) {
+    if (mapsLoaded && window.google && !sessionToken) {
       setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
     }
-  }, [])
+  }, [mapsLoaded, sessionToken])
 
-  const fetchSuggestions = useCallback((input) => {
-    if (!input || input.length < 2 || !window.google) { setSuggestions([]); return }
+  const dbResults = query.trim().length > 0
+    ? venues.filter(v =>
+        v.name?.toLowerCase().includes(query.toLowerCase()) ||
+        v.city?.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 6)
+    : []
+
+  const showGoogleOption = query.trim().length > 0
+  const searchOptions = [
+    ...dbResults.map(v => ({ type: 'db', venue: v })),
+    ...(showGoogleOption ? [{ type: 'google-search' }] : []),
+    { type: 'create-new' },
+  ]
+
+  const handleQueryChange = (e) => {
+    const val = e.target.value
+    setQuery(val)
+    onChange({ venue_name: val, city, state, venue_id: null })
+    setMode('search')
+    setGoogleResults([])
+    setActiveIndex(-1)
+    setShow(true)
+  }
+
+  const handleSelectDbVenue = (venue) => {
+    setQuery(venue.name)
+    onChange({ venue_name: venue.name, city: venue.city || city, state: venue.state || state, venue_id: venue.id })
+    setShow(false)
+    setMode('search')
+    setActiveIndex(-1)
+  }
+
+  const fetchGoogleResults = useCallback((input) => {
+    if (!input || !window.google) { setGoogleResults([]); return }
     const service = new window.google.maps.places.AutocompleteService()
     service.getPlacePredictions(
       { input, types: ['establishment'], sessionToken },
       (predictions, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-          setSuggestions(predictions)
-          setShow(true)
-        } else {
-          setSuggestions([])
-        }
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) setGoogleResults(predictions)
+        else setGoogleResults([])
       }
     )
   }, [sessionToken])
 
-  const handleChange = (e) => {
-    const val = e.target.value
-    onChange(val)
+  const handleSearchGoogle = () => {
+    setMode('google')
     setActiveIndex(-1)
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 250)
+    fetchGoogleResults(query)
   }
 
-  const handleSelect = (prediction) => {
+  const handleSelectGooglePlace = (prediction) => {
     if (!window.google) return
     const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
     placesService.getDetails(
@@ -220,48 +285,242 @@ function PlacesAutocomplete({ value, onChange, onSelect, placeholder }) {
       (place, status) => {
         if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
         const get = (type) => place.address_components?.find(c => c.types.includes(type))
-        const city = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
-        const state = get('administrative_area_level_1')?.short_name || ''
-        const country = get('country')?.long_name || ''
-        onSelect({
-          name: place.name || '',
-          city, state, country,
-          place_id: place.place_id || '',
-        })
+        const placeCity = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
+        const placeState = get('administrative_area_level_1')?.short_name || ''
+        setQuery(place.name || '')
+        onChange({ venue_name: place.name || '', city: placeCity || city, state: placeState || state, venue_id: null })
         setShow(false)
-        setSuggestions([])
+        setMode('search')
+        setGoogleResults([])
+        setActiveIndex(-1)
         setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
       }
     )
   }
 
+  const handleOpenCreate = () => {
+    setNewVenue({ name: query, address: '', city: '', state: '', country: '', full_address: '', place_id: '', latitude: null, longitude: null, zip: '', region: '' })
+    setVenueError('')
+    setMode('create')
+    setShow(false)
+    setActiveIndex(-1)
+  }
+
+  const fetchPlaceSuggestions = useCallback((input) => {
+    if (!input || input.length < 2 || !window.google) { setPlaceSuggestions([]); return }
+    const service = new window.google.maps.places.AutocompleteService()
+    service.getPlacePredictions(
+      { input, types: ['establishment'], sessionToken },
+      (predictions, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+          setPlaceSuggestions(predictions)
+          setShowPlaceSuggestions(true)
+        } else {
+          setPlaceSuggestions([])
+        }
+      }
+    )
+  }, [sessionToken])
+
+  const handlePlaceNameChange = (e) => {
+    const val = e.target.value
+    setNewVenue(prev => ({ ...prev, name: val }))
+    setPlaceActiveIndex(-1)
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchPlaceSuggestions(val), 250)
+  }
+
+  const handlePlaceSelect = (prediction) => {
+    if (!window.google) return
+    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
+    placesService.getDetails(
+      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'geometry', 'place_id'] },
+      (place, status) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
+        const get = (type) => place.address_components?.find(c => c.types.includes(type))
+        const streetNum = get('street_number')?.long_name || ''
+        const route = get('route')?.long_name || ''
+        const placeCity = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
+        const placeState = get('administrative_area_level_1')?.short_name || ''
+        const placeCountry = get('country')?.long_name || ''
+        const zip = get('postal_code')?.long_name || ''
+        setNewVenue({
+          name: place.name || '',
+          address: [streetNum, route].filter(Boolean).join(' '),
+          city: placeCity, state: placeState, country: placeCountry, zip,
+          full_address: place.formatted_address || '',
+          place_id: place.place_id || '',
+          latitude: place.geometry?.location?.lat() || null,
+          longitude: place.geometry?.location?.lng() || null,
+          region: '',
+        })
+        setShowPlaceSuggestions(false)
+        setPlaceSuggestions([])
+        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
+      }
+    )
+  }
+
+  const handlePlaceKeyDown = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setPlaceActiveIndex(i => Math.min(i + 1, placeSuggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setPlaceActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && placeActiveIndex >= 0) { e.preventDefault(); handlePlaceSelect(placeSuggestions[placeActiveIndex]) }
+    else if (e.key === 'Escape') { setShowPlaceSuggestions(false); setPlaceActiveIndex(-1) }
+  }
+
+  const handleCancelCreate = () => {
+    setMode('search')
+    setNewVenue(null)
+    setVenueError('')
+  }
+
+  const handleSaveNewVenue = async () => {
+    if (!newVenue.name.trim()) { setVenueError('Venue name is required'); return }
+    setSavingVenue(true)
+    setVenueError('')
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('venues').insert([newVenue]).select().single()
+    if (error) { setVenueError(error.message); setSavingVenue(false); return }
+    setVenues(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    setQuery(data.name)
+    onChange({ venue_name: data.name, city: data.city || city, state: data.state || state, venue_id: data.id })
+    setMode('search')
+    setNewVenue(null)
+    setSavingVenue(false)
+  }
+
   const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, suggestions.length - 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
-    else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelect(suggestions[activeIndex]) }
-    else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+    if (mode === 'search') {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setShow(true); setActiveIndex(i => Math.min(i + 1, searchOptions.length - 1)) }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+      else if (e.key === 'Enter') {
+        if (!show || activeIndex < 0) return
+        e.preventDefault()
+        const opt = searchOptions[activeIndex]
+        if (opt.type === 'db') handleSelectDbVenue(opt.venue)
+        else if (opt.type === 'google-search') handleSearchGoogle()
+        else if (opt.type === 'create-new') handleOpenCreate()
+      } else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
+    } else if (mode === 'google') {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, googleResults.length - 1)) }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+      else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelectGooglePlace(googleResults[activeIndex]) }
+      else if (e.key === 'Escape') { setMode('search'); setGoogleResults([]); setActiveIndex(-1) }
+    }
+  }
+
+  const optionStyle = (active) => ({
+    padding: '8px 10px', cursor: 'pointer', fontSize: 12,
+    borderBottom: '0.5px solid var(--glass-border)',
+    background: active ? 'rgba(51,255,153,0.08)' : 'transparent',
+    color: active ? 'var(--mint)' : 'var(--text-primary)',
+  })
+
+  if (mode === 'create') {
+    return (
+      <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mint)', marginBottom: 8 }}>New Venue</div>
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <label style={labelStyle}>Venue Name *</label>
+          <input
+            style={inputStyle}
+            placeholder="Search venue name..."
+            value={newVenue?.name || ''}
+            onChange={handlePlaceNameChange}
+            onKeyDown={handlePlaceKeyDown}
+            onFocus={() => placeSuggestions.length > 0 && setShowPlaceSuggestions(true)}
+            autoComplete="off"
+          />
+          {showPlaceSuggestions && placeSuggestions.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 160, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+              {placeSuggestions.map((p, i) => (
+                <div key={p.place_id}
+                  onMouseDown={() => handlePlaceSelect(p)}
+                  onMouseEnter={() => setPlaceActiveIndex(i)}
+                  onMouseLeave={() => setPlaceActiveIndex(-1)}
+                  style={optionStyle(i === placeActiveIndex)}>
+                  <div style={{ fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <div style={{ flex: 2 }}>
+            <label style={labelStyle}>City</label>
+            <input style={inputStyle} placeholder="City" value={newVenue?.city || ''} onChange={e => setNewVenue(p => ({ ...p, city: e.target.value }))} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>State</label>
+            <input style={inputStyle} placeholder="ST" value={newVenue?.state || ''} onChange={e => setNewVenue(p => ({ ...p, state: e.target.value }))} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <label style={labelStyle}>Country</label>
+          <input style={inputStyle} placeholder="Country" value={newVenue?.country || ''} onChange={e => setNewVenue(p => ({ ...p, country: e.target.value }))} />
+        </div>
+        {venueError && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{venueError}</div>}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={handleCancelCreate} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+          <button className="btn-primary" onClick={handleSaveNewVenue} disabled={savingVenue} style={{ fontSize: 12, padding: '6px 14px' }}>{savingVenue ? 'Saving...' : 'Save & Select'}</button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <input
         style={inputStyle}
-        placeholder={placeholder}
-        value={value}
-        onChange={handleChange}
-        onFocus={() => suggestions.length > 0 && setShow(true)}
+        placeholder="Search venue..."
+        value={query}
+        onChange={handleQueryChange}
+        onFocus={() => setShow(true)}
         onKeyDown={handleKeyDown}
         autoComplete="off"
       />
-      {show && suggestions.length > 0 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
-          {suggestions.map((p, i) => (
-            <div key={p.place_id}
-              onMouseDown={() => handleSelect(p)}
+      {show && mode === 'search' && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {dbResults.map((v, i) => (
+            <div key={v.id}
+              onMouseDown={() => handleSelectDbVenue(v)}
               onMouseEnter={() => setActiveIndex(i)}
               onMouseLeave={() => setActiveIndex(-1)}
-              style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
-              <div style={{ color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)', fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
+              style={optionStyle(i === activeIndex)}>
+              <div style={{ fontWeight: 500 }}>{v.name}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{[v.city, v.state].filter(Boolean).join(', ')}</div>
+            </div>
+          ))}
+          {showGoogleOption && (
+            <div
+              onMouseDown={handleSearchGoogle}
+              onMouseEnter={() => setActiveIndex(dbResults.length)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={optionStyle(dbResults.length === activeIndex)}>
+              Search Google Places for &quot;{query}&quot;
+            </div>
+          )}
+          <div
+            onMouseDown={handleOpenCreate}
+            onMouseEnter={() => setActiveIndex(searchOptions.length - 1)}
+            onMouseLeave={() => setActiveIndex(-1)}
+            style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--mint)', background: searchOptions.length - 1 === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+            + Create New Venue
+          </div>
+        </div>
+      )}
+      {show && mode === 'google' && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {googleResults.length === 0 ? (
+            <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Searching Google Places...</div>
+          ) : googleResults.map((p, i) => (
+            <div key={p.place_id}
+              onMouseDown={() => handleSelectGooglePlace(p)}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex(-1)}
+              style={optionStyle(i === activeIndex)}>
+              <div style={{ fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
             </div>
           ))}
@@ -273,7 +532,7 @@ function PlacesAutocomplete({ value, onChange, onSelect, placeholder }) {
 
 // ── EVENT POPOVER (add / edit a booking cell) ──────────────────────────────────
 
-function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose }) {
+function EventPopover({ anchorRef, event, venues, setVenues, mapsLoaded, onSave, onDelete, onClose }) {
   const [venueName, setVenueName] = useState(event?.venue_name || '')
   const [city, setCity] = useState(event?.city || '')
   const [state, setState] = useState(event?.state || '')
@@ -281,6 +540,8 @@ function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose })
   const [status, setStatus] = useState(event?.status || 'tentative')
   const [note, setNote] = useState(event?.booking_note || '')
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [pos, setPos] = useState(null)
   const ref = useRef(null)
 
@@ -312,18 +573,23 @@ function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose })
     }
   }, [onClose, anchorRef])
 
-  const handlePlaceSelect = (place) => {
-    setVenueName(place.name)
-    if (place.city) setCity(place.city)
-    if (place.state) setState(place.state)
-    const matched = venues.find(v => v.place_id && v.place_id === place.place_id)
-    setVenueId(matched ? matched.id : null)
+  const handleVenueChange = ({ venue_name, city: newCity, state: newState, venue_id }) => {
+    setVenueName(venue_name)
+    if (newCity) setCity(newCity)
+    if (newState) setState(newState)
+    setVenueId(venue_id)
   }
 
   const handleSave = async () => {
     setSaving(true)
     await onSave({ venue_name: venueName, city, state, venue_id: venueId, status, booking_note: note })
     setSaving(false)
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    await onDelete(event)
+    setDeleting(false)
   }
 
   if (!pos) return null
@@ -335,7 +601,7 @@ function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose })
       <div>
         <label style={labelStyle}>Venue</label>
         {mapsLoaded ? (
-          <PlacesAutocomplete value={venueName} onChange={setVenueName} onSelect={handlePlaceSelect} placeholder="Search venue..." />
+          <VenuePicker value={venueName} onChange={handleVenueChange} city={city} state={state} venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded} />
         ) : (
           <input style={inputStyle} value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="Venue name" />
         )}
@@ -360,10 +626,25 @@ function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose })
         <label style={labelStyle}>Note</label>
         <textarea style={{ ...inputStyle, height: 64, resize: 'vertical' }} value={note} onChange={e => setNote(e.target.value)} placeholder="Booking note..." />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 2 }}>
-        <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
-        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
-      </div>
+      {confirmingDelete ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '0.5px solid var(--glass-border)' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Are you sure? This cannot be undone.</div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button onClick={() => setConfirmingDelete(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleDelete} disabled={deleting} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          {event ? (
+            <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
+          ) : <div />}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   )
@@ -390,13 +671,13 @@ function HolidayCell({ value, onSave }) {
           if (e.key === 'Enter') commit()
           else if (e.key === 'Escape') { setText(value); setEditing(false) }
         }}
-        style={{ ...inputStyle, fontSize: 12, padding: '4px 6px' }}
+        style={{ ...inputStyle, fontSize: 12, padding: '4px 6px', textAlign: 'center' }}
       />
     )
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -404,7 +685,7 @@ function HolidayCell({ value, onSave }) {
 
 // ── TOUR CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──────
 
-function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsLoaded, widths, isLast, rowHeight }) {
+function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, venues, setVenues, mapsLoaded, widths, isLast, rowHeight }) {
   const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
   const cellRef = useRef(null)
   const cellBase = {
@@ -425,7 +706,7 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsL
         style={{ ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder }}>
         {formatCityState(event)}
         {isActive && (
-          <EventPopover anchorRef={cellRef} event={event} venues={venues} mapsLoaded={mapsLoaded} onSave={onSave} onClose={onClose} />
+          <EventPopover anchorRef={cellRef} event={event} venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded} onSave={onSave} onDelete={onDelete} onClose={onClose} />
         )}
       </td>
       <td onClick={onOpen} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
@@ -501,6 +782,22 @@ export default function BookingPage() {
       setEvents(data.events || [])
       setVenues(data.venues || [])
       setLoading(false)
+
+      // Backfill show_list rows for events that have weekend dates but no shows yet
+      const showList = data.showList || []
+      const eventsWithShows = new Set(showList.map(s => s.event_id))
+      const toBackfill = (data.events || []).filter(ev =>
+        ev.saturday_date && ev.sunday_date && !eventsWithShows.has(ev.id)
+      )
+      if (toBackfill.length > 0) {
+        const supabase = getSupabase()
+        for (const ev of toBackfill) {
+          await supabase.from('show_list').insert([
+            { event_id: ev.id, show_date: ev.saturday_date },
+            { event_id: ev.id, show_date: ev.sunday_date },
+          ])
+        }
+      }
     }
     fetchAll()
   }, [])
@@ -573,8 +870,11 @@ export default function BookingPage() {
         venue_id: formData.venue_id,
         status: formData.status,
         booking_note: formData.booking_note,
+        saturday_date: row.saturday,
+        sunday_date: row.sunday,
       }).eq('id', existingEvent.id).select().single()
       if (!error && data) {
+        await syncShowDates(supabase, data.id, row.saturday, row.sunday)
         setEvents(prev => prev.map(e => e.id === data.id ? data : e))
       }
     } else {
@@ -591,12 +891,20 @@ export default function BookingPage() {
         load_in_date: row.saturday,
       }]).select().single()
       if (!error && data) {
-        await supabase.from('show_list').insert([
-          { event_id: data.id, show_date: row.saturday },
-          { event_id: data.id, show_date: row.sunday },
-        ])
+        await syncShowDates(supabase, data.id, row.saturday, row.sunday)
         setEvents(prev => [...prev, data])
       }
+    }
+    setActiveCell(null)
+  }
+
+  const handleDeleteCell = async (existingEvent) => {
+    if (!existingEvent) return
+    const supabase = getSupabase()
+    await supabase.from('show_list').delete().eq('event_id', existingEvent.id)
+    const { error } = await supabase.from('events').delete().eq('id', existingEvent.id)
+    if (!error) {
+      setEvents(prev => prev.filter(e => e.id !== existingEvent.id))
     }
     setActiveCell(null)
   }
@@ -657,7 +965,7 @@ export default function BookingPage() {
               </tr>
               <tr>
                 <th style={{ ...leftThStyle(0, WEEK_W, H1), top: H1, textAlign: 'center' }}>Wk</th>
-                <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W, H1), top: H1 }}>Holiday</th>
+                <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W, H1), top: H1, textAlign: 'center' }}>Holiday</th>
                 <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, H1), top: H1, textAlign: 'center' }}>Sat</th>
                 <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, H1), top: H1, textAlign: 'center', borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => (
@@ -697,7 +1005,9 @@ export default function BookingPage() {
                         onOpen={() => setActiveCell(isActive ? null : cellKey)}
                         onClose={() => setActiveCell(null)}
                         onSave={(formData) => handleSaveCell(row, tour, event, formData)}
+                        onDelete={() => handleDeleteCell(event)}
                         venues={venues}
+                        setVenues={setVenues}
                         mapsLoaded={mapsLoaded}
                         widths={widths}
                         isLast={ti === yearTours.length - 1}

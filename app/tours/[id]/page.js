@@ -6,6 +6,15 @@ import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 
+// Determine the date that decides whether an event is "past": latest show date,
+// falling back to sunday_date, then saturday_date, then load_in_date.
+function getEventPastDate(event, shows) {
+  if (shows && shows.length > 0) return shows[shows.length - 1].show_date
+  if (event.sunday_date) return event.sunday_date
+  if (event.saturday_date) return event.saturday_date
+  return event.load_in_date
+}
+
 const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
 
 const STATUS_STYLES = {
@@ -265,9 +274,16 @@ export default function TourPage() {
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
 
-  // Split events into upcoming and past
-  const upcomingEvents = events.filter(e => !e.load_in_date || e.load_in_date >= today)
-  const pastEvents = events.filter(e => e.load_in_date && e.load_in_date < today)
+  // Split events into upcoming and past, using the latest known date for each event
+  // (show dates > weekend dates > load-in date) to decide if it's already happened
+  const upcomingEvents = events.filter(e => {
+    const pastDate = getEventPastDate(e, eventShows[e.id])
+    return !pastDate || pastDate >= today
+  })
+  const pastEvents = events.filter(e => {
+    const pastDate = getEventPastDate(e, eventShows[e.id])
+    return pastDate && pastDate < today
+  })
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>

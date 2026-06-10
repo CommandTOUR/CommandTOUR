@@ -14,10 +14,12 @@ export default function NewEvent() {
   const [venues, setVenues] = useState([])
   const [venueSearch, setVenueSearch] = useState('')
   const [showVenueList, setShowVenueList] = useState(false)
+  const [venueActiveIndex, setVenueActiveIndex] = useState(-1)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [countrySuggestions, setCountrySuggestions] = useState([])
   const [allCountries, setAllCountries] = useState([])
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
+  const [countryActiveIndex, setCountryActiveIndex] = useState(-1)
   const [mapsLoaded, setMapsLoaded] = useState(false)
 
   // Inline create venue state
@@ -42,6 +44,8 @@ export default function NewEvent() {
     state: '', event_type: '', status: 'tentative',
     load_in_date: '', load_out_date: '', notes: '',
   })
+
+  const [shows, setShows] = useState([{ show_date: '', show_time: '' }])
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
 
@@ -84,6 +88,7 @@ export default function NewEvent() {
 
   const handleCountryChange = (val) => {
     set('country', val)
+    setCountryActiveIndex(-1)
     if (val.trim().length > 0) {
       const filtered = allCountries.filter(c => c.toLowerCase().startsWith(val.toLowerCase()))
       setCountrySuggestions(filtered)
@@ -91,6 +96,14 @@ export default function NewEvent() {
     } else {
       setShowCountrySuggestions(false)
     }
+  }
+
+  const handleCountryKeyDown = (e) => {
+    if (!showCountrySuggestions) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setCountryActiveIndex(i => Math.min(i + 1, countrySuggestions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setCountryActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter' && countryActiveIndex >= 0) { e.preventDefault(); set('country', countrySuggestions[countryActiveIndex]); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }
+    else if (e.key === 'Escape') { setShowCountrySuggestions(false); setCountryActiveIndex(-1) }
   }
 
   const filteredVenues = venues.filter(v =>
@@ -110,6 +123,21 @@ export default function NewEvent() {
     }))
     setVenueSearch(venue.name)
     setShowVenueList(false)
+    setVenueActiveIndex(-1)
+  }
+
+  const handleVenueKeyDown = (e) => {
+    if (!showVenueList) return
+    const optionsCount = filteredVenues.length + 1 // +1 for "Create New Venue"
+    if (e.key === 'ArrowDown') { e.preventDefault(); setVenueActiveIndex(i => Math.min(i + 1, optionsCount - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setVenueActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter') {
+      if (venueActiveIndex < 0) return
+      e.preventDefault()
+      if (venueActiveIndex < filteredVenues.length) handleSelectVenue(filteredVenues[venueActiveIndex])
+      else { setCreatingVenue(true); setShowVenueList(false); setVenueActiveIndex(-1) }
+    }
+    else if (e.key === 'Escape') { setShowVenueList(false); setVenueActiveIndex(-1) }
   }
 
   const handleClearVenue = () => {
@@ -196,6 +224,10 @@ export default function NewEvent() {
     setSavingVenue(false)
   }
 
+  const addShow = () => setShows(prev => [...prev, { show_date: '', show_time: '' }])
+  const removeShow = (i) => setShows(prev => prev.filter((_, idx) => idx !== i))
+  const updateShow = (i, key, val) => setShows(prev => prev.map((s, idx) => idx === i ? { ...s, [key]: val } : s))
+
   const handleSave = async () => {
     if (!form.city.trim()) { setError('City is required'); return }
     if (!form.load_in_date) { setError('Load-in date is required'); return }
@@ -209,9 +241,18 @@ export default function NewEvent() {
       load_in_date: form.load_in_date, notes: form.notes, tour_id: id,
     }
     if (extendedLoadOut && form.load_out_date) payload.load_out_date = form.load_out_date
-    const { error } = await supabase.from('events').insert([payload])
-    if (error) { setError(error.message); setSaving(false) }
-    else router.push(`/tours/${id}`)
+    const { data, error } = await supabase.from('events').insert([payload]).select().single()
+    if (error) { setError(error.message); setSaving(false); return }
+
+    const showRows = shows
+      .filter(s => s.show_date)
+      .map(s => ({ event_id: data.id, show_date: s.show_date, show_time: s.show_time || null, completed: false }))
+    if (showRows.length > 0) {
+      const { error: showError } = await supabase.from('show_list').insert(showRows)
+      if (showError) { setError(showError.message); setSaving(false); return }
+    }
+
+    router.push(`/tours/${id}`)
   }
 
   const inputStyle = {
@@ -326,27 +367,28 @@ export default function NewEvent() {
               <div style={{ position: 'relative' }}>
                 <input style={inputStyle} placeholder="Search venues or leave blank to enter manually..."
                   value={venueSearch}
-                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true) }}
+                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true); setVenueActiveIndex(-1) }}
                   onFocus={() => setShowVenueList(true)}
                   onBlur={() => setTimeout(() => setShowVenueList(false), 150)}
+                  onKeyDown={handleVenueKeyDown}
                 />
                 {showVenueList && (
                   <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 260, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                    {filteredVenues.map(venue => (
+                    {filteredVenues.map((venue, i) => (
                       <div key={venue.id} onMouseDown={() => handleSelectVenue(venue)}
-                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <div style={{ fontSize: 14, fontWeight: 500 }}>{venue.name}</div>
+                        onMouseEnter={() => setVenueActiveIndex(i)}
+                        onMouseLeave={() => setVenueActiveIndex(-1)}
+                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.country].filter(Boolean).join(', ')}</div>
                       </div>
                     ))}
                     {/* Create new venue option */}
                     <div
                       onMouseDown={() => { setCreatingVenue(true); setShowVenueList(false) }}
-                      style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.06)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      onMouseEnter={() => setVenueActiveIndex(filteredVenues.length)}
+                      onMouseLeave={() => setVenueActiveIndex(-1)}
+                      style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: filteredVenues.length === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
                       <span style={{ color: 'var(--mint)', fontSize: 16, lineHeight: 1 }}>+</span>
                       <span style={{ fontSize: 14, color: 'var(--mint)' }}>Create New Venue</span>
                     </div>
@@ -372,14 +414,15 @@ export default function NewEvent() {
                 onChange={e => handleCountryChange(e.target.value)}
                 onFocus={() => { if (form.country.trim().length > 0 && countrySuggestions.length > 0) setShowCountrySuggestions(true) }}
                 onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 150)}
+                onKeyDown={handleCountryKeyDown}
               />
               {showCountrySuggestions && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                  {countrySuggestions.map(c => (
-                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false) }}
-                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  {countrySuggestions.map((c, i) => (
+                    <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }}
+                      onMouseEnter={() => setCountryActiveIndex(i)}
+                      onMouseLeave={() => setCountryActiveIndex(-1)}
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
                       {c}
                     </div>
                   ))}
@@ -434,6 +477,27 @@ export default function NewEvent() {
                 <input style={inputStyle} type="date" value={form.load_out_date} onChange={e => set('load_out_date', e.target.value)} />
               </div>
             )}
+          </div>
+
+          {/* Shows */}
+          <div>
+            <label style={labelStyle}>Shows</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {shows.map((show, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <input style={{ ...inputStyle, flex: 2 }} type="date" value={show.show_date} onChange={e => updateShow(i, 'show_date', e.target.value)} />
+                  <input style={{ ...inputStyle, flex: 1 }} type="time" value={show.show_time} onChange={e => updateShow(i, 'show_time', e.target.value)} />
+                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                    ×
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={addShow} type="button" style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 10 }}>
+              + Add Show
+            </button>
           </div>
 
           {/* Notes */}
