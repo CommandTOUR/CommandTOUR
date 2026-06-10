@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 
@@ -89,6 +90,12 @@ function getEventSaturday(ev) {
   if (ev.saturday_date) return ev.saturday_date
   if (ev.load_in_date) return nextSaturdayOnOrAfter(ev.load_in_date)
   return null
+}
+
+function formatCityState(ev) {
+  if (!ev) return ''
+  if (ev.state) return `${ev.city || ''}, ${ev.state}`
+  return ev.city || ''
 }
 
 // ── HOLIDAYS ──────────────────────────────────────────────────────────────────
@@ -266,40 +273,65 @@ function PlacesAutocomplete({ value, onChange, onSelect, placeholder }) {
 
 // ── EVENT POPOVER (add / edit a booking cell) ──────────────────────────────────
 
-function EventPopover({ event, venues, mapsLoaded, onSave, onClose }) {
+function EventPopover({ anchorRef, event, venues, mapsLoaded, onSave, onClose }) {
   const [venueName, setVenueName] = useState(event?.venue_name || '')
   const [city, setCity] = useState(event?.city || '')
+  const [state, setState] = useState(event?.state || '')
   const [venueId, setVenueId] = useState(event?.venue_id || null)
   const [status, setStatus] = useState(event?.status || 'tentative')
   const [note, setNote] = useState(event?.booking_note || '')
   const [saving, setSaving] = useState(false)
+  const [pos, setPos] = useState(null)
   const ref = useRef(null)
+
+  // Anchor the popover (rendered into document.body) to the cell that opened it
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current
+    if (!anchor) return
+    const rect = anchor.getBoundingClientRect()
+    const width = 270
+    setPos({
+      top: rect.bottom + 4,
+      left: Math.min(rect.left, window.innerWidth - width - 12),
+    })
+  }, [anchorRef])
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && !anchorRef.current?.contains(e.target)) onClose()
+    }
+    const handleScroll = () => onClose()
     document.addEventListener('keydown', handleKey)
     document.addEventListener('mousedown', handleClick)
-    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
-  }, [onClose])
+    document.addEventListener('scroll', handleScroll, true)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [onClose, anchorRef])
 
   const handlePlaceSelect = (place) => {
     setVenueName(place.name)
     if (place.city) setCity(place.city)
+    if (place.state) setState(place.state)
     const matched = venues.find(v => v.place_id && v.place_id === place.place_id)
     setVenueId(matched ? matched.id : null)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    await onSave({ venue_name: venueName, city, venue_id: venueId, status, booking_note: note })
+    await onSave({ venue_name: venueName, city, state, venue_id: venueId, status, booking_note: note })
     setSaving(false)
   }
 
-  return (
+  if (!pos) return null
+
+  return createPortal(
     <div ref={ref}
       onClick={e => e.stopPropagation()}
-      style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, width: 270, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 4, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, cursor: 'default' }}>
+      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 1000, width: 270, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, cursor: 'default' }}>
       <div>
         <label style={labelStyle}>Venue</label>
         {mapsLoaded ? (
@@ -308,9 +340,15 @@ function EventPopover({ event, venues, mapsLoaded, onSave, onClose }) {
           <input style={inputStyle} value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="Venue name" />
         )}
       </div>
-      <div>
-        <label style={labelStyle}>City</label>
-        <input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 2 }}>
+          <label style={labelStyle}>City</label>
+          <input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={labelStyle}>State</label>
+          <input style={inputStyle} value={state} onChange={e => setState(e.target.value)} placeholder="ST" />
+        </div>
       </div>
       <div>
         <label style={labelStyle}>Status</label>
@@ -326,7 +364,8 @@ function EventPopover({ event, venues, mapsLoaded, onSave, onClose }) {
         <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
         <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -357,7 +396,7 @@ function HolidayCell({ value, onSave }) {
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
       {value || '—'}
     </div>
   )
@@ -367,12 +406,13 @@ function HolidayCell({ value, onSave }) {
 
 function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsLoaded, widths, isLast, rowHeight }) {
   const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
+  const cellRef = useRef(null)
   const cellBase = {
     height: rowHeight, padding: '0 8px', cursor: 'pointer',
     borderBottom: '0.5px solid rgba(255,255,255,0.07)',
     fontSize: 12, color: 'var(--text-secondary)',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    verticalAlign: 'middle',
+    verticalAlign: 'middle', textAlign: 'center',
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
   const groupBorder = '2px solid rgba(255,255,255,0.18)'
@@ -380,24 +420,25 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsL
   return (
     <>
       <td
+        ref={cellRef}
         onClick={onOpen}
-        style={{ ...cellBase, position: 'relative', width: widths.city, minWidth: widths.city, borderRight: innerBorder, zIndex: isActive ? 1000 : 'auto' }}>
-        {event?.city || ''}
+        style={{ ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder }}>
+        {formatCityState(event)}
         {isActive && (
-          <EventPopover event={event} venues={venues} mapsLoaded={mapsLoaded} onSave={onSave} onClose={onClose} />
+          <EventPopover anchorRef={cellRef} event={event} venues={venues} mapsLoaded={mapsLoaded} onSave={onSave} onClose={onClose} />
         )}
       </td>
       <td onClick={onOpen} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
         {event?.venue_name || ''}
       </td>
-      <td onClick={onOpen} style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder, textAlign: 'center' }}>
+      <td onClick={onOpen} style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder }}>
         {statusStyle && (
           <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
             {statusLabel(event.status)}
           </div>
         )}
       </td>
-      <td onClick={onOpen} style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder, textAlign: 'center' }}>
+      <td onClick={onOpen} style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder }}>
         {event?.booking_note ? (
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', display: 'inline-block' }} />
         ) : null}
@@ -409,7 +450,7 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, venues, mapsL
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 const WEEK_W = 44
-const HOLIDAY_W = 160
+const HOLIDAY_W = 120
 const SAT_W = 100
 const SUN_W = 100
 
@@ -527,6 +568,7 @@ export default function BookingPage() {
     if (existingEvent) {
       const { data, error } = await supabase.from('events').update({
         city: formData.city,
+        state: formData.state,
         venue_name: formData.venue_name,
         venue_id: formData.venue_id,
         status: formData.status,
@@ -539,6 +581,7 @@ export default function BookingPage() {
       const { data, error } = await supabase.from('events').insert([{
         tour_id: tour.id,
         city: formData.city,
+        state: formData.state,
         venue_name: formData.venue_name,
         venue_id: formData.venue_id,
         status: formData.status,
@@ -603,17 +646,20 @@ export default function BookingPage() {
                 <th style={leftThStyle(WEEK_W, HOLIDAY_W, 0)} />
                 <th style={leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, 0)} />
                 <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, 0), borderRight: B_LEFT_COL }} />
-                {yearTours.map((tour, ti) => (
-                  <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: HDR_BG, borderBottom: B_INNER, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--gold)' }}>
-                    {tour.name}
-                  </th>
-                ))}
+                {yearTours.map((tour, ti) => {
+                  const tourColor = tour.color || '#C9A84C'
+                  return (
+                    <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
+                      {tour.name}
+                    </th>
+                  )
+                })}
               </tr>
               <tr>
-                <th style={{ ...leftThStyle(0, WEEK_W, H1), top: H1 }}>Wk</th>
+                <th style={{ ...leftThStyle(0, WEEK_W, H1), top: H1, textAlign: 'center' }}>Wk</th>
                 <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W, H1), top: H1 }}>Holiday</th>
-                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, H1), top: H1 }}>Sat</th>
-                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, H1), top: H1, borderRight: B_LEFT_COL }}>Sun</th>
+                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, H1), top: H1, textAlign: 'center' }}>Sat</th>
+                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, H1), top: H1, textAlign: 'center', borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => (
                   <React.Fragment key={tour.id}>
                     <th style={{ position: 'sticky', top: H1, zIndex: 30, width: CITY_W, minWidth: CITY_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</th>
@@ -633,10 +679,10 @@ export default function BookingPage() {
                   <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', verticalAlign: 'middle' }}>
                     <HolidayCell value={row.holiday} onSave={(text) => saveHolidayOverride(row.saturday, text)} />
                   </td>
-                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                     {fmtDay(row.saturday, 'Sat')}
                   </td>
-                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                     {fmtDay(row.sunday, 'Sun')}
                   </td>
                   {yearTours.map((tour, ti) => {
