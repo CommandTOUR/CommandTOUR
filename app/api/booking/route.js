@@ -8,7 +8,7 @@ export async function GET() {
   )
 
   const [toursRes, eventsRes, venuesRes, showListRes] = await Promise.all([
-    supabase.from('tours').select('id, name, color, status, tour_type').order('name', { ascending: true }),
+    supabase.from('tours').select('id, name, color, status, tour_type, year').order('name', { ascending: true }),
     supabase.from('events').select('id, tour_id, city, state, country, venue_name, venue_id, status, booking_note, load_in_date, load_out_date, saturday_date, sunday_date'),
     supabase.from('venues').select('id, name, place_id, city, state, country'),
     supabase.from('show_list').select('id, event_id, show_date'),

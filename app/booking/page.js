@@ -99,28 +99,6 @@ function formatCityState(ev) {
   return ev.city || ''
 }
 
-// Ensure show_list rows for an event match its saturday/sunday weekend dates
-async function syncShowDates(supabase, eventId, saturday, sunday) {
-  const { data: existing } = await supabase
-    .from('show_list')
-    .select('id, show_date')
-    .eq('event_id', eventId)
-    .order('show_date', { ascending: true })
-
-  if (!existing || existing.length === 0) {
-    await supabase.from('show_list').insert([
-      { event_id: eventId, show_date: saturday },
-      { event_id: eventId, show_date: sunday },
-    ])
-  } else if (existing.length === 1) {
-    await supabase.from('show_list').update({ show_date: saturday }).eq('id', existing[0].id)
-    await supabase.from('show_list').insert([{ event_id: eventId, show_date: sunday }])
-  } else {
-    await supabase.from('show_list').update({ show_date: saturday }).eq('id', existing[0].id)
-    await supabase.from('show_list').update({ show_date: sunday }).eq('id', existing[existing.length - 1].id)
-  }
-}
-
 // One-time migration: link pre-existing events (booked before saturday/sunday columns
 // existed) to their show weekend, based on the week of their load_in_date.
 async function linkExistingEvents(supabase) {
@@ -153,6 +131,44 @@ async function linkExistingEvents(supabase) {
 
   console.log(`Linked ${linked} events, ${needsReview} events need manual review`)
   return updates
+}
+
+// One-time cleanup: remove show_list rows that were auto-created by the booking
+// page to mirror an event's saturday_date/sunday_date. If an event's show_list
+// entries all exactly match its weekend dates (nothing manual was added), delete
+// them — saturday_date/sunday_date are reference dates only, not actual shows.
+async function cleanupAutoCreatedShows(supabase) {
+  const { data: showList, error } = await supabase
+    .from('show_list')
+    .select('id, event_id, show_date')
+
+  if (error || !showList || showList.length === 0) return
+
+  const { data: events, error: eventsError } = await supabase
+    .from('events')
+    .select('id, saturday_date, sunday_date')
+
+  if (eventsError || !events) return
+
+  const eventById = new Map(events.map(e => [e.id, e]))
+  const showsByEvent = new Map()
+  for (const show of showList) {
+    if (!showsByEvent.has(show.event_id)) showsByEvent.set(show.event_id, [])
+    showsByEvent.get(show.event_id).push(show)
+  }
+
+  const idsToDelete = []
+  for (const [eventId, shows] of showsByEvent) {
+    const event = eventById.get(eventId)
+    if (!event) continue
+    const allMatch = shows.every(s => s.show_date === event.saturday_date || s.show_date === event.sunday_date)
+    if (allMatch) idsToDelete.push(...shows.map(s => s.id))
+  }
+
+  if (idsToDelete.length > 0) {
+    await supabase.from('show_list').delete().in('id', idsToDelete)
+  }
+  console.log(`Cleaned up ${idsToDelete.length} auto-created show entries`)
 }
 
 // ── HOLIDAYS ──────────────────────────────────────────────────────────────────
@@ -819,6 +835,7 @@ export default function BookingPage() {
   const [activeCell, setActiveCell] = useState(null)
   const [holidayOverrides, setHolidayOverrides] = useState({})
   const linkedEventsRef = useRef(false)
+  const cleanedShowsRef = useRef(false)
 
   // Load Google Maps script (same pattern as app/venues/new/page.js)
   useEffect(() => {
@@ -842,22 +859,6 @@ export default function BookingPage() {
       setVenues(data.venues || [])
       setLoading(false)
 
-      // Backfill show_list rows for events that have weekend dates but no shows yet
-      const showList = data.showList || []
-      const eventsWithShows = new Set(showList.map(s => s.event_id))
-      const toBackfill = (data.events || []).filter(ev =>
-        ev.saturday_date && ev.sunday_date && !eventsWithShows.has(ev.id)
-      )
-      if (toBackfill.length > 0) {
-        const supabase = getSupabase()
-        for (const ev of toBackfill) {
-          await supabase.from('show_list').insert([
-            { event_id: ev.id, show_date: ev.saturday_date },
-            { event_id: ev.id, show_date: ev.sunday_date },
-          ])
-        }
-      }
-
       // One-time migration (per session): link pre-existing events to their show weekend
       if (!linkedEventsRef.current) {
         linkedEventsRef.current = true
@@ -869,6 +870,14 @@ export default function BookingPage() {
             return u ? { ...ev, ...u } : ev
           }))
         }
+      }
+
+      // One-time cleanup (per session): remove show_list rows that were auto-created
+      // by the booking page to mirror an event's saturday_date/sunday_date
+      if (!cleanedShowsRef.current) {
+        cleanedShowsRef.current = true
+        const supabase = getSupabase()
+        await cleanupAutoCreatedShows(supabase)
       }
     }
     fetchAll()
@@ -892,10 +901,15 @@ export default function BookingPage() {
     })
   }
 
-  // Years available in the dropdown — every distinct year that has at least one event,
-  // derived from saturday_date (preferred) or load_in_date. Always includes the
-  // currently selected year so the select stays valid even with no events yet.
+  // Years available in the dropdown — every distinct tours.year value, plus every
+  // distinct year derived from events (saturday_date preferred, then load_in_date),
+  // merged and deduped. Always includes the currently selected year so the select
+  // stays valid even with no tours/events yet.
   const yearsSet = new Set([year])
+  tours.forEach(t => {
+    const ty = parseInt(t.year, 10)
+    if (!isNaN(ty)) yearsSet.add(ty)
+  })
   events.forEach(ev => {
     const dateStr = ev.saturday_date || ev.load_in_date
     if (dateStr) yearsSet.add(new Date(dateStr + 'T00:00:00').getFullYear())
@@ -913,12 +927,15 @@ export default function BookingPage() {
     holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
   }))
 
-  // Tours that have at least one event in the selected year
+  // Tours to show as columns: tours whose own `year` matches the selected year,
+  // plus any tour with at least one event in the selected year (even if its
+  // `year` field doesn't match). Tours with no events for this year still get
+  // columns, just with empty cells.
   const tourIdsWithEvents = new Set(
     events.filter(ev => satSet.has(getEventSaturday(ev))).map(ev => ev.tour_id)
   )
   const yearTours = tours
-    .filter(t => tourIdsWithEvents.has(t.id))
+    .filter(t => parseInt(t.year, 10) === year || tourIdsWithEvents.has(t.id))
     .sort((a, b) => {
       const ai = tourOrderIndex(a)
       const bi = tourOrderIndex(b)
@@ -948,7 +965,6 @@ export default function BookingPage() {
         sunday_date: row.sunday,
       }).eq('id', existingEvent.id).select().single()
       if (!error && data) {
-        await syncShowDates(supabase, data.id, row.saturday, row.sunday)
         setEvents(prev => prev.map(e => e.id === data.id ? data : e))
       }
     } else {
@@ -965,7 +981,6 @@ export default function BookingPage() {
         load_in_date: row.saturday,
       }]).select().single()
       if (!error && data) {
-        await syncShowDates(supabase, data.id, row.saturday, row.sunday)
         setEvents(prev => [...prev, data])
       }
     }

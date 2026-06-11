@@ -77,9 +77,7 @@ export default function StaffPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
                 onClick={() => router.push('/staffing-grid')}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer' }}
               >
                 All Tours Staffing Grid
               </button>
