@@ -149,7 +149,12 @@ export default function EditStaff() {
       <div style={{ marginTop: 62, padding: '28px 32px' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button
+            onClick={() => router.push(`/staff/${staffId}`)}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
             ← Back
           </button>
           <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Profile</div>
@@ -306,7 +311,12 @@ export default function EditStaff() {
           {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
-            <button onClick={() => router.push(`/staff/${staffId}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button
+              onClick={() => router.push(`/staff/${staffId}`)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
               Cancel
             </button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>

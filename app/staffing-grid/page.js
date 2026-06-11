@@ -382,7 +382,12 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
             : staffMember.first_name + ' ' + staffMember.last_name + ' is already booked' + (avail && avail.city ? ' in ' + avail.city : ' on another event') + '. Assign anyway?'}
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-          <button onClick={onCancel} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+          <button
+            onClick={onCancel}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >Cancel</button>
           <button onClick={onConfirm} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
         </div>
       </div>

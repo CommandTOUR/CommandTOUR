@@ -30,8 +30,8 @@ export default function Venues() {
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState({ 'North America': true })
-  const [showAllVenues, setShowAllVenues] = useState({})
+  // Per-section state: 'partial' (first 4 visible) or 'full' (all visible). Defaults to 'partial'.
+  const [sectionState, setSectionState] = useState({})
 
   useEffect(() => {
     const fetchVenues = async () => {
@@ -70,37 +70,24 @@ export default function Venues() {
     if (!REGION_ORDER.includes(r)) sections.push({ region: r, venues: grouped[r] })
   })
 
-  const allExpanded = sections.length > 0 && sections.every(s => expanded[s.region] && (s.venues.length <= 4 || showAllVenues[s.region]))
+  const allExpanded = sections.length > 0 && sections.every(s => s.venues.length <= 4 || sectionState[s.region] === 'full')
 
   const toggleAll = () => {
-    if (allExpanded) {
-      setExpanded({ 'North America': true })
-      setShowAllVenues({})
-    } else {
-      const allExp = {}
-      const allShow = {}
-      sections.forEach(s => { allExp[s.region] = true; allShow[s.region] = true })
-      setExpanded(allExp)
-      setShowAllVenues(allShow)
-    }
+    const next = {}
+    sections.forEach(s => { next[s.region] = allExpanded ? 'partial' : 'full' })
+    setSectionState(next)
   }
 
   const toggleSection = (region) => {
-    setExpanded(prev => ({ ...prev, [region]: !prev[region] }))
+    setSectionState(prev => ({ ...prev, [region]: prev[region] === 'full' ? 'partial' : 'full' }))
   }
 
-  const toggleShowAll = (region) => {
-    setShowAllVenues(prev => ({ ...prev, [region]: !prev[region] }))
-  }
-
-  // When searching, auto-expand all sections that have results
+  // When searching, show all results in every matching section
   useEffect(() => {
     if (search.trim()) {
-      const newExpanded = {}
-      const newShowAll = {}
-      sections.forEach(s => { newExpanded[s.region] = true; newShowAll[s.region] = true })
-      setExpanded(newExpanded)
-      setShowAllVenues(newShowAll)
+      const next = {}
+      sections.forEach(s => { next[s.region] = 'full' })
+      setSectionState(next)
     }
   }, [search])
 
@@ -130,9 +117,9 @@ export default function Venues() {
             {sections.length > 0 && (
               <button
                 onClick={toggleAll}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 {allExpanded ? 'Collapse All' : 'Expand All'}
               </button>
@@ -165,18 +152,18 @@ export default function Venues() {
         {!loading && sections.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {sections.map(({ region, venues: sectionVenues }) => {
-              const showAll = !!showAllVenues[region]
-              const visibleVenues = showAll ? sectionVenues : sectionVenues.slice(0, 4)
               const hasMore = sectionVenues.length > 4
+              const isFull = hasMore && sectionState[region] === 'full'
+              const visibleVenues = isFull ? sectionVenues : sectionVenues.slice(0, 4)
               return (
                 <div key={region}>
                   {/* Section header */}
                   <div
-                    onClick={() => toggleSection(region)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[region] ? 12 : 0, userSelect: 'none' }}
+                    onClick={() => hasMore && toggleSection(region)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: hasMore ? 'pointer' : 'default', marginBottom: 12, userSelect: 'none' }}
                   >
                     <span style={{ color: 'var(--text-muted)' }}>
-                      <ChevronIcon open={!!expanded[region]} />
+                      <ChevronIcon open={!hasMore || isFull} />
                     </span>
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       {region}
@@ -188,36 +175,32 @@ export default function Venues() {
                   </div>
 
                   {/* Venue tiles */}
-                  {expanded[region] && (
-                    <>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: hasMore ? 8 : 8 }}>
-                        {visibleVenues.map(venue => (
-                          <div
-                            key={venue.id}
-                            className="glass-card"
-                            onClick={() => router.push(`/venues/${venue.id}`)}
-                            style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
-                          >
-                            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{venue.name}</div>
-                            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                              {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
-                            </div>
-                          </div>
-                        ))}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12, marginBottom: 8 }}>
+                    {visibleVenues.map(venue => (
+                      <div
+                        key={venue.id}
+                        className="glass-card"
+                        onClick={() => router.push(`/venues/${venue.id}`)}
+                        style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+                      >
+                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{venue.name}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                          {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                        </div>
                       </div>
-                      {hasMore && (
-                        <button
-                          onClick={() => toggleShowAll(region)}
-                          style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: 8 }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                        >
-                          {showAll ? 'Collapse' : `Expand (${sectionVenues.length - 4} more)`}
-                        </button>
-                      )}
-                    </>
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <button
+                      onClick={() => toggleSection(region)}
+                      style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginBottom: 8 }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {isFull ? 'Collapse' : `Expand (${sectionVenues.length - 4} more)`}
+                    </button>
                   )}
                 </div>
               )

@@ -190,7 +190,12 @@ export default function EventPage() {
         <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button onClick={() => router.push(`/tours/${id}`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button
+                onClick={() => router.push(`/tours/${id}`)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 ← {tour?.name || 'Tour'}
               </button>
               <div>
@@ -218,7 +223,12 @@ export default function EventPage() {
               <button onClick={handleDeleteEvent} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid rgba(255,51,51,0.3)', background: 'transparent', color: 'var(--red)', cursor: 'pointer' }}>
                 Delete Event
               </button>
-              <button onClick={() => router.push(`/tours/${id}/events/${eventId}/edit`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button
+                onClick={() => router.push(`/tours/${id}/events/${eventId}/edit`)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 Edit Event
               </button>
             </div>
@@ -442,7 +452,12 @@ export default function EventPage() {
                     <input type="text" style={{ ...inputStyle, width: '100%' }} placeholder="Optional notes..." value={newShow.notes} onChange={e => setNewShow(p => ({ ...p, notes: e.target.value }))} />
                   </div>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                    <button onClick={() => { setAddingShow(false); setNewShow({ show_date: '', show_time: '', notes: '' }) }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+                    <button
+                      onClick={() => { setAddingShow(false); setNewShow({ show_date: '', show_time: '', notes: '' }) }}
+                      style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >Cancel</button>
                     <button className="btn-primary" onClick={handleAddShow} disabled={saving}>{saving ? 'Saving...' : 'Save Show'}</button>
                   </div>
                 </div>
@@ -477,7 +492,12 @@ export default function EventPage() {
                             <input type="text" style={{ ...inputStyle, width: '100%' }} value={editForm.notes || ''} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} />
                           </div>
                           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setEditingId(null)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >Cancel</button>
                             <button className="btn-primary" onClick={() => handleSaveEdit(show.id)}>Save</button>
                           </div>
                         </div>

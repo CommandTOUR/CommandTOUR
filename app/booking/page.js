@@ -513,7 +513,12 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
         </div>
         {venueError && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{venueError}</div>}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button onClick={handleCancelCreate} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+          <button
+            onClick={handleCancelCreate}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >Cancel</button>
           <button className="btn-primary" onClick={handleSaveNewVenue} disabled={savingVenue} style={{ fontSize: 12, padding: '6px 14px' }}>{savingVenue ? 'Saving...' : 'Save & Select'}</button>
         </div>
       </div>
@@ -694,7 +699,12 @@ function EventPopover({ anchorRef, event, venues, setVenues, mapsLoaded, onSave,
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '0.5px solid var(--glass-border)' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Are you sure? This cannot be undone.</div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button onClick={() => setConfirmingDelete(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Cancel</button>
             <button onClick={handleDelete} disabled={deleting} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
           </div>
         </div>
@@ -704,7 +714,12 @@ function EventPopover({ anchorRef, event, venues, setVenues, mapsLoaded, onSave,
             <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
           ) : <div />}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+            <button
+              onClick={onClose}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
           </div>
         </div>

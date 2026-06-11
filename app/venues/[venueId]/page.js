@@ -180,7 +180,12 @@ export default function VenuePage() {
         {/* Sticky header */}
         <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => router.push('/venues')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button
+              onClick={() => router.push('/venues')}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
               ← Venues
             </button>
             <div>
@@ -193,7 +198,9 @@ export default function VenuePage() {
           </div>
           <button
             onClick={() => router.push(`/venues/${venueId}/edit`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             Edit Venue
           </button>
@@ -278,7 +285,12 @@ export default function VenuePage() {
                   <input style={inputStyle} placeholder="Optional notes" value={newContact.notes} onChange={e => setNewContact(p => ({ ...p, notes: e.target.value }))} />
                 </div>
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                  <button onClick={() => { setAddingContact(false); setNewContact({ name: '', title: '', phone: '', email: '', notes: '' }) }} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <button
+                    onClick={() => { setAddingContact(false); setNewContact({ name: '', title: '', phone: '', email: '', notes: '' }) }}
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
                     Cancel
                   </button>
                   <button className="btn-primary" onClick={handleAddContact} disabled={savingContact}>

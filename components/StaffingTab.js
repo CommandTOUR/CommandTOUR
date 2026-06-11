@@ -582,8 +582,12 @@ export default function StaffingTab({ eventId, event }) {
             autoFocus
           />
           <button className="btn-primary" onClick={handleAddPosition} style={{ fontSize: 13 }}>Add</button>
-          <button onClick={() => { setAddingPosition(false); setNewPositionLabel(''); setNewPositionDept('') }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+          <button
+            onClick={() => { setAddingPosition(false); setNewPositionLabel(''); setNewPositionDept('') }}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >Cancel</button>
         </div>
       )}
 
@@ -627,7 +631,12 @@ export default function StaffingTab({ eventId, event }) {
             {execOpen && (
               <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }} onClick={e => e.stopPropagation()}>
                 <button onClick={() => handleAddExec('Executive')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Executive</button>
-                <button onClick={() => handleAddExec('Visitor')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>+ Visitor</button>
+                <button
+                  onClick={() => handleAddExec('Visitor')}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >+ Visitor</button>
               </div>
             )}
           </div>
@@ -657,7 +666,12 @@ export default function StaffingTab({ eventId, event }) {
                 : `${confirmOverride.staffMember.first_name} ${confirmOverride.staffMember.last_name} is already booked on another event${confirmOverride.avail?.city ? ` (${confirmOverride.avail.city})` : ''}. Assign anyway?`}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmOverride(null)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+              <button
+                onClick={() => setConfirmOverride(null)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Cancel</button>
               <button onClick={() => doAssign(confirmOverride.staffMember, confirmOverride.positionKey)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
             </div>
           </div>

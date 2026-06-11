@@ -119,7 +119,12 @@ export default function StaffProfile() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => router.push('/staff')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <button
+              onClick={() => router.push('/staff')}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
               ← Staff
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -140,7 +145,12 @@ export default function StaffProfile() {
               </div>
             </div>
           </div>
-          <button onClick={() => router.push(`/staff/${staffId}/edit`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button
+            onClick={() => router.push(`/staff/${staffId}/edit`)}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
             Edit Profile
           </button>
         </div>

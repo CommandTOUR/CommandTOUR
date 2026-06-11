@@ -313,7 +313,12 @@ export default function TourPage() {
         <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '24px 32px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <button onClick={() => router.push('/tours')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button
+                onClick={() => router.push('/tours')}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 ← Tours
               </button>
               <div>
@@ -331,7 +336,12 @@ export default function TourPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => router.push(`/tours/${id}/edit`)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button
+                onClick={() => router.push(`/tours/${id}/edit`)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 Edit Tour
               </button>
               <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>

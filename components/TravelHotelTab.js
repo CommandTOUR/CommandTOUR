@@ -95,7 +95,12 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
             </div>
           ))}
         </div>
-        <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+        <button
+          onClick={onClose}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >Cancel</button>
       </div>
     </div>
   )
@@ -307,7 +312,14 @@ export default function TravelHotelTab({ eventId, event }) {
       </div>
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
         {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
-        {onExport && <button onClick={onExport} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Export PDF</button>}
+        {onExport && (
+          <button
+            onClick={onExport}
+            style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >Export PDF</button>
+        )}
       </div>
     </div>
   )
@@ -348,7 +360,12 @@ export default function TravelHotelTab({ eventId, event }) {
                 <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 14 }}>{fmtDate(hotel.check_out_date)}</div></div>
                 {hotel.notes && <div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 14 }}>{hotel.notes}</div></div>}
                 <div style={{ marginLeft: 'auto' }}>
-                  <button onClick={() => setEditingHotel(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Edit</button>
+                  <button
+                    onClick={() => setEditingHotel(true)}
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >Edit</button>
                 </div>
               </div>
             )}
@@ -453,7 +470,12 @@ export default function TravelHotelTab({ eventId, event }) {
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setEditingHotel(false)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Cancel</button>
+              <button
+                onClick={() => setEditingHotel(false)}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Cancel</button>
               <button className="btn-primary" onClick={handleSaveHotel}>Save</button>
             </div>
           </div>

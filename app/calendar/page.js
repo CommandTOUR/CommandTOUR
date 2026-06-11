@@ -187,13 +187,28 @@ export default function Calendar() {
             </div>
             {/* Nav */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={view === 'month' ? prevMonth : prevWeek} style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>‹</button>
+              <button
+                onClick={view === 'month' ? prevMonth : prevWeek}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >‹</button>
               <div style={{ fontSize: 16, fontWeight: 600, minWidth: 180, textAlign: 'center' }}>
                 {view === 'month' ? `${MONTHS[current.month]} ${current.year}` : weekLabel}
               </div>
-              <button onClick={view === 'month' ? nextMonth : nextWeek} style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>›</button>
+              <button
+                onClick={view === 'month' ? nextMonth : nextWeek}
+                style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >›</button>
             </div>
-            <button onClick={goToday} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>Today</button>
+            <button
+              onClick={goToday}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Today</button>
           </div>
         </div>
 
@@ -325,7 +340,12 @@ export default function Calendar() {
                 </div>
               </div>
             ))}
-            <button onClick={() => setOverflowDay(null)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', marginTop: 8 }}>Close</button>
+            <button
+              onClick={() => setOverflowDay(null)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 8 }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Close</button>
           </div>
         </div>
       )}
