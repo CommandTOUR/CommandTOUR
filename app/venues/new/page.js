@@ -197,9 +197,45 @@ export default function NewVenue() {
     loading_docks: '', tunnel_dims: '', tunnel_position: '', slope_angle: '',
     video_board_location: '', pit_trailer_parking: '', union_status: '',
     noise_restrictions: '', permits: '', notes: '', region: '',
+    custom_fields: [], custom_sections: [],
   })
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
+
+  // Custom fields helpers
+  const addCustomField = (section) => {
+    setForm(prev => ({ ...prev, custom_fields: [...prev.custom_fields, { section, label: '', value: '' }] }))
+  }
+  const updateCustomField = (index, key, val) => {
+    setForm(prev => {
+      const updated = [...prev.custom_fields]
+      updated[index] = { ...updated[index], [key]: val }
+      return { ...prev, custom_fields: updated }
+    })
+  }
+  const removeCustomField = (index) => {
+    setForm(prev => ({ ...prev, custom_fields: prev.custom_fields.filter((_, i) => i !== index) }))
+  }
+
+  // Custom sections helpers
+  const addCustomSection = () => {
+    setForm(prev => ({ ...prev, custom_sections: [...prev.custom_sections, { id: crypto.randomUUID(), title: 'New Section', fields: [] }] }))
+  }
+  const removeCustomSection = (sectionId) => {
+    setForm(prev => ({ ...prev, custom_sections: prev.custom_sections.filter(s => s.id !== sectionId) }))
+  }
+  const updateCustomSectionTitle = (sectionId, title) => {
+    setForm(prev => ({ ...prev, custom_sections: prev.custom_sections.map(s => s.id === sectionId ? { ...s, title } : s) }))
+  }
+  const addCustomSectionField = (sectionId) => {
+    setForm(prev => ({ ...prev, custom_sections: prev.custom_sections.map(s => s.id === sectionId ? { ...s, fields: [...s.fields, { label: '', value: '' }] } : s) }))
+  }
+  const updateCustomSectionField = (sectionId, index, key, val) => {
+    setForm(prev => ({ ...prev, custom_sections: prev.custom_sections.map(s => s.id === sectionId ? { ...s, fields: s.fields.map((f, i) => i === index ? { ...f, [key]: val } : f) } : s) }))
+  }
+  const removeCustomSectionField = (sectionId, index) => {
+    setForm(prev => ({ ...prev, custom_sections: prev.custom_sections.map(s => s.id === sectionId ? { ...s, fields: s.fields.filter((_, i) => i !== index) } : s) }))
+  }
 
   // Load Google Maps script
   useEffect(() => {
@@ -264,6 +300,35 @@ export default function NewVenue() {
     <AutoInput fieldKey={fieldKey} label={label} placeholder={placeholder}
       value={form[fieldKey]} onChange={val => set(fieldKey, val)}
       suggestions={suggestions} inputStyle={inputStyle} labelStyle={labelStyle} />
+  )
+
+  const removeBtnStyle = {
+    fontFamily: 'Inter, sans-serif', fontSize: 18, lineHeight: 1, padding: '0 8px',
+    background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+  }
+
+  const addFieldBtnStyle = {
+    fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7,
+    border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)',
+    cursor: 'pointer', alignSelf: 'flex-start',
+  }
+
+  // Renders the editable rows for a given custom_fields section key (e.g. 'floor', 'access', 'rules')
+  const customFieldRows = (sectionKey) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {form.custom_fields.map((f, i) => f.section === sectionKey && (
+        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <input style={{ ...inputStyle, flex: 1 }} placeholder="Field name" value={f.label} onChange={e => updateCustomField(i, 'label', e.target.value)} />
+          <input style={{ ...inputStyle, flex: 1 }} placeholder="Value" value={f.value} onChange={e => updateCustomField(i, 'value', e.target.value)} />
+          <button
+            onClick={() => removeCustomField(i)}
+            style={removeBtnStyle}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >×</button>
+        </div>
+      ))}
+    </div>
   )
 
   return (
@@ -339,6 +404,8 @@ export default function NewVenue() {
               {ai('slope_angle', 'Slope Angle', 'e.g. 2 degrees')}
               {ai('video_board_location', 'Video Board Location', 'e.g. Center hung')}
             </div>
+            {customFieldRows('floor')}
+            <button onClick={() => addCustomField('floor')} style={addFieldBtnStyle}>+ Add Field</button>
           </div>
 
           {/* Access & Logistics */}
@@ -350,6 +417,8 @@ export default function NewVenue() {
               {ai('loading_docks', 'Loading Docks', 'e.g. 4 docks, north side')}
               {ai('pit_trailer_parking', 'Pit / Trailer Parking', 'e.g. Lot B, 20 spaces')}
             </div>
+            {customFieldRows('access')}
+            <button onClick={() => addCustomField('access')} style={addFieldBtnStyle}>+ Add Field</button>
           </div>
 
           {/* Rules & Restrictions */}
@@ -368,6 +437,50 @@ export default function NewVenue() {
               {ai('permits', 'Permits Required', 'e.g. Fire, pyro, noise')}
               {ai('noise_restrictions', 'Noise Restrictions', 'e.g. No sound after 11pm')}
             </div>
+            {customFieldRows('rules')}
+            <button onClick={() => addCustomField('rules')} style={addFieldBtnStyle}>+ Add Field</button>
+          </div>
+
+          {/* Custom sections */}
+          {form.custom_sections.map(section => (
+            <div key={section.id} className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)' }}>
+                <input
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', background: 'transparent', border: 'none', outline: 'none', flex: 1, padding: 0 }}
+                  value={section.title}
+                  placeholder="Section title"
+                  onChange={e => updateCustomSectionTitle(section.id, e.target.value)}
+                />
+                <button
+                  onClick={() => removeCustomSection(section.id)}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                >× Remove Section</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {section.fields.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <input style={{ ...inputStyle, flex: 1 }} placeholder="Field name" value={f.label} onChange={e => updateCustomSectionField(section.id, i, 'label', e.target.value)} />
+                    <input style={{ ...inputStyle, flex: 1 }} placeholder="Value" value={f.value} onChange={e => updateCustomSectionField(section.id, i, 'value', e.target.value)} />
+                    <button
+                      onClick={() => removeCustomSectionField(section.id, i)}
+                      style={removeBtnStyle}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => addCustomSectionField(section.id)} style={addFieldBtnStyle}>+ Add Field</button>
+            </div>
+          ))}
+
+          <div>
+            <button
+              onClick={addCustomSection}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >+ Add Section</button>
           </div>
 
           {/* Notes */}

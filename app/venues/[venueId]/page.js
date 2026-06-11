@@ -143,14 +143,20 @@ export default function VenuePage() {
     </div>
   )
 
-  const field = (label, value) => value ? (
-    <div>
+  const field = (label, value, key) => value ? (
+    <div key={key}>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{value}</div>
     </div>
   ) : null
 
   const hasMap = venue && (venue.latitude || venue.longitude)
+
+  const customFields = venue?.custom_fields || []
+  const customSections = venue?.custom_sections || []
+  const floorCustomFields = customFields.filter(f => f.section === 'floor')
+  const accessCustomFields = customFields.filter(f => f.section === 'access')
+  const rulesCustomFields = customFields.filter(f => f.section === 'rules')
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -169,10 +175,10 @@ export default function VenuePage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28 }}>
+      <div style={{ marginTop: 62 }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+        {/* Sticky header */}
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button onClick={() => router.push('/venues')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
               ← Venues
@@ -192,6 +198,8 @@ export default function VenuePage() {
             Edit Venue
           </button>
         </div>
+
+        <div style={{ padding: 28 }}>
 
         {/* Top row — Address + Map + Contacts */}
         <div style={{ display: 'grid', gridTemplateColumns: hasMap ? '1fr 1fr 1fr' : '1fr 1fr', gap: 20, marginBottom: 20 }}>
@@ -322,6 +330,7 @@ export default function VenuePage() {
               {field('Floor Weight Capacity', venue.floor_weight_capacity)}
               {field('Slope Angle', venue.slope_angle)}
               {field('Video Board Location', venue.video_board_location)}
+              {floorCustomFields.map((f, i) => field(f.label, f.value, `floor-custom-${i}`))}
             </div>
           </div>
 
@@ -332,6 +341,7 @@ export default function VenuePage() {
               {field('Tunnel Position', venue.tunnel_position)}
               {field('Loading Docks', venue.loading_docks)}
               {field('Pit / Trailer Parking', venue.pit_trailer_parking)}
+              {accessCustomFields.map((f, i) => field(f.label, f.value, `access-custom-${i}`))}
             </div>
           </div>
         </div>
@@ -343,8 +353,19 @@ export default function VenuePage() {
             {field('Union Status', venue.union_status)}
             {field('Permits Required', venue.permits)}
             {field('Noise Restrictions', venue.noise_restrictions)}
+            {rulesCustomFields.map((f, i) => field(f.label, f.value, `rules-custom-${i}`))}
           </div>
         </div>
+
+        {/* Custom sections */}
+        {customSections.map((section, i) => (
+          <div key={section.id || i} className="glass-card" style={{ padding: '20px 24px', marginBottom: 20 }}>
+            {sectionLabel(section.title)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              {(section.fields || []).map((f, j) => field(f.label, f.value, `custom-section-${i}-${j}`))}
+            </div>
+          </div>
+        ))}
 
         {/* Event History */}
         {pastEvents.length > 0 && (
@@ -386,6 +407,7 @@ export default function VenuePage() {
           </div>
         )}
 
+        </div>
       </div>
     </div>
   )
