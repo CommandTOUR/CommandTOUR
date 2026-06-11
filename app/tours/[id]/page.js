@@ -187,8 +187,9 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
 
 function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInUpdate, fmt }) {
   const shows = eventShows[event.id] || []
-  const firstShow = shows.length > 0 ? shows[0].show_date : null
-  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
+  const firstShow = shows.length > 0 ? shows[0].show_date : (event.saturday_date || null)
+  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : (event.sunday_date || null)
+  const numShows = shows.length > 0 ? shows.length : (event.num_shows > 0 ? event.num_shows : '—')
   const alerts = getAlerts(event, shows)
 
   return (
@@ -211,7 +212,7 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
         {event.venue_name || 'TBC'}
       </div>
       <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
-        {shows.length > 0 ? shows.length : (event.num_shows || '—')}
+        {numShows}
       </div>
       <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
         {fmt(firstShow)}

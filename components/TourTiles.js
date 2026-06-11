@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
+import { getEventCompletionDate } from '../lib/eventDates'
 
 export default function TourTiles() {
   const [tours, setTours] = useState([])
@@ -21,26 +22,28 @@ export default function TourTiles() {
 
     if (error || !toursData) { setLoading(false); return }
 
+    const today = new Date().toISOString().split('T')[0]
+
     const enriched = await Promise.all(toursData.map(async (tour) => {
       const { data: events } = await supabase
         .from('events')
-        .select('id, city, load_in_date, load_out_date, status, num_shows')
+        .select('id, city, load_in_date, load_out_date, status, num_shows, saturday_date, sunday_date')
         .eq('tour_id', tour.id)
         .order('load_in_date', { ascending: true })
 
       const totalEvents = events?.length ?? 0
 
       const eventCompletions = await Promise.all((events || []).map(async (e) => {
-        const { count } = await supabase
+        const { data: shows } = await supabase
           .from('show_list')
-          .select('id', { count: 'exact', head: true })
+          .select('show_date')
           .eq('event_id', e.id)
-          .eq('completed', true)
-        return { ...e, completedShows: count ?? 0 }
+        const completionDate = getEventCompletionDate(e, shows)
+        return { ...e, isPast: completionDate ? completionDate < today : false }
       }))
 
-      const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
-      const nextEvent = eventCompletions.find(e => !(e.num_shows > 0 && e.completedShows >= e.num_shows))
+      const completedEvents = eventCompletions.filter(e => e.isPast).length
+      const nextEvent = eventCompletions.find(e => !e.isPast)
 
       const nameParts = (tour.director_name || '').trim().split(' ')
       const initials = nameParts.length >= 2

@@ -82,24 +82,6 @@ export default function TopNav() {
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-        <Link href="/tours/new" style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: 14,
-          fontWeight: 500,
-          padding: '8px 16px',
-          borderRadius: 7,
-          border: 'none',
-          cursor: 'pointer',
-          background: 'var(--mint)',
-          color: '#0a1628',
-          textDecoration: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 5,
-        }}>
-          + New Tour
-        </Link>
-
         <div
           onClick={handleSignOut}
           style={{

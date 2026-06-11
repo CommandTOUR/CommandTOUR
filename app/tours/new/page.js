@@ -21,6 +21,12 @@ const TOUR_TYPES = [
   { label: 'Hot Wheels Monster Trucks Live', value: 'hwmt' },
 ]
 
+const TOUR_CATEGORIES = [
+  { label: 'Domestic', value: 'domestic' },
+  { label: 'International', value: 'international' },
+  { label: 'Uncategorized', value: 'uncategorized' },
+]
+
 export default function NewTour() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -29,9 +35,9 @@ export default function NewTour() {
   const [form, setForm] = useState({
     name: '',
     year: new Date().getFullYear(),
-    region: '',
     type: '',
     tour_type: '',
+    tour_category: 'uncategorized',
     color: '#C9A84C',
     status: 'upcoming',
     director_name: '',
@@ -136,11 +142,15 @@ export default function NewTour() {
             </div>
           </div>
 
-          {/* Region + Director */}
+          {/* Tour Category + Director */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Region</label>
-              <input style={inputStyle} placeholder="e.g. North America" value={form.region} onChange={e => set('region', e.target.value)} />
+              <label style={labelStyle}>Tour Category</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.tour_category} onChange={e => set('tour_category', e.target.value)}>
+                {TOUR_CATEGORIES.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label style={labelStyle}>Tour Director</label>

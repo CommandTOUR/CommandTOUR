@@ -5,12 +5,19 @@ import { useRouter } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 
+const EMPLOYEE_TYPES = [
+  { label: 'Staff', value: 'staff' },
+  { label: 'Contractor', value: 'contractor' },
+  { label: 'Other', value: 'other' },
+]
+
 export default function NewStaff() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [airlines, setAirlines] = useState([])
   const [form, setForm] = useState({
+    employee_type: 'staff',
     first_name: '', middle_name: '', last_name: '', suffix: '',
     cell_phone: '', email: '', dob: '',
     address: '', city: '', state: '', zip: '', country: '',
@@ -34,6 +41,7 @@ export default function NewStaff() {
     const { data: staffData, error: staffError } = await supabase
       .from('staff')
       .insert([{
+        employee_type: form.employee_type,
         first_name: form.first_name,
         middle_name: form.middle_name || null,
         last_name: form.last_name,
@@ -106,6 +114,21 @@ export default function NewStaff() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* Employee Type */}
+          <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {sectionLabel('Employee Type')}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', maxWidth: 280 }}>
+              <div>
+                <label style={labelStyle}>Employee Type</label>
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.employee_type} onChange={e => set('employee_type', e.target.value)}>
+                  {EMPLOYEE_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
 
           {/* Name */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>

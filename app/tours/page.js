@@ -4,14 +4,35 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { getEventCompletionDate } from '../../lib/eventDates'
 
 const STATUS_ORDER = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
+
+const CATEGORY_SECTIONS = [
+  { key: 'domestic', label: 'Domestic' },
+  { key: 'international', label: 'International' },
+  { key: 'uncategorized', label: 'Uncategorized' },
+]
+
+function getTourCategory(tour) {
+  if (tour.tour_category === 'domestic') return 'domestic'
+  if (tour.tour_category === 'international') return 'international'
+  return 'uncategorized'
+}
+
+function ChevronIcon({ open }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export default function Tours() {
   const router = useRouter()
   const [tours, setTours] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showArchived, setShowArchived] = useState(false)
+  const [expanded, setExpanded] = useState({ domestic: true, international: true, uncategorized: true })
 
   useEffect(() => {
     const fetchTours = async () => {
@@ -19,26 +40,28 @@ export default function Tours() {
       const { data, error } = await supabase.from('tours').select('*')
 
       if (!error) {
+        const today = new Date().toISOString().split('T')[0]
+
         const enriched = await Promise.all(data.map(async (tour) => {
           const { data: events } = await supabase
             .from('events')
-            .select('id, city, load_in_date, num_shows')
+            .select('id, city, load_in_date, num_shows, saturday_date, sunday_date')
             .eq('tour_id', tour.id)
             .order('load_in_date', { ascending: true })
 
           const totalEvents = events?.length ?? 0
 
           const eventCompletions = await Promise.all((events || []).map(async (e) => {
-            const { count } = await supabase
+            const { data: shows } = await supabase
               .from('show_list')
-              .select('id', { count: 'exact', head: true })
+              .select('show_date')
               .eq('event_id', e.id)
-              .eq('completed', true)
-            return { ...e, completedShows: count ?? 0 }
+            const completionDate = getEventCompletionDate(e, shows)
+            return { ...e, isPast: completionDate ? completionDate < today : false }
           }))
 
-          const completedEvents = eventCompletions.filter(e => e.num_shows > 0 && e.completedShows >= e.num_shows).length
-          const nextEvent = eventCompletions.find(e => !(e.num_shows > 0 && e.completedShows >= e.num_shows))
+          const completedEvents = eventCompletions.filter(e => e.isPast).length
+          const nextEvent = eventCompletions.find(e => !e.isPast)
           const nameParts = (tour.director_name || '').trim().split(' ')
           const initials = nameParts.length >= 2
             ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
@@ -71,8 +94,13 @@ export default function Tours() {
     fetchTours()
   }, [])
 
-  const activeTours = tours.filter(t => t.status === 'active' || t.status === 'upcoming')
-  const archivedTours = tours.filter(t => t.status === 'completed' || t.status === 'cancelled')
+  const sections = CATEGORY_SECTIONS
+    .map(s => ({ ...s, tours: tours.filter(t => getTourCategory(t) === s.key) }))
+    .filter(s => s.tours.length > 0)
+
+  const toggleSection = (key) => {
+    setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const renderTile = (tour) => {
     const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
@@ -169,31 +197,32 @@ export default function Tours() {
             </div>
           )}
 
-          {/* Active + Upcoming */}
-          {!loading && activeTours.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 32 }}>
-              {activeTours.map(renderTile)}
-            </div>
-          )}
-
-          {/* Archived — collapsible */}
-          {!loading && archivedTours.length > 0 && (
-            <div>
+          {/* Category sections */}
+          {!loading && sections.map(({ key, label, tours: sectionTours }) => (
+            <div key={key} style={{ marginBottom: 32 }}>
               <div
-                onClick={() => setShowArchived(!showArchived)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: showArchived ? 16 : 0 }}
+                onClick={() => toggleSection(key)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[key] ? 16 : 0, userSelect: 'none' }}
               >
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  {showArchived ? '▾' : '▸'} Completed & Cancelled ({archivedTours.length})
+                <span style={{ color: 'var(--text-muted)' }}>
+                  <ChevronIcon open={!!expanded[key]} />
                 </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {label}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {sectionTours.length} {sectionTours.length === 1 ? 'tour' : 'tours'}
+                </span>
+                <div style={{ flex: 1, height: '0.5px', background: 'var(--glass-border)', marginLeft: 4 }} />
               </div>
-              {showArchived && (
+
+              {expanded[key] && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                  {archivedTours.map(renderTile)}
+                  {sectionTours.map(renderTile)}
                 </div>
               )}
             </div>
-          )}
+          ))}
         </div>
 
       </div>

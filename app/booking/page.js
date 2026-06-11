@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 
@@ -118,6 +119,40 @@ async function syncShowDates(supabase, eventId, saturday, sunday) {
     await supabase.from('show_list').update({ show_date: saturday }).eq('id', existing[0].id)
     await supabase.from('show_list').update({ show_date: sunday }).eq('id', existing[existing.length - 1].id)
   }
+}
+
+// One-time migration: link pre-existing events (booked before saturday/sunday columns
+// existed) to their show weekend, based on the week of their load_in_date.
+async function linkExistingEvents(supabase) {
+  const { data: unlinked, error } = await supabase
+    .from('events')
+    .select('id, city, load_in_date, saturday_date')
+    .not('load_in_date', 'is', null)
+    .is('saturday_date', null)
+
+  if (error || !unlinked || unlinked.length === 0) return []
+
+  const updates = []
+  let linked = 0
+  let needsReview = 0
+
+  for (const ev of unlinked) {
+    const saturday = nextSaturdayOnOrAfter(ev.load_in_date)
+    const sunday = addDays(saturday, 1)
+    const diffDays = Math.round((new Date(saturday + 'T00:00:00') - new Date(ev.load_in_date + 'T00:00:00')) / 86400000)
+
+    if (diffDays <= 7) {
+      await supabase.from('events').update({ saturday_date: saturday, sunday_date: sunday }).eq('id', ev.id)
+      updates.push({ id: ev.id, saturday_date: saturday, sunday_date: sunday })
+      linked++
+    } else {
+      console.warn('Event needs manual review for weekend linking:', { id: ev.id, city: ev.city, load_in_date: ev.load_in_date })
+      needsReview++
+    }
+  }
+
+  console.log(`Linked ${linked} events, ${needsReview} events need manual review`)
+  return updates
 }
 
 // ── HOLIDAYS ──────────────────────────────────────────────────────────────────
@@ -554,8 +589,21 @@ function EventPopover({ anchorRef, event, venues, setVenues, mapsLoaded, onSave,
     setPos({
       top: rect.bottom + 4,
       left: Math.min(rect.left, window.innerWidth - width - 12),
+      anchorTop: rect.top,
     })
   }, [anchorRef])
+
+  // After the popover is rendered, flip it upward if it would overflow the bottom of the viewport
+  useLayoutEffect(() => {
+    if (!pos || !ref.current) return
+    const height = ref.current.getBoundingClientRect().height
+    if (pos.top + height > window.innerHeight - 20) {
+      const flippedTop = Math.max(8, pos.anchorTop - height - 4)
+      if (flippedTop !== pos.top) {
+        setPos(prev => ({ ...prev, top: flippedTop }))
+      }
+    }
+  }, [pos])
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -686,6 +734,7 @@ function HolidayCell({ value, onSave }) {
 // ── TOUR CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──────
 
 function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, venues, setVenues, mapsLoaded, widths, isLast, rowHeight }) {
+  const router = useRouter()
   const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
   const cellRef = useRef(null)
   const cellBase = {
@@ -698,13 +747,22 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, ven
   const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
   const groupBorder = '2px solid rgba(255,255,255,0.18)'
 
+  const handleCityClick = (e) => {
+    e.stopPropagation()
+    router.push(`/tours/${event.tour_id}/events/${event.id}`)
+  }
+
   return (
     <>
       <td
         ref={cellRef}
         onClick={onOpen}
         style={{ ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder }}>
-        {formatCityState(event)}
+        {event ? (
+          <span onClick={handleCityClick} style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
+            {formatCityState(event)}
+          </span>
+        ) : formatCityState(event)}
         {isActive && (
           <EventPopover anchorRef={cellRef} event={event} venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded} onSave={onSave} onDelete={onDelete} onClose={onClose} />
         )}
@@ -760,6 +818,7 @@ export default function BookingPage() {
   const [mapsLoaded, setMapsLoaded] = useState(false)
   const [activeCell, setActiveCell] = useState(null)
   const [holidayOverrides, setHolidayOverrides] = useState({})
+  const linkedEventsRef = useRef(false)
 
   // Load Google Maps script (same pattern as app/venues/new/page.js)
   useEffect(() => {
@@ -798,6 +857,19 @@ export default function BookingPage() {
           ])
         }
       }
+
+      // One-time migration (per session): link pre-existing events to their show weekend
+      if (!linkedEventsRef.current) {
+        linkedEventsRef.current = true
+        const supabase = getSupabase()
+        const updates = await linkExistingEvents(supabase)
+        if (updates.length > 0) {
+          setEvents(prev => prev.map(ev => {
+            const u = updates.find(x => x.id === ev.id)
+            return u ? { ...ev, ...u } : ev
+          }))
+        }
+      }
     }
     fetchAll()
   }, [])
@@ -820,11 +892,13 @@ export default function BookingPage() {
     })
   }
 
-  // Years available in the dropdown — always includes 2026
-  const yearsSet = new Set([2026])
+  // Years available in the dropdown — every distinct year that has at least one event,
+  // derived from saturday_date (preferred) or load_in_date. Always includes the
+  // currently selected year so the select stays valid even with no events yet.
+  const yearsSet = new Set([year])
   events.forEach(ev => {
-    const sat = getEventSaturday(ev)
-    if (sat) yearsSet.add(new Date(sat + 'T00:00:00').getFullYear())
+    const dateStr = ev.saturday_date || ev.load_in_date
+    if (dateStr) yearsSet.add(new Date(dateStr + 'T00:00:00').getFullYear())
   })
   const years = [...yearsSet].sort((a, b) => a - b)
 
@@ -931,7 +1005,7 @@ export default function BookingPage() {
 
       <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 12px', borderBottom: '0.5px solid var(--glass-border)', background: 'var(--bg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>Booking</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
           <select
             value={year}
             onChange={e => setYear(Number(e.target.value))}
