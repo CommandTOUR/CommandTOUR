@@ -133,3 +133,12 @@ html, body {
 /* Schedule row delete button — visible on row hover */
 .schedule-row-delete { opacity: 0; transition: opacity 0.15s; }
 .schedule-row:hover .schedule-row-delete { opacity: 1; }
+
+/* Rich text notes editor placeholder */
+.notes-editor:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+}
+.notes-editor ul, .notes-editor ol {
+  padding-left: 24px;
+}

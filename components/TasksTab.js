@@ -79,7 +79,7 @@ function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, 
   const total = tasks.length
 
   return (
-    <div className="glass-card" style={{ marginBottom: 12, overflow: 'hidden' }}>
+    <div className="glass-card" style={{ marginBottom: 12, overflow: 'hidden', width: '100%' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
           <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -217,7 +217,7 @@ export default function TasksTab({ eventId, event }) {
   tasks.forEach(t => { if (!BUCKET_ORDER.includes(t.bucket) && !buckets.includes(t.bucket)) buckets.push(t.bucket) })
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600 }}>Tasks</div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{pct}% complete ({completed}/{total})</div>

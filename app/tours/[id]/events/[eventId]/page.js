@@ -305,7 +305,7 @@ export default function EventPage() {
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
+        <div style={{ flex: 1, overflowY: 'auto', width: '100%', padding: '28px 32px' }}>
 
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
@@ -552,7 +552,7 @@ export default function EventPage() {
           )}
 
           {activeTab === 'schedule' && (
-            <ScheduleTab eventId={eventId} event={event} tourId={id} />
+            <ScheduleTab eventId={eventId} event={event} tourId={id} hasShows={shows.length > 0} />
           )}
 
           {activeTab === 'tasks' && (

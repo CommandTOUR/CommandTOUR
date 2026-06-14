@@ -6,10 +6,10 @@ import { getSupabase } from '../lib/supabase'
 const ROW_GRID = '28px 100px 100px 1.2fr 1.2fr 1.6fr 28px'
 
 const DAY_TYPE_STYLES = {
-  'Load In': { color: 'var(--mint)', background: 'rgba(51,255,153,0.1)', border: 'rgba(51,255,153,0.35)' },
-  'Load Out': { color: 'var(--red)', background: 'rgba(255,51,51,0.1)', border: 'rgba(255,51,51,0.35)' },
-  'Show Day': { color: '#C9A84C', background: 'rgba(201,168,76,0.1)', border: 'rgba(201,168,76,0.35)' },
-  'Day Off': { color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', border: 'var(--glass-border)' },
+  'Load In': { color: '#FFCC00', background: 'rgba(255,204,0,0.15)', border: '#FFCC00' },
+  'Show Day': { color: '#33FF99', background: 'rgba(51,255,153,0.15)', border: '#33FF99' },
+  'Load Out': { color: '#FF3333', background: 'rgba(255,51,51,0.15)', border: '#FF3333' },
+  'Day Off': { color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.2)' },
 }
 
 const addDays = (dateStr, n) => {
@@ -79,14 +79,13 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
   )
 }
 
-function DayCard({ dateStr, dayType, toggleable, expanded, onToggleExpand, onToggleDayType, items, onAddRow, onUpdateRow, onDeleteRow, onDragStart, onDragOver, onDrop }) {
+function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onToggleDayType, items, onAddRow, onUpdateRow, onDeleteRow, onDragStart, onDragOver, onDrop }) {
   const date = new Date(dateStr + 'T00:00:00')
   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
   const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const pill = DAY_TYPE_STYLES[dayType] || DAY_TYPE_STYLES['Show Day']
 
   return (
-    <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid #C9A84C', overflow: 'hidden' }}>
+    <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid #C9A84C', overflow: 'hidden', width: '100%' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
           <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -94,13 +93,22 @@ function DayCard({ dateStr, dayType, toggleable, expanded, onToggleExpand, onTog
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{dayName}</div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{dateLabel}</div>
         <div style={{ flex: 1 }} />
-        <span
-          onClick={toggleable ? (e) => { e.stopPropagation(); onToggleDayType() } : undefined}
-          title={toggleable ? 'Click to toggle Show Day / Day Off' : undefined}
-          style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20, color: pill.color, background: pill.background, border: `0.5px solid ${pill.border}`, cursor: toggleable ? 'pointer' : 'default' }}
-        >
-          {dayType}
-        </span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {dayTypes.map(dayType => {
+            const pill = DAY_TYPE_STYLES[dayType] || DAY_TYPE_STYLES['Show Day']
+            const clickable = toggleable && (dayType === 'Show Day' || dayType === 'Day Off')
+            return (
+              <span
+                key={dayType}
+                onClick={clickable ? (e) => { e.stopPropagation(); onToggleDayType() } : undefined}
+                title={clickable ? 'Click to toggle Show Day / Day Off' : undefined}
+                style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20, color: pill.color, background: pill.background, border: `0.5px solid ${pill.border}`, cursor: clickable ? 'pointer' : 'default' }}
+              >
+                {dayType}
+              </span>
+            )
+          })}
+        </div>
       </div>
       {expanded && (
         <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column' }}>
@@ -131,7 +139,7 @@ function DayCard({ dateStr, dayType, toggleable, expanded, onToggleExpand, onTog
   )
 }
 
-export default function ScheduleTab({ eventId, event, tourId }) {
+export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
   const [items, setItems] = useState([])
   const [dayOverrides, setDayOverrides] = useState({})
   const [loading, setLoading] = useState(true)
@@ -176,11 +184,18 @@ export default function ScheduleTab({ eventId, event, tourId }) {
     fetchData()
   }, [eventId])
 
-  const getDayType = (dateStr, idx) => {
-    if (days.length === 1) return 'Load In'
-    if (idx === 0) return 'Load In'
-    if (idx === days.length - 1) return 'Load Out'
-    return dayOverrides[dateStr] || 'Show Day'
+  const getDayTypes = (dateStr, idx) => {
+    const types = []
+    const isFirst = idx === 0
+    const isLast = idx === days.length - 1
+    if (isFirst) types.push('Load In')
+    if (isLast) {
+      if (hasShows) types.push('Show Day')
+      types.push('Load Out')
+    } else if (!isFirst) {
+      types.push(dayOverrides[dateStr] || 'Show Day')
+    }
+    return types
   }
 
   const toggleExpand = (dateStr) => setExpanded(prev => ({ ...prev, [dateStr]: !prev[dateStr] }))
@@ -200,7 +215,7 @@ export default function ScheduleTab({ eventId, event, tourId }) {
     const { data, error } = await supabase.from('schedule_items').insert([{
       event_id: eventId,
       day_date: dateStr,
-      day_type: getDayType(dateStr, days.indexOf(dateStr)),
+      day_type: getDayTypes(dateStr, days.indexOf(dateStr))[0],
       time_start: null,
       time_end: null,
       what: null,
@@ -278,7 +293,7 @@ export default function ScheduleTab({ eventId, event, tourId }) {
   if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading schedule...</div>
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600 }}>Schedule</div>
         <button
@@ -296,13 +311,13 @@ export default function ScheduleTab({ eventId, event, tourId }) {
       )}
 
       {days.map((dateStr, idx) => {
-        const dayType = getDayType(dateStr, idx)
+        const dayTypes = getDayTypes(dateStr, idx)
         const toggleable = days.length > 1 && idx !== 0 && idx !== days.length - 1
         return (
           <DayCard
             key={dateStr}
             dateStr={dateStr}
-            dayType={dayType}
+            dayTypes={dayTypes}
             toggleable={toggleable}
             expanded={!!expanded[dateStr]}
             onToggleExpand={() => toggleExpand(dateStr)}
