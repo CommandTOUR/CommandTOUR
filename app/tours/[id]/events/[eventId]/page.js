@@ -1,25 +1,82 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
 import StaffingTab from '../../../../../components/StaffingTab'
 import TravelHotelTab from '../../../../../components/TravelHotelTab'
 
+const STATUS_TEXT_COLORS = {
+  confirmed: '#33FF99',
+  tentative: '#FF69B4',
+  '1-hold': '#FFCC00',
+  '2-hold': '#FF8C00',
+  '3-hold': '#FF3333',
+  cancelled: '#888888',
+  want: '#aaaaaa',
+  'date-hold': '#aaaaaa',
+}
+
+function ShowTile({ show, index, fmtShort, fmtTime, onToggleComplete, onDelete, onSaveNotes }) {
+  const [open, setOpen] = useState(false)
+  const [notes, setNotes] = useState(show.notes || '')
+
+  return (
+    <div className="glass-card" style={{ width: 240, padding: '14px 16px', transition: 'all 0.25s ease' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div onClick={() => onToggleComplete(show)} style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid var(--glass-border)', background: show.completed ? 'var(--mint)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+          {show.completed && (
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
+        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setOpen(o => !o)}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
+            Show #{index + 1}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+            {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
+          </div>
+        </div>
+        <svg onClick={() => setOpen(o => !o)} width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ cursor: 'pointer', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <div onClick={() => onDelete(show.id)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+        >×</div>
+      </div>
+      <div style={{ maxHeight: open ? 100 : 0, opacity: open ? 1 : 0, overflow: 'hidden', marginTop: open ? 12 : 0, transition: 'max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease' }}>
+        <textarea
+          placeholder="Notes..."
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          onBlur={() => onSaveNotes(show.id, notes)}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 10px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%', height: 70, resize: 'none' }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function EventPage() {
   const router = useRouter()
   const { id, eventId } = useParams()
+  const searchParams = useSearchParams()
   const [event, setEvent] = useState(null)
   const [tour, setTour] = useState(null)
   const [shows, setShows] = useState([])
   const [venue, setVenue] = useState(null)
   const [venueContacts, setVenueContacts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'travel') return 'travel & hotel'
+    return tab || 'overview'
+  })
   const [addingShow, setAddingShow] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({})
   const [newShow, setNewShow] = useState({ show_date: '', show_time: '', notes: '' })
   const [saving, setSaving] = useState(false)
 
@@ -74,18 +131,10 @@ export default function EventPage() {
     setSaving(false)
   }
 
-  const handleSaveEdit = async (showId) => {
+  const handleSaveShowNotes = async (showId, notes) => {
     const supabase = getSupabase()
-    const { error } = await supabase.from('show_list').update({
-      show_date: editForm.show_date,
-      show_time: editForm.show_time || null,
-      notes: editForm.notes || null,
-    }).eq('id', showId)
-    if (!error) {
-      setShows(prev => prev.map(s => s.id === showId ? { ...s, ...editForm } : s)
-        .sort((a, b) => new Date(`${a.show_date}T${a.show_time || '00:00'}`) - new Date(`${b.show_date}T${b.show_time || '00:00'}`)))
-        setEditingId(null)
-    }
+    await supabase.from('show_list').update({ notes }).eq('id', showId)
+    setShows(prev => prev.map(s => s.id === showId ? { ...s, notes } : s))
   }
 
   const handleToggleComplete = async (show) => {
@@ -270,7 +319,7 @@ export default function EventPage() {
                 {statCard(
                   event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative',
                   'Booking Status', null,
-                  event.status === 'confirmed' ? 'var(--mint)' : event.status === 'cancelled' ? 'var(--red)' : 'var(--yellow)'
+                  STATUS_TEXT_COLORS[event.status] || STATUS_TEXT_COLORS.tentative
                 )}
                 {statCard(
                   event.venue_name || 'TBC',
@@ -420,8 +469,8 @@ export default function EventPage() {
 
           {/* SHOWS */}
           {activeTab === 'shows' && (
-            <div style={{ maxWidth: 600 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, maxWidth: 600 }}>
                 <div style={{ fontSize: 15, fontWeight: 600 }}>
                   Show Dates
                   {shows.length > 0 && (
@@ -436,7 +485,7 @@ export default function EventPage() {
               </div>
 
               {addingShow && (
-                <div className="glass-card" style={{ padding: '18px 20px', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="glass-card" style={{ padding: '18px 20px', marginBottom: 16, maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
                       <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Show Date *</label>
@@ -472,59 +521,18 @@ export default function EventPage() {
               )}
 
               {shows.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
                   {shows.map((show, i) => (
-                    <div key={show.id}>
-                      {editingId === show.id ? (
-                        <div className="glass-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <div>
-                              <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Show Date</label>
-                              <input type="date" style={{ ...inputStyle, width: '100%' }} value={editForm.show_date || ''} onChange={e => setEditForm(p => ({ ...p, show_date: e.target.value }))} />
-                            </div>
-                            <div>
-                              <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Show Time</label>
-                              <input type="time" style={{ ...inputStyle, width: '100%' }} value={editForm.show_time || ''} onChange={e => setEditForm(p => ({ ...p, show_time: e.target.value }))} />
-                            </div>
-                          </div>
-                          <div>
-                            <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Notes</label>
-                            <input type="text" style={{ ...inputStyle, width: '100%' }} value={editForm.notes || ''} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} />
-                          </div>
-                          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                            <button
-                              onClick={() => setEditingId(null)}
-                              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            >Cancel</button>
-                            <button className="btn-primary" onClick={() => handleSaveEdit(show.id)}>Save</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="glass-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                          <div onClick={() => handleToggleComplete(show)} style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid var(--glass-border)', background: show.completed ? 'var(--mint)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-                            {show.completed && (
-                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 28, flexShrink: 0 }}>#{i + 1}</div>
-                          <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => { setEditingId(show.id); setEditForm({ show_date: show.show_date, show_time: show.show_time || '', notes: show.notes || '' }) }}>
-                            <div style={{ fontSize: 14, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                              {fmt(show.show_date)}
-                              {fmtTime(show.show_time) && <span style={{ marginLeft: 10, fontSize: 13, color: 'var(--text-muted)', fontWeight: 400 }}>{fmtTime(show.show_time)}</span>}
-                            </div>
-                            {show.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{show.notes}</div>}
-                          </div>
-                          <div onClick={() => handleDeleteShow(show.id)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}
-                            onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                          >×</div>
-                        </div>
-                      )}
-                    </div>
+                    <ShowTile
+                      key={show.id}
+                      show={show}
+                      index={i}
+                      fmtShort={fmtShort}
+                      fmtTime={fmtTime}
+                      onToggleComplete={handleToggleComplete}
+                      onDelete={handleDeleteShow}
+                      onSaveNotes={handleSaveShowNotes}
+                    />
                   ))}
                 </div>
               )}

@@ -379,36 +379,38 @@ export default function EditVenue() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', overflowY: 'auto' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
 
-      {/* Sticky header */}
-      <div style={{ position: 'sticky', top: 62, zIndex: 50, marginTop: 62, background: 'rgba(10,22,40,0.95)', backdropFilter: 'blur(8px)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button
-            onClick={() => router.push(`/venues/${venueId}`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >← Back</button>
-          <div style={{ fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }}>Editing: {form.name || 'Venue'}</div>
+      <div style={{ marginTop: 62 }}>
+
+        {/* Sticky header */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10,22,40,0.95)', backdropFilter: 'blur(8px)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <button
+              onClick={() => router.push(`/venues/${venueId}`)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >← Back</button>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }}>Editing: {form.name || 'Venue'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => router.push(`/venues/${venueId}`)}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >Cancel</button>
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => router.push(`/venues/${venueId}`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >Cancel</button>
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
-        </div>
-      </div>
 
-      <div style={{ padding: '28px 32px' }}>
+        <div style={{ padding: '28px 32px' }}>
 
-        {error && <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 20 }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 20 }}>{error}</div>}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Basic Info */}
           <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -558,6 +560,7 @@ export default function EditVenue() {
 
           <div style={{ paddingBottom: 40 }} />
 
+        </div>
         </div>
       </div>
     </div>

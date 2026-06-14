@@ -287,9 +287,9 @@ function AssignedCell({ assignment, staff, positionKey, eventId, event, onAssign
   )
 }
 
-// Travel type dropdown — always rendered, disabled when no assignment
+// Travel type dropdown — always rendered, disabled when no staff assigned
 function TravelTypeSelect({ assignment, onSave }) {
-  const hasAssignment = !!assignment?.id
+  const hasAssignment = !!assignment?.staff_id
   return (
     <select
       value={assignment?.travel_type || ''}
@@ -301,7 +301,7 @@ function TravelTypeSelect({ assignment, onSave }) {
         background: hasAssignment ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
         color: assignment?.travel_type ? 'var(--text-primary)' : 'var(--text-muted)',
         outline: 'none', cursor: hasAssignment ? 'pointer' : 'default', width: '100%',
-        opacity: hasAssignment ? 1 : 0.35,
+        opacity: hasAssignment ? 1 : 0.4,
       }}>
       <option value="">—</option>
       <option value="flying">Flying</option>

@@ -148,6 +148,19 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
   )
 }
 
+function StatusBadge({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES.tentative
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20,
+      color: s.color, background: s.background, border: `0.5px solid ${s.border}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Tentative'}
+    </span>
+  )
+}
+
 function LoadInPicker({ eventId, currentDate, onUpdate }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(currentDate || '')
@@ -236,6 +249,7 @@ export default function TourPage() {
   const [tour, setTour] = useState(null)
   const [events, setEvents] = useState([])
   const [eventShows, setEventShows] = useState({})
+  const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
   const [pastExpanded, setPastExpanded] = useState(false)
@@ -259,6 +273,12 @@ export default function TourPage() {
           showMap[ev.id] = data || []
         }))
         setEventShows(showMap)
+
+        const venueIds = [...new Set(eventsRes.data.map(e => e.venue_id).filter(Boolean))]
+        if (venueIds.length > 0) {
+          const { data: venuesData } = await supabase.from('venues').select('id, name, city, state, country').in('id', venueIds)
+          setVenues(venuesData || [])
+        }
       }
       setLoading(false)
     }
@@ -301,7 +321,7 @@ export default function TourPage() {
   )
 
   const color = tour.color || '#C9A84C'
-  const tabs = ['Schedule', 'Staffing', 'Travel', 'Calendar', 'Venues', 'Files', 'Notes']
+  const tabs = ['Schedule', 'Staffing', 'Travel', 'Calendar', 'Venues', 'Files']
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
@@ -449,7 +469,87 @@ export default function TourPage() {
             <TourCalendar tourId={id} tourColor={color} />
           )}
 
-          {activeTab !== 'schedule' && activeTab !== 'calendar' && (
+          {activeTab === 'travel' && (
+            <div style={{ padding: '28px 32px' }}>
+              {events.length === 0 ? (
+                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No events on this tour yet.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+                  {events.map(event => (
+                    <div
+                      key={event.id}
+                      className="glass-card"
+                      onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
+                      style={{ padding: '16px 18px', cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.05)'; e.currentTarget.style.borderColor = 'rgba(51,255,153,0.3)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-bg)'; e.currentTarget.style.borderColor = 'var(--glass-border)' }}
+                    >
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                        {event.city}{event.state && `, ${event.state}`}
+                      </div>
+                      <div style={{ fontSize: 13, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', marginBottom: 10 }}>
+                        {event.venue_name || 'Venue TBC'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Load-In {fmt(event.load_in_date)}</div>
+                        <StatusBadge status={event.status} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'venues' && (
+            <div style={{ padding: '28px 32px' }}>
+              {venues.length === 0 ? (
+                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No venues linked to this tour yet.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                  {venues.map(venue => (
+                    <div
+                      key={venue.id}
+                      className="glass-card"
+                      onClick={() => router.push(`/venues/${venue.id}`)}
+                      style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.05)'; e.currentTarget.style.borderColor = 'rgba(51,255,153,0.3)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-bg)'; e.currentTarget.style.borderColor = 'var(--glass-border)' }}
+                    >
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{venue.name}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                        {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'files' && (
+            <div style={{ padding: '28px 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>Tour Files</div>
+                <button
+                  disabled
+                  title="Coming soon"
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                >
+                  + Upload File
+                </button>
+              </div>
+              <div className="glass-card" style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+                <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
+                  <path d="M6 12a3 3 0 0 1 3-3h9l4 4h17a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V12Z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinejoin="round"/>
+                </svg>
+                <div style={{ fontSize: 15, fontWeight: 500 }}>No files uploaded yet</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>File uploads coming in a future update</div>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && (
             <div style={{ padding: '28px 32px', fontSize: 14, color: 'var(--text-muted)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
