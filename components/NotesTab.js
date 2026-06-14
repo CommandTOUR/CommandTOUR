@@ -6,7 +6,7 @@ import { getSupabase } from '../lib/supabase'
 const TOOLBAR_BTN = {
   fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, minWidth: 32, height: 32, padding: '0 8px', borderRadius: 6,
   border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)',
-  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
 }
 
 const SELECT_STYLE = {
@@ -109,57 +109,53 @@ export default function NotesTab({ eventId }) {
     <div style={{ width: '100%' }}>
       <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Notes</div>
 
-      <div className="glass-card" style={{ padding: 12, marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {/* Row 1: text style */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('bold')} title="Bold"><b>B</b></button>
-          <button type="button" style={{ ...TOOLBAR_BTN, fontStyle: 'italic' }} onClick={() => exec('italic')} title="Italic">I</button>
-          <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'underline' }} onClick={() => exec('underline')} title="Underline">U</button>
-          <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'line-through' }} onClick={() => exec('strikeThrough')} title="Strikethrough">S</button>
-        </div>
+      <div className="glass-card" style={{ padding: 12, marginBottom: 10, display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 4, overflowX: 'auto' }}>
+        {/* Text style */}
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('bold')} title="Bold"><b>B</b></button>
+        <button type="button" style={{ ...TOOLBAR_BTN, fontStyle: 'italic' }} onClick={() => exec('italic')} title="Italic">I</button>
+        <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'underline' }} onClick={() => exec('underline')} title="Underline">U</button>
+        <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'line-through' }} onClick={() => exec('strikeThrough')} title="Strikethrough">S</button>
 
-        {/* Row 2: alignment */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyLeft')} title="Align left"><AlignIcon align="left" /></button>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyCenter')} title="Align center"><AlignIcon align="center" /></button>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyRight')} title="Align right"><AlignIcon align="right" /></button>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyFull')} title="Justify"><AlignIcon align="justify" /></button>
-        </div>
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
 
-        {/* Row 3: lists */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertUnorderedList')} title="Bullet list">• ≡</button>
-          <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertOrderedList')} title="Numbered list">1. ≡</button>
-        </div>
+        {/* Alignment */}
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyLeft')} title="Align left"><AlignIcon align="left" /></button>
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyCenter')} title="Align center"><AlignIcon align="center" /></button>
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyRight')} title="Align right"><AlignIcon align="right" /></button>
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyFull')} title="Justify"><AlignIcon align="justify" /></button>
 
-        {/* Row 4: font size */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Size</span>
-          <select style={SELECT_STYLE} defaultValue="14" onChange={e => applyFontSize(e.target.value)}>
-            {FONT_SIZE_OPTIONS.map(opt => (
-              <option key={opt.px} value={opt.px}>{opt.label} ({opt.px}px)</option>
-            ))}
-          </select>
-        </div>
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
 
-        {/* Row 5: text color */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Color</span>
-          {COLOR_SWATCHES.map(c => (
-            <div
-              key={c.value}
-              onClick={() => exec('foreColor', c.value)}
-              title={c.name}
-              style={{ width: 22, height: 22, borderRadius: '50%', background: c.value, border: '1px solid var(--glass-border)', cursor: 'pointer' }}
-            />
+        {/* Lists */}
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertUnorderedList')} title="Bullet list">• ≡</button>
+        <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertOrderedList')} title="Numbered list">1. ≡</button>
+
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+
+        {/* Font size */}
+        <select style={SELECT_STYLE} defaultValue="14" onChange={e => applyFontSize(e.target.value)}>
+          {FONT_SIZE_OPTIONS.map(opt => (
+            <option key={opt.px} value={opt.px}>{opt.label} ({opt.px}px)</option>
           ))}
-          <input
-            type="color"
-            onChange={e => exec('foreColor', e.target.value)}
-            title="Custom color"
-            style={{ width: 28, height: 28, padding: 0, border: '0.5px solid var(--glass-border)', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
+        </select>
+
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+
+        {/* Text color */}
+        {COLOR_SWATCHES.map(c => (
+          <div
+            key={c.value}
+            onClick={() => exec('foreColor', c.value)}
+            title={c.name}
+            style={{ width: 22, height: 22, borderRadius: '50%', background: c.value, border: '1px solid var(--glass-border)', cursor: 'pointer', flexShrink: 0 }}
           />
-        </div>
+        ))}
+        <input
+          type="color"
+          onChange={e => exec('foreColor', e.target.value)}
+          title="Custom color"
+          style={{ width: 28, height: 28, padding: 0, border: '0.5px solid var(--glass-border)', borderRadius: 6, background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
+        />
       </div>
 
       <div
