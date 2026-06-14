@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
@@ -24,7 +24,7 @@ const statusLabel = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.s
 
 // ── TOUR ORDERING ─────────────────────────────────────────────────────────────
 
-const TOUR_ORDER = ['HWMTL Orange', 'HWMTL Blue', 'HWSS North America Red', 'HWMTL Purple', 'HWMTL Yellow', 'HWSS Gold']
+const TOUR_ORDER = ['HWMTL Orange', 'HWMTL Blue', 'HWSS North America', 'HWMTL Purple', 'HWMTL Yellow', 'HWSS Gold']
 
 const COLOR_NAME_HEX = {
   orange: '#FF8C00',
@@ -51,6 +51,15 @@ function tourOrderIndex(tour) {
     if (matchesTourLabel(tour, TOUR_ORDER[i])) return i
   }
   return TOUR_ORDER.length
+}
+
+function tourSort(a, b) {
+  const ai = tourOrderIndex(a)
+  const bi = tourOrderIndex(b)
+  if (ai !== bi) return ai - bi
+  const at = a.created_at ? new Date(a.created_at).getTime() : 0
+  const bt = b.created_at ? new Date(b.created_at).getTime() : 0
+  return at - bt
 }
 
 // ── DATE HELPERS ──────────────────────────────────────────────────────────────
@@ -80,6 +89,16 @@ function getSaturdaysOfYear(year) {
 function nextSaturdayOnOrAfter(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7))
+  return toYMD(d)
+}
+
+// The Saturday of the weekend containing "today"
+function getCurrentWeekendSaturday() {
+  const d = new Date()
+  const day = d.getDay()
+  if (day === 0) { d.setDate(d.getDate() - 1); return toYMD(d) }
+  if (day === 6) return toYMD(d)
+  d.setDate(d.getDate() + (6 - day))
   return toYMD(d)
 }
 
@@ -242,7 +261,7 @@ const labelStyle = {
 
 // ── VENUE PICKER (DB search → Google Places fallback → inline create) ─────────
 
-function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChange }) {
+function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChange, autoFocus }) {
   const [query, setQuery] = useState(value || '')
   const [show, setShow] = useState(false)
   const [mode, setMode] = useState('search') // 'search' | 'google' | 'create'
@@ -470,7 +489,7 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
 
   if (mode === 'create') {
     return (
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10 }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 320, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mint)', marginBottom: 8 }}>New Venue</div>
         <div style={{ position: 'relative', marginBottom: 8 }}>
           <label style={labelStyle}>Venue Name *</label>
@@ -527,7 +546,7 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
       <input
         style={inputStyle}
         placeholder="Search venue..."
@@ -535,10 +554,11 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
         onChange={handleQueryChange}
         onFocus={() => setShow(true)}
         onKeyDown={handleKeyDown}
+        autoFocus={autoFocus}
         autoComplete="off"
       />
       {show && mode === 'search' && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, width: 260, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
           {dbResults.map((v, i) => (
             <div key={v.id}
               onMouseDown={() => handleSelectDbVenue(v)}
@@ -568,7 +588,7 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
         </div>
       )}
       {show && mode === 'google' && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, width: 260, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
           {googleResults.length === 0 ? (
             <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Searching Google Places...</div>
           ) : googleResults.map((p, i) => (
@@ -587,143 +607,120 @@ function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChan
   )
 }
 
-// ── EVENT POPOVER (add / edit a booking cell) ──────────────────────────────────
+// ── INLINE STATUS PICKER ────────────────────────────────────────────────────
 
-function EventPopover({ anchorRef, event, venues, setVenues, mapsLoaded, onSave, onDelete, onClose }) {
-  const [venueName, setVenueName] = useState(event?.venue_name || '')
-  const [city, setCity] = useState(event?.city || '')
-  const [state, setState] = useState(event?.state || '')
-  const [venueId, setVenueId] = useState(event?.venue_id || null)
-  const [status, setStatus] = useState(event?.status || 'tentative')
-  const [note, setNote] = useState(event?.booking_note || '')
-  const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-  const [pos, setPos] = useState(null)
+function InlineStatusPicker({ status, onChange }) {
+  const [open, setOpen] = useState(false)
   const ref = useRef(null)
-
-  // Anchor the popover (rendered into document.body) to the cell that opened it
-  useLayoutEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) return
-    const rect = anchor.getBoundingClientRect()
-    const width = 270
-    setPos({
-      top: rect.bottom + 4,
-      left: Math.min(rect.left, window.innerWidth - width - 12),
-      anchorTop: rect.top,
-    })
-  }, [anchorRef])
-
-  // After the popover is rendered, flip it upward if it would overflow the bottom of the viewport
-  useLayoutEffect(() => {
-    if (!pos || !ref.current) return
-    const height = ref.current.getBoundingClientRect().height
-    if (pos.top + height > window.innerHeight - 20) {
-      const flippedTop = Math.max(8, pos.anchorTop - height - 4)
-      if (flippedTop !== pos.top) {
-        setPos(prev => ({ ...prev, top: flippedTop }))
-      }
-    }
-  }, [pos])
+  const s = STATUS_STYLES[status] || STATUS_STYLES.tentative
 
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target) && !anchorRef.current?.contains(e.target)) onClose()
-    }
-    const handleScroll = () => onClose()
-    document.addEventListener('keydown', handleKey)
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handleClick)
-    document.addEventListener('scroll', handleScroll, true)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }} onClick={e => e.stopPropagation()}>
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: s.color, background: s.background, border: `0.5px solid ${s.border}`, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        {statusLabel(status)}
+      </div>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 4, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, zIndex: 700, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', minWidth: 120 }}>
+          {STATUS_OPTIONS.map(opt => {
+            const os = STATUS_STYLES[opt] || STATUS_STYLES.tentative
+            return (
+              <div key={opt}
+                onMouseDown={() => { onChange(opt); setOpen(false) }}
+                style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 12, color: os.color, background: status === opt ? 'rgba(255,255,255,0.06)' : 'transparent', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = status === opt ? 'rgba(255,255,255,0.06)' : 'transparent'}
+              >{statusLabel(opt)}</div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── INLINE NOTE EDITOR ──────────────────────────────────────────────────────
+
+function InlineNoteEditor({ value, onChange, onClose }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [onClose])
+
+  return (
+    <div ref={ref} onClick={e => e.stopPropagation()}
+      style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 700, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.5)', padding: 6 }}>
+      <textarea
+        autoFocus
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onBlur={onClose}
+        onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }}
+        style={{ ...inputStyle, height: 64, resize: 'vertical', fontSize: 12 }}
+        placeholder="Booking note..."
+      />
+    </div>
+  )
+}
+
+// ── CONTEXT MENU (right-click on a filled cell) ────────────────────────────────
+
+function ContextMenu({ x, y, onEdit, onDelete, onClose }) {
+  const ref = useRef(null)
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
     return () => {
-      document.removeEventListener('keydown', handleKey)
       document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('scroll', handleScroll, true)
+      document.removeEventListener('keydown', handleKey)
     }
-  }, [onClose, anchorRef])
-
-  const handleVenueChange = ({ venue_name, city: newCity, state: newState, venue_id }) => {
-    setVenueName(venue_name)
-    if (newCity) setCity(newCity)
-    if (newState) setState(newState)
-    setVenueId(venue_id)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    await onSave({ venue_name: venueName, city, state, venue_id: venueId, status, booking_note: note })
-    setSaving(false)
-  }
+  }, [onClose])
 
   const handleDelete = async () => {
     setDeleting(true)
-    await onDelete(event)
+    await onDelete()
     setDeleting(false)
   }
 
-  if (!pos) return null
+  const left = Math.min(x, window.innerWidth - 170)
+  const top = Math.min(y, window.innerHeight - 90)
 
   return createPortal(
     <div ref={ref}
       onClick={e => e.stopPropagation()}
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 1000, width: 270, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', padding: 14, display: 'flex', flexDirection: 'column', gap: 10, cursor: 'default' }}>
-      <div>
-        <label style={labelStyle}>Venue</label>
-        {mapsLoaded ? (
-          <VenuePicker value={venueName} onChange={handleVenueChange} city={city} state={state} venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded} />
-        ) : (
-          <input style={inputStyle} value={venueName} onChange={e => setVenueName(e.target.value)} placeholder="Venue name" />
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 2 }}>
-          <label style={labelStyle}>City</label>
-          <input style={inputStyle} value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle}>State</label>
-          <input style={inputStyle} value={state} onChange={e => setState(e.target.value)} placeholder="ST" />
-        </div>
-      </div>
-      <div>
-        <label style={labelStyle}>Status</label>
-        <select style={{ ...inputStyle, cursor: 'pointer' }} value={status} onChange={e => setStatus(e.target.value)}>
-          {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{statusLabel(opt)}</option>)}
-        </select>
-      </div>
-      <div>
-        <label style={labelStyle}>Note</label>
-        <textarea style={{ ...inputStyle, height: 64, resize: 'vertical' }} value={note} onChange={e => setNote(e.target.value)} placeholder="Booking note..." />
-      </div>
-      {confirmingDelete ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '0.5px solid var(--glass-border)' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Are you sure? This cannot be undone.</div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button
-              onClick={() => setConfirmingDelete(false)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >Cancel</button>
-            <button onClick={handleDelete} disabled={deleting} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
+      style={{ position: 'fixed', top, left, zIndex: 2000, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, boxShadow: '0 4px 24px rgba(0,0,0,0.6)', minWidth: 150, overflow: 'hidden' }}>
+      {confirming ? (
+        <div style={{ padding: 10 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Delete this event?</div>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleDelete} disabled={deleting} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Delete'}</button>
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 2 }}>
-          {event ? (
-            <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
-          ) : <div />}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={onClose}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >Cancel</button>
-            <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save'}</button>
-          </div>
-        </div>
+        <>
+          <div onClick={onEdit} style={{ padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--text-primary)' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Edit</div>
+          <div onClick={() => setConfirming(true)} style={{ padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: '#FF6666' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Delete Event</div>
+        </>
       )}
     </div>,
     document.body
@@ -763,18 +760,42 @@ function HolidayCell({ value, onSave }) {
   )
 }
 
-// ── TOUR CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──────
+// ── PAST YEAR PILLS ────────────────────────────────────────────────────────────
 
-function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, venues, setVenues, mapsLoaded, widths, isLast, rowHeight }) {
+function PastYearPills({ years, activeYears, onToggle }) {
+  if (years.length === 0) return null
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+      {years.map(y => {
+        const active = activeYears.has(y)
+        return (
+          <div key={y} onClick={() => onToggle(y)}
+            style={{ border: `0.5px solid ${active ? 'var(--mint)' : 'var(--glass-border)'}`, color: active ? 'var(--mint)' : 'var(--text-muted)', borderRadius: 20, padding: '3px 14px', fontSize: 12, cursor: 'pointer' }}>
+            {y}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── EDITABLE CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──
+
+function EditableCellGroup({
+  row, tour, event, isEditing, editForm, onStartEdit, onSaveEdit, onChangeForm,
+  venues, setVenues, mapsLoaded, widths, isLast, rowHeight,
+  onCityDrop, onContextMenu, noteOpen, setNoteOpen,
+  dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
+}) {
   const router = useRouter()
   const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
-  const cellRef = useRef(null)
+  const isDragOver = dragOverKey === cellKey
   const cellBase = {
-    height: rowHeight, padding: '0 8px', cursor: 'pointer',
+    height: rowHeight, padding: '0 8px',
     borderBottom: '0.5px solid rgba(255,255,255,0.07)',
     fontSize: 12, color: 'var(--text-secondary)',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    verticalAlign: 'middle', textAlign: 'center',
+    verticalAlign: 'middle', textAlign: 'center', position: 'relative',
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
   const groupBorder = '2px solid rgba(255,255,255,0.18)'
@@ -784,33 +805,114 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, ven
     router.push(`/tours/${event.tour_id}/events/${event.id}`)
   }
 
+  const handleCellClick = () => {
+    if (isEditing) return
+    onStartEdit()
+  }
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', String(event.id))
+    e.dataTransfer.effectAllowed = 'move'
+    const ghost = document.createElement('div')
+    ghost.textContent = formatCityState(event)
+    ghost.style.position = 'absolute'
+    ghost.style.top = '-1000px'
+    ghost.style.padding = '4px 10px'
+    ghost.style.background = '#0d1f3a'
+    ghost.style.color = '#fff'
+    ghost.style.fontSize = '12px'
+    ghost.style.borderRadius = '6px'
+    ghost.style.border = '0.5px solid rgba(255,255,255,0.2)'
+    document.body.appendChild(ghost)
+    e.dataTransfer.setDragImage(ghost, 0, 0)
+    setTimeout(() => { if (ghost.parentNode) document.body.removeChild(ghost) }, 0)
+  }
+
+  const dragHandlers = !event ? {
+    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
+    onDragEnter: (e) => { e.preventDefault(); onDragEnterCell(cellKey) },
+    onDragLeave: () => onDragLeaveCell(cellKey),
+    onDrop: (e) => {
+      e.preventDefault()
+      onDragLeaveCell(cellKey)
+      const idStr = e.dataTransfer.getData('text/plain')
+      if (idStr) onCityDrop(idStr)
+    },
+  } : {}
+
   return (
     <>
       <td
-        ref={cellRef}
-        onClick={onOpen}
-        style={{ ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder }}>
-        {event ? (
-          <span onClick={handleCityClick} style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
+        onClick={handleCellClick}
+        onContextMenu={event && !isEditing ? (e) => { e.preventDefault(); onContextMenu(e, event) } : undefined}
+        {...dragHandlers}
+        style={{
+          ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
+          cursor: 'pointer', zIndex: isEditing ? 300 : 1, overflow: isEditing ? 'visible' : 'hidden',
+          outline: isDragOver ? '1px dashed var(--mint)' : 'none',
+          background: isDragOver ? 'rgba(51,255,153,0.06)' : undefined,
+        }}>
+        {isEditing ? (
+          <div onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
+            <VenuePicker
+              value={editForm.venue_name}
+              onChange={({ venue_name, city, state, venue_id }) => onChangeForm({ venue_name, city: city || editForm.city, state: state || editForm.state, venue_id })}
+              city={editForm.city} state={editForm.state}
+              venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded}
+              autoFocus
+            />
+            {editForm.city && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {formatCityState(editForm)}
+              </div>
+            )}
+          </div>
+        ) : event ? (
+          <span
+            draggable
+            onDragStart={handleDragStart}
+            onClick={handleCityClick}
+            style={{ cursor: 'grab', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
             {formatCityState(event)}
           </span>
-        ) : formatCityState(event)}
-        {isActive && (
-          <EventPopover anchorRef={cellRef} event={event} venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded} onSave={onSave} onDelete={onDelete} onClose={onClose} />
-        )}
+        ) : null}
       </td>
-      <td onClick={onOpen} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
-        {event?.venue_name || ''}
+      <td onClick={handleCellClick} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder, cursor: 'pointer' }}>
+        {isEditing ? (editForm.venue_name || '') : (event?.venue_name || '')}
       </td>
-      <td onClick={onOpen} style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder }}>
-        {statusStyle && (
+      <td
+        onClick={!isEditing ? handleCellClick : undefined}
+        style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder, cursor: isEditing ? 'default' : 'pointer', zIndex: isEditing ? 300 : 1, overflow: isEditing ? 'visible' : 'hidden' }}>
+        {isEditing ? (
+          <InlineStatusPicker status={editForm.status} onChange={(status) => onChangeForm({ status })} />
+        ) : statusStyle ? (
           <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
             {statusLabel(event.status)}
           </div>
-        )}
+        ) : null}
       </td>
-      <td onClick={onOpen} style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder }}>
-        {event?.booking_note ? (
+      <td
+        onClick={!isEditing ? handleCellClick : undefined}
+        style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder, cursor: isEditing ? 'default' : 'pointer', zIndex: isEditing ? 300 : 1, overflow: 'visible' }}>
+        {isEditing ? (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, position: 'relative' }}>
+            <div
+              onClick={() => setNoteOpen(o => !o)}
+              title="Note"
+              style={{ width: 17, height: 17, borderRadius: '50%', cursor: 'pointer', border: '0.5px solid var(--glass-border)', background: editForm.booking_note ? 'rgba(51,255,153,0.15)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--text-muted)' }}>
+              ✎
+            </div>
+            <div
+              onClick={onSaveEdit}
+              title="Save"
+              style={{ width: 18, height: 18, borderRadius: '50%', cursor: 'pointer', background: 'var(--mint)', color: '#04140b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+              ✓
+            </div>
+            {noteOpen && (
+              <InlineNoteEditor value={editForm.booking_note} onChange={(v) => onChangeForm({ booking_note: v })} onClose={() => setNoteOpen(false)} />
+            )}
+          </div>
+        ) : event?.booking_note ? (
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', display: 'inline-block' }} />
         ) : null}
       </td>
@@ -818,17 +920,17 @@ function TourCellGroup({ event, isActive, onOpen, onClose, onSave, onDelete, ven
   )
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+// ── YEAR SECTION (collapsible grid for one calendar year) ──────────────────────
 
 const WEEK_W = 44
 const HOLIDAY_W = 120
 const SAT_W = 100
 const SUN_W = 100
 
-const CITY_W = 110
+const CITY_W = 130
 const VENUE_W = 160
 const STATUS_W = 110
-const NOTE_W = 50
+const NOTE_W = 60
 
 const H1 = 40
 const H2 = 34
@@ -841,17 +943,147 @@ const B_HEADER_BOTTOM = '2px solid rgba(255,255,255,0.18)'
 const B_LEFT_COL = '2px solid rgba(255,255,255,0.18)'
 const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.18)'
 
+const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
+
+const leftThStyle = (left, width) => ({
+  position: 'sticky', left, zIndex: 60, width, minWidth: width, height: H1 + H2,
+  background: HDR_BG, padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
+  fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em',
+  borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
+})
+
+const subHeaderStyle = (width, borderRight) => ({
+  height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight,
+  padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)',
+  textTransform: 'uppercase', letterSpacing: '0.07em', width, minWidth: width,
+})
+
+function YearSection({
+  year, rows, yearTours, eventMap, collapsed, onToggleCollapse, currentWeekendSaturday,
+  sectionRef, onSaveHoliday,
+  editing, editForm, onStartEdit, onSaveEdit, onChangeForm,
+  venues, setVenues, mapsLoaded, onCityDrop, onContextMenu, noteOpen, setNoteOpen,
+  dragOverKey, onDragEnterCell, onDragLeaveCell,
+}) {
+  return (
+    <div ref={sectionRef}>
+      <div onClick={onToggleCollapse}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(5,14,28,1)', borderTop: '2px solid var(--mint)', cursor: 'pointer' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ display: 'inline-block', transition: 'transform 0.15s', transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', fontSize: 12, color: 'var(--text-muted)' }}>▾</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{year}</span>
+        </div>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{yearTours.length} {yearTours.length === 1 ? 'tour' : 'tours'}</span>
+      </div>
+      {!collapsed && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
+            <thead>
+              <tr>
+                <th rowSpan={2} style={leftThStyle(0, WEEK_W)}>Wk</th>
+                <th rowSpan={2} style={leftThStyle(WEEK_W, HOLIDAY_W)}>Holiday</th>
+                <th rowSpan={2} style={leftThStyle(WEEK_W + HOLIDAY_W, SAT_W)}>Sat</th>
+                <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
+                {yearTours.map((tour, ti) => {
+                  const tourColor = tour.color || '#C9A84C'
+                  return (
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
+                      {tour.name}
+                    </th>
+                  )
+                })}
+                {yearTours.length === 0 && <th />}
+              </tr>
+              <tr>
+                {yearTours.map((tour, ti) => {
+                  const isLastTour = ti === yearTours.length - 1
+                  return (
+                    <React.Fragment key={tour.id}>
+                      <th style={subHeaderStyle(CITY_W, B_INNER)}>City</th>
+                      <th style={subHeaderStyle(VENUE_W, B_INNER)}>Venue</th>
+                      <th style={subHeaderStyle(STATUS_W, B_INNER)}>Status</th>
+                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP)}>Note</th>
+                    </React.Fragment>
+                  )
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(row => {
+                const isCurrentWeek = row.saturday === currentWeekendSaturday
+                return (
+                  <tr key={row.saturday} style={{ background: isCurrentWeek ? 'rgba(51,255,153,0.04)' : undefined }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle' }}>
+                      {row.weekNum}
+                    </td>
+                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', verticalAlign: 'middle' }}>
+                      <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
+                    </td>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      {fmtDay(row.saturday, 'Sat')}
+                    </td>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                      {fmtDay(row.sunday, 'Sun')}
+                    </td>
+                    {yearTours.map((tour, ti) => {
+                      const event = eventMap[tour.id + '__' + row.saturday]
+                      const cellKey = row.saturday + '__' + tour.id
+                      const isEditingThis = !!(editing && editing.saturday === row.saturday && editing.tourId === tour.id)
+                      return (
+                        <EditableCellGroup
+                          key={tour.id}
+                          row={row} tour={tour} event={event}
+                          isEditing={isEditingThis}
+                          editForm={editForm}
+                          onStartEdit={() => onStartEdit(row, tour, event)}
+                          onSaveEdit={onSaveEdit}
+                          onChangeForm={onChangeForm}
+                          venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded}
+                          widths={widths} isLast={ti === yearTours.length - 1} rowHeight={ROW_H}
+                          onCityDrop={(eventId) => onCityDrop(eventId, row, tour)}
+                          onContextMenu={(e, ev) => onContextMenu(e, ev, row, tour)}
+                          noteOpen={isEditingThis && noteOpen}
+                          setNoteOpen={setNoteOpen}
+                          dragOverKey={dragOverKey}
+                          cellKey={cellKey}
+                          onDragEnterCell={onDragEnterCell}
+                          onDragLeaveCell={onDragLeaveCell}
+                        />
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
 export default function BookingPage() {
   const [tours, setTours] = useState([])
   const [events, setEvents] = useState([])
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
-  const [year, setYear] = useState(2026)
   const [mapsLoaded, setMapsLoaded] = useState(false)
-  const [activeCell, setActiveCell] = useState(null)
   const [holidayOverrides, setHolidayOverrides] = useState({})
+
+  const [editing, setEditing] = useState(null) // { saturday, sunday, tourId, eventId }
+  const [editForm, setEditForm] = useState({ city: '', state: '', venue_name: '', venue_id: null, status: 'tentative', booking_note: '' })
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [contextMenu, setContextMenu] = useState(null)
+  const [dragOverKey, setDragOverKey] = useState(null)
+
+  const [collapsedSections, setCollapsedSections] = useState(new Set())
+  const [activePastYears, setActivePastYears] = useState(new Set())
+
   const linkedEventsRef = useRef(false)
   const cleanedShowsRef = useRef(false)
+  const sectionRefs = useRef({})
 
   // Load Google Maps script (same pattern as app/venues/new/page.js)
   useEffect(() => {
@@ -899,129 +1131,202 @@ export default function BookingPage() {
     fetchAll()
   }, [])
 
-  // Manual holiday overrides persist per-year in localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('booking_holidays_' + year)
-      setHolidayOverrides(raw ? JSON.parse(raw) : {})
-    } catch {
-      setHolidayOverrides({})
-    }
-  }, [year])
+  const currentYear = new Date().getFullYear()
+  const currentWeekendSaturday = getCurrentWeekendSaturday()
 
-  const saveHolidayOverride = (saturday, text) => {
-    setHolidayOverrides(prev => {
-      const next = { ...prev, [saturday]: text }
-      try { localStorage.setItem('booking_holidays_' + year, JSON.stringify(next)) } catch {}
-      return next
-    })
-  }
-
-  // Years available in the dropdown — every distinct tours.year value, plus every
-  // distinct year derived from events (saturday_date preferred, then load_in_date),
-  // merged and deduped. Always includes the currently selected year so the select
-  // stays valid even with no tours/events yet.
-  const yearsSet = new Set([year])
+  // All distinct years derived from tours.year and event dates (saturday_date / load_in_date)
+  const yearsSet = new Set([currentYear])
   tours.forEach(t => {
     const ty = parseInt(t.year, 10)
     if (!isNaN(ty)) yearsSet.add(ty)
   })
   events.forEach(ev => {
-    const dateStr = ev.saturday_date || ev.load_in_date
-    if (dateStr) yearsSet.add(new Date(dateStr + 'T00:00:00').getFullYear())
+    if (ev.saturday_date) yearsSet.add(new Date(ev.saturday_date + 'T00:00:00').getFullYear())
+    if (ev.load_in_date) yearsSet.add(new Date(ev.load_in_date + 'T00:00:00').getFullYear())
   })
-  const years = [...yearsSet].sort((a, b) => a - b)
+  const allYears = [...yearsSet].sort((a, b) => a - b)
+  const sectionYears = allYears.filter(y => y >= currentYear)
+  const pastYears = allYears.filter(y => y < currentYear).sort((a, b) => b - a)
 
-  // Sat/Sun backbone for the selected year
-  const saturdays = getSaturdaysOfYear(year)
-  const satSet = new Set(saturdays)
-  const autoHolidays = buildHolidayMap(year, saturdays)
-  const rows = saturdays.map((sat, i) => ({
-    weekNum: i + 1,
-    saturday: sat,
-    sunday: addDays(sat, 1),
-    holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
-  }))
+  // Persist holiday overrides per-year in localStorage, merged for all rendered years
+  const renderedYearsKey = [...sectionYears, ...activePastYears].sort((a, b) => a - b).join(',')
+  useEffect(() => {
+    let merged = {}
+    for (const y of renderedYearsKey.split(',')) {
+      if (!y) continue
+      try {
+        const raw = localStorage.getItem('booking_holidays_' + y)
+        if (raw) merged = { ...merged, ...JSON.parse(raw) }
+      } catch {}
+    }
+    setHolidayOverrides(merged)
+  }, [renderedYearsKey])
 
-  // Tours to show as columns: tours whose own `year` matches the selected year,
-  // plus any tour with at least one event in the selected year (even if its
-  // `year` field doesn't match). Tours with no events for this year still get
-  // columns, just with empty cells.
-  const tourIdsWithEvents = new Set(
-    events.filter(ev => satSet.has(getEventSaturday(ev))).map(ev => ev.tour_id)
-  )
-  const yearTours = tours
-    .filter(t => parseInt(t.year, 10) === year || tourIdsWithEvents.has(t.id))
-    .sort((a, b) => {
-      const ai = tourOrderIndex(a)
-      const bi = tourOrderIndex(b)
-      if (ai !== bi) return ai - bi
-      return (a.name || '').localeCompare(b.name || '')
+  const saveHolidayOverride = (saturday, text) => {
+    const y = saturday.slice(0, 4)
+    setHolidayOverrides(prev => {
+      const next = { ...prev, [saturday]: text }
+      try {
+        const raw = localStorage.getItem('booking_holidays_' + y)
+        const yearObj = raw ? JSON.parse(raw) : {}
+        yearObj[saturday] = text
+        localStorage.setItem('booking_holidays_' + y, JSON.stringify(yearObj))
+      } catch {}
+      return next
+    })
+  }
+
+  // Build the Sat/Sun backbone, tour columns, and event map for a given year
+  const buildYearData = (year) => {
+    const saturdays = getSaturdaysOfYear(year)
+    const satSet = new Set(saturdays)
+    const autoHolidays = buildHolidayMap(year, saturdays)
+    const rows = saturdays.map((sat, i) => ({
+      weekNum: i + 1,
+      saturday: sat,
+      sunday: addDays(sat, 1),
+      holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
+    }))
+
+    const tourIdsWithEvents = new Set(
+      events.filter(ev => satSet.has(getEventSaturday(ev))).map(ev => ev.tour_id)
+    )
+    const yearTours = tours
+      .filter(t => parseInt(t.year, 10) === year || tourIdsWithEvents.has(t.id))
+      .sort(tourSort)
+
+    const eventMap = {}
+    events.forEach(ev => {
+      const sat = getEventSaturday(ev)
+      if (sat && satSet.has(sat)) eventMap[ev.tour_id + '__' + sat] = ev
     })
 
-  // Map of "tourId__saturday" -> event
-  const eventMap = {}
-  events.forEach(ev => {
-    const sat = getEventSaturday(ev)
-    if (!sat) return
-    eventMap[ev.tour_id + '__' + sat] = ev
-  })
+    return { rows, yearTours, eventMap }
+  }
 
-  const handleSaveCell = async (row, tour, existingEvent, formData) => {
+  // ── Inline editing ──────────────────────────────────────────────────────────
+
+  const startEdit = (row, tour, event) => {
+    setEditing({ saturday: row.saturday, sunday: row.sunday, tourId: tour.id, eventId: event?.id || null })
+    setEditForm(event ? {
+      city: event.city || '', state: event.state || '', venue_name: event.venue_name || '',
+      venue_id: event.venue_id || null, status: event.status || 'tentative', booking_note: event.booking_note || '',
+    } : { city: '', state: '', venue_name: '', venue_id: null, status: 'tentative', booking_note: '' })
+    setNoteOpen(false)
+    setContextMenu(null)
+  }
+
+  const cancelEdit = () => {
+    setEditing(null)
+    setNoteOpen(false)
+  }
+
+  const changeEditForm = (patch) => setEditForm(prev => ({ ...prev, ...patch }))
+
+  const saveEdit = async () => {
+    if (!editing) return
     const supabase = getSupabase()
-    if (existingEvent) {
+    if (editing.eventId) {
       const { data, error } = await supabase.from('events').update({
-        city: formData.city,
-        state: formData.state,
-        venue_name: formData.venue_name,
-        venue_id: formData.venue_id,
-        status: formData.status,
-        booking_note: formData.booking_note,
-        saturday_date: row.saturday,
-        sunday_date: row.sunday,
-      }).eq('id', existingEvent.id).select().single()
-      if (!error && data) {
-        setEvents(prev => prev.map(e => e.id === data.id ? data : e))
-      }
+        city: editForm.city,
+        state: editForm.state,
+        venue_name: editForm.venue_name,
+        venue_id: editForm.venue_id,
+        status: editForm.status,
+        booking_note: editForm.booking_note,
+      }).eq('id', editing.eventId).select().single()
+      if (!error && data) setEvents(prev => prev.map(e => e.id === data.id ? data : e))
     } else {
+      if (!editForm.city && !editForm.venue_name) { cancelEdit(); return }
       const { data, error } = await supabase.from('events').insert([{
-        tour_id: tour.id,
-        city: formData.city,
-        state: formData.state,
-        venue_name: formData.venue_name,
-        venue_id: formData.venue_id,
-        status: formData.status,
-        booking_note: formData.booking_note,
-        saturday_date: row.saturday,
-        sunday_date: row.sunday,
-        load_in_date: row.saturday,
+        tour_id: editing.tourId,
+        city: editForm.city,
+        state: editForm.state,
+        venue_name: editForm.venue_name,
+        venue_id: editForm.venue_id,
+        status: editForm.status,
+        booking_note: editForm.booking_note,
+        saturday_date: editing.saturday,
+        sunday_date: editing.sunday,
+        load_in_date: editing.saturday,
       }]).select().single()
-      if (!error && data) {
-        setEvents(prev => [...prev, data])
-      }
+      if (!error && data) setEvents(prev => [...prev, data])
     }
-    setActiveCell(null)
+    setEditing(null)
+    setNoteOpen(false)
   }
 
-  const handleDeleteCell = async (existingEvent) => {
-    if (!existingEvent) return
+  // Escape cancels the active edit; Enter (outside text inputs) saves it
+  useEffect(() => {
+    if (!editing) return
+    const handleKey = (e) => {
+      if (e.key === 'Escape') cancelEdit()
+      else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') saveEdit()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, editForm])
+
+  const deleteEvent = async (event) => {
     const supabase = getSupabase()
-    await supabase.from('show_list').delete().eq('event_id', existingEvent.id)
-    const { error } = await supabase.from('events').delete().eq('id', existingEvent.id)
-    if (!error) {
-      setEvents(prev => prev.filter(e => e.id !== existingEvent.id))
-    }
-    setActiveCell(null)
+    await supabase.from('show_list').delete().eq('event_id', event.id)
+    const { error } = await supabase.from('events').delete().eq('id', event.id)
+    if (!error) setEvents(prev => prev.filter(e => e.id !== event.id))
   }
 
-  const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
+  // ── Context menu ───────────────────────────────────────────────────────────
 
-  const leftThStyle = (left, width, top) => ({
-    position: 'sticky', top, left, zIndex: 60, width, minWidth: width,
-    background: HDR_BG, padding: '0 10px', textAlign: 'left', verticalAlign: 'middle',
-    fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em',
-    borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
-  })
+  const openContextMenu = (e, event, row, tour) => setContextMenu({ x: e.clientX, y: e.clientY, event, row, tour })
+  const closeContextMenu = () => setContextMenu(null)
+
+  // ── Drag and drop ──────────────────────────────────────────────────────────
+
+  const handleDragEnterCell = (key) => setDragOverKey(key)
+  const handleDragLeaveCell = (key) => setDragOverKey(prev => (prev === key ? null : prev))
+
+  const handleCityDrop = async (eventIdStr, row, tour) => {
+    const dragged = events.find(e => String(e.id) === eventIdStr)
+    if (!dragged) return
+    const currentSat = getEventSaturday(dragged)
+    if (dragged.tour_id === tour.id && currentSat === row.saturday) return // no-op drop
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('events').update({
+      saturday_date: row.saturday,
+      sunday_date: row.sunday,
+      load_in_date: row.saturday,
+      tour_id: tour.id,
+    }).eq('id', dragged.id).select().single()
+    if (!error && data) setEvents(prev => prev.map(e => e.id === data.id ? data : e))
+  }
+
+  // ── Past year pills ───────────────────────────────────────────────────────
+
+  const togglePastYear = (y) => {
+    setActivePastYears(prev => {
+      const next = new Set(prev)
+      if (next.has(y)) {
+        next.delete(y)
+      } else {
+        next.add(y)
+        setCollapsedSections(c => { const n = new Set(c); n.delete(y); return n })
+        setTimeout(() => {
+          const el = sectionRefs.current[y]
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 60)
+      }
+      return next
+    })
+  }
+
+  const toggleCollapse = (y) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(y)) next.delete(y)
+      else next.add(y)
+      return next
+    })
+  }
 
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
@@ -1030,101 +1335,93 @@ export default function BookingPage() {
     </div>
   )
 
+  const activePastYearsSorted = [...activePastYears].sort((a, b) => b - a)
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
 
-      <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 12px', borderBottom: '0.5px solid var(--glass-border)', background: 'var(--bg)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
-          <select
-            value={year}
-            onChange={e => setYear(Number(e.target.value))}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none' }}>
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
+      <div style={{ marginTop: 62, padding: '14px 28px 0', background: 'var(--bg)' }}>
+        <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
+        <PastYearPills years={pastYears} activeYears={activePastYears} onToggle={togglePastYear} />
       </div>
 
-      {yearTours.length === 0 ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>No tours scheduled for {year}</div>
-        </div>
-      ) : (
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
-            <thead>
-              <tr>
-                <th style={leftThStyle(0, WEEK_W, 0)} />
-                <th style={leftThStyle(WEEK_W, HOLIDAY_W, 0)} />
-                <th style={leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, 0)} />
-                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, 0), borderRight: B_LEFT_COL }} />
-                {yearTours.map((tour, ti) => {
-                  const tourColor = tour.color || '#C9A84C'
-                  return (
-                    <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
-                      {tour.name}
-                    </th>
-                  )
-                })}
-              </tr>
-              <tr>
-                <th style={{ ...leftThStyle(0, WEEK_W, H1), top: H1, textAlign: 'center' }}>Wk</th>
-                <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W, H1), top: H1, textAlign: 'center' }}>Holiday</th>
-                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W, SAT_W, H1), top: H1, textAlign: 'center' }}>Sat</th>
-                <th style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W, H1), top: H1, textAlign: 'center', borderRight: B_LEFT_COL }}>Sun</th>
-                {yearTours.map((tour, ti) => (
-                  <React.Fragment key={tour.id}>
-                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: CITY_W, minWidth: CITY_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</th>
-                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: VENUE_W, minWidth: VENUE_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</th>
-                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: STATUS_W, minWidth: STATUS_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER, padding: '0 8px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Status</th>
-                    <th style={{ position: 'sticky', top: H1, zIndex: 30, width: NOTE_W, minWidth: NOTE_W, height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, padding: '0 4px', textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Note</th>
-                  </React.Fragment>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(row => (
-                <tr key={row.saturday}>
-                  <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle' }}>
-                    {row.weekNum}
-                  </td>
-                  <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', verticalAlign: 'middle' }}>
-                    <HolidayCell value={row.holiday} onSave={(text) => saveHolidayOverride(row.saturday, text)} />
-                  </td>
-                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                    {fmtDay(row.saturday, 'Sat')}
-                  </td>
-                  <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                    {fmtDay(row.sunday, 'Sun')}
-                  </td>
-                  {yearTours.map((tour, ti) => {
-                    const event = eventMap[tour.id + '__' + row.saturday]
-                    const cellKey = row.saturday + '__' + tour.id
-                    const isActive = activeCell === cellKey
-                    return (
-                      <TourCellGroup
-                        key={tour.id}
-                        event={event}
-                        isActive={isActive}
-                        onOpen={() => setActiveCell(isActive ? null : cellKey)}
-                        onClose={() => setActiveCell(null)}
-                        onSave={(formData) => handleSaveCell(row, tour, event, formData)}
-                        onDelete={() => handleDeleteCell(event)}
-                        venues={venues}
-                        setVenues={setVenues}
-                        mapsLoaded={mapsLoaded}
-                        widths={widths}
-                        isLast={ti === yearTours.length - 1}
-                        rowHeight={ROW_H}
-                      />
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div style={{ padding: '14px 28px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {sectionYears.map(year => {
+          const { rows, yearTours, eventMap } = buildYearData(year)
+          return (
+            <YearSection
+              key={year}
+              year={year}
+              rows={rows}
+              yearTours={yearTours}
+              eventMap={eventMap}
+              collapsed={collapsedSections.has(year)}
+              onToggleCollapse={() => toggleCollapse(year)}
+              currentWeekendSaturday={currentWeekendSaturday}
+              sectionRef={(el) => { sectionRefs.current[year] = el }}
+              onSaveHoliday={saveHolidayOverride}
+              editing={editing}
+              editForm={editForm}
+              onStartEdit={startEdit}
+              onSaveEdit={saveEdit}
+              onChangeForm={changeEditForm}
+              venues={venues}
+              setVenues={setVenues}
+              mapsLoaded={mapsLoaded}
+              onCityDrop={handleCityDrop}
+              onContextMenu={openContextMenu}
+              noteOpen={noteOpen}
+              setNoteOpen={setNoteOpen}
+              dragOverKey={dragOverKey}
+              onDragEnterCell={handleDragEnterCell}
+              onDragLeaveCell={handleDragLeaveCell}
+            />
+          )
+        })}
+
+        {activePastYearsSorted.map(year => {
+          const { rows, yearTours, eventMap } = buildYearData(year)
+          return (
+            <YearSection
+              key={year}
+              year={year}
+              rows={rows}
+              yearTours={yearTours}
+              eventMap={eventMap}
+              collapsed={collapsedSections.has(year)}
+              onToggleCollapse={() => toggleCollapse(year)}
+              currentWeekendSaturday={currentWeekendSaturday}
+              sectionRef={(el) => { sectionRefs.current[year] = el }}
+              onSaveHoliday={saveHolidayOverride}
+              editing={editing}
+              editForm={editForm}
+              onStartEdit={startEdit}
+              onSaveEdit={saveEdit}
+              onChangeForm={changeEditForm}
+              venues={venues}
+              setVenues={setVenues}
+              mapsLoaded={mapsLoaded}
+              onCityDrop={handleCityDrop}
+              onContextMenu={openContextMenu}
+              noteOpen={noteOpen}
+              setNoteOpen={setNoteOpen}
+              dragOverKey={dragOverKey}
+              onDragEnterCell={handleDragEnterCell}
+              onDragLeaveCell={handleDragLeaveCell}
+            />
+          )
+        })}
+      </div>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onEdit={() => { startEdit(contextMenu.row, contextMenu.tour, contextMenu.event); closeContextMenu() }}
+          onDelete={async () => { await deleteEvent(contextMenu.event); closeContextMenu() }}
+          onClose={closeContextMenu}
+        />
       )}
     </div>
   )
