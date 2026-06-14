@@ -399,7 +399,7 @@ export default function EditVenue() {
               <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
                 {[form.city, form.state, form.country].filter(Boolean).join(', ')}
                 {form.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{form.region}</span>}
-                <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,204,0,0.15)', border: '0.5px solid #FFCC00', color: '#FFCC00' }}>Editing</span>
+                <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,51,51,0.15)', border: '0.5px solid #FF3333', color: '#FF3333' }}>Editing</span>
               </div>
             </div>
           </div>
