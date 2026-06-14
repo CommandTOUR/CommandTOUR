@@ -6,6 +6,10 @@ import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
 import StaffingTab from '../../../../../components/StaffingTab'
 import TravelHotelTab from '../../../../../components/TravelHotelTab'
+import ScheduleTab from '../../../../../components/ScheduleTab'
+import TasksTab from '../../../../../components/TasksTab'
+import NotesTab from '../../../../../components/NotesTab'
+import FilesTab from '../../../../../components/FilesTab'
 
 const STATUS_TEXT_COLORS = {
   confirmed: '#33FF99',
@@ -547,10 +551,20 @@ export default function EventPage() {
             <TravelHotelTab eventId={eventId} event={event} />
           )}
 
-          {activeTab !== 'overview' && activeTab !== 'shows' && activeTab !== 'staffing' && activeTab !== 'travel & hotel' && (
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
-            </div>
+          {activeTab === 'schedule' && (
+            <ScheduleTab eventId={eventId} event={event} tourId={id} />
+          )}
+
+          {activeTab === 'tasks' && (
+            <TasksTab eventId={eventId} event={event} />
+          )}
+
+          {activeTab === 'notes' && (
+            <NotesTab eventId={eventId} />
+          )}
+
+          {activeTab === 'files' && (
+            <FilesTab />
           )}
         </div>
       </div>

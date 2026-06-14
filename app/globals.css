@@ -113,3 +113,23 @@ html, body {
 .badge-tentative { color: var(--pink); border-color: rgba(255,105,180,0.35); background: rgba(255,105,180,0.08); }
 .badge-active { color: var(--mint); border-color: rgba(51,255,153,0.35); background: rgba(51,255,153,0.08); }
 .badge-upcoming { color: var(--yellow); border-color: rgba(255,204,0,0.35); background: rgba(255,204,0,0.08); }
+
+/* Inline-editable schedule cell */
+.sched-input {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: background 0.15s;
+}
+.sched-input:hover, .sched-input:focus { background: rgba(255,255,255,0.06); }
+.sched-input::placeholder { color: var(--text-muted); }
+
+/* Schedule row delete button — visible on row hover */
+.schedule-row-delete { opacity: 0; transition: opacity 0.15s; }
+.schedule-row:hover .schedule-row-delete { opacity: 1; }
