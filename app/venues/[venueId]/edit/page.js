@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../components/TopNav'
 import { getSupabase } from '../../../../lib/supabase'
+import { MAPS_API_KEY } from '../../../../lib/maps'
 
 const AUTOCOMPLETE_FIELDS = [
   'city', 'state', 'country', 'floor_size', 'surface_coating',
@@ -244,7 +245,7 @@ export default function EditVenue() {
     const existing = document.querySelector('script[data-gmaps]')
     if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`
     script.async = true
     script.dataset.gmaps = 'true'
     script.onload = () => setMapsLoaded(true)
@@ -385,7 +386,7 @@ export default function EditVenue() {
       <div style={{ marginTop: 62 }}>
 
         {/* Sticky header */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10,22,40,0.95)', backdropFilter: 'blur(8px)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'rgba(10,22,40,0.95)', backdropFilter: 'blur(8px)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}

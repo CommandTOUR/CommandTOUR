@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { MAPS_API_KEY } from '../../lib/maps'
 
 const STATUS_STYLES = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
@@ -858,7 +859,7 @@ export default function BookingPage() {
     const existing = document.querySelector('script[data-gmaps]')
     if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`
     script.async = true
     script.dataset.gmaps = 'true'
     script.onload = () => setMapsLoaded(true)

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
+import { MAPS_API_KEY } from '../../../lib/maps'
 
 const AUTOCOMPLETE_FIELDS = [
   'city', 'state', 'country', 'floor_size', 'surface_coating',
@@ -243,7 +244,7 @@ export default function NewVenue() {
     const existing = document.querySelector('script[data-gmaps]')
     if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`
     script.async = true
     script.dataset.gmaps = 'true'
     script.onload = () => setMapsLoaded(true)

@@ -202,7 +202,7 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
   const shows = eventShows[event.id] || []
   const firstShow = shows.length > 0 ? shows[0].show_date : (event.saturday_date || null)
   const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : (event.sunday_date || null)
-  const numShows = shows.length > 0 ? shows.length : (event.num_shows > 0 ? event.num_shows : '—')
+  const numShows = shows.length > 0 ? shows.length : '—'
   const alerts = getAlerts(event, shows)
 
   return (
