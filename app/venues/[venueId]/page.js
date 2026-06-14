@@ -56,6 +56,7 @@ export default function VenuePage() {
     if (!venue.latitude && !venue.longitude && !venue.place_id) return
 
     const initMap = () => {
+      if (!mapRef.current) return
       const lat = venue.latitude || 0
       const lng = venue.longitude || 0
       const map = new window.google.maps.Map(mapRef.current, {

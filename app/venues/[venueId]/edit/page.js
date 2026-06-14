@@ -386,7 +386,7 @@ export default function EditVenue() {
       <div style={{ marginTop: 62 }}>
 
         {/* Sticky header */}
-        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'rgba(10,22,40,0.95)', backdropFilter: 'blur(8px)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}
@@ -394,12 +394,19 @@ export default function EditVenue() {
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >← Back</button>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }}>Editing: {form.name || 'Venue'}</div>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 700 }}>{form.name || 'Venue'}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
+                {[form.city, form.state, form.country].filter(Boolean).join(', ')}
+                {form.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{form.region}</span>}
+                <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,204,0,0.15)', border: '0.5px solid #FFCC00', color: '#FFCC00' }}>Editing</span>
+              </div>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
