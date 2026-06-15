@@ -87,14 +87,39 @@ function fmtWeekend(fridayStr) {
   return fri.toLocaleDateString('en-US', opts) + ' \u2013 ' + sun.toLocaleDateString('en-US', opts)
 }
 
-function cityColor(status) {
-  if (status === 'confirmed') return '#33FF99'
-  if (status === 'tentative') return '#FF69B4'
-  if (status === '1-hold') return '#FFCC00'
-  if (status === '2-hold') return '#FF8C00'
-  if (status === '3-hold') return '#FF4500'
-  if (status === 'cancelled' || status === 'want' || status === 'date-hold') return 'rgba(255,255,255,0.3)'
-  return '#FFCC00'
+const STATUS_STYLES = {
+  confirmed: '#33FF99',
+  tentative: '#FF69B4',
+  '1-hold': '#FFCC00',
+  '2-hold': '#FF8C00',
+  '3-hold': '#FF3333',
+  cancelled: 'rgba(255,255,255,0.3)',
+  want: 'rgba(255,255,255,0.3)',
+  'date-hold': 'rgba(255,255,255,0.3)',
+}
+
+function getEventStatusColor(status) {
+  return STATUS_STYLES[status] || '#FFCC00'
+}
+
+function colorWithAlpha(color, alpha) {
+  if (color.startsWith('#')) {
+    const r = parseInt(color.slice(1, 3), 16)
+    const g = parseInt(color.slice(3, 5), 16)
+    const b = parseInt(color.slice(5, 7), 16)
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')'
+  }
+  const m = color.match(/rgba?\(([^)]+)\)/)
+  if (m) {
+    const parts = m[1].split(',').map(s => s.trim())
+    return 'rgba(' + parts[0] + ',' + parts[1] + ',' + parts[2] + ',' + alpha + ')'
+  }
+  return color
+}
+
+function formatStatusLabel(status) {
+  if (!status) return '—'
+  return status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 }
 
 const STATUS_OPTIONS = [
@@ -150,15 +175,21 @@ function isHatchedCell(posRow, event, eventMeta) {
 // Rendered inside an empty cell once it enters edit mode. Typing filters an
 // autocomplete dropdown; arrow keys navigate it, Enter selects, Escape cancels.
 
-function InlineStaffSearch({ eventId, event, onAssign, onClose }) {
-  const [query, setQuery] = useState('')
+function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) {
+  const [query, setQuery] = useState(initialValue || '')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef(null)
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.focus()
+    const len = el.value.length
+    el.setSelectionRange(len, len)
+  }, [])
 
   useEffect(() => {
     if (query.trim().length < 1) return
@@ -357,9 +388,10 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
 
 // ── GRID CELL ─────────────────────────────────────────────────────────────────
 
-function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, isActive, activeType, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, COL_WIDTH, ROW_HEIGHT, borderRight }) {
+function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
+  const [assignError, setAssignError] = useState(false)
   const isExec = positionRow.isExec
   const statusStyle = (!isExec && assignment && assignment.status) ? getStatusStyle(assignment.status) : null
   const staffName = assignment && assignment.staff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
@@ -367,13 +399,23 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   const doAssign = async (staffMember) => {
     setConfirmOverride(null)
     const supabase = getSupabase()
+    const payload = { staff_id: staffMember.id, status: isExec ? null : 'scheduled', confirmed: false }
+    let result
     if (assignment) {
-      await supabase.from('event_staff').update({ staff_id: staffMember.id, status: isExec ? null : 'scheduled', confirmed: false }).eq('id', assignment.id)
+      result = await supabase.from('event_staff').update(payload).eq('id', assignment.id)
+        .select('*, staff(id, first_name, last_name)').maybeSingle()
     } else {
-      await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionRow.displayLabel, position_key: positionRow.key, status: isExec ? null : 'scheduled', confirmed: false }])
+      result = await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, ...payload }])
+        .select('*, staff(id, first_name, last_name)').maybeSingle()
     }
+    if (result.error || !result.data) {
+      setAssignError(true)
+      setTimeout(() => setAssignError(false), 1200)
+      onCloseActive()
+      return
+    }
+    onAssignSuccess(eventId, result.data)
     onCloseActive()
-    onRefresh()
   }
 
   const handleAssign = (staffMember, avail) => {
@@ -408,7 +450,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     onRefresh()
   }
 
-  const cellBg = isHatched && !assignment ? HATCH_BG : 'transparent'
+  const cellBg = assignError ? 'rgba(255,51,51,0.15)' : (isHatched && !assignment ? HATCH_BG : 'transparent')
   const cellBgSize = isHatched && !assignment ? HATCH_SIZE : 'auto'
   const pillBg = isExec ? 'rgba(255,255,255,0.06)' : (statusStyle ? statusStyle.pill : 'rgba(255,255,255,0.06)')
   const pillBorder = isExec ? 'rgba(255,255,255,0.12)' : (statusStyle ? statusStyle.border : 'rgba(255,255,255,0.12)')
@@ -432,14 +474,14 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
           padding: '0 6px', cursor: isActive ? 'default' : 'pointer',
           background: cellBg, backgroundSize: cellBgSize, textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box', borderRight, borderBottom: '0.5px solid rgba(255,255,255,0.06)',
-          boxShadow: isFocused && !isActive ? 'inset 0 0 0 1px var(--mint)' : 'none',
+          boxShadow: assignError ? 'inset 0 0 0 1px #FF3333' : (isFocused && !isActive ? 'inset 0 0 0 1px var(--mint)' : 'none'),
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={handleCellClick}>
         {isActive && activeType === 'edit' ? (
-          <InlineStaffSearch eventId={eventId} event={event} onAssign={handleAssign} onClose={onCloseActive} />
+          <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
         ) : staffName ? (
           <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, background: pillBg, border: '0.5px solid ' + pillBorder, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s' }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
@@ -490,7 +532,7 @@ export default function StaffingGrid() {
   const [loading, setLoading] = useState(true)
   const [collapsedDepts, setCollapsedDepts] = useState({})
   const [showPast, setShowPast] = useState(false)
-  const [activeCell, setActiveCell] = useState(null) // { eventId, positionKey, type: 'edit'|'menu' } | null
+  const [activeCell, setActiveCell] = useState(null) // { eventId, positionKey, type: 'edit'|'menu', initialValue? } | null
   const [focusedCell, setFocusedCell] = useState(null) // { eventId, positionKey } | null
   const activeCellElRef = useRef(null)
 
@@ -502,6 +544,8 @@ export default function StaffingGrid() {
   const H2 = 32
   const H3 = 32
   const H4 = 32
+  const H5 = 32
+  const TOTAL_HDR = H1 + H2 + H3 + H4 + H5
 
   const B_INNER = '0.5px solid rgba(255,255,255,0.07)'
   const B_WEEKEND = '2px solid rgba(255,255,255,0.2)'
@@ -548,6 +592,16 @@ export default function StaffingGrid() {
   }
 
   const getAssignment = (eventId, positionKey) => (assignments[eventId] || []).find(a => a.position_key === positionKey)
+
+  // Optimistically merge a freshly written event_staff row into local state so the pill appears immediately
+  const updateAssignmentLocal = (eventId, row) => {
+    setAssignments(prev => {
+      const list = prev[eventId] || []
+      const idx = list.findIndex(a => a.position_key === row.position_key)
+      const nextList = idx >= 0 ? list.map((a, i) => (i === idx ? row : a)) : [...list, row]
+      return { ...prev, [eventId]: nextList }
+    })
+  }
   const getTourColor = (tourId) => { const t = tours.find(t => t.id === tourId); return t ? t.color : '#33FF99' }
   const getTourName = (tourId) => { const t = tours.find(t => t.id === tourId); return t ? t.name : '\u2014' }
   const toggleDept = (dept) => setCollapsedDepts(prev => ({ ...prev, [dept]: !prev[dept] }))
@@ -683,7 +737,18 @@ export default function StaffingGrid() {
       setFocusedCell({ eventId: orderedEvents[nextCol].id, positionKey: visiblePositionRows[nextRow].key })
     }
     const handleKeyDown = (e) => {
-      if (activeCell || !focusedCell) return
+      if (!focusedCell) return
+
+      // While a cell is active (editing/menu), only Escape is handled here —
+      // InlineStaffSearch stops propagation for its own Escape handling.
+      if (activeCell) {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          setActiveCell(null)
+        }
+        return
+      }
+
       switch (e.key) {
         case 'Tab':
           e.preventDefault()
@@ -702,10 +767,25 @@ export default function StaffingGrid() {
           const hatched = isHatchedCell(posRow, ev, meta)
           if (hatched && !assignment) return
           e.preventDefault()
-          setActiveCell({ eventId: ev.id, positionKey: posRow.key, type: assignment ? 'menu' : 'edit' })
+          setActiveCell({ eventId: ev.id, positionKey: posRow.key, type: assignment ? 'menu' : 'edit', initialValue: '' })
           break
         }
-        default: break
+        default: {
+          // Any letter/number key on a focused cell jumps straight into edit mode,
+          // seeding the search input with that character (Excel-style "just type to search").
+          if (/^[a-zA-Z0-9]$/.test(e.key)) {
+            const posRow = visiblePositionRows.find(r => r.key === focusedCell.positionKey)
+            const ev = orderedEvents.find(e2 => e2.id === focusedCell.eventId)
+            if (!posRow || !ev) return
+            const meta = eventMetas[ev.id] || {}
+            const assignment = (assignments[ev.id] || []).find(a => a.position_key === posRow.key)
+            const hatched = isHatchedCell(posRow, ev, meta)
+            if (hatched && !assignment) return
+            e.preventDefault()
+            setActiveCell({ eventId: ev.id, positionKey: posRow.key, type: 'edit', initialValue: e.key })
+          }
+          break
+        }
       }
     }
     document.addEventListener('keydown', handleKeyDown)
@@ -770,14 +850,14 @@ export default function StaffingGrid() {
                 })}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: DEPT_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
-                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: HDR_BG, borderBottom: B_INNER, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: DEPT_BG, borderBottom: B_INNER, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                     <span
                       onClick={() => router.push('/tours/' + ev.tour_id + '/events/' + ev.id + '?tab=staffing')}
-                      style={{ fontSize: 12, fontWeight: 600, color: cityColor(ev.status), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                      style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.75' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
                       {ev.city}{ev.state ? ', ' + ev.state : ''}
@@ -786,11 +866,26 @@ export default function StaffingGrid() {
                 ))}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: DEPT_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Status</span>
+                </th>
+                {orderedEvents.map((ev, i) => {
+                  const statusColor = getEventStatusColor(ev.status)
+                  return (
+                    <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: DEPT_BG, borderBottom: B_INNER, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                      <span style={{ display: 'inline-block', fontSize: 10, padding: '2px 8px', borderRadius: 20, border: '0.5px solid ' + statusColor, background: colorWithAlpha(statusColor, 0.1), color: statusColor }}>
+                        {formatStatusLabel(ev.status)}
+                      </span>
+                    </th>
+                  )
+                })}
+              </tr>
+              <tr>
+                <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
-                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {ev.venue_name || '\u2014'}
                   </th>
                 ))}
@@ -838,8 +933,10 @@ export default function StaffingGrid() {
                               assignment={assignment}
                               isHatched={hatched}
                               onRefresh={fetchAll}
+                              onAssignSuccess={updateAssignmentLocal}
                               isActive={isActiveCell}
                               activeType={isActiveCell ? activeCell.type : null}
+                              initialValue={isActiveCell ? activeCell.initialValue : undefined}
                               isFocused={isFocusedCell}
                               cellRef={isActiveCell ? activeCellElRef : null}
                               onActivate={(type) => handleCellActivate(ev.id, posRow.key, type)}
