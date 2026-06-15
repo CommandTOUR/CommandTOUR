@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
-import { MAPS_API_KEY } from '../../lib/maps'
 
 const STATUS_STYLES = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
@@ -18,7 +17,7 @@ const STATUS_STYLES = {
   'date-hold': { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
 }
 
-const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
+const PANEL_STATUSES = ['confirmed', 'tentative', '1-hold', '2-hold', '3-hold', 'cancelled']
 
 const statusLabel = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 
@@ -259,471 +258,150 @@ const labelStyle = {
   letterSpacing: '0.06em', marginBottom: 4, display: 'block',
 }
 
-// ── VENUE PICKER (DB search → Google Places fallback → inline create) ─────────
+const mintOutlineBtn = {
+  fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 14px', borderRadius: 6,
+  border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer',
+}
 
-function VenuePicker({ city, state, venues, setVenues, mapsLoaded, value, onChange, autoFocus }) {
-  const [query, setQuery] = useState(value || '')
-  const [show, setShow] = useState(false)
-  const [mode, setMode] = useState('search') // 'search' | 'google' | 'create'
+// ── INLINE VENUE SEARCH (DB-only — clicking an empty venue cell) ───────────────
+
+function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
+  const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(-1)
-  const [googleResults, setGoogleResults] = useState([])
-  const [sessionToken, setSessionToken] = useState(null)
-  const ref = useRef(null)
-
-  // Inline create-venue form state
-  const [newVenue, setNewVenue] = useState(null)
-  const [savingVenue, setSavingVenue] = useState(false)
-  const [venueError, setVenueError] = useState('')
-  const [placeSuggestions, setPlaceSuggestions] = useState([])
-  const [showPlaceSuggestions, setShowPlaceSuggestions] = useState(false)
-  const [placeActiveIndex, setPlaceActiveIndex] = useState(-1)
-  const debounceRef = useRef(null)
-
-  useEffect(() => { setQuery(value || '') }, [value])
+  const [mode, setMode] = useState('search') // 'search' | 'create'
+  const [newVenue, setNewVenue] = useState({ name: '', city: '', state: '', country: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const inputRef = useRef(null)
+  const blurTimeout = useRef(null)
 
   useEffect(() => {
-    const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setShow(false)
-        if (mode !== 'create') setMode('search')
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [mode])
+    inputRef.current?.focus()
+    return () => clearTimeout(blurTimeout.current)
+  }, [])
 
-  useEffect(() => {
-    if (mapsLoaded && window.google && !sessionToken) {
-      setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
-    }
-  }, [mapsLoaded, sessionToken])
-
-  const dbResults = query.trim().length > 0
+  const results = query.trim()
     ? venues.filter(v =>
         v.name?.toLowerCase().includes(query.toLowerCase()) ||
         v.city?.toLowerCase().includes(query.toLowerCase())
       ).slice(0, 6)
     : []
 
-  const showGoogleOption = query.trim().length > 0
-  const searchOptions = [
-    ...dbResults.map(v => ({ type: 'db', venue: v })),
-    ...(showGoogleOption ? [{ type: 'google-search' }] : []),
-    { type: 'create-new' },
-  ]
+  const optionCount = results.length + 1 // + "Create New Venue"
 
-  const handleQueryChange = (e) => {
-    const val = e.target.value
-    setQuery(val)
-    onChange({ venue_name: val, city, state, venue_id: null })
-    setMode('search')
-    setGoogleResults([])
-    setActiveIndex(-1)
-    setShow(true)
-  }
-
-  const handleSelectDbVenue = (venue) => {
-    setQuery(venue.name)
-    onChange({ venue_name: venue.name, city: venue.city || city, state: venue.state || state, venue_id: venue.id })
-    setShow(false)
-    setMode('search')
-    setActiveIndex(-1)
-  }
-
-  const fetchGoogleResults = useCallback((input) => {
-    if (!input || !window.google) { setGoogleResults([]); return }
-    const service = new window.google.maps.places.AutocompleteService()
-    service.getPlacePredictions(
-      { input, types: ['establishment'], sessionToken },
-      (predictions, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) setGoogleResults(predictions)
-        else setGoogleResults([])
-      }
-    )
-  }, [sessionToken])
-
-  const handleSearchGoogle = () => {
-    setMode('google')
-    setActiveIndex(-1)
-    fetchGoogleResults(query)
-  }
-
-  const handleSelectGooglePlace = (prediction) => {
-    if (!window.google) return
-    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
-    placesService.getDetails(
-      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'place_id'] },
-      (place, status) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
-        const get = (type) => place.address_components?.find(c => c.types.includes(type))
-        const placeCity = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
-        const placeState = get('administrative_area_level_1')?.short_name || ''
-        setQuery(place.name || '')
-        onChange({ venue_name: place.name || '', city: placeCity || city, state: placeState || state, venue_id: null })
-        setShow(false)
-        setMode('search')
-        setGoogleResults([])
-        setActiveIndex(-1)
-        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
-      }
-    )
+  const handleSelect = (venue) => {
+    clearTimeout(blurTimeout.current)
+    onSelect(venue)
   }
 
   const handleOpenCreate = () => {
-    setNewVenue({ name: query, address: '', city: '', state: '', country: '', full_address: '', place_id: '', latitude: null, longitude: null, zip: '', region: '' })
-    setVenueError('')
+    clearTimeout(blurTimeout.current)
+    setNewVenue({ name: query, city: '', state: '', country: '' })
+    setError('')
     setMode('create')
-    setShow(false)
-    setActiveIndex(-1)
   }
 
-  const fetchPlaceSuggestions = useCallback((input) => {
-    if (!input || input.length < 2 || !window.google) { setPlaceSuggestions([]); return }
-    const service = new window.google.maps.places.AutocompleteService()
-    service.getPlacePredictions(
-      { input, types: ['establishment'], sessionToken },
-      (predictions, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-          setPlaceSuggestions(predictions)
-          setShowPlaceSuggestions(true)
-        } else {
-          setPlaceSuggestions([])
-        }
-      }
-    )
-  }, [sessionToken])
-
-  const handlePlaceNameChange = (e) => {
-    const val = e.target.value
-    setNewVenue(prev => ({ ...prev, name: val }))
-    setPlaceActiveIndex(-1)
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => fetchPlaceSuggestions(val), 250)
-  }
-
-  const handlePlaceSelect = (prediction) => {
-    if (!window.google) return
-    const placesService = new window.google.maps.places.PlacesService(document.createElement('div'))
-    placesService.getDetails(
-      { placeId: prediction.place_id, fields: ['name', 'formatted_address', 'address_components', 'geometry', 'place_id'] },
-      (place, status) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) return
-        const get = (type) => place.address_components?.find(c => c.types.includes(type))
-        const streetNum = get('street_number')?.long_name || ''
-        const route = get('route')?.long_name || ''
-        const placeCity = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
-        const placeState = get('administrative_area_level_1')?.short_name || ''
-        const placeCountry = get('country')?.long_name || ''
-        const zip = get('postal_code')?.long_name || ''
-        setNewVenue({
-          name: place.name || '',
-          address: [streetNum, route].filter(Boolean).join(' '),
-          city: placeCity, state: placeState, country: placeCountry, zip,
-          full_address: place.formatted_address || '',
-          place_id: place.place_id || '',
-          latitude: place.geometry?.location?.lat() || null,
-          longitude: place.geometry?.location?.lng() || null,
-          region: '',
-        })
-        setShowPlaceSuggestions(false)
-        setPlaceSuggestions([])
-        setSessionToken(new window.google.maps.places.AutocompleteSessionToken())
-      }
-    )
-  }
-
-  const handlePlaceKeyDown = (e) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setPlaceActiveIndex(i => Math.min(i + 1, placeSuggestions.length - 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setPlaceActiveIndex(i => Math.max(i - 1, 0)) }
-    else if (e.key === 'Enter' && placeActiveIndex >= 0) { e.preventDefault(); handlePlaceSelect(placeSuggestions[placeActiveIndex]) }
-    else if (e.key === 'Escape') { setShowPlaceSuggestions(false); setPlaceActiveIndex(-1) }
-  }
-
-  const handleCancelCreate = () => {
-    setMode('search')
-    setNewVenue(null)
-    setVenueError('')
-  }
-
-  const handleSaveNewVenue = async () => {
-    if (!newVenue.name.trim()) { setVenueError('Venue name is required'); return }
-    setSavingVenue(true)
-    setVenueError('')
+  const handleSaveNew = async () => {
+    if (!newVenue.name.trim()) { setError('Venue name is required'); return }
+    setSaving(true)
+    setError('')
     const supabase = getSupabase()
     const { data, error } = await supabase.from('venues').insert([newVenue]).select().single()
-    if (error) { setVenueError(error.message); setSavingVenue(false); return }
+    if (error) { setError(error.message); setSaving(false); return }
     setVenues(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-    setQuery(data.name)
-    onChange({ venue_name: data.name, city: data.city || city, state: data.state || state, venue_id: data.id })
-    setMode('search')
-    setNewVenue(null)
-    setSavingVenue(false)
+    onSelect(data)
   }
 
   const handleKeyDown = (e) => {
-    if (mode === 'search') {
-      if (e.key === 'ArrowDown') { e.preventDefault(); setShow(true); setActiveIndex(i => Math.min(i + 1, searchOptions.length - 1)) }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
-      else if (e.key === 'Enter') {
-        if (!show || activeIndex < 0) return
-        e.preventDefault()
-        const opt = searchOptions[activeIndex]
-        if (opt.type === 'db') handleSelectDbVenue(opt.venue)
-        else if (opt.type === 'google-search') handleSearchGoogle()
-        else if (opt.type === 'create-new') handleOpenCreate()
-      } else if (e.key === 'Escape') { setShow(false); setActiveIndex(-1) }
-    } else if (mode === 'google') {
-      if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, googleResults.length - 1)) }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
-      else if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); handleSelectGooglePlace(googleResults[activeIndex]) }
-      else if (e.key === 'Escape') { setMode('search'); setGoogleResults([]); setActiveIndex(-1) }
+    if (mode !== 'search') return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex(i => Math.min(i + 1, optionCount - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex(i => Math.max(i - 1, 0)) }
+    else if (e.key === 'Enter') {
+      if (activeIndex < 0) return
+      e.preventDefault()
+      if (activeIndex < results.length) handleSelect(results[activeIndex])
+      else handleOpenCreate()
+    } else if (e.key === 'Escape') {
+      e.stopPropagation()
+      onCancel()
     }
   }
 
-  const optionStyle = (active) => ({
-    padding: '8px 10px', cursor: 'pointer', fontSize: 12,
-    borderBottom: '0.5px solid var(--glass-border)',
-    background: active ? 'rgba(51,255,153,0.08)' : 'transparent',
-    color: active ? 'var(--mint)' : 'var(--text-primary)',
-  })
+  const handleBlur = () => {
+    blurTimeout.current = setTimeout(() => { onCancel() }, 150)
+  }
+  const handleFocus = () => clearTimeout(blurTimeout.current)
 
   if (mode === 'create') {
     return (
-      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 320, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+      <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 280, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mint)', marginBottom: 8 }}>New Venue</div>
-        <div style={{ position: 'relative', marginBottom: 8 }}>
+        <div style={{ marginBottom: 8 }}>
           <label style={labelStyle}>Venue Name *</label>
-          <input
-            style={inputStyle}
-            placeholder="Search venue name..."
-            value={newVenue?.name || ''}
-            onChange={handlePlaceNameChange}
-            onKeyDown={handlePlaceKeyDown}
-            onFocus={() => placeSuggestions.length > 0 && setShowPlaceSuggestions(true)}
-            autoComplete="off"
-          />
-          {showPlaceSuggestions && placeSuggestions.length > 0 && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 160, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
-              {placeSuggestions.map((p, i) => (
-                <div key={p.place_id}
-                  onMouseDown={() => handlePlaceSelect(p)}
-                  onMouseEnter={() => setPlaceActiveIndex(i)}
-                  onMouseLeave={() => setPlaceActiveIndex(-1)}
-                  style={optionStyle(i === placeActiveIndex)}>
-                  <div style={{ fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          <input autoFocus style={inputStyle} value={newVenue.name} onChange={e => setNewVenue(p => ({ ...p, name: e.target.value }))}
+            onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onCancel() } }} />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <div style={{ flex: 2 }}>
             <label style={labelStyle}>City</label>
-            <input style={inputStyle} placeholder="City" value={newVenue?.city || ''} onChange={e => setNewVenue(p => ({ ...p, city: e.target.value }))} />
+            <input style={inputStyle} value={newVenue.city} onChange={e => setNewVenue(p => ({ ...p, city: e.target.value }))} />
           </div>
           <div style={{ flex: 1 }}>
             <label style={labelStyle}>State</label>
-            <input style={inputStyle} placeholder="ST" value={newVenue?.state || ''} onChange={e => setNewVenue(p => ({ ...p, state: e.target.value }))} />
+            <input style={inputStyle} value={newVenue.state} onChange={e => setNewVenue(p => ({ ...p, state: e.target.value }))} />
           </div>
         </div>
         <div style={{ marginBottom: 8 }}>
           <label style={labelStyle}>Country</label>
-          <input style={inputStyle} placeholder="Country" value={newVenue?.country || ''} onChange={e => setNewVenue(p => ({ ...p, country: e.target.value }))} />
+          <input style={inputStyle} value={newVenue.country} onChange={e => setNewVenue(p => ({ ...p, country: e.target.value }))} />
         </div>
-        {venueError && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{venueError}</div>}
+        {error && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
-            onClick={handleCancelCreate}
+            onClick={onCancel}
             style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
-          <button className="btn-primary" onClick={handleSaveNewVenue} disabled={savingVenue} style={{ fontSize: 12, padding: '6px 14px' }}>{savingVenue ? 'Saving...' : 'Save & Select'}</button>
+          <button className="btn-primary" onClick={handleSaveNew} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save & Select'}</button>
         </div>
       </div>
     )
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'relative', textAlign: 'left' }}>
       <input
+        ref={inputRef}
         style={inputStyle}
         placeholder="Search venue..."
         value={query}
-        onChange={handleQueryChange}
-        onFocus={() => setShow(true)}
+        onChange={e => { setQuery(e.target.value); setActiveIndex(-1) }}
         onKeyDown={handleKeyDown}
-        autoFocus={autoFocus}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
         autoComplete="off"
       />
-      {show && mode === 'search' && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, width: 260, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
-          {dbResults.map((v, i) => (
+      {query.trim() && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, width: 240, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+          {results.map((v, i) => (
             <div key={v.id}
-              onMouseDown={() => handleSelectDbVenue(v)}
+              onMouseDown={() => handleSelect(v)}
               onMouseEnter={() => setActiveIndex(i)}
               onMouseLeave={() => setActiveIndex(-1)}
-              style={optionStyle(i === activeIndex)}>
+              style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
               <div style={{ fontWeight: 500 }}>{v.name}</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{[v.city, v.state].filter(Boolean).join(', ')}</div>
             </div>
           ))}
-          {showGoogleOption && (
-            <div
-              onMouseDown={handleSearchGoogle}
-              onMouseEnter={() => setActiveIndex(dbResults.length)}
-              onMouseLeave={() => setActiveIndex(-1)}
-              style={optionStyle(dbResults.length === activeIndex)}>
-              Search Google Places for &quot;{query}&quot;
-            </div>
-          )}
           <div
             onMouseDown={handleOpenCreate}
-            onMouseEnter={() => setActiveIndex(searchOptions.length - 1)}
+            onMouseEnter={() => setActiveIndex(results.length)}
             onMouseLeave={() => setActiveIndex(-1)}
-            style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--mint)', background: searchOptions.length - 1 === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+            style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--mint)', background: results.length === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
             + Create New Venue
           </div>
         </div>
       )}
-      {show && mode === 'google' && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, width: 260, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
-          {googleResults.length === 0 ? (
-            <div style={{ padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)' }}>Searching Google Places...</div>
-          ) : googleResults.map((p, i) => (
-            <div key={p.place_id}
-              onMouseDown={() => handleSelectGooglePlace(p)}
-              onMouseEnter={() => setActiveIndex(i)}
-              onMouseLeave={() => setActiveIndex(-1)}
-              style={optionStyle(i === activeIndex)}>
-              <div style={{ fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
-  )
-}
-
-// ── INLINE STATUS PICKER ────────────────────────────────────────────────────
-
-function InlineStatusPicker({ status, onChange }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-  const s = STATUS_STYLES[status] || STATUS_STYLES.tentative
-
-  useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }} onClick={e => e.stopPropagation()}>
-      <div
-        onClick={() => setOpen(o => !o)}
-        style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: s.color, background: s.background, border: `0.5px solid ${s.border}`, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-        {statusLabel(status)}
-      </div>
-      {open && (
-        <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 4, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, zIndex: 700, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', minWidth: 120 }}>
-          {STATUS_OPTIONS.map(opt => {
-            const os = STATUS_STYLES[opt] || STATUS_STYLES.tentative
-            return (
-              <div key={opt}
-                onMouseDown={() => { onChange(opt); setOpen(false) }}
-                style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 12, color: os.color, background: status === opt ? 'rgba(255,255,255,0.06)' : 'transparent', whiteSpace: 'nowrap' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                onMouseLeave={e => e.currentTarget.style.background = status === opt ? 'rgba(255,255,255,0.06)' : 'transparent'}
-              >{statusLabel(opt)}</div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── INLINE NOTE EDITOR ──────────────────────────────────────────────────────
-
-function InlineNoteEditor({ value, onChange, onClose }) {
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
-
-  return (
-    <div ref={ref} onClick={e => e.stopPropagation()}
-      style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 700, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.5)', padding: 6 }}>
-      <textarea
-        autoFocus
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onBlur={onClose}
-        onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }}
-        style={{ ...inputStyle, height: 64, resize: 'vertical', fontSize: 12 }}
-        placeholder="Booking note..."
-      />
-    </div>
-  )
-}
-
-// ── CONTEXT MENU (right-click on a filled cell) ────────────────────────────────
-
-function ContextMenu({ x, y, onEdit, onDelete, onClose }) {
-  const ref = useRef(null)
-  const [confirming, setConfirming] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-
-  useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [onClose])
-
-  const handleDelete = async () => {
-    setDeleting(true)
-    await onDelete()
-    setDeleting(false)
-  }
-
-  const left = Math.min(x, window.innerWidth - 170)
-  const top = Math.min(y, window.innerHeight - 90)
-
-  return createPortal(
-    <div ref={ref}
-      onClick={e => e.stopPropagation()}
-      style={{ position: 'fixed', top, left, zIndex: 2000, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, boxShadow: '0 4px 24px rgba(0,0,0,0.6)', minWidth: 150, overflow: 'hidden' }}>
-      {confirming ? (
-        <div style={{ padding: 10 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>Delete this event?</div>
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-            <button onClick={onClose} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleDelete} disabled={deleting} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Delete'}</button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div onClick={onEdit} style={{ padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--text-primary)' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Edit</div>
-          <div onClick={() => setConfirming(true)} style={{ padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: '#FF6666' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Delete Event</div>
-        </>
-      )}
-    </div>,
-    document.body
   )
 }
 
@@ -762,15 +440,25 @@ function HolidayCell({ value, onSave }) {
 
 // ── PAST YEAR PILLS ────────────────────────────────────────────────────────────
 
-function PastYearPills({ years, activeYears, onToggle }) {
+function PastYearPills({ years, activeYears, onToggle, dragging, hoveredPillYear, onPillDragOver, onPillDragLeave }) {
   if (years.length === 0) return null
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
       {years.map(y => {
         const active = activeYears.has(y)
+        const glow = dragging && hoveredPillYear === y
         return (
-          <div key={y} onClick={() => onToggle(y)}
-            style={{ border: `0.5px solid ${active ? 'var(--mint)' : 'var(--glass-border)'}`, color: active ? 'var(--mint)' : 'var(--text-muted)', borderRadius: 20, padding: '3px 14px', fontSize: 12, cursor: 'pointer' }}>
+          <div key={y}
+            onClick={() => onToggle(y)}
+            onDragOver={dragging ? (e) => { e.preventDefault(); onPillDragOver(y) } : undefined}
+            onDragLeave={dragging ? () => onPillDragLeave(y) : undefined}
+            style={{
+              border: `0.5px solid ${glow || active ? 'var(--mint)' : 'var(--glass-border)'}`,
+              color: glow || active ? 'var(--mint)' : 'var(--text-muted)',
+              background: glow ? 'rgba(51,255,153,0.1)' : 'transparent',
+              borderRadius: 20, padding: '3px 14px', fontSize: 12, cursor: 'pointer',
+              transition: 'border-color 0.15s, background 0.15s, color 0.15s',
+            }}>
             {y}
           </div>
         )
@@ -779,148 +467,246 @@ function PastYearPills({ years, activeYears, onToggle }) {
   )
 }
 
-// ── EDITABLE CELL GROUP (City / Venue / Status / Note for one tour x weekend) ──
+// ── EVENT SIDE PANEL (slide-in from the right for a filled cell) ──────────────
 
-function EditableCellGroup({
-  row, tour, event, isEditing, editForm, onStartEdit, onSaveEdit, onChangeForm,
-  venues, setVenues, mapsLoaded, widths, isLast, rowHeight,
-  onCityDrop, onContextMenu, noteOpen, setNoteOpen,
-  dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
-}) {
+function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, onMoved }) {
   const router = useRouter()
-  const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
-  const isDragOver = dragOverKey === cellKey
-  const cellBase = {
-    height: rowHeight, padding: '0 8px',
-    borderBottom: '0.5px solid rgba(255,255,255,0.07)',
-    fontSize: 12, color: 'var(--text-secondary)',
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    verticalAlign: 'middle', textAlign: 'center', position: 'relative',
+  const [status, setStatus] = useState(event.status || 'tentative')
+  const [loadInDate, setLoadInDate] = useState(event.load_in_date || '')
+  const [bookingNote, setBookingNote] = useState(event.booking_note || '')
+  const [shows, setShows] = useState([])
+  const [initialShows, setInitialShows] = useState([])
+  const [loadingShows, setLoadingShows] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [moveOpen, setMoveOpen] = useState(false)
+  const [moveTourId, setMoveTourId] = useState(event.tour_id)
+  const [moveSaturday, setMoveSaturday] = useState(row?.saturday || getEventSaturday(event) || '')
+  const [moving, setMoving] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  const [initial] = useState({ status: event.status || 'tentative', loadInDate: event.load_in_date || '', bookingNote: event.booking_note || '' })
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 10)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    const fetchShows = async () => {
+      const supabase = getSupabase()
+      const { data } = await supabase.from('show_list').select('*').eq('event_id', event.id).order('show_date', { ascending: true }).order('show_time', { ascending: true })
+      setShows(data || [])
+      setInitialShows(data || [])
+      setLoadingShows(false)
+    }
+    fetchShows()
+  }, [event.id])
+
+  const dirty = status !== initial.status
+    || loadInDate !== initial.loadInDate
+    || bookingNote !== initial.bookingNote
+    || JSON.stringify(shows) !== JSON.stringify(initialShows)
+
+  const handleClose = () => {
+    setVisible(false)
+    setTimeout(onClose, 200)
   }
-  const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
-  const groupBorder = '2px solid rgba(255,255,255,0.18)'
 
-  const handleCityClick = (e) => {
-    e.stopPropagation()
-    router.push(`/tours/${event.tour_id}/events/${event.id}`)
+  const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: '', show_time: '' }])
+  const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
+
+  const handleDeleteShow = async (idx) => {
+    const show = shows[idx]
+    if (show.id) {
+      const supabase = getSupabase()
+      await supabase.from('show_list').delete().eq('id', show.id)
+      setInitialShows(prev => prev.filter(s => s.id !== show.id))
+    }
+    setShows(prev => prev.filter((_, i) => i !== idx))
   }
 
-  const handleCellClick = () => {
-    if (isEditing) return
-    onStartEdit()
+  const handleSaveClose = async () => {
+    setSaving(true)
+    const supabase = getSupabase()
+    const { data: updatedEvent, error } = await supabase.from('events').update({
+      status, load_in_date: loadInDate || null, booking_note: bookingNote,
+    }).eq('id', event.id).select().single()
+
+    for (const show of shows) {
+      if (!show.id) {
+        if (show.show_date) await supabase.from('show_list').insert([{ event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }])
+      } else {
+        const orig = initialShows.find(s => s.id === show.id)
+        if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
+          await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id)
+        }
+      }
+    }
+
+    await supabase.from('event_notes').upsert({ event_id: event.id, content: bookingNote, updated_at: new Date().toISOString() }, { onConflict: 'event_id' })
+
+    setSaving(false)
+    if (!error && updatedEvent) onSaved(updatedEvent)
+    handleClose()
   }
 
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData('text/plain', String(event.id))
-    e.dataTransfer.effectAllowed = 'move'
-    const ghost = document.createElement('div')
-    ghost.textContent = formatCityState(event)
-    ghost.style.position = 'absolute'
-    ghost.style.top = '-1000px'
-    ghost.style.padding = '4px 10px'
-    ghost.style.background = '#0d1f3a'
-    ghost.style.color = '#fff'
-    ghost.style.fontSize = '12px'
-    ghost.style.borderRadius = '6px'
-    ghost.style.border = '0.5px solid rgba(255,255,255,0.2)'
-    document.body.appendChild(ghost)
-    e.dataTransfer.setDragImage(ghost, 0, 0)
-    setTimeout(() => { if (ghost.parentNode) document.body.removeChild(ghost) }, 0)
+  const handleDelete = async () => {
+    setDeleting(true)
+    await onDeleted(event)
+    setDeleting(false)
+    handleClose()
   }
 
-  const dragHandlers = !event ? {
-    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
-    onDragEnter: (e) => { e.preventDefault(); onDragEnterCell(cellKey) },
-    onDragLeave: () => onDragLeaveCell(cellKey),
-    onDrop: (e) => {
-      e.preventDefault()
-      onDragLeaveCell(cellKey)
-      const idStr = e.dataTransfer.getData('text/plain')
-      if (idStr) onCityDrop(idStr)
-    },
-  } : {}
+  const handleMove = async () => {
+    setMoving(true)
+    const supabase = getSupabase()
+    const saturday = nextSaturdayOnOrAfter(moveSaturday)
+    const sunday = addDays(saturday, 1)
+    const { data, error } = await supabase.from('events').update({
+      tour_id: moveTourId, saturday_date: saturday, sunday_date: sunday, load_in_date: saturday,
+    }).eq('id', event.id).select().single()
+    setMoving(false)
+    if (!error && data) {
+      onMoved(data)
+      handleClose()
+    }
+  }
 
-  return (
-    <>
-      <td
-        onClick={handleCellClick}
-        onContextMenu={event && !isEditing ? (e) => { e.preventDefault(); onContextMenu(e, event) } : undefined}
-        {...dragHandlers}
-        style={{
-          ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
-          cursor: 'pointer', zIndex: isEditing ? 300 : 1, overflow: isEditing ? 'visible' : 'hidden',
-          outline: isDragOver ? '1px dashed var(--mint)' : 'none',
-          background: isDragOver ? 'rgba(51,255,153,0.06)' : undefined,
-        }}>
-        {isEditing ? (
-          <div onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}>
-            <VenuePicker
-              value={editForm.venue_name}
-              onChange={({ venue_name, city, state, venue_id }) => onChangeForm({ venue_name, city: city || editForm.city, state: state || editForm.state, venue_id })}
-              city={editForm.city} state={editForm.state}
-              venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded}
-              autoFocus
-            />
-            {editForm.city && (
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {formatCityState(editForm)}
+  const sortedTours = [...tours].sort((a, b) => (b.year || 0) - (a.year || 0) || (a.name || '').localeCompare(b.name || ''))
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', top: 62, right: 0, width: 360, height: 'calc(100vh - 62px)',
+      background: '#0d1f3a', borderLeft: '1px solid var(--glass-border)', zIndex: 200,
+      transform: visible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.2s ease',
+      display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 32px rgba(0,0,0,0.4)',
+    }}>
+      <div style={{ padding: '18px 20px', borderBottom: '0.5px solid var(--glass-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{formatCityState(event)}</div>
+            {event.country && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{event.country}</div>}
+            {event.venue_name && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{event.venue_name}</div>}
+          </div>
+          <button
+            onClick={() => { if (!dirty) handleClose() }}
+            disabled={dirty}
+            title="Close"
+            style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', fontSize: 16, cursor: dirty ? 'default' : 'pointer', opacity: dirty ? 0.3 : 1, flexShrink: 0, lineHeight: 1 }}>
+            ×
+          </button>
+        </div>
+        {dirty && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
+            <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* Status */}
+        <div>
+          <label style={labelStyle}>Status</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {PANEL_STATUSES.map(opt => {
+              const s = STATUS_STYLES[opt]
+              const selected = status === opt
+              return (
+                <div key={opt} onClick={() => setStatus(opt)}
+                  style={{
+                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    color: selected ? '#04140b' : s.color,
+                    background: selected ? s.color : 'transparent',
+                    border: `0.5px solid ${s.color}`,
+                  }}>
+                  {statusLabel(opt)}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Load-In Date */}
+        <div>
+          <label style={labelStyle}>Load-In Date</label>
+          <input type="date" style={inputStyle} value={loadInDate || ''} onChange={e => setLoadInDate(e.target.value)} />
+        </div>
+
+        {/* Shows */}
+        <div>
+          <label style={labelStyle}>Shows</label>
+          {loadingShows ? (
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Loading...</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {shows.map((s, i) => (
+                <div key={s.id || 'new-' + i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input type="date" style={{ ...inputStyle, flex: 2 }} value={s.show_date || ''} onChange={e => handleShowChange(i, { show_date: e.target.value })} />
+                  <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} />
+                  <div onClick={() => handleDeleteShow(i)}
+                    style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
+                </div>
+              ))}
+              <button onClick={handleAddShow} style={mintOutlineBtn}>+ Add Show</button>
+            </div>
+          )}
+        </div>
+
+        {/* Booking Note */}
+        <div>
+          <label style={labelStyle}>Booking Note</label>
+          <textarea style={{ ...inputStyle, height: 90, resize: 'vertical' }} value={bookingNote} onChange={e => setBookingNote(e.target.value)} placeholder="Booking note..." />
+        </div>
+
+        {/* Move Event */}
+        <div>
+          <div onClick={() => setMoveOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-block', transform: moveOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}>▾</span>
+            <span style={{ ...labelStyle, marginBottom: 0 }}>Move Event</span>
+          </div>
+          {moveOpen && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div>
+                <label style={labelStyle}>Move to Tour</label>
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={moveTourId} onChange={e => setMoveTourId(e.target.value)}>
+                  {sortedTours.map(t => <option key={t.id} value={t.id}>{t.name} ({t.year})</option>)}
+                </select>
               </div>
-            )}
-          </div>
-        ) : event ? (
-          <span
-            draggable
-            onDragStart={handleDragStart}
-            onClick={handleCityClick}
-            style={{ cursor: 'grab', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
-            {formatCityState(event)}
-          </span>
-        ) : null}
-      </td>
-      <td onClick={handleCellClick} style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder, cursor: 'pointer' }}>
-        {isEditing ? (editForm.venue_name || '') : (event?.venue_name || '')}
-      </td>
-      <td
-        onClick={!isEditing ? handleCellClick : undefined}
-        style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder, cursor: isEditing ? 'default' : 'pointer', zIndex: isEditing ? 300 : 1, overflow: isEditing ? 'visible' : 'hidden' }}>
-        {isEditing ? (
-          <InlineStatusPicker status={editForm.status} onChange={(status) => onChangeForm({ status })} />
-        ) : statusStyle ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
-            {statusLabel(event.status)}
-          </div>
-        ) : null}
-      </td>
-      <td
-        onClick={!isEditing ? handleCellClick : undefined}
-        style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder, cursor: isEditing ? 'default' : 'pointer', zIndex: isEditing ? 300 : 1, overflow: 'visible' }}>
-        {isEditing ? (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, position: 'relative' }}>
-            <div
-              onClick={() => setNoteOpen(o => !o)}
-              title="Note"
-              style={{ width: 17, height: 17, borderRadius: '50%', cursor: 'pointer', border: '0.5px solid var(--glass-border)', background: editForm.booking_note ? 'rgba(51,255,153,0.15)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--text-muted)' }}>
-              ✎
+              <div>
+                <label style={labelStyle}>Move to Weekend (Saturday)</label>
+                <input type="date" style={inputStyle} value={moveSaturday} onChange={e => setMoveSaturday(e.target.value)} />
+              </div>
+              <button className="btn-primary" onClick={handleMove} disabled={moving} style={{ fontSize: 12, padding: '8px' }}>{moving ? 'Moving...' : 'Move'}</button>
             </div>
-            <div
-              onClick={onSaveEdit}
-              title="Save"
-              style={{ width: 18, height: 18, borderRadius: '50%', cursor: 'pointer', background: 'var(--mint)', color: '#04140b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
-              ✓
+          )}
+        </div>
+      </div>
+
+      <div style={{ padding: '16px 20px', borderTop: '0.5px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <button onClick={() => router.push(`/tours/${event.tour_id}/events/${event.id}`)} style={{ ...mintOutlineBtn, width: '100%', boxSizing: 'border-box' }}>→ Go to Event</button>
+        {confirmingDelete ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Delete this event? This cannot be undone.</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setConfirmingDelete(false)} style={{ flex: 1, ...mintOutlineBtn }}>Cancel</button>
+              <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
             </div>
-            {noteOpen && (
-              <InlineNoteEditor value={editForm.booking_note} onChange={(v) => onChangeForm({ booking_note: v })} onClose={() => setNoteOpen(false)} />
-            )}
           </div>
-        ) : event?.booking_note ? (
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', display: 'inline-block' }} />
-        ) : null}
-      </td>
-    </>
+        ) : (
+          <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px', border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
+        )}
+      </div>
+    </div>,
+    document.body
   )
 }
 
-// ── YEAR SECTION (collapsible grid for one calendar year) ──────────────────────
+// ── GRID CELL (City / Venue / Status / Note for one tour x weekend) ────────────
 
 const WEEK_W = 44
 const HOLIDAY_W = 120
@@ -931,6 +717,7 @@ const CITY_W = 130
 const VENUE_W = 160
 const STATUS_W = 110
 const NOTE_W = 60
+const PLACEHOLDER_W = 180
 
 const H1 = 40
 const H2 = 34
@@ -958,13 +745,122 @@ const subHeaderStyle = (width, borderRight) => ({
   textTransform: 'uppercase', letterSpacing: '0.07em', width, minWidth: width,
 })
 
+function GridCell({
+  row, tour, event, isActive, activeCellRef, isLast, rowHeight,
+  venues, setVenues, onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
+  onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
+  onDragStartEvent, onDragEndEvent,
+}) {
+  const router = useRouter()
+  const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
+  const isDragOver = dragOverKey === cellKey
+  const cellBase = {
+    height: rowHeight, padding: '0 8px',
+    borderBottom: '0.5px solid rgba(255,255,255,0.07)',
+    fontSize: 12, color: 'var(--text-secondary)',
+    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    verticalAlign: 'middle', textAlign: 'center', position: 'relative',
+  }
+  const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
+  const groupBorder = '2px solid rgba(255,255,255,0.18)'
+
+  const handleCityClick = () => {
+    if (event) onOpenPanel(event, row, tour)
+    else onStartSearch(row, tour)
+  }
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', String(event.id))
+    e.dataTransfer.effectAllowed = 'move'
+    const ghost = document.createElement('div')
+    ghost.textContent = formatCityState(event)
+    ghost.style.position = 'absolute'
+    ghost.style.top = '-1000px'
+    ghost.style.padding = '4px 10px'
+    ghost.style.background = '#0d1f3a'
+    ghost.style.color = '#fff'
+    ghost.style.fontSize = '12px'
+    ghost.style.borderRadius = '6px'
+    ghost.style.border = '0.5px solid rgba(255,255,255,0.2)'
+    document.body.appendChild(ghost)
+    e.dataTransfer.setDragImage(ghost, 0, 0)
+    setTimeout(() => { if (ghost.parentNode) document.body.removeChild(ghost) }, 0)
+    onDragStartEvent(event, tour)
+  }
+
+  const dragHandlers = !event ? {
+    onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
+    onDragEnter: (e) => { e.preventDefault(); onDragEnterCell(cellKey) },
+    onDragLeave: () => onDragLeaveCell(cellKey),
+    onDrop: (e) => {
+      e.preventDefault()
+      onDragLeaveCell(cellKey)
+      const idStr = e.dataTransfer.getData('text/plain')
+      if (idStr) onCityDrop(idStr, row, tour)
+    },
+  } : {}
+
+  return (
+    <>
+      <td
+        ref={isActive ? activeCellRef : null}
+        onClick={handleCityClick}
+        {...dragHandlers}
+        style={{
+          ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
+          cursor: 'pointer', zIndex: isActive ? 300 : 1, overflow: isActive ? 'visible' : 'hidden',
+          outline: isDragOver ? '1px dashed var(--mint)' : 'none',
+          background: isDragOver ? 'rgba(51,255,153,0.08)' : undefined,
+        }}>
+        {isActive ? (
+          <InlineVenueSearch
+            venues={venues} setVenues={setVenues}
+            onSelect={(venue) => onSelectVenue(venue, row, tour)}
+            onCancel={onCancelSearch}
+          />
+        ) : event ? (
+          <span
+            draggable
+            onDragStart={handleDragStart}
+            onDragEnd={onDragEndEvent}
+            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${event.tour_id}/events/${event.id}`) }}
+            style={{ cursor: 'grab', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
+            {formatCityState(event)}
+          </span>
+        ) : null}
+      </td>
+      <td style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
+        {event?.venue_name || ''}
+      </td>
+      <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder }}>
+        {statusStyle ? (
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
+            {statusLabel(event.status)}
+          </div>
+        ) : null}
+      </td>
+      <td style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder }}>
+        {event?.booking_note ? (
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', display: 'inline-block' }} />
+        ) : null}
+      </td>
+    </>
+  )
+}
+
+// ── YEAR SECTION (collapsible grid for one calendar year) ──────────────────────
+
 function YearSection({
   year, rows, yearTours, eventMap, collapsed, onToggleCollapse, currentWeekendSaturday,
   sectionRef, onSaveHoliday,
-  editing, editForm, onStartEdit, onSaveEdit, onChangeForm,
-  venues, setVenues, mapsLoaded, onCityDrop, onContextMenu, noteOpen, setNoteOpen,
-  dragOverKey, onDragEnterCell, onDragLeaveCell,
+  activeCell, activeCellRef, venues, setVenues,
+  onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
+  onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
+  onDragStartEvent, onDragEndEvent,
+  draggedTour, onPlaceholderDrop,
 }) {
+  const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
+
   return (
     <div ref={sectionRef}>
       <div onClick={onToggleCollapse}
@@ -987,12 +883,17 @@ function YearSection({
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : B_INNER, textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : (showPlaceholder ? B_TOUR_GROUP : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
                       {tour.name}
                     </th>
                   )
                 })}
-                {yearTours.length === 0 && <th />}
+                {yearTours.length === 0 && !showPlaceholder && <th />}
+                {showPlaceholder && (
+                  <th rowSpan={2} style={{ height: H1 + H2, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, background: 'rgba(51,255,153,0.06)', border: '1px dashed var(--mint)', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--mint)', padding: '0 8px', verticalAlign: 'middle' }}>
+                    + Add {draggedTour.name} to {year}
+                  </th>
+                )}
               </tr>
               <tr>
                 {yearTours.map((tour, ti) => {
@@ -1028,29 +929,40 @@ function YearSection({
                     {yearTours.map((tour, ti) => {
                       const event = eventMap[tour.id + '__' + row.saturday]
                       const cellKey = row.saturday + '__' + tour.id
-                      const isEditingThis = !!(editing && editing.saturday === row.saturday && editing.tourId === tour.id)
+                      const isActive = !!(activeCell && activeCell.type === 'search' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
                       return (
-                        <EditableCellGroup
+                        <GridCell
                           key={tour.id}
                           row={row} tour={tour} event={event}
-                          isEditing={isEditingThis}
-                          editForm={editForm}
-                          onStartEdit={() => onStartEdit(row, tour, event)}
-                          onSaveEdit={onSaveEdit}
-                          onChangeForm={onChangeForm}
-                          venues={venues} setVenues={setVenues} mapsLoaded={mapsLoaded}
-                          widths={widths} isLast={ti === yearTours.length - 1} rowHeight={ROW_H}
-                          onCityDrop={(eventId) => onCityDrop(eventId, row, tour)}
-                          onContextMenu={(e, ev) => onContextMenu(e, ev, row, tour)}
-                          noteOpen={isEditingThis && noteOpen}
-                          setNoteOpen={setNoteOpen}
+                          isActive={isActive}
+                          activeCellRef={activeCellRef}
+                          isLast={ti === yearTours.length - 1} rowHeight={ROW_H}
+                          venues={venues} setVenues={setVenues}
+                          onStartSearch={onStartSearch}
+                          onSelectVenue={onSelectVenue}
+                          onCancelSearch={onCancelSearch}
+                          onOpenPanel={onOpenPanel}
+                          onCityDrop={onCityDrop}
                           dragOverKey={dragOverKey}
                           cellKey={cellKey}
                           onDragEnterCell={onDragEnterCell}
                           onDragLeaveCell={onDragLeaveCell}
+                          onDragStartEvent={onDragStartEvent}
+                          onDragEndEvent={onDragEndEvent}
                         />
                       )
                     })}
+                    {showPlaceholder && (
+                      <td
+                        onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                        onDrop={e => {
+                          e.preventDefault()
+                          const idStr = e.dataTransfer.getData('text/plain')
+                          if (idStr) onPlaceholderDrop(idStr, row, year)
+                        }}
+                        style={{ height: ROW_H, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, border: '1px dashed rgba(51,255,153,0.3)', background: 'rgba(51,255,153,0.04)', borderBottom: B_INNER }}
+                      />
+                    )}
                   </tr>
                 )
               })}
@@ -1069,14 +981,14 @@ export default function BookingPage() {
   const [events, setEvents] = useState([])
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
-  const [mapsLoaded, setMapsLoaded] = useState(false)
   const [holidayOverrides, setHolidayOverrides] = useState({})
 
-  const [editing, setEditing] = useState(null) // { saturday, sunday, tourId, eventId }
-  const [editForm, setEditForm] = useState({ city: '', state: '', venue_name: '', venue_id: null, status: 'tentative', booking_note: '' })
-  const [noteOpen, setNoteOpen] = useState(false)
-  const [contextMenu, setContextMenu] = useState(null)
+  // activeCell: { type: 'search', saturday, sunday, tourId } | { type: 'panel', event, row, tour } | null
+  const [activeCell, setActiveCell] = useState(null)
   const [dragOverKey, setDragOverKey] = useState(null)
+  const [draggedEvent, setDraggedEvent] = useState(null)
+  const [draggedTour, setDraggedTour] = useState(null)
+  const [hoveredPillYear, setHoveredPillYear] = useState(null)
 
   const [collapsedSections, setCollapsedSections] = useState(new Set())
   const [activePastYears, setActivePastYears] = useState(new Set())
@@ -1084,19 +996,8 @@ export default function BookingPage() {
   const linkedEventsRef = useRef(false)
   const cleanedShowsRef = useRef(false)
   const sectionRefs = useRef({})
-
-  // Load Google Maps script (same pattern as app/venues/new/page.js)
-  useEffect(() => {
-    if (window.google) { setMapsLoaded(true); return }
-    const existing = document.querySelector('script[data-gmaps]')
-    if (existing) { existing.addEventListener('load', () => setMapsLoaded(true)); return }
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&libraries=places`
-    script.async = true
-    script.dataset.gmaps = 'true'
-    script.onload = () => setMapsLoaded(true)
-    document.head.appendChild(script)
-  }, [])
+  const activeCellElRef = useRef(null)
+  const pillHoverTimerRef = useRef(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -1204,69 +1105,57 @@ export default function BookingPage() {
     return { rows, yearTours, eventMap }
   }
 
-  // ── Inline editing ──────────────────────────────────────────────────────────
+  // ── Cursor / outside-click cleanup for the active inline search cell ───────
 
-  const startEdit = (row, tour, event) => {
-    setEditing({ saturday: row.saturday, sunday: row.sunday, tourId: tour.id, eventId: event?.id || null })
-    setEditForm(event ? {
-      city: event.city || '', state: event.state || '', venue_name: event.venue_name || '',
-      venue_id: event.venue_id || null, status: event.status || 'tentative', booking_note: event.booking_note || '',
-    } : { city: '', state: '', venue_name: '', venue_id: null, status: 'tentative', booking_note: '' })
-    setNoteOpen(false)
-    setContextMenu(null)
-  }
-
-  const cancelEdit = () => {
-    setEditing(null)
-    setNoteOpen(false)
-  }
-
-  const changeEditForm = (patch) => setEditForm(prev => ({ ...prev, ...patch }))
-
-  const saveEdit = async () => {
-    if (!editing) return
-    const supabase = getSupabase()
-    if (editing.eventId) {
-      const { data, error } = await supabase.from('events').update({
-        city: editForm.city,
-        state: editForm.state,
-        venue_name: editForm.venue_name,
-        venue_id: editForm.venue_id,
-        status: editForm.status,
-        booking_note: editForm.booking_note,
-      }).eq('id', editing.eventId).select().single()
-      if (!error && data) setEvents(prev => prev.map(e => e.id === data.id ? data : e))
-    } else {
-      if (!editForm.city && !editForm.venue_name) { cancelEdit(); return }
-      const { data, error } = await supabase.from('events').insert([{
-        tour_id: editing.tourId,
-        city: editForm.city,
-        state: editForm.state,
-        venue_name: editForm.venue_name,
-        venue_id: editForm.venue_id,
-        status: editForm.status,
-        booking_note: editForm.booking_note,
-        saturday_date: editing.saturday,
-        sunday_date: editing.sunday,
-        load_in_date: editing.saturday,
-      }]).select().single()
-      if (!error && data) setEvents(prev => [...prev, data])
-    }
-    setEditing(null)
-    setNoteOpen(false)
-  }
-
-  // Escape cancels the active edit; Enter (outside text inputs) saves it
   useEffect(() => {
-    if (!editing) return
-    const handleKey = (e) => {
-      if (e.key === 'Escape') cancelEdit()
-      else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') saveEdit()
+    if (!activeCell || activeCell.type !== 'search') return
+    const handleMouseDown = (e) => {
+      if (activeCellElRef.current && !activeCellElRef.current.contains(e.target)) {
+        setActiveCell(null)
+      }
     }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing, editForm])
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [activeCell])
+
+  const handleStartSearch = (row, tour) => {
+    setActiveCell({ type: 'search', saturday: row.saturday, sunday: row.sunday, tourId: tour.id })
+  }
+
+  const handleCancelSearch = () => setActiveCell(null)
+
+  const handleSelectVenue = async (venue, row, tour) => {
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('events').insert([{
+      tour_id: tour.id,
+      city: venue.city || '',
+      state: venue.state || '',
+      venue_name: venue.name,
+      venue_id: venue.id,
+      status: 'tentative',
+      saturday_date: row.saturday,
+      sunday_date: row.sunday,
+      load_in_date: row.saturday,
+    }]).select().single()
+    if (!error && data) setEvents(prev => [...prev, data])
+    setActiveCell(null)
+  }
+
+  // ── Side panel ───────────────────────────────────────────────────────────
+
+  const handleOpenPanel = (event, row, tour) => {
+    setActiveCell({ type: 'panel', event, row, tour })
+  }
+
+  const handleClosePanel = () => setActiveCell(null)
+
+  const handlePanelSaved = (updatedEvent) => {
+    setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
+  }
+
+  const handlePanelMoved = (updatedEvent) => {
+    setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
+  }
 
   const deleteEvent = async (event) => {
     const supabase = getSupabase()
@@ -1275,15 +1164,28 @@ export default function BookingPage() {
     if (!error) setEvents(prev => prev.filter(e => e.id !== event.id))
   }
 
-  // ── Context menu ───────────────────────────────────────────────────────────
-
-  const openContextMenu = (e, event, row, tour) => setContextMenu({ x: e.clientX, y: e.clientY, event, row, tour })
-  const closeContextMenu = () => setContextMenu(null)
-
   // ── Drag and drop ──────────────────────────────────────────────────────────
 
   const handleDragEnterCell = (key) => setDragOverKey(key)
   const handleDragLeaveCell = (key) => setDragOverKey(prev => (prev === key ? null : prev))
+
+  const handleDragStartEvent = (event, tour) => {
+    setDraggedEvent(event)
+    setDraggedTour(tour)
+  }
+
+  const resetDragState = () => {
+    setDraggedEvent(null)
+    setDraggedTour(null)
+    setDragOverKey(null)
+    setHoveredPillYear(null)
+    clearTimeout(pillHoverTimerRef.current)
+  }
+
+  useEffect(() => {
+    document.addEventListener('dragend', resetDragState)
+    return () => document.removeEventListener('dragend', resetDragState)
+  }, [])
 
   const handleCityDrop = async (eventIdStr, row, tour) => {
     const dragged = events.find(e => String(e.id) === eventIdStr)
@@ -1300,7 +1202,39 @@ export default function BookingPage() {
     if (!error && data) setEvents(prev => prev.map(e => e.id === data.id ? data : e))
   }
 
+  // ── Drag to a missing tour column in another year ───────────────────────────
+
+  const handlePlaceholderDrop = async (eventIdStr, row, year) => {
+    const dragged = events.find(e => String(e.id) === eventIdStr)
+    if (!dragged) return
+    const supabase = getSupabase()
+    const { data: fullTour } = await supabase.from('tours').select('*').eq('id', dragged.tour_id).single()
+    if (!fullTour) return
+    const { id: _id, created_at: _createdAt, ...rest } = fullTour
+    const { data: newTour, error: tourError } = await supabase.from('tours').insert([{ ...rest, year, status: 'upcoming' }]).select('id, name, color, status, tour_type, year, created_at').single()
+    if (tourError || !newTour) return
+    setTours(prev => [...prev, newTour])
+    const { data: updatedEvent, error } = await supabase.from('events').update({
+      tour_id: newTour.id, saturday_date: row.saturday, sunday_date: row.sunday, load_in_date: row.saturday,
+    }).eq('id', dragged.id).select().single()
+    if (!error && updatedEvent) setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
+  }
+
   // ── Past year pills ───────────────────────────────────────────────────────
+
+  const expandPastYear = (y) => {
+    setActivePastYears(prev => {
+      if (prev.has(y)) return prev
+      const next = new Set(prev)
+      next.add(y)
+      setCollapsedSections(c => { const n = new Set(c); n.delete(y); return n })
+      setTimeout(() => {
+        const el = sectionRefs.current[y]
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 60)
+      return next
+    })
+  }
 
   const togglePastYear = (y) => {
     setActivePastYears(prev => {
@@ -1328,6 +1262,21 @@ export default function BookingPage() {
     })
   }
 
+  const handlePillDragOver = (year) => {
+    if (hoveredPillYear !== year) {
+      setHoveredPillYear(year)
+      clearTimeout(pillHoverTimerRef.current)
+      pillHoverTimerRef.current = setTimeout(() => expandPastYear(year), 600)
+    }
+  }
+
+  const handlePillDragLeave = (year) => {
+    if (hoveredPillYear === year) {
+      setHoveredPillYear(null)
+      clearTimeout(pillHoverTimerRef.current)
+    }
+  }
+
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
       <TopNav />
@@ -1337,13 +1286,28 @@ export default function BookingPage() {
 
   const activePastYearsSorted = [...activePastYears].sort((a, b) => b - a)
 
+  const yearSectionCommonProps = {
+    activeCell, activeCellRef: activeCellElRef, venues, setVenues,
+    onStartSearch: handleStartSearch, onSelectVenue: handleSelectVenue, onCancelSearch: handleCancelSearch,
+    onOpenPanel: handleOpenPanel,
+    onCityDrop: handleCityDrop, dragOverKey, onDragEnterCell: handleDragEnterCell, onDragLeaveCell: handleDragLeaveCell,
+    onDragStartEvent: handleDragStartEvent, onDragEndEvent: resetDragState,
+    draggedTour, onPlaceholderDrop: handlePlaceholderDrop,
+    onSaveHoliday: saveHolidayOverride,
+    currentWeekendSaturday,
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
 
       <div style={{ marginTop: 62, padding: '14px 28px 0', background: 'var(--bg)' }}>
         <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
-        <PastYearPills years={pastYears} activeYears={activePastYears} onToggle={togglePastYear} />
+        <PastYearPills
+          years={pastYears} activeYears={activePastYears} onToggle={togglePastYear}
+          dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
+          onPillDragOver={handlePillDragOver} onPillDragLeave={handlePillDragLeave}
+        />
       </div>
 
       <div style={{ padding: '14px 28px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1358,24 +1322,8 @@ export default function BookingPage() {
               eventMap={eventMap}
               collapsed={collapsedSections.has(year)}
               onToggleCollapse={() => toggleCollapse(year)}
-              currentWeekendSaturday={currentWeekendSaturday}
               sectionRef={(el) => { sectionRefs.current[year] = el }}
-              onSaveHoliday={saveHolidayOverride}
-              editing={editing}
-              editForm={editForm}
-              onStartEdit={startEdit}
-              onSaveEdit={saveEdit}
-              onChangeForm={changeEditForm}
-              venues={venues}
-              setVenues={setVenues}
-              mapsLoaded={mapsLoaded}
-              onCityDrop={handleCityDrop}
-              onContextMenu={openContextMenu}
-              noteOpen={noteOpen}
-              setNoteOpen={setNoteOpen}
-              dragOverKey={dragOverKey}
-              onDragEnterCell={handleDragEnterCell}
-              onDragLeaveCell={handleDragLeaveCell}
+              {...yearSectionCommonProps}
             />
           )
         })}
@@ -1391,36 +1339,23 @@ export default function BookingPage() {
               eventMap={eventMap}
               collapsed={collapsedSections.has(year)}
               onToggleCollapse={() => toggleCollapse(year)}
-              currentWeekendSaturday={currentWeekendSaturday}
               sectionRef={(el) => { sectionRefs.current[year] = el }}
-              onSaveHoliday={saveHolidayOverride}
-              editing={editing}
-              editForm={editForm}
-              onStartEdit={startEdit}
-              onSaveEdit={saveEdit}
-              onChangeForm={changeEditForm}
-              venues={venues}
-              setVenues={setVenues}
-              mapsLoaded={mapsLoaded}
-              onCityDrop={handleCityDrop}
-              onContextMenu={openContextMenu}
-              noteOpen={noteOpen}
-              setNoteOpen={setNoteOpen}
-              dragOverKey={dragOverKey}
-              onDragEnterCell={handleDragEnterCell}
-              onDragLeaveCell={handleDragLeaveCell}
+              {...yearSectionCommonProps}
             />
           )
         })}
       </div>
 
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onEdit={() => { startEdit(contextMenu.row, contextMenu.tour, contextMenu.event); closeContextMenu() }}
-          onDelete={async () => { await deleteEvent(contextMenu.event); closeContextMenu() }}
-          onClose={closeContextMenu}
+      {activeCell && activeCell.type === 'panel' && (
+        <EventSidePanel
+          event={activeCell.event}
+          tour={activeCell.tour}
+          tours={tours}
+          row={activeCell.row}
+          onClose={handleClosePanel}
+          onSaved={handlePanelSaved}
+          onDeleted={deleteEvent}
+          onMoved={handlePanelMoved}
         />
       )}
     </div>
