@@ -276,7 +276,6 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
       selectIndex(activeIndex >= 0 ? activeIndex : 0)
     } else if (e.key === 'Escape') {
       e.preventDefault()
-      e.stopPropagation()
       onClose()
     } else if (e.key === 'Tab') {
       onClose()
@@ -400,22 +399,48 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     setConfirmOverride(null)
     const supabase = getSupabase()
     const payload = { staff_id: staffMember.id, status: isExec ? null : 'scheduled', confirmed: false }
-    let result
+
+    console.log('[StaffGrid] doAssign', { eventId, staffId: staffMember.id, positionKey: positionRow.key })
+
+    let writeError = null
+    let newRowId = null
+
     if (assignment) {
-      result = await supabase.from('event_staff').update(payload).eq('id', assignment.id)
-        .select('*, staff(id, first_name, last_name)').maybeSingle()
+      const { error } = await supabase.from('event_staff').update(payload).eq('id', assignment.id)
+      writeError = error
+      newRowId = assignment.id
     } else {
-      result = await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, ...payload }])
-        .select('*, staff(id, first_name, last_name)').maybeSingle()
+      // Only select 'id' after insert — avoids RLS issues with the staff FK join
+      const { data: inserted, error } = await supabase.from('event_staff')
+        .insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, ...payload }])
+        .select('id').maybeSingle()
+      writeError = error
+      newRowId = inserted?.id ?? null
     }
-    if (result.error || !result.data) {
+
+    console.log('[StaffGrid] doAssign result', { writeError, newRowId })
+
+    if (writeError) {
       setAssignError(true)
       setTimeout(() => setAssignError(false), 1200)
       onCloseActive()
       return
     }
-    onAssignSuccess(eventId, result.data)
+
+    // Build the local row from staffMember (already in scope, correct shape) rather than
+    // relying on a joined select that can silently return null if RLS blocks the staff join.
+    const localRow = {
+      id: newRowId,
+      event_id: eventId,
+      staff_id: staffMember.id,
+      position: positionRow.displayLabel,
+      position_key: positionRow.key,
+      ...payload,
+      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name },
+    }
+    onAssignSuccess(eventId, localRow)
     onCloseActive()
+    onRefresh() // background sync so the real DB id replaces our optimistic row
   }
 
   const handleAssign = (staffMember, avail) => {
