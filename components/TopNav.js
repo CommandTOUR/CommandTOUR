@@ -9,7 +9,6 @@ const navLinks = [
   { label: 'Tours', href: '/tours' },
   { label: 'Staff', href: '/staff' },
   { label: 'Calendar', href: '/calendar' },
-  { label: 'Staffing Grid', href: '/staffing-grid' },
   { label: 'Venues', href: '/venues' },
   { label: 'All Events', href: '/booking' },
   { label: 'Reports', href: '/reports' },
@@ -55,7 +54,6 @@ export default function TopNav() {
         {navLinks.map(link => {
           const active =
             link.href === '/' ? pathname === '/' :
-            link.href === '/staffing-grid' ? pathname === '/staffing-grid' :
             link.href === '/staff' ? pathname === '/staff' || pathname.startsWith('/staff/') :
             pathname.startsWith(link.href)
 

@@ -109,22 +109,22 @@ function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === st
 const HATCH_BG = 'radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)'
 const HATCH_SIZE = '6px 6px'
 
-// SVG lock icon (locked = closed padlock, unlocked = open padlock)
-function LockIcon({ locked, size = 13 }) {
+// SVG lock icon (locked = closed padlock "ti-lock", unlocked = open padlock "ti-lock-open")
+function LockIcon({ locked, size = 13, color = 'rgba(255,255,255,0.5)' }) {
   if (locked) {
     return (
       <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="7" width="10" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/>
-        <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/>
-        <circle cx="7" cy="11" r="1" fill="rgba(255,255,255,0.5)"/>
+        <rect x="2" y="7" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2"/>
+        <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+        <circle cx="7" cy="11" r="1" fill={color}/>
       </svg>
     )
   }
   return (
     <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="7" width="10" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/>
-      <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/>
-      <circle cx="7" cy="11" r="1" fill="rgba(255,255,255,0.5)"/>
+      <rect x="2" y="7" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2"/>
+      <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="7" cy="11" r="1" fill={color}/>
     </svg>
   )
 }
@@ -146,82 +146,28 @@ function isHatchedCell(posRow, event, eventMeta) {
   return false
 }
 
-// ── CELL ACTION POPUP ─────────────────────────────────────────────────────────
-// Used for both hatched cells (lock/unlock) and open cells (lock option)
+// ── INLINE STAFF SEARCH ───────────────────────────────────────────────────────
+// Rendered inside an empty cell once it enters edit mode. Typing filters an
+// autocomplete dropdown; arrow keys navigate it, Enter selects, Escape cancels.
 
-function CellActionPopup({ isHatched, isLocked, isHiddenLocked, onUnlock, onLock, onOpenSearch, onClose }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener('keydown', handleKey)
-    document.addEventListener('mousedown', handleClick)
-    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
-  }, [onClose])
-
-  return (
-    <div ref={ref} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, width: 210, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 4, overflow: 'hidden' }}>
-      {isHatched ? (
-        // Hatched cell: unlock option
-        <div
-          onMouseDown={e => { e.preventDefault(); onUnlock(); onClose() }}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-          <LockIcon locked={false} />
-          <span style={{ color: '#33FF99' }}>Unlock for this event</span>
-        </div>
-      ) : (
-        // Open cell: assign + lock options
-        <>
-          <div
-            onMouseDown={e => { e.preventDefault(); onOpenSearch(); onClose() }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2"/><path d="M10 10l2.5 2.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.2" strokeLinecap="round"/></svg>
-            <span style={{ color: 'var(--text-primary)' }}>Assign staff</span>
-          </div>
-          <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
-          <div
-            onMouseDown={e => { e.preventDefault(); onLock(); onClose() }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-            <LockIcon locked={true} />
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Lock this position</span>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-// ── STAFF SEARCH ──────────────────────────────────────────────────────────────
-
-function StaffSearch({ eventId, event, onAssign, onClose, onLock }) {
-  const [search, setSearch] = useState('')
+function InlineStaffSearch({ eventId, event, onAssign, onClose }) {
+  const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
   const [loading, setLoading] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef(null)
-  const ref = useRef(null)
 
-  useEffect(() => { if (inputRef.current) inputRef.current.focus() }, [])
-  useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   useEffect(() => {
-    if (search.trim().length < 2) { setResults([]); setAvailability({}); return }
+    if (query.trim().length < 1) return
     const timer = setTimeout(async () => {
       setLoading(true)
       const supabase = getSupabase()
       const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name')
-        .or('first_name.ilike.%' + search + '%,last_name.ilike.%' + search + '%')
-        .order('last_name', { ascending: true }).limit(10)
+        .or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%')
+        .order('last_name', { ascending: true }).limit(8)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
       setResults(staffData)
       const staffIds = staffData.map(s => s.id)
@@ -249,9 +195,9 @@ function StaffSearch({ eventId, event, onAssign, onClose, onLock }) {
       })
       setAvailability(avail)
       setLoading(false)
-    }, 250)
+    }, 200)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [query, event, eventId])
 
   const dotColor = (id) => {
     const a = availability[id]
@@ -265,89 +211,103 @@ function StaffSearch({ eventId, event, onAssign, onClose, onLock }) {
     const a = availability[id]
     if (!a || a.status === 'free') return ''
     if (a.status === 'same_event') return 'Already on this event'
-    if (a.status === 'conflict') return 'Booked \u2014 ' + (a.city || 'another event')
+    if (a.status === 'conflict') return 'Booked — ' + (a.city || 'another event')
     return ''
   }
 
+  const showDropdown = query.trim().length >= 1
+  const optionCount = results.length + (showDropdown ? 1 : 0)
+
+  const handleCreate = async () => {
+    const parts = query.trim().split(' ')
+    const firstName = parts[0]
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : ''
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('staff').insert([{ first_name: firstName, last_name: lastName }]).select().single()
+    if (!error && data) onAssign(data, { status: 'free' })
+  }
+
+  const selectIndex = (idx) => {
+    if (idx < 0 || idx >= optionCount) return
+    if (idx < results.length) onAssign(results[idx], availability[results[idx].id])
+    else handleCreate()
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (optionCount > 0) setActiveIndex(i => (i + 1) % optionCount)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (optionCount > 0) setActiveIndex(i => (i - 1 + optionCount) % optionCount)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      selectIndex(activeIndex >= 0 ? activeIndex : 0)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      e.stopPropagation()
+      onClose()
+    } else if (e.key === 'Tab') {
+      onClose()
+    }
+  }
+
   return (
-    <div ref={ref} style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, width: 260, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 2, overflow: 'hidden' }}>
-      <div style={{ padding: '6px 10px', borderBottom: '0.5px solid var(--glass-border)' }}>
-        <input ref={inputRef}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '5px 8px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
-          placeholder="Search staff..." value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Escape') onClose() }} />
-      </div>
-      {loading && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>Searching...</div>}
-      {!loading && search.trim().length >= 2 && results.length === 0 && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>No results</div>}
-      {results.map(s => {
-        const color = dotColor(s.id)
-        const t = tipText(s.id)
-        return (
-          <div key={s.id}
-            onMouseDown={e => { e.preventDefault(); onAssign(s, availability[s.id]) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            title={t}>
-            {color && <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />}
-            <span>{s.first_name} {s.last_name}</span>
-            {t && <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 'auto' }}>{t}</span>}
-          </div>
-        )
-      })}
-      {search.trim().length >= 2 && (
-        <div
-          onMouseDown={async e => {
-            e.preventDefault()
-            const parts = search.trim().split(' ')
-            const firstName = parts[0]
-            const lastName = parts.length > 1 ? parts.slice(1).join(' ') : ''
-            const supabase = getSupabase()
-            const { data, error } = await supabase.from('staff').insert([{ first_name: firstName, last_name: lastName }]).select().single()
-            if (!error && data) onAssign(data, { status: 'free' })
-          }}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderTop: results.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.06)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-          <span style={{ color: 'var(--mint)' }}>+ Create "{search.trim()}" as new staff</span>
-        </div>
-      )}
-      {onLock && (
-        <>
-          <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
+    <div onClick={e => e.stopPropagation()} style={{ position: 'relative', textAlign: 'left' }}>
+      <input
+        ref={inputRef}
+        value={query}
+        onChange={e => {
+          const val = e.target.value
+          setQuery(val)
+          setActiveIndex(-1)
+          if (val.trim().length < 1) { setResults([]); setAvailability({}) }
+        }}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+        placeholder="Type a name..."
+        style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '0.5px solid var(--mint)', background: 'rgba(255,255,255,0.07)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+      />
+      {showDropdown && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+          {loading && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Searching...</div>}
+          {!loading && results.length === 0 && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>No results</div>}
+          {results.map((s, i) => {
+            const color = dotColor(s.id)
+            const t = tipText(s.id)
+            return (
+              <div key={s.id}
+                onMouseDown={e => { e.preventDefault(); selectIndex(i) }}
+                onMouseEnter={() => setActiveIndex(i)}
+                title={t}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
+                {color && <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />}
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.first_name} {s.last_name}</span>
+              </div>
+            )
+          })}
           <div
-            onMouseDown={e => { e.preventDefault(); onLock(); onClose() }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', fontSize: 13 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-            <LockIcon locked={true} size={12} />
-            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Lock this position</span>
+            onMouseDown={e => { e.preventDefault(); selectIndex(results.length) }}
+            onMouseEnter={() => setActiveIndex(results.length)}
+            style={{ padding: '7px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--mint)', background: activeIndex === results.length ? 'rgba(51,255,153,0.1)' : 'transparent', borderTop: results.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}>
+            + Create &quot;{query.trim()}&quot;
           </div>
-        </>
+        </div>
       )}
     </div>
   )
 }
 
-// ── STATUS DROPDOWN ───────────────────────────────────────────────────────────
+// ── INLINE STATUS MENU ────────────────────────────────────────────────────────
+// Compact dropdown shown when clicking a filled staff pill: status options + remove.
 
-function StatusDropdown({ assignment, onSetStatus, onRemove, onClose }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    document.addEventListener('keydown', handleKey)
-    document.addEventListener('mousedown', handleClick)
-    return () => { document.removeEventListener('keydown', handleKey); document.removeEventListener('mousedown', handleClick) }
-  }, [onClose])
-
+function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
   return (
-    <div ref={ref} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, width: 160, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', marginTop: 4, overflow: 'hidden' }}>
+    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: 150, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', overflow: 'hidden' }}>
       {STATUS_OPTIONS.map(opt => (
         <div key={opt.value}
-          onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value); onClose() }}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', background: assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+          onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value) }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', background: assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
           onMouseLeave={e => { e.currentTarget.style.background = assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
@@ -356,11 +316,11 @@ function StatusDropdown({ assignment, onSetStatus, onRemove, onClose }) {
       ))}
       <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
       <div
-        onMouseDown={e => { e.preventDefault(); onRemove(); onClose() }}
-        style={{ padding: '9px 12px', cursor: 'pointer', fontSize: 12, color: '#FF3333' }}
+        onMouseDown={e => { e.preventDefault(); onRemove() }}
+        style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, color: '#FF3333' }}
         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,51,51,0.08)' }}
         onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-        x Remove
+        × Remove
       </div>
     </div>
   )
@@ -397,18 +357,14 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
 
 // ── GRID CELL ─────────────────────────────────────────────────────────────────
 
-function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatched, onRefresh, onLockPosition, onUnlockPosition, COL_WIDTH, ROW_HEIGHT, borderRight }) {
-  const [mode, setMode] = useState(null)
+function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, isActive, activeType, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const isExec = positionRow.isExec
   const statusStyle = (!isExec && assignment && assignment.status) ? getStatusStyle(assignment.status) : null
   const staffName = assignment && assignment.staff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
-  const isHiddenLocked = ((eventMeta && eventMeta.hidden_positions) || []).includes(positionRow.key)
-  const isUnlockedOverride = ((eventMeta && eventMeta.unlocked_positions) || []).includes(positionRow.key)
 
   const doAssign = async (staffMember) => {
-    setMode(null)
     setConfirmOverride(null)
     const supabase = getSupabase()
     if (assignment) {
@@ -416,12 +372,12 @@ function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatche
     } else {
       await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionRow.displayLabel, position_key: positionRow.key, status: isExec ? null : 'scheduled', confirmed: false }])
     }
+    onCloseActive()
     onRefresh()
   }
 
   const handleAssign = (staffMember, avail) => {
     if (avail && (avail.status === 'conflict' || avail.status === 'same_event')) {
-      setMode(null)
       setConfirmOverride({ staffMember, avail })
       return
     }
@@ -440,6 +396,7 @@ function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatche
         await supabase.from('event_travel_departures').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
       }
     }
+    onCloseActive()
     onRefresh()
   }
 
@@ -447,6 +404,7 @@ function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatche
     if (!assignment) return
     const supabase = getSupabase()
     await supabase.from('event_staff').delete().eq('id', assignment.id)
+    onCloseActive()
     onRefresh()
   }
 
@@ -456,44 +414,57 @@ function GridCell({ eventId, event, eventMeta, positionRow, assignment, isHatche
   const pillBorder = isExec ? 'rgba(255,255,255,0.12)' : (statusStyle ? statusStyle.border : 'rgba(255,255,255,0.12)')
   const pillColor = isExec ? 'var(--text-secondary)' : (statusStyle ? statusStyle.color : 'var(--text-primary)')
 
+  const handleCellClick = () => {
+    if (isActive) return
+    if (assignment) { onActivate('menu'); return }
+    if (isHatched) { onActivate(null); return }
+    onActivate('edit')
+  }
+
+  const showLockIcon = !isExec && hovered && !isActive
+
   return (
     <React.Fragment>
       <td
-        style={{ position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT, padding: '0 6px', cursor: 'pointer', background: cellBg, backgroundSize: cellBgSize, textAlign: 'center', verticalAlign: 'middle', boxSizing: 'border-box', borderRight: borderRight, borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}
+        ref={cellRef}
+        style={{
+          position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
+          padding: '0 6px', cursor: isActive ? 'default' : 'pointer',
+          background: cellBg, backgroundSize: cellBgSize, textAlign: 'center', verticalAlign: 'middle',
+          boxSizing: 'border-box', borderRight, borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+          boxShadow: isFocused && !isActive ? 'inset 0 0 0 1px var(--mint)' : 'none',
+          zIndex: isActive ? 300 : (isFocused ? 5 : 1),
+        }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => {
-          if (staffName) { setMode(mode === 'status' ? null : 'status'); return }
-          if (isHatched) { setMode(mode === 'hatch' ? null : 'hatch'); return }
-          setMode(mode === 'search' ? null : 'search')
-        }}>
-        {staffName ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, background: pillBg, border: '0.5px solid ' + pillBorder, maxWidth: COL_WIDTH - 12, opacity: hovered ? 0.82 : 1, transition: 'opacity 0.1s' }}>
+        onClick={handleCellClick}>
+        {isActive && activeType === 'edit' ? (
+          <InlineStaffSearch eventId={eventId} event={event} onAssign={handleAssign} onClose={onCloseActive} />
+        ) : staffName ? (
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, background: pillBg, border: '0.5px solid ' + pillBorder, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s' }}>
             <span style={{ fontSize: 11, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
           </div>
-        ) : isHatched ? (
-          hovered ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LockIcon locked={true} size={12} />
-            </div>
-          ) : null
-        ) : (
+        ) : isHatched ? null : (
           hovered ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>+ Assign</span> : null
         )}
 
-        {mode === 'search' && <StaffSearch eventId={eventId} event={event} onAssign={handleAssign} onClose={() => setMode(null)} onLock={() => { setMode(null); onLockPosition(positionRow.key) }} />}
-        {mode === 'hatch' && (
-          <CellActionPopup
-            isHatched={isHatched}
-            isHiddenLocked={isHiddenLocked}
-            isUnlockedOverride={isUnlockedOverride}
-            onUnlock={() => onUnlockPosition(positionRow.key)}
-            onLock={() => onLockPosition(positionRow.key)}
-            onOpenSearch={() => setMode('search')}
-            onClose={() => setMode(null)}
-          />
+        {isActive && activeType === 'menu' && assignment && (
+          <InlineStatusMenu assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} />
         )}
-        {mode === 'status' && assignment && <StatusDropdown assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} onClose={() => setMode(null)} />}
+
+        {!isExec && (
+          <div
+            onClick={e => { e.stopPropagation(); onToggleLock() }}
+            title={isHatched ? 'Unlock position' : 'Lock position'}
+            style={{
+              position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10,
+              opacity: showLockIcon ? 1 : 0, transition: 'opacity 0.1s',
+            }}>
+            <LockIcon locked={isHatched} size={14} color={isHatched ? 'var(--mint)' : 'var(--text-muted)'} />
+          </div>
+        )}
       </td>
       {confirmOverride && (
         <ConfirmOverride
@@ -519,6 +490,9 @@ export default function StaffingGrid() {
   const [loading, setLoading] = useState(true)
   const [collapsedDepts, setCollapsedDepts] = useState({})
   const [showPast, setShowPast] = useState(false)
+  const [activeCell, setActiveCell] = useState(null) // { eventId, positionKey, type: 'edit'|'menu' } | null
+  const [focusedCell, setFocusedCell] = useState(null) // { eventId, positionKey } | null
+  const activeCellElRef = useRef(null)
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
@@ -623,6 +597,16 @@ export default function StaffingGrid() {
     fetchAll()
   }
 
+  const handleToggleLock = (eventId, positionKey, isHatched, positionRow, event) => {
+    if (isHatched) handleUnlockPosition(eventId, positionKey, positionRow, event)
+    else handleLockPosition(eventId, positionKey)
+  }
+
+  const handleCellActivate = (eventId, positionKey, type) => {
+    setFocusedCell({ eventId, positionKey })
+    setActiveCell(type ? { eventId, positionKey, type } : null)
+  }
+
   const today = toYMD(new Date())
 
   // Build weekend groups from ALL events first (for past count)
@@ -674,6 +658,59 @@ export default function StaffingGrid() {
     }
     return [...templateRows, ...customRows]
   }
+
+  const visiblePositionRows = DEPARTMENT_ORDER.flatMap(dept => collapsedDepts[dept] ? [] : getPositionRowsForDept(dept))
+
+  // Close the active cell on outside click
+  useEffect(() => {
+    if (!activeCell) return
+    const handleMouseDown = (e) => {
+      if (activeCellElRef.current && !activeCellElRef.current.contains(e.target)) setActiveCell(null)
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [activeCell])
+
+  // Excel-style keyboard navigation between cells when nothing is being edited
+  useEffect(() => {
+    const moveFocus = (dCol, dRow) => {
+      if (!focusedCell || !orderedEvents.length || !visiblePositionRows.length) return
+      const colIdx = orderedEvents.findIndex(e => e.id === focusedCell.eventId)
+      const rowIdx = visiblePositionRows.findIndex(r => r.key === focusedCell.positionKey)
+      if (colIdx === -1 || rowIdx === -1) return
+      const nextCol = Math.min(Math.max(colIdx + dCol, 0), orderedEvents.length - 1)
+      const nextRow = Math.min(Math.max(rowIdx + dRow, 0), visiblePositionRows.length - 1)
+      setFocusedCell({ eventId: orderedEvents[nextCol].id, positionKey: visiblePositionRows[nextRow].key })
+    }
+    const handleKeyDown = (e) => {
+      if (activeCell || !focusedCell) return
+      switch (e.key) {
+        case 'Tab':
+          e.preventDefault()
+          moveFocus(e.shiftKey ? -1 : 1, 0)
+          break
+        case 'ArrowRight': e.preventDefault(); moveFocus(1, 0); break
+        case 'ArrowLeft': e.preventDefault(); moveFocus(-1, 0); break
+        case 'ArrowDown': e.preventDefault(); moveFocus(0, 1); break
+        case 'ArrowUp': e.preventDefault(); moveFocus(0, -1); break
+        case 'Enter': {
+          const posRow = visiblePositionRows.find(r => r.key === focusedCell.positionKey)
+          const ev = orderedEvents.find(e2 => e2.id === focusedCell.eventId)
+          if (!posRow || !ev) return
+          const meta = eventMetas[ev.id] || {}
+          const assignment = (assignments[ev.id] || []).find(a => a.position_key === posRow.key)
+          const hatched = isHatchedCell(posRow, ev, meta)
+          if (hatched && !assignment) return
+          e.preventDefault()
+          setActiveCell({ eventId: ev.id, positionKey: posRow.key, type: assignment ? 'menu' : 'edit' })
+          break
+        }
+        default: break
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [activeCell, focusedCell, orderedEvents, visiblePositionRows, eventMetas, assignments])
 
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
@@ -790,18 +827,24 @@ export default function StaffingGrid() {
                           const meta = eventMetas[ev.id] || {}
                           const assignment = getAssignment(ev.id, posRow.key)
                           const hatched = isHatchedCell(posRow, ev, meta)
+                          const isActiveCell = !!activeCell && activeCell.eventId === ev.id && activeCell.positionKey === posRow.key
+                          const isFocusedCell = !!focusedCell && focusedCell.eventId === ev.id && focusedCell.positionKey === posRow.key
                           return (
                             <GridCell
                               key={ev.id}
                               eventId={ev.id}
                               event={ev}
-                              eventMeta={meta}
                               positionRow={posRow}
                               assignment={assignment}
                               isHatched={hatched}
                               onRefresh={fetchAll}
-                              onLockPosition={(key) => handleLockPosition(ev.id, key)}
-                              onUnlockPosition={(key) => handleUnlockPosition(ev.id, key, posRow, ev)}
+                              isActive={isActiveCell}
+                              activeType={isActiveCell ? activeCell.type : null}
+                              isFocused={isFocusedCell}
+                              cellRef={isActiveCell ? activeCellElRef : null}
+                              onActivate={(type) => handleCellActivate(ev.id, posRow.key, type)}
+                              onCloseActive={() => setActiveCell(null)}
+                              onToggleLock={() => handleToggleLock(ev.id, posRow.key, hatched, posRow, ev)}
                               COL_WIDTH={COL_WIDTH}
                               ROW_HEIGHT={ROW_HEIGHT}
                               borderRight={cellBorderRight(ev, i)}
