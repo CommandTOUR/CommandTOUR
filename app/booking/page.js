@@ -405,6 +405,46 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
   )
 }
 
+// ── INLINE CITY TEXT ENTRY (free text — clicking an empty city cell) ───────────
+
+function InlineCityInput({ onSubmit, onCancel }) {
+  const [text, setText] = useState('')
+  const inputRef = useRef(null)
+  const blurTimeout = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    return () => clearTimeout(blurTimeout.current)
+  }, [])
+
+  const commit = () => {
+    clearTimeout(blurTimeout.current)
+    if (text.trim()) onSubmit(text.trim())
+    else onCancel()
+  }
+
+  const handleBlur = () => {
+    blurTimeout.current = setTimeout(commit, 150)
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      style={inputStyle}
+      placeholder="City..."
+      value={text}
+      onChange={e => setText(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={e => {
+        if (e.key === 'Enter') { e.preventDefault(); commit() }
+        else if (e.key === 'Escape') { e.stopPropagation(); onCancel() }
+      }}
+      onMouseDown={e => e.stopPropagation()}
+      autoComplete="off"
+    />
+  )
+}
+
 // ── HOLIDAY CELL (auto-populated, manually editable) ───────────────────────────
 
 function HolidayCell({ value, onSave }) {
@@ -438,25 +478,46 @@ function HolidayCell({ value, onSave }) {
   )
 }
 
-// ── PAST YEAR PILLS ────────────────────────────────────────────────────────────
+// ── YEAR PILLS (horizontal year switcher, replaces dropdown/stacked sections) ──
 
-function PastYearPills({ years, activeYears, onToggle, dragging, hoveredPillYear, onPillDragOver, onPillDragLeave }) {
+function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hoveredPillYear, onPillDragOver, onPillDragLeave }) {
+  const [hovered, setHovered] = useState(null)
   if (years.length === 0) return null
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
       {years.map(y => {
-        const active = activeYears.has(y)
+        const selected = y === selectedYear
+        const isPast = y < currentYear
         const glow = dragging && hoveredPillYear === y
+        const isHovered = hovered === y
+
+        let border = '0.5px solid var(--glass-border)'
+        let color = 'var(--text-muted)'
+        let background = 'transparent'
+        let opacity = 1
+
+        if (selected || glow) {
+          border = '1px solid var(--mint)'
+          color = 'var(--mint)'
+          background = glow ? 'rgba(51,255,153,0.1)' : 'rgba(51,255,153,0.08)'
+        } else {
+          if (isPast) opacity = 0.6
+          if (isHovered) {
+            border = '0.5px solid var(--mint)'
+            color = 'var(--text-primary)'
+          }
+        }
+
         return (
           <div key={y}
-            onClick={() => onToggle(y)}
+            onClick={() => onSelect(y)}
+            onMouseEnter={() => setHovered(y)}
+            onMouseLeave={() => setHovered(null)}
             onDragOver={dragging ? (e) => { e.preventDefault(); onPillDragOver(y) } : undefined}
             onDragLeave={dragging ? () => onPillDragLeave(y) : undefined}
             style={{
-              border: `0.5px solid ${glow || active ? 'var(--mint)' : 'var(--glass-border)'}`,
-              color: glow || active ? 'var(--mint)' : 'var(--text-muted)',
-              background: glow ? 'rgba(51,255,153,0.1)' : 'transparent',
-              borderRadius: 20, padding: '3px 14px', fontSize: 12, cursor: 'pointer',
+              border, color, background, opacity,
+              borderRadius: 20, padding: '4px 16px', fontSize: 13, cursor: 'pointer',
               transition: 'border-color 0.15s, background 0.15s, color 0.15s',
             }}>
             {y}
@@ -746,12 +807,12 @@ const subHeaderStyle = (width, borderRight) => ({
 })
 
 function GridCell({
-  row, tour, event, isActive, activeCellRef, isLast, rowHeight,
+  row, tour, event, isCityActive, isVenueActive, activeCellRef, isLast, rowHeight,
   venues, setVenues, onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
+  onStartCityText, onSubmitCityText, onCancelCityText,
   onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
 }) {
-  const router = useRouter()
   const statusStyle = event?.status ? (STATUS_STYLES[event.status] || STATUS_STYLES.tentative) : null
   const isDragOver = dragOverKey === cellKey
   const cellBase = {
@@ -763,6 +824,11 @@ function GridCell({
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
   const groupBorder = '2px solid rgba(255,255,255,0.18)'
+
+  const handleCityClick = () => {
+    if (event) onOpenPanel(event, row, tour)
+    else onStartCityText(row, tour)
+  }
 
   const handleVenueClick = () => {
     if (event) onOpenPanel(event, row, tour)
@@ -808,33 +874,35 @@ function GridCell({
   return (
     <>
       <td
+        ref={isCityActive ? activeCellRef : null}
         draggable={!!event}
         onDragStart={event ? handleDragStart : undefined}
         onDragEnd={event ? onDragEndEvent : undefined}
+        onClick={handleCityClick}
         {...dropHandlers}
         style={{
           ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
-          cursor: event ? 'grab' : 'default',
+          cursor: event ? 'grab' : 'pointer',
+          zIndex: isCityActive ? 300 : 1, overflow: isCityActive ? 'visible' : 'hidden',
           ...dropHighlight,
         }}>
-        {event ? (
-          <span
-            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${event.tour_id}/events/${event.id}`) }}
-            style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
-            {formatCityState(event)}
-          </span>
-        ) : null}
+        {isCityActive ? (
+          <InlineCityInput
+            onSubmit={(text) => onSubmitCityText(text, row, tour)}
+            onCancel={onCancelCityText}
+          />
+        ) : (event ? formatCityState(event) : '')}
       </td>
       <td
-        ref={isActive ? activeCellRef : null}
+        ref={isVenueActive ? activeCellRef : null}
         onClick={handleVenueClick}
         {...dropHandlers}
         style={{
           ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
-          cursor: 'pointer', zIndex: isActive ? 300 : 1, overflow: isActive ? 'visible' : 'hidden',
+          cursor: 'pointer', zIndex: isVenueActive ? 300 : 1, overflow: isVenueActive ? 'visible' : 'hidden',
           ...dropHighlight,
         }}>
-        {isActive ? (
+        {isVenueActive ? (
           <InlineVenueSearch
             venues={venues} setVenues={setVenues}
             onSelect={(venue) => onSelectVenue(venue, row, tour)}
@@ -858,13 +926,14 @@ function GridCell({
   )
 }
 
-// ── YEAR SECTION (collapsible grid for one calendar year) ──────────────────────
+// ── YEAR GRID (full 52-week grid for the currently selected year) ──────────────
 
-function YearSection({
-  year, rows, yearTours, eventMap, collapsed, onToggleCollapse, currentWeekendSaturday,
-  sectionRef, onSaveHoliday,
+function YearGrid({
+  year, rows, yearTours, eventMap, currentWeekendSaturday,
+  onSaveHoliday,
   activeCell, activeCellRef, venues, setVenues,
   onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
+  onStartCityText, onSubmitCityText, onCancelCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
   draggedTour, onPlaceholderDrop,
@@ -872,17 +941,7 @@ function YearSection({
   const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
 
   return (
-    <div ref={sectionRef}>
-      <div onClick={onToggleCollapse}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(5,14,28,1)', borderTop: '2px solid var(--mint)', cursor: 'pointer' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ display: 'inline-block', transition: 'transform 0.15s', transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', fontSize: 12, color: 'var(--text-muted)' }}>▾</span>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{year}</span>
-        </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{yearTours.length} {yearTours.length === 1 ? 'tour' : 'tours'}</span>
-      </div>
-      {!collapsed && (
-        <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
             <thead>
               <tr>
@@ -939,12 +998,14 @@ function YearSection({
                     {yearTours.map((tour, ti) => {
                       const event = eventMap[tour.id + '__' + row.saturday]
                       const cellKey = row.saturday + '__' + tour.id
-                      const isActive = !!(activeCell && activeCell.type === 'search' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
+                      const isCityActive = !!(activeCell && activeCell.type === 'cityText' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
+                      const isVenueActive = !!(activeCell && activeCell.type === 'search' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
                       return (
                         <GridCell
                           key={tour.id}
                           row={row} tour={tour} event={event}
-                          isActive={isActive}
+                          isCityActive={isCityActive}
+                          isVenueActive={isVenueActive}
                           activeCellRef={activeCellRef}
                           isLast={ti === yearTours.length - 1} rowHeight={ROW_H}
                           venues={venues} setVenues={setVenues}
@@ -952,6 +1013,9 @@ function YearSection({
                           onSelectVenue={onSelectVenue}
                           onCancelSearch={onCancelSearch}
                           onOpenPanel={onOpenPanel}
+                          onStartCityText={onStartCityText}
+                          onSubmitCityText={onSubmitCityText}
+                          onCancelCityText={onCancelCityText}
                           onCityDrop={onCityDrop}
                           dragOverKey={dragOverKey}
                           cellKey={cellKey}
@@ -978,8 +1042,6 @@ function YearSection({
               })}
             </tbody>
           </table>
-        </div>
-      )}
     </div>
   )
 }
@@ -993,19 +1055,17 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true)
   const [holidayOverrides, setHolidayOverrides] = useState({})
 
-  // activeCell: { type: 'search', saturday, sunday, tourId } | { type: 'panel', event, row, tour } | null
+  // activeCell: { type: 'search'|'cityText', saturday, sunday, tourId } | { type: 'panel', event, row, tour } | null
   const [activeCell, setActiveCell] = useState(null)
   const [dragOverKey, setDragOverKey] = useState(null)
   const [draggedEvent, setDraggedEvent] = useState(null)
   const [draggedTour, setDraggedTour] = useState(null)
   const [hoveredPillYear, setHoveredPillYear] = useState(null)
 
-  const [collapsedSections, setCollapsedSections] = useState(new Set())
-  const [activePastYears, setActivePastYears] = useState(new Set())
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
 
   const linkedEventsRef = useRef(false)
   const cleanedShowsRef = useRef(false)
-  const sectionRefs = useRef({})
   const activeCellElRef = useRef(null)
   const pillHoverTimerRef = useRef(null)
 
@@ -1056,22 +1116,16 @@ export default function BookingPage() {
     if (ev.load_in_date) yearsSet.add(new Date(ev.load_in_date + 'T00:00:00').getFullYear())
   })
   const allYears = [...yearsSet].sort((a, b) => a - b)
-  const sectionYears = allYears.filter(y => y >= currentYear)
-  const pastYears = allYears.filter(y => y < currentYear).sort((a, b) => b - a)
 
-  // Persist holiday overrides per-year in localStorage, merged for all rendered years
-  const renderedYearsKey = [...sectionYears, ...activePastYears].sort((a, b) => a - b).join(',')
+  // Persist holiday overrides per-year in localStorage, for the selected year
   useEffect(() => {
-    let merged = {}
-    for (const y of renderedYearsKey.split(',')) {
-      if (!y) continue
-      try {
-        const raw = localStorage.getItem('booking_holidays_' + y)
-        if (raw) merged = { ...merged, ...JSON.parse(raw) }
-      } catch {}
+    try {
+      const raw = localStorage.getItem('booking_holidays_' + selectedYear)
+      setHolidayOverrides(raw ? JSON.parse(raw) : {})
+    } catch {
+      setHolidayOverrides({})
     }
-    setHolidayOverrides(merged)
-  }, [renderedYearsKey])
+  }, [selectedYear])
 
   const saveHolidayOverride = (saturday, text) => {
     const y = saturday.slice(0, 4)
@@ -1115,10 +1169,10 @@ export default function BookingPage() {
     return { rows, yearTours, eventMap }
   }
 
-  // ── Cursor / outside-click cleanup for the active inline search cell ───────
+  // ── Cursor / outside-click cleanup for the active inline cell ──────────────
 
   useEffect(() => {
-    if (!activeCell || activeCell.type !== 'search') return
+    if (!activeCell || (activeCell.type !== 'search' && activeCell.type !== 'cityText')) return
     const handleMouseDown = (e) => {
       if (activeCellElRef.current && !activeCellElRef.current.contains(e.target)) {
         setActiveCell(null)
@@ -1142,6 +1196,28 @@ export default function BookingPage() {
       state: venue.state || '',
       venue_name: venue.name,
       venue_id: venue.id,
+      status: 'tentative',
+      saturday_date: row.saturday,
+      sunday_date: row.sunday,
+      load_in_date: row.saturday,
+    }]).select().single()
+    if (!error && data) setEvents(prev => [...prev, data])
+    setActiveCell(null)
+  }
+
+  // ── Inline plain-text city entry (empty city cell) ──────────────────────────
+
+  const handleStartCityText = (row, tour) => {
+    setActiveCell({ type: 'cityText', saturday: row.saturday, sunday: row.sunday, tourId: tour.id })
+  }
+
+  const handleCancelCityText = () => setActiveCell(null)
+
+  const handleSubmitCityText = async (cityText, row, tour) => {
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('events').insert([{
+      tour_id: tour.id,
+      city: cityText,
       status: 'tentative',
       saturday_date: row.saturday,
       sunday_date: row.sunday,
@@ -1230,53 +1306,13 @@ export default function BookingPage() {
     if (!error && updatedEvent) setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
   }
 
-  // ── Past year pills ───────────────────────────────────────────────────────
-
-  const expandPastYear = (y) => {
-    setActivePastYears(prev => {
-      if (prev.has(y)) return prev
-      const next = new Set(prev)
-      next.add(y)
-      setCollapsedSections(c => { const n = new Set(c); n.delete(y); return n })
-      setTimeout(() => {
-        const el = sectionRefs.current[y]
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 60)
-      return next
-    })
-  }
-
-  const togglePastYear = (y) => {
-    setActivePastYears(prev => {
-      const next = new Set(prev)
-      if (next.has(y)) {
-        next.delete(y)
-      } else {
-        next.add(y)
-        setCollapsedSections(c => { const n = new Set(c); n.delete(y); return n })
-        setTimeout(() => {
-          const el = sectionRefs.current[y]
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 60)
-      }
-      return next
-    })
-  }
-
-  const toggleCollapse = (y) => {
-    setCollapsedSections(prev => {
-      const next = new Set(prev)
-      if (next.has(y)) next.delete(y)
-      else next.add(y)
-      return next
-    })
-  }
+  // ── Year pill drag-hover (switch year while dragging an event) ─────────────
 
   const handlePillDragOver = (year) => {
     if (hoveredPillYear !== year) {
       setHoveredPillYear(year)
       clearTimeout(pillHoverTimerRef.current)
-      pillHoverTimerRef.current = setTimeout(() => expandPastYear(year), 600)
+      pillHoverTimerRef.current = setTimeout(() => setSelectedYear(year), 600)
     }
   }
 
@@ -1294,18 +1330,7 @@ export default function BookingPage() {
     </div>
   )
 
-  const activePastYearsSorted = [...activePastYears].sort((a, b) => b - a)
-
-  const yearSectionCommonProps = {
-    activeCell, activeCellRef: activeCellElRef, venues, setVenues,
-    onStartSearch: handleStartSearch, onSelectVenue: handleSelectVenue, onCancelSearch: handleCancelSearch,
-    onOpenPanel: handleOpenPanel,
-    onCityDrop: handleCityDrop, dragOverKey, onDragEnterCell: handleDragEnterCell, onDragLeaveCell: handleDragLeaveCell,
-    onDragStartEvent: handleDragStartEvent, onDragEndEvent: resetDragState,
-    draggedTour, onPlaceholderDrop: handlePlaceholderDrop,
-    onSaveHoliday: saveHolidayOverride,
-    currentWeekendSaturday,
-  }
+  const { rows, yearTours, eventMap } = buildYearData(selectedYear)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -1313,47 +1338,29 @@ export default function BookingPage() {
 
       <div style={{ marginTop: 62, padding: '14px 28px 0', background: 'var(--bg)' }}>
         <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
-        <PastYearPills
-          years={pastYears} activeYears={activePastYears} onToggle={togglePastYear}
+        <YearPills
+          years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
           dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
           onPillDragOver={handlePillDragOver} onPillDragLeave={handlePillDragLeave}
         />
       </div>
 
-      <div style={{ padding: '14px 28px 40px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {sectionYears.map(year => {
-          const { rows, yearTours, eventMap } = buildYearData(year)
-          return (
-            <YearSection
-              key={year}
-              year={year}
-              rows={rows}
-              yearTours={yearTours}
-              eventMap={eventMap}
-              collapsed={collapsedSections.has(year)}
-              onToggleCollapse={() => toggleCollapse(year)}
-              sectionRef={(el) => { sectionRefs.current[year] = el }}
-              {...yearSectionCommonProps}
-            />
-          )
-        })}
-
-        {activePastYearsSorted.map(year => {
-          const { rows, yearTours, eventMap } = buildYearData(year)
-          return (
-            <YearSection
-              key={year}
-              year={year}
-              rows={rows}
-              yearTours={yearTours}
-              eventMap={eventMap}
-              collapsed={collapsedSections.has(year)}
-              onToggleCollapse={() => toggleCollapse(year)}
-              sectionRef={(el) => { sectionRefs.current[year] = el }}
-              {...yearSectionCommonProps}
-            />
-          )
-        })}
+      <div style={{ padding: '14px 28px 40px' }}>
+        <YearGrid
+          year={selectedYear}
+          rows={rows}
+          yearTours={yearTours}
+          eventMap={eventMap}
+          currentWeekendSaturday={currentWeekendSaturday}
+          onSaveHoliday={saveHolidayOverride}
+          activeCell={activeCell} activeCellRef={activeCellElRef} venues={venues} setVenues={setVenues}
+          onStartSearch={handleStartSearch} onSelectVenue={handleSelectVenue} onCancelSearch={handleCancelSearch}
+          onOpenPanel={handleOpenPanel}
+          onStartCityText={handleStartCityText} onSubmitCityText={handleSubmitCityText} onCancelCityText={handleCancelCityText}
+          onCityDrop={handleCityDrop} dragOverKey={dragOverKey} onDragEnterCell={handleDragEnterCell} onDragLeaveCell={handleDragLeaveCell}
+          onDragStartEvent={handleDragStartEvent} onDragEndEvent={resetDragState}
+          draggedTour={draggedTour} onPlaceholderDrop={handlePlaceholderDrop}
+        />
       </div>
 
       {activeCell && activeCell.type === 'panel' && (
