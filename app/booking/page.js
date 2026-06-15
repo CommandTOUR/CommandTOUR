@@ -578,7 +578,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
   return createPortal(
     <div style={{
-      position: 'fixed', top: 62, right: 0, width: 360, height: 'calc(100vh - 62px)',
+      position: 'fixed', top: 62, right: 0, width: 480, height: 'calc(100vh - 62px)',
       background: '#0d1f3a', borderLeft: '1px solid var(--glass-border)', zIndex: 200,
       transform: visible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.2s ease',
       display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 32px rgba(0,0,0,0.4)',
@@ -764,7 +764,7 @@ function GridCell({
   const innerBorder = '0.5px solid rgba(255,255,255,0.07)'
   const groupBorder = '2px solid rgba(255,255,255,0.18)'
 
-  const handleCityClick = () => {
+  const handleVenueClick = () => {
     if (event) onOpenPanel(event, row, tour)
     else onStartSearch(row, tour)
   }
@@ -788,7 +788,7 @@ function GridCell({
     onDragStartEvent(event, tour)
   }
 
-  const dragHandlers = !event ? {
+  const dropHandlers = !event ? {
     onDragOver: (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' },
     onDragEnter: (e) => { e.preventDefault(); onDragEnterCell(cellKey) },
     onDragLeave: () => onDragLeaveCell(cellKey),
@@ -800,17 +800,39 @@ function GridCell({
     },
   } : {}
 
+  const dropHighlight = isDragOver ? {
+    outline: '1px dashed var(--mint)',
+    background: 'rgba(51,255,153,0.08)',
+  } : {}
+
   return (
     <>
       <td
-        ref={isActive ? activeCellRef : null}
-        onClick={handleCityClick}
-        {...dragHandlers}
+        draggable={!!event}
+        onDragStart={event ? handleDragStart : undefined}
+        onDragEnd={event ? onDragEndEvent : undefined}
+        {...dropHandlers}
         style={{
           ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
+          cursor: event ? 'grab' : 'default',
+          ...dropHighlight,
+        }}>
+        {event ? (
+          <span
+            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${event.tour_id}/events/${event.id}`) }}
+            style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
+            {formatCityState(event)}
+          </span>
+        ) : null}
+      </td>
+      <td
+        ref={isActive ? activeCellRef : null}
+        onClick={handleVenueClick}
+        {...dropHandlers}
+        style={{
+          ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
           cursor: 'pointer', zIndex: isActive ? 300 : 1, overflow: isActive ? 'visible' : 'hidden',
-          outline: isDragOver ? '1px dashed var(--mint)' : 'none',
-          background: isDragOver ? 'rgba(51,255,153,0.08)' : undefined,
+          ...dropHighlight,
         }}>
         {isActive ? (
           <InlineVenueSearch
@@ -818,19 +840,7 @@ function GridCell({
             onSelect={(venue) => onSelectVenue(venue, row, tour)}
             onCancel={onCancelSearch}
           />
-        ) : event ? (
-          <span
-            draggable
-            onDragStart={handleDragStart}
-            onDragEnd={onDragEndEvent}
-            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${event.tour_id}/events/${event.id}`) }}
-            style={{ cursor: 'grab', textDecoration: 'underline dotted rgba(255,255,255,0.25)', textUnderlineOffset: 3 }}>
-            {formatCityState(event)}
-          </span>
-        ) : null}
-      </td>
-      <td style={{ ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder }}>
-        {event?.venue_name || ''}
+        ) : (event?.venue_name || '')}
       </td>
       <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder }}>
         {statusStyle ? (
