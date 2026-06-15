@@ -398,27 +398,22 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   const doAssign = async (staffMember) => {
     setConfirmOverride(null)
     const supabase = getSupabase()
-    const payload = { staff_id: staffMember.id, status: isExec ? null : 'scheduled', confirmed: false }
+    const status = isExec ? null : 'scheduled'
 
-    console.log('[StaffGrid] doAssign', { eventId, staffId: staffMember.id, positionKey: positionRow.key })
+    // Check for an existing row by event_id + position_key to prevent duplicate inserts
+    const { data: existing } = await supabase.from('event_staff')
+      .select('id').eq('event_id', eventId).eq('position_key', positionRow.key).maybeSingle()
 
     let writeError = null
-    let newRowId = null
-
-    if (assignment) {
-      const { error } = await supabase.from('event_staff').update(payload).eq('id', assignment.id)
+    if (existing) {
+      const { error } = await supabase.from('event_staff')
+        .update({ staff_id: staffMember.id, status, confirmed: false }).eq('id', existing.id)
       writeError = error
-      newRowId = assignment.id
     } else {
-      // Only select 'id' after insert — avoids RLS issues with the staff FK join
-      const { data: inserted, error } = await supabase.from('event_staff')
-        .insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, ...payload }])
-        .select('id').maybeSingle()
+      const { error } = await supabase.from('event_staff')
+        .insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, staff_id: staffMember.id, status, confirmed: false }])
       writeError = error
-      newRowId = inserted?.id ?? null
     }
-
-    console.log('[StaffGrid] doAssign result', { writeError, newRowId })
 
     if (writeError) {
       setAssignError(true)
@@ -427,20 +422,18 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
       return
     }
 
-    // Build the local row from staffMember (already in scope, correct shape) rather than
-    // relying on a joined select that can silently return null if RLS blocks the staff join.
+    // Build optimistic local row entirely from in-scope data — no select after write
     const localRow = {
-      id: newRowId,
+      id: crypto.randomUUID(),
       event_id: eventId,
       staff_id: staffMember.id,
-      position: positionRow.displayLabel,
       position_key: positionRow.key,
-      ...payload,
+      status,
       staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name },
     }
     onAssignSuccess(eventId, localRow)
     onCloseActive()
-    onRefresh() // background sync so the real DB id replaces our optimistic row
+    onRefresh() // background sync to replace optimistic row with real DB state
   }
 
   const handleAssign = (staffMember, avail) => {
@@ -477,9 +470,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
 
   const cellBg = assignError ? 'rgba(255,51,51,0.15)' : (isHatched && !assignment ? HATCH_BG : 'transparent')
   const cellBgSize = isHatched && !assignment ? HATCH_SIZE : 'auto'
-  const pillBg = isExec ? 'rgba(255,255,255,0.06)' : (statusStyle ? statusStyle.pill : 'rgba(255,255,255,0.06)')
-  const pillBorder = isExec ? 'rgba(255,255,255,0.12)' : (statusStyle ? statusStyle.border : 'rgba(255,255,255,0.12)')
-  const pillColor = isExec ? 'var(--text-secondary)' : (statusStyle ? statusStyle.color : 'var(--text-primary)')
+  const pillColor = isExec ? 'rgba(255,255,255,0.5)' : (statusStyle ? statusStyle.color : '#FFCC00')
+  const pillBg = isExec ? 'rgba(255,255,255,0.08)' : colorWithAlpha(statusStyle ? statusStyle.color : '#FFCC00', 0.2)
 
   const handleCellClick = () => {
     if (isActive) return
@@ -508,8 +500,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         {isActive && activeType === 'edit' ? (
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
         ) : staffName ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, background: pillBg, border: '0.5px solid ' + pillBorder, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s' }}>
-            <span style={{ fontSize: 11, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 6, background: pillBg, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s' }}>
+            <span style={{ fontSize: 12, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
           </div>
         ) : isHatched ? null : (
           hovered ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>+ Assign</span> : null
