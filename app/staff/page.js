@@ -77,7 +77,9 @@ export default function StaffPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
                 onClick={() => router.push('/staffing-grid')}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--mint)', color: '#0a1628', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C9A84C', color: '#0a1628', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#b8963e'}
+                onMouseLeave={e => e.currentTarget.style.background = '#C9A84C'}
               >
                 All Tours Staffing Grid
               </button>
@@ -154,9 +156,9 @@ export default function StaffPage() {
                       {/* Avatar */}
                       <div style={{
                         width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                        background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)',
+                        background: '#0a1628', border: 'none',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 14, fontWeight: 600, color: 'var(--mint)',
+                        fontSize: 14, fontWeight: 700, color: '#33FF99',
                       }}>
                         {initials(s)}
                       </div>

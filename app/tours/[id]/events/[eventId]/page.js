@@ -22,6 +22,9 @@ const STATUS_TEXT_COLORS = {
   'date-hold': '#6b7280',
 }
 
+// Title-case a status value, capitalizing each hyphen segment ("1-hold" → "1-Hold")
+const fmtStatus = (s) => s ? s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : ''
+
 function ShowTile({ show, index, fmtShort, fmtTime, onToggleComplete, onDelete, onSaveNotes }) {
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(show.notes || '')
@@ -263,7 +266,7 @@ export default function EventPage() {
                     background: event.status === 'confirmed' ? '#dcfce7' : '#fef9c3',
                     border: `1px solid ${event.status === 'confirmed' ? '#86efac' : '#fde68a'}`,
                   }}>
-                    {event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative'}
+                    {event.status ? fmtStatus(event.status) : 'Tentative'}
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
@@ -322,7 +325,7 @@ export default function EventPage() {
                 )}
                 {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', '#1a1a1a')}
                 {statCard(
-                  event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative',
+                  event.status ? fmtStatus(event.status) : 'Tentative',
                   'Booking Status', null,
                   STATUS_TEXT_COLORS[event.status] || STATUS_TEXT_COLORS.tentative
                 )}

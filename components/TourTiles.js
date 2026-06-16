@@ -97,7 +97,7 @@ export default function TourTiles() {
         onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
         onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: tileColor, borderRadius: '12px 12px 0 0' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: tileColor }} />
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>

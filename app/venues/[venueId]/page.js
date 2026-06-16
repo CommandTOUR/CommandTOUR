@@ -403,7 +403,7 @@ export default function VenuePage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ fontSize: 13, color: '#6b6b6b' }}>{fmt(ev.load_in_date)}</div>
                     <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, color: ev.status === 'confirmed' ? '#15803d' : '#6b7280', background: ev.status === 'confirmed' ? '#dcfce7' : '#f3f4f6', border: `0.5px solid ${ev.status === 'confirmed' ? '#86efac' : '#d1d5db'}` }}>
-                      {ev.status ? ev.status.charAt(0).toUpperCase() + ev.status.slice(1) : '—'}
+                      {ev.status ? ev.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : '—'}
                     </span>
                   </div>
                 </div>

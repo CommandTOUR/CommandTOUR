@@ -222,21 +222,28 @@ function lastWeekday(year, month, weekday) {
   return toYMD(d)
 }
 
+// Easter Sunday dates (Gregorian) — Easter is not derivable from a simple weekday rule
+const EASTER_DATES = {
+  2026: '-04-05',
+  2027: '-03-28',
+  2028: '-04-16',
+}
+
 function computeHolidays(year) {
-  return {
+  const holidays = {
     "New Year's Day": year + '-01-01',
     "MLK Day": nthWeekday(year, 0, 1, 3),
     "Presidents Day": nthWeekday(year, 1, 1, 3),
     "Memorial Day": lastWeekday(year, 4, 1),
-    "Juneteenth": year + '-06-19',
     "Independence Day": year + '-07-04',
     "Labor Day": nthWeekday(year, 8, 1, 1),
     "Columbus Day": nthWeekday(year, 9, 1, 2),
     "Veterans Day": year + '-11-11',
     "Thanksgiving": nthWeekday(year, 10, 4, 4),
     "Christmas Day": year + '-12-25',
-    "New Year's Eve": year + '-12-31',
   }
+  if (EASTER_DATES[year]) holidays["Easter"] = year + EASTER_DATES[year]
+  return holidays
 }
 
 // Maps each holiday onto the nearest Saturday row for that year
@@ -997,7 +1004,7 @@ function YearGrid({
               {rows.map(row => {
                 const isCurrentWeek = row.saturday === currentWeekendSaturday
                 const zebra = row.weekNum % 2 === 0 ? '#f7f5f1' : '#ffffff'
-                const rowBg = row.holiday ? '#fef9c3' : (isCurrentWeek ? '#e8faf2' : zebra)
+                const rowBg = row.holiday ? '#f0f4ff' : (isCurrentWeek ? '#e8faf2' : zebra)
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
                     <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: '#6b6b6b', textAlign: 'center', verticalAlign: 'middle' }}>

@@ -28,6 +28,9 @@ const STATUS_STYLES = {
   'date-hold': { color: '#6b7280', background: '#f3f4f6',              border: '#d1d5db' },
 }
 
+// Title-case a status value, capitalizing each hyphen segment ("1-hold" → "1-Hold")
+const fmtStatus = (s) => s ? s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : ''
+
 const COLS = [
   { key: 'loadIn',    label: 'Load-In Date', width: '1fr',   align: 'left' },
   { key: 'city',      label: 'City',         width: '1.5fr', align: 'left' },
@@ -116,7 +119,7 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
           opacity: saving ? 0.5 : 1,
         }}
       >
-        {currentStatus ? currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) : 'Tentative'} ▾
+        {currentStatus ? fmtStatus(currentStatus) : 'Tentative'} ▾
       </div>
       {open && (
         <div style={{
@@ -138,7 +141,7 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
                 onMouseLeave={e => e.currentTarget.style.background = currentStatus === opt ? 'rgba(255,255,255,0.06)' : 'transparent'}
               >
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {fmtStatus(opt)}
               </div>
             )
           })}
@@ -156,7 +159,7 @@ function StatusBadge({ status }) {
       color: s.color, background: s.background, border: `0.5px solid ${s.border}`,
       whiteSpace: 'nowrap',
     }}>
-      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Tentative'}
+      {status ? fmtStatus(status) : 'Tentative'}
     </span>
   )
 }
