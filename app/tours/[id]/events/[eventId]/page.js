@@ -12,7 +12,7 @@ import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 
 const STATUS_TEXT_COLORS = {
-  confirmed: '#15803d',
+  confirmed: '#16a34a',
   tentative: '#6b21a8',
   '1-hold': '#854d0e',
   '2-hold': '#9a3412',
@@ -320,7 +320,7 @@ export default function EventPage() {
                   daysUntil !== null && daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
                   daysUntil !== null && daysUntil <= 7 ? 'var(--red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--yellow)' : 'var(--mint)'
                 )}
-                {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', shows.length > 0 ? 'var(--text-primary)' : 'var(--text-muted)')}
+                {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', '#1a1a1a')}
                 {statCard(
                   event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Tentative',
                   'Booking Status', null,
@@ -330,7 +330,7 @@ export default function EventPage() {
                   event.venue_name || 'TBC',
                   'Venue',
                   venue ? [venue.city, venue.country].filter(Boolean).join(', ') : event.city || null,
-                  event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)',
+                  '#1a1a1a',
                   venue ? () => router.push(`/venues/${venue.id}`) : null
                 )}
               </div>
@@ -342,7 +342,12 @@ export default function EventPage() {
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>Show Dates</div>
-                    <div onClick={() => setActiveTab('shows')} style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}>
+                    <div
+                      onClick={() => setActiveTab('shows')}
+                      style={{ fontSize: 12, fontWeight: 600, color: '#16a34a', background: '#e8faf2', border: '1px solid #bbf7d0', borderRadius: 7, padding: '5px 12px', cursor: 'pointer', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#d1fae5'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#e8faf2'}
+                    >
                       {shows.length > 0 ? 'Manage →' : '+ Add Shows'}
                     </div>
                   </div>
@@ -374,13 +379,13 @@ export default function EventPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {shows.length === 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#FFCC00"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#d97706"/></svg>
                         <div style={{ fontSize: 13, color: '#6b6b6b' }}>No show dates added</div>
                       </div>
                     )}
                     {!event.venue_name && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#FFCC00"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#d97706"/></svg>
                         <div style={{ fontSize: 13, color: '#6b6b6b' }}>Venue not confirmed</div>
                       </div>
                     )}

@@ -198,12 +198,13 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
   )
 }
 
-function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInUpdate, fmt }) {
+function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInUpdate, fmt, rowIndex = 0 }) {
   const shows = eventShows[event.id] || []
   const firstShow = shows.length > 0 ? shows[0].show_date : (event.saturday_date || null)
   const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : (event.sunday_date || null)
   const numShows = shows.length > 0 ? shows.length : '—'
   const alerts = getAlerts(event, shows)
+  const baseBg = rowIndex % 2 === 0 ? '#ffffff' : '#f7f5f1'
 
   return (
     <div
@@ -211,27 +212,27 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       style={{
         display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
         gap: '0 24px', padding: '14px 32px',
-        cursor: 'pointer', borderBottom: '1px solid #f0ece4',
+        cursor: 'pointer', borderBottom: '1px solid #e8e2d9',
         transition: 'background 0.15s', alignItems: 'center',
-        background: '#ffffff',
+        background: baseBg,
       }}
-      onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'}
-      onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
+      onMouseEnter={e => e.currentTarget.style.background = '#f0ece4'}
+      onMouseLeave={e => e.currentTarget.style.background = baseBg}
     >
       <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} />
       <div style={{ fontSize: 14, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country && `, ${event.country}`}
       </div>
-      <div style={{ fontSize: 14, color: event.venue_name ? '#444444' : '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 14, color: event.venue_name ? '#1a1a1a' : '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.venue_name || 'TBC'}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: '#444444' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: '#1a1a1a' }}>
         {numShows}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? '#444444' : '#9ca3af' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? '#1a1a1a' : '#9ca3af' }}>
         {fmt(firstShow)}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? '#444444' : '#9ca3af' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? '#1a1a1a' : '#9ca3af' }}>
         {fmt(lastShow)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -389,81 +390,86 @@ export default function TourPage() {
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {activeTab === 'schedule' && (
-            <>
-              {/* Sticky column headers */}
-              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f0ece4', borderBottom: '1px solid #e8e2d9' }}>
-                <div style={{ padding: '14px 32px 8px', fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
-                  Events <span style={{ fontSize: 12, color: '#6b6b6b', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
-                </div>
-                {events.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '6px 32px 12px' }}>
-                    {COLS.map(col => (
-                      <div key={col.key} style={{ fontSize: 10, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align, fontWeight: 700 }}>
-                        {col.label}
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div style={{ padding: '20px 32px 32px' }}>
+              {/* Section title on the navy shell */}
+              <div style={{ marginBottom: 14, fontSize: 14, fontWeight: 600, color: '#ffffff' }}>
+                Events <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
               </div>
 
               {/* Empty state */}
               {events.length === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 14 }}>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>No events yet</div>
-                  <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Add your first event to this tour</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>No events yet</div>
+                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>Add your first event to this tour</div>
                   <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>+ Add Event</button>
                 </div>
               )}
 
-              {/* Upcoming event rows */}
-              {upcomingEvents.map((event) => (
-                <EventRow
-                  key={event.id}
-                  event={event}
-                  eventShows={eventShows}
-                  tourId={id}
-                  router={router}
-                  onStatusUpdate={handleStatusUpdate}
-                  onLoadInUpdate={handleLoadInUpdate}
-                  fmt={fmt}
-                />
-              ))}
-
-              {/* Past events — collapsible */}
-              {pastEvents.length > 0 && (
-                <div>
-                  {/* Past events toggle */}
-                  <div
-                    onClick={() => setPastExpanded(p => !p)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderBottom: '1px solid #f0ece4', background: '#faf8f4', color: '#6b6b6b', userSelect: 'none' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f0ece4'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#faf8f4'}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
-                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span style={{ fontSize: 13, color: '#6b6b6b' }}>
-                      Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
-                    </span>
+              {/* Rounded table card */}
+              {events.length > 0 && (
+                <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e8e2d9' }}>
+                  {/* Column headers — tan */}
+                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 32px', background: '#f0ece4', borderBottom: '1px solid #e8e2d9' }}>
+                    {COLS.map(col => (
+                      <div key={col.key} style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: col.align, fontWeight: 700 }}>
+                        {col.label}
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Past event rows */}
-                  {pastExpanded && pastEvents.map((event) => (
-                    <div key={event.id} style={{ opacity: 0.6 }}>
-                      <EventRow
-                        event={event}
-                        eventShows={eventShows}
-                        tourId={id}
-                        router={router}
-                        onStatusUpdate={handleStatusUpdate}
-                        onLoadInUpdate={handleLoadInUpdate}
-                        fmt={fmt}
-                      />
-                    </div>
+                  {/* Upcoming event rows */}
+                  {upcomingEvents.map((event, idx) => (
+                    <EventRow
+                      key={event.id}
+                      event={event}
+                      eventShows={eventShows}
+                      tourId={id}
+                      router={router}
+                      onStatusUpdate={handleStatusUpdate}
+                      onLoadInUpdate={handleLoadInUpdate}
+                      fmt={fmt}
+                      rowIndex={idx}
+                    />
                   ))}
+
+                  {/* Past events — collapsible */}
+                  {pastEvents.length > 0 && (
+                    <div>
+                      {/* Past events toggle */}
+                      <div
+                        onClick={() => setPastExpanded(p => !p)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderTop: '1px solid #e8e2d9', background: '#f0ece4', color: '#6b6b6b', userSelect: 'none' }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#e8e2d9'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#f0ece4'}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span style={{ fontSize: 13, color: '#6b6b6b' }}>
+                          Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
+                        </span>
+                      </div>
+
+                      {/* Past event rows */}
+                      {pastExpanded && pastEvents.map((event, idx) => (
+                        <div key={event.id} style={{ opacity: 0.6 }}>
+                          <EventRow
+                            event={event}
+                            eventShows={eventShows}
+                            tourId={id}
+                            router={router}
+                            onStatusUpdate={handleStatusUpdate}
+                            onLoadInUpdate={handleLoadInUpdate}
+                            fmt={fmt}
+                            rowIndex={idx}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {activeTab === 'calendar' && (
