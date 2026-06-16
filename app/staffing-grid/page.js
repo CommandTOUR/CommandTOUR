@@ -387,7 +387,7 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
 
 // ── GRID CELL ─────────────────────────────────────────────────────────────────
 
-function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, COL_WIDTH, ROW_HEIGHT, borderRight }) {
+function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, isSelected, onToggleSelect, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
@@ -485,8 +485,13 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   const pillColor = isExec ? 'rgba(255,255,255,0.5)' : (statusStyle ? statusStyle.color : '#FFCC00')
   const pillBg = isExec ? 'rgba(255,255,255,0.08)' : colorWithAlpha(statusStyle ? statusStyle.color : '#FFCC00', 0.2)
 
-  const handleCellClick = () => {
+  const handleCellClick = (e) => {
     if (isActive) return
+    if (assignment && (e.ctrlKey || e.metaKey)) {
+      e.stopPropagation()
+      onToggleSelect(assignment.id)
+      return
+    }
     if (assignment) { onActivate('menu'); return }
     if (isHatched) { onActivate(null); return }
     onActivate('edit')
@@ -512,8 +517,11 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         {isActive && activeType === 'edit' ? (
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
         ) : staffName ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 6, background: pillBg, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s' }}>
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 6, background: pillBg, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s', boxShadow: isSelected ? '0 0 0 1.5px rgba(255,255,255,0.9)' : 'none' }}>
             <span style={{ fontSize: 12, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
+            {isSelected && (
+              <div style={{ position: 'absolute', top: -5, left: -5, width: 13, height: 13, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: '#0a1628', fontWeight: 800, lineHeight: 1, flexShrink: 0 }}>✓</div>
+            )}
           </div>
         ) : isHatched ? null : (
           hovered ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>+ Assign</span> : null
@@ -549,6 +557,27 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   )
 }
 
+// ── BULK ACTION BAR ───────────────────────────────────────────────────────────
+
+function BulkActionBar({ count, onSetStatus, onClear }) {
+  return (
+    <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: '#0d1f3a', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{count} selected</span>
+      <div style={{ width: 1, height: 20, background: 'var(--glass-border)' }} />
+      {STATUS_OPTIONS.map(opt => (
+        <button key={opt.value} onClick={() => onSetStatus(opt.value)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid ' + opt.border, background: opt.pill, color: opt.color, cursor: 'pointer' }}>
+          {opt.label}
+        </button>
+      ))}
+      <div style={{ width: 1, height: 20, background: 'var(--glass-border)' }} />
+      <button onClick={onClear} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+        Clear
+      </button>
+      <button onClick={onClear} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 2px', fontFamily: 'Inter, sans-serif' }}>×</button>
+    </div>
+  )
+}
+
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export default function StaffingGrid() {
@@ -563,6 +592,7 @@ export default function StaffingGrid() {
   const [showPast, setShowPast] = useState(false)
   const [activeCell, setActiveCell] = useState(null) // { eventId, positionKey, type: 'edit'|'menu', initialValue? } | null
   const [focusedCell, setFocusedCell] = useState(null) // { eventId, positionKey } | null
+  const [selectedIds, setSelectedIds] = useState(new Set())
   const activeCellElRef = useRef(null)
 
   const COL_WIDTH = 140
@@ -591,7 +621,7 @@ export default function StaffingGrid() {
     const supabase = getSupabase()
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
-      supabase.from('events').select('id, city, state, venue_name, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
+      supabase.from('events').select('id, city, state, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
       supabase.from('event_staff').select('*, staff(id, first_name, last_name)'),
     ])
     setTours(toursRes.data || [])
@@ -688,6 +718,31 @@ export default function StaffingGrid() {
   const handleCellActivate = (eventId, positionKey, type) => {
     setFocusedCell({ eventId, positionKey })
     setActiveCell(type ? { eventId, positionKey, type } : null)
+    setSelectedIds(new Set())
+  }
+
+  const toggleSelectId = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkStatus = async (status) => {
+    if (selectedIds.size === 0) return
+    const supabase = getSupabase()
+    const ids = Array.from(selectedIds)
+    const confirmed = status === 'confirmed'
+    await supabase.from('event_staff').update({ status, confirmed }).in('id', ids)
+    setAssignments(prev => {
+      const next = { ...prev }
+      for (const eid of Object.keys(next)) {
+        next[eid] = next[eid].map(a => ids.includes(a.id) ? { ...a, status, confirmed } : a)
+      }
+      return next
+    })
+    setSelectedIds(new Set())
   }
 
   const today = toYMD(new Date())
@@ -774,7 +829,14 @@ export default function StaffingGrid() {
         if (e.key === 'Escape') {
           e.preventDefault()
           setActiveCell(null)
+          setSelectedIds(new Set())
         }
+        return
+      }
+
+      if (e.key === 'Escape' && selectedIds.size > 0) {
+        e.preventDefault()
+        setSelectedIds(new Set())
         return
       }
 
@@ -819,7 +881,7 @@ export default function StaffingGrid() {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [activeCell, focusedCell, orderedEvents, visiblePositionRows, eventMetas, assignments])
+  }, [activeCell, focusedCell, orderedEvents, visiblePositionRows, eventMetas, assignments, selectedIds])
 
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
@@ -850,7 +912,11 @@ export default function StaffingGrid() {
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Create events on your tours to populate the staffing grid</div>
         </div>
       ) : (
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <React.Fragment>
+          {selectedIds.size > 0 && (
+            <BulkActionBar count={selectedIds.size} onSetStatus={handleBulkStatus} onClear={() => setSelectedIds(new Set())} />
+          )}
+          <div style={{ flex: 1, overflow: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
             <thead>
               <tr>
@@ -914,8 +980,18 @@ export default function StaffingGrid() {
                   <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
-                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {ev.venue_name || '\u2014'}
+                  <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRight(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {ev.venue_id ? (
+                      <span
+                        onClick={() => router.push('/venues/' + ev.venue_id)}
+                        style={{ color: 'var(--mint)', cursor: 'pointer' }}
+                        onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
+                        onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
+                        {ev.venue_name || '\u2014'}
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)' }}>{ev.venue_name || '\u2014'}</span>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -971,6 +1047,8 @@ export default function StaffingGrid() {
                               onActivate={(type) => handleCellActivate(ev.id, posRow.key, type)}
                               onCloseActive={() => setActiveCell(null)}
                               onToggleLock={() => handleToggleLock(ev.id, posRow.key, hatched, posRow, ev)}
+                              isSelected={!!assignment && selectedIds.has(assignment.id)}
+                              onToggleSelect={toggleSelectId}
                               COL_WIDTH={COL_WIDTH}
                               ROW_HEIGHT={ROW_HEIGHT}
                               borderRight={cellBorderRight(ev, i)}
@@ -984,7 +1062,8 @@ export default function StaffingGrid() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </React.Fragment>
       )}
     </div>
   )
