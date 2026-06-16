@@ -398,7 +398,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   const doAssign = async (staffMember) => {
     setConfirmOverride(null)
     const supabase = getSupabase()
-    const status = isExec ? null : 'scheduled'
+    const status = isExec ? null : 'confirmed'
+    const confirmed = status === 'confirmed'
 
     // Check for an existing row by event_id + position_key to prevent duplicate inserts
     const { data: existingRows } = await supabase.from('event_staff')
@@ -408,11 +409,11 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     let writeError = null
     if (existing) {
       const { error } = await supabase.from('event_staff')
-        .update({ staff_id: staffMember.id, status, confirmed: false }).eq('id', existing.id)
+        .update({ staff_id: staffMember.id, status, confirmed }).eq('id', existing.id)
       writeError = error
     } else {
       const { error } = await supabase.from('event_staff')
-        .insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, staff_id: staffMember.id, status, confirmed: false }])
+        .insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionRow.key, staff_id: staffMember.id, status, confirmed }])
       writeError = error
     }
 
@@ -423,7 +424,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
       return
     }
 
-    // Show pill immediately with an optimistic local row — no select after write
+    // Show name immediately with an optimistic local row — no select after write
     const localRow = {
       id: crypto.randomUUID(),
       event_id: eventId,
@@ -481,10 +482,11 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     onRefresh()
   }
 
-  const cellBg = assignError ? 'rgba(255,51,51,0.15)' : (isHatched && !assignment ? HATCH_BG : 'transparent')
+  const isEmptyAssignable = !assignment && !isHatched && !isActive
+  const cellBg = assignError ? 'rgba(255,51,51,0.15)' : isHatched && !assignment ? HATCH_BG : isEmptyAssignable ? (hovered ? 'rgba(255,204,0,0.15)' : 'rgba(255,204,0,0.08)') : 'transparent'
   const cellBgSize = isHatched && !assignment ? HATCH_SIZE : 'auto'
-  const pillColor = isExec ? '#ffffff' : (statusStyle ? statusStyle.color : '#FFCC00')
-  const pillBg = isExec ? 'rgba(255,255,255,0.08)' : (statusStyle ? statusStyle.pill : 'rgba(255,204,0,0.15)')
+  const nameColor = isExec ? '#ffffff' : (statusStyle ? statusStyle.color : '#FFCC00')
+  const nameWeight = !isExec && assignment && assignment.status === 'confirmed' ? 500 : 400
 
   const handleCellClick = (e) => {
     if (isActive) return
@@ -506,7 +508,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         ref={cellRef}
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
-          padding: '0 6px', cursor: isActive ? 'default' : 'pointer',
+          padding: '4px 8px', cursor: isActive ? 'default' : 'pointer',
           background: cellBg, backgroundSize: cellBgSize, textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box', borderRight, borderBottom: '0.5px solid rgba(255,255,255,0.06)',
           boxShadow: assignError ? 'inset 0 0 0 1px #FF3333' : (isFocused && !isActive ? 'inset 0 0 0 1px var(--mint)' : 'none'),
@@ -518,12 +520,12 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         {isActive && activeType === 'edit' ? (
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
         ) : staffName ? (
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 6, background: pillBg, maxWidth: COL_WIDTH - 12, opacity: hovered && !isActive ? 0.82 : 1, transition: 'opacity 0.1s', boxShadow: isSelected ? '0 0 0 1.5px rgba(255,255,255,0.9)' : 'none' }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: pillColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffName}</span>
+          <React.Fragment>
+            <span style={{ fontSize: 12, fontWeight: nameWeight, color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: hovered && !isActive ? 0.7 : 1, transition: 'opacity 0.1s' }}>{staffName}</span>
             {isSelected && (
-              <div style={{ position: 'absolute', top: -5, left: -5, width: 13, height: 13, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: '#0a1628', fontWeight: 800, lineHeight: 1, flexShrink: 0 }}>✓</div>
+              <div style={{ position: 'absolute', top: 2, left: 2, width: 13, height: 13, borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: '#0a1628', fontWeight: 800, lineHeight: 1 }}>✓</div>
             )}
-          </div>
+          </React.Fragment>
         ) : isHatched ? null : (
           hovered ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>+ Assign</span> : null
         )}
@@ -598,8 +600,8 @@ export default function StaffingGrid() {
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
-  const ROW_HEIGHT = 38
-  const DEPT_H = 34
+  const ROW_HEIGHT = 28
+  const DEPT_H = 28
   const H1 = 46
   const H2 = 32
   const H3 = 32
