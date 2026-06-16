@@ -422,7 +422,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
       return
     }
 
-    // Build optimistic local row entirely from in-scope data — no select after write
+    // Show pill immediately with an optimistic local row — no select after write
     const localRow = {
       id: crypto.randomUUID(),
       event_id: eventId,
@@ -433,7 +433,19 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     }
     onAssignSuccess(eventId, localRow)
     onCloseActive()
-    onRefresh() // background sync to replace optimistic row with real DB state
+
+    // Swap the temporary UUID for the real DB id so status/remove actions work correctly.
+    // This is a targeted single-row fetch — no full grid refresh that could wipe the pill.
+    const { data: newRow } = await supabase
+      .from('event_staff')
+      .select('id, event_id, staff_id, position_key, status')
+      .eq('event_id', eventId)
+      .eq('position_key', positionRow.key)
+      .single()
+    if (newRow) {
+      onAssignSuccess(eventId, { ...localRow, id: newRow.id })
+    }
+    // If the targeted fetch fails, the optimistic row stays — pill remains visible
   }
 
   const handleAssign = (staffMember, avail) => {
