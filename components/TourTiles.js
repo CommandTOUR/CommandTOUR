@@ -89,21 +89,27 @@ export default function TourTiles({ glassMorphism = false }) {
     const tileColor = tour.color || '#33FF99'
     const glass = glassMorphism
 
-    // Full tour-color perimeter border — thicker at the top for emphasis
-    const borderStyle = {
+    // Full tour-color perimeter border — thicker at the top for emphasis.
+    // Glass tiles get a heavier frame than the solid fallback.
+    const borderStyle = glass ? {
+      borderTop: `7px solid ${tileColor}`,
+      borderLeft: `2px solid ${tileColor}`,
+      borderRight: `2px solid ${tileColor}`,
+      borderBottom: `2px solid ${tileColor}`,
+    } : {
       borderTop: `3px solid ${tileColor}`,
       borderLeft: `1px solid ${tileColor}`,
       borderRight: `1px solid ${tileColor}`,
       borderBottom: `1px solid ${tileColor}`,
     }
 
-    const glassShadow = '0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)'
-    const glassShadowHover = '0 6px 28px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.12)'
+    const glassShadow = '0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.18)'
+    const glassShadowHover = '0 6px 28px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)'
     const solidShadow = '0 1px 4px rgba(0,0,0,0.06)'
     const solidShadowHover = '0 2px 8px rgba(0,0,0,0.1)'
 
     const surfaceStyle = glass
-      ? { background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: glassShadow }
+      ? { background: 'rgba(255,255,255,0.13)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: glassShadow }
       : { background: '#faf8f4', boxShadow: solidShadow }
 
     // Text / element colors per surface
@@ -124,8 +130,8 @@ export default function TourTiles({ glassMorphism = false }) {
         key={tour.id}
         onClick={() => router.push(`/tours/${tour.id}`)}
         style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: 12, transition: 'background 0.15s, box-shadow 0.15s', ...borderStyle, ...surfaceStyle }}
-        onMouseEnter={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.12)' : '#f0ece4'; e.currentTarget.style.boxShadow = glass ? glassShadowHover : solidShadowHover }}
-        onMouseLeave={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.08)' : '#faf8f4'; e.currentTarget.style.boxShadow = glass ? glassShadow : solidShadow }}
+        onMouseEnter={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.18)' : '#f0ece4'; e.currentTarget.style.boxShadow = glass ? glassShadowHover : solidShadowHover }}
+        onMouseLeave={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.13)' : '#faf8f4'; e.currentTarget.style.boxShadow = glass ? glassShadow : solidShadow }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
