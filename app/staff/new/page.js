@@ -83,20 +83,20 @@ export default function NewStaff() {
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 14,
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
     padding: '10px 14px', borderRadius: 8,
-    border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-primary)', outline: 'none', width: '100%',
+    border: '1px solid #d4cfc8',
+    background: '#ffffff',
+    color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: 'var(--text-muted)',
+    fontSize: 12, color: '#6b6b6b',
     letterSpacing: '0.05em', marginBottom: 6, display: 'block',
   }
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)', marginBottom: 4 }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid #e8e2d9', marginBottom: 4 }}>
       {title}
     </div>
   )
@@ -109,13 +109,13 @@ export default function NewStaff() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push('/staff')}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 26, fontWeight: 600 }}>Add Staff Member</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Add Staff Member</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -225,12 +225,12 @@ export default function NewStaff() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>Airlines & Frequent Flyer Numbers</label>
-                <button onClick={addAirline} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>
+                <button onClick={addAirline} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#16a34a', cursor: 'pointer' }}>
                   + Add Airline
                 </button>
               </div>
               {airlines.length === 0 && (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No airlines added yet.</div>
+                <div style={{ fontSize: 13, color: '#6b6b6b' }}>No airlines added yet.</div>
               )}
               {airlines.map((a, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 12, alignItems: 'center', marginBottom: 10 }}>
@@ -240,12 +240,12 @@ export default function NewStaff() {
                     onClick={() => togglePreferred(i)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}
                   >
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: a.preferred ? 'var(--mint)' : 'transparent', border: a.preferred ? 'none' : '1.5px solid var(--glass-border)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: a.preferred ? 'var(--mint)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>Preferred</span>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: a.preferred ? '#16a34a' : 'transparent', border: a.preferred ? 'none' : '1.5px solid #d4cfc8', flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: a.preferred ? '#16a34a' : '#6b6b6b', whiteSpace: 'nowrap' }}>Preferred</span>
                   </div>
-                  <div onClick={() => removeAirline(i)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}
-                    onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  <div onClick={() => removeAirline(i)} style={{ cursor: 'pointer', color: '#6b6b6b', fontSize: 20, lineHeight: 1, padding: '0 4px' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
                   >×</div>
                 </div>
               ))}
@@ -265,13 +265,13 @@ export default function NewStaff() {
             </div>
           </div>
 
-          {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
             <button
               onClick={() => router.push('/staff')}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               Cancel

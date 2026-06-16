@@ -320,19 +320,19 @@ export default function EditVenue() {
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 14px',
-    borderRadius: 8, border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px',
+    borderRadius: 8, border: '1px solid #d4cfc8',
+    background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
     outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em',
+    fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em',
     marginBottom: 6, display: 'block',
   }
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)', marginBottom: 4 }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid #e8e2d9', marginBottom: 4 }}>
       {title}
     </div>
   )
@@ -344,13 +344,13 @@ export default function EditVenue() {
   )
 
   const removeBtnStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 18, lineHeight: 1, padding: '0 8px',
-    background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, lineHeight: 1, padding: '0 8px',
+    background: 'transparent', border: 'none', color: '#6b6b6b', cursor: 'pointer',
   }
 
   const addFieldBtnStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7,
-    border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 8,
+    border: '1px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b',
     cursor: 'pointer', alignSelf: 'flex-start',
   }
 
@@ -364,8 +364,8 @@ export default function EditVenue() {
           <button
             onClick={() => removeCustomField(i)}
             style={removeBtnStyle}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
           >×</button>
         </div>
       ))}
@@ -375,7 +375,7 @@ export default function EditVenue() {
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ marginTop: 62, padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading...</div>
     </div>
   )
 
@@ -390,23 +390,23 @@ export default function EditVenue() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >← Back</button>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 700 }}>{form.name || 'Venue'}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 4 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>{form.name || 'Venue'}</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 4, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
                 {[form.city, form.state, form.country].filter(Boolean).join(', ')}
                 {form.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{form.region}</span>}
-                <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(255,51,51,0.15)', border: '0.5px solid #FF3333', color: '#FF3333' }}>Editing</span>
+                <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(220,38,38,0.15)', border: '0.5px solid #dc2626', color: '#f87171' }}>Editing</span>
               </div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               onClick={() => router.push(`/venues/${venueId}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
@@ -416,7 +416,7 @@ export default function EditVenue() {
 
         <div style={{ padding: '28px 32px' }}>
 
-          {error && <div style={{ fontSize: 13, color: 'var(--red)', marginBottom: 20 }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#dc2626', marginBottom: 20 }}>{error}</div>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -459,9 +459,9 @@ export default function EditVenue() {
             </div>
 
             {form.full_address && (
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 7, border: '0.5px solid var(--glass-border)' }}>
-                <span style={{ color: 'var(--text-muted)', marginRight: 8 }}>Full address:</span>
-                <span style={{ color: 'var(--text-secondary)' }}>{form.full_address}</span>
+              <div style={{ fontSize: 12, color: '#6b6b6b', padding: '8px 12px', background: '#f0ece5', borderRadius: 7, border: '1px solid #e8e2d9' }}>
+                <span style={{ color: '#6b6b6b', marginRight: 8 }}>Full address:</span>
+                <span style={{ color: '#444444' }}>{form.full_address}</span>
               </div>
             )}
           </div>
@@ -519,18 +519,18 @@ export default function EditVenue() {
           {/* Custom sections */}
           {form.custom_sections.map(section => (
             <div key={section.id} className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 10, borderBottom: '0.5px solid var(--glass-border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 10, borderBottom: '1px solid #e8e2d9' }}>
                 <input
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', background: 'transparent', border: 'none', outline: 'none', flex: 1, padding: 0 }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', background: 'transparent', border: 'none', outline: 'none', flex: 1, padding: 0 }}
                   value={section.title}
                   placeholder="Section title"
                   onChange={e => updateCustomSectionTitle(section.id, e.target.value)}
                 />
                 <button
                   onClick={() => removeCustomSection(section.id)}
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, color: '#6b6b6b', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
                 >× Remove Section</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -541,8 +541,8 @@ export default function EditVenue() {
                     <button
                       onClick={() => removeCustomSectionField(section.id, i)}
                       style={removeBtnStyle}
-                      onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                      onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
                     >×</button>
                   </div>
                 ))}
@@ -554,7 +554,7 @@ export default function EditVenue() {
           <div>
             <button
               onClick={addCustomSection}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b', cursor: 'pointer' }}
             >+ Add Section</button>
           </div>
 

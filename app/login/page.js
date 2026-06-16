@@ -43,44 +43,44 @@ export default function Login() {
         gap: 24,
       }}>
         <img
-          src="/CommandTourLogo-DARKMODE.png"
+          src="/CommandTOURLogo-LightMode.png"
           alt="CommandTOUR"
           style={{ height: 28, width: 'auto', marginBottom: 8 }}
         />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>Email</label>
+            <label style={{ fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               style={{
-                fontFamily: 'Inter, sans-serif', fontSize: 14,
+                fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
-                border: '0.5px solid var(--glass-border)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)', outline: 'none', width: '100%',
+                border: '1px solid #d4cfc8',
+                background: '#ffffff',
+                color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
               }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>Password</label>
+            <label style={{ fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               style={{
-                fontFamily: 'Inter, sans-serif', fontSize: 14,
+                fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
-                border: '0.5px solid var(--glass-border)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-primary)', outline: 'none', width: '100%',
+                border: '1px solid #d4cfc8',
+                background: '#ffffff',
+                color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
               }}
             />
           </div>
-          {error && <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 4 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#dc2626', marginTop: 4 }}>{error}</div>}
           <button
             onClick={handleLogin}
             disabled={loading}

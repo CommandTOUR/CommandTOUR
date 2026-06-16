@@ -237,9 +237,9 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
   const dotColor = (id) => {
     const a = availability[id]
     if (!a) return null
-    if (a.status === 'free') return '#33FF99'
-    if (a.status === 'same_event') return '#FFCC00'
-    if (a.status === 'conflict') return '#FF3333'
+    if (a.status === 'free') return '#16a34a'
+    if (a.status === 'same_event') return '#d97706'
+    if (a.status === 'conflict') return '#dc2626'
     return null
   }
   const tipText = (id) => {
@@ -300,7 +300,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
         onKeyDown={handleKeyDown}
         autoComplete="off"
         placeholder="Type a name..."
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '0.5px solid var(--mint)', background: 'rgba(255,255,255,0.07)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid #0a1628', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {showDropdown && (
         <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
@@ -438,6 +438,9 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     }
     onAssignSuccess(eventId, localRow)
     onCloseActive()
+    // Render the cell solid immediately — drop hover affordance (lock icon / dimmed name)
+    // so the staff name shows without requiring the user to click elsewhere.
+    setHovered(false)
 
     // Swap the temporary UUID for the real DB id so status/remove actions work correctly.
     // This is a targeted single-row fetch — no full grid refresh that could wipe the pill.
@@ -503,7 +506,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     onActivate('edit')
   }
 
-  const showLockIcon = !isExec && hovered && !isActive && !isLocked
+  const showLockIcon = !isExec && hovered && !isActive && !isLocked && !assignment
 
   return (
     <React.Fragment>
@@ -512,12 +515,12 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '6px 10px', cursor: isActive ? 'default' : 'pointer',
-          backgroundColor: assignError ? 'rgba(255,51,51,0.15)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(255,204,0,0.06)' : '#ffffff'),
+          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : '#ffffff'),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
           textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box', borderRight, borderBottom: '0.5px solid #e8e4dc',
-          boxShadow: assignError ? 'inset 0 0 0 1px #FF3333' : (isFocused && !isActive ? 'inset 0 0 0 1.5px #1a2a42' : 'none'),
+          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : (isFocused && !isActive ? 'inset 0 0 0 1.5px #1a2a42' : 'none'),
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
@@ -539,9 +542,9 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
           </div>
         ) : isEmptyAssignable ? (
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFCC00" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="9" x2="12" y2="13" stroke="#FFCC00" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="12" cy="17" r="0.5" fill="#FFCC00" stroke="#FFCC00" strokeWidth="1.5"/>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="12" y1="9" x2="12" y2="13" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="12" cy="17" r="0.5" fill="#d97706" stroke="#d97706" strokeWidth="1.5"/>
           </svg>
         ) : null}
 
@@ -1097,7 +1100,7 @@ export default function StaffingGrid() {
           )}
           <div style={{ flex: 1 }}>
           <div style={{ margin: 16, borderRadius: 16, overflow: 'hidden', border: '0.5px solid #e0d8cc', boxShadow: '0 2px 16px rgba(0,0,0,0.08)', background: 'white' }}>
-          <div style={{ overflow: 'auto', height: 'calc(100vh - 160px)' }}>
+          <div style={{ overflow: 'auto', height: 'calc(100vh - 160px)', transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 'max-content' }}>
             <thead>
               <tr>
@@ -1191,7 +1194,7 @@ export default function StaffingGrid() {
                     <tr>
                       <td
                         onClick={() => toggleDept(dept)}
-                        style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 14px', cursor: 'pointer', userSelect: 'none', background: BODY_DEPT_BG, borderLeft: '3px solid #C9A84C', borderRight: B_LEFT_COL, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP }}
+                        style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 14px', cursor: 'pointer', userSelect: 'none', background: BODY_DEPT_BG, borderLeft: '3px solid #C9A84C', borderRight: B_LEFT_COL, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, willChange: 'transform' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#e8e4da' }}
                         onMouseLeave={e => { e.currentTarget.style.background = BODY_DEPT_BG }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1205,7 +1208,7 @@ export default function StaffingGrid() {
                     </tr>
                     {!collapsed && deptRows.map(posRow => (
                       <tr key={posRow.key}>
-                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: '#faf8f4', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#555555', whiteSpace: 'nowrap' }}>
+                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: '#faf8f4', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#555555', whiteSpace: 'nowrap', willChange: 'transform' }}>
                           {posRow.displayLabel}
                         </td>
                         {orderedEvents.map((ev, i) => {

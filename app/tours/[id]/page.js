@@ -18,14 +18,14 @@ function getEventPastDate(event, shows) {
 const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
 
 const STATUS_STYLES = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
-  tentative:   { color: '#FF69B4', background: 'rgba(255,105,180,0.1)', border: 'rgba(255,105,180,0.35)' },
-  '1-hold':    { color: '#FFCC00', background: 'rgba(255,204,0,0.1)',   border: 'rgba(255,204,0,0.35)' },
-  '2-hold':    { color: '#FF8C00', background: 'rgba(255,140,0,0.1)',   border: 'rgba(255,140,0,0.35)' },
-  '3-hold':    { color: '#FF3333', background: 'rgba(255,51,51,0.1)',   border: 'rgba(255,51,51,0.35)' },
-  cancelled:   { color: '#888',    background: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.35)' },
-  want:        { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
-  'date-hold': { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
+  confirmed:   { color: '#15803d', background: '#dcfce7',              border: '#86efac' },
+  tentative:   { color: '#6b21a8', background: '#f3e8ff',              border: '#d8b4fe' },
+  '1-hold':    { color: '#854d0e', background: '#fef9c3',              border: '#fde68a' },
+  '2-hold':    { color: '#9a3412', background: '#ffedd5',              border: '#fdba74' },
+  '3-hold':    { color: '#991b1b', background: '#fee2e2',              border: '#fca5a5' },
+  cancelled:   { color: '#6b7280', background: '#f9fafb',              border: '#d1d5db' },
+  want:        { color: '#6b7280', background: '#f3f4f6',              border: '#d1d5db' },
+  'date-hold': { color: '#6b7280', background: '#f3f4f6',              border: '#d1d5db' },
 }
 
 const COLS = [
@@ -57,9 +57,9 @@ function AlertIcon({ alerts }) {
       onMouseLeave={() => setVisible(false)}
     >
       <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ cursor: 'pointer' }}>
-        <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFCC00" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M9 7V10" stroke="#FFCC00" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="9" cy="13" r="0.75" fill="#FFCC00"/>
+        <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="9" cy="13" r="0.75" fill="#d97706"/>
       </svg>
       {visible && (
         <div style={{
@@ -68,7 +68,7 @@ function AlertIcon({ alerts }) {
           borderRadius: 8, padding: '10px 14px', zIndex: 100,
           minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ fontSize: 11, color: '#FFCC00', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
             Needs Attention
           </div>
           {alerts.map((a, i) => (
@@ -181,7 +181,7 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
       >
         <input type="date" value={value} onChange={e => setValue(e.target.value)} autoFocus
           onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none' }}
+          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid #d4cfc8', background: '#ffffff', color: '#1a1a1a', outline: 'none' }}
         />
         <div onClick={handleSave} style={{ fontSize: 11, color: 'var(--mint)', cursor: 'pointer' }}>✓</div>
         <div onClick={() => setEditing(false)} style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>✕</div>
@@ -191,7 +191,7 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
 
   return (
     <div onClick={e => { e.stopPropagation(); setEditing(true) }}
-      style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)', cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.2)', textUnderlineOffset: 3 }}
+      style={{ fontSize: 14, fontWeight: 400, color: '#444444', cursor: 'pointer', textDecoration: 'underline dotted #d4cfc8', textUnderlineOffset: 3 }}
     >
       {fmt(currentDate)}
     </div>
@@ -210,27 +210,28 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       onClick={() => router.push(`/tours/${tourId}/events/${event.id}`)}
       style={{
         display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
-        gap: '0 24px', padding: '16px 32px',
-        cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)',
+        gap: '0 24px', padding: '14px 32px',
+        cursor: 'pointer', borderBottom: '1px solid #f0ece4',
         transition: 'background 0.15s', alignItems: 'center',
+        background: '#ffffff',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'}
+      onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
     >
       <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} />
-      <div style={{ fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 14, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country && `, ${event.country}`}
       </div>
-      <div style={{ fontSize: 14, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 14, color: event.venue_name ? '#444444' : '#9ca3af', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.venue_name || 'TBC'}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-secondary)' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: '#444444' }}>
         {numShows}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? '#444444' : '#9ca3af' }}>
         {fmt(firstShow)}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? '#444444' : '#9ca3af' }}>
         {fmt(lastShow)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -335,7 +336,7 @@ export default function TourPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <button
                 onClick={() => router.push('/tours')}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -358,7 +359,7 @@ export default function TourPage() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => router.push(`/tours/${id}/edit`)}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -377,7 +378,7 @@ export default function TourPage() {
               const active = activeTab === tab.toLowerCase()
               return (
                 <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())}
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '14px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '14px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
                   {tab}
                 </button>
               )
@@ -390,14 +391,14 @@ export default function TourPage() {
           {activeTab === 'schedule' && (
             <>
               {/* Sticky column headers */}
-              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)' }}>
-                <div style={{ padding: '16px 32px 8px', fontSize: 15, fontWeight: 600 }}>
-                  Events <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
+              <div style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f0ece4', borderBottom: '1px solid #e8e2d9' }}>
+                <div style={{ padding: '14px 32px 8px', fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
+                  Events <span style={{ fontSize: 12, color: '#6b6b6b', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
                 </div>
                 {events.length > 0 && (
                   <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '6px 32px 12px' }}>
                     {COLS.map(col => (
-                      <div key={col.key} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align }}>
+                      <div key={col.key} style={{ fontSize: 10, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align, fontWeight: 700 }}>
                         {col.label}
                       </div>
                     ))}
@@ -434,14 +435,14 @@ export default function TourPage() {
                   {/* Past events toggle */}
                   <div
                     onClick={() => setPastExpanded(p => !p)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.01)', userSelect: 'none' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.01)'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderBottom: '1px solid #f0ece4', background: '#faf8f4', color: '#6b6b6b', userSelect: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f0ece4'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#faf8f4'}
                   >
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
                       <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: 13, color: '#6b6b6b' }}>
                       Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
                     </span>
                   </div>
@@ -472,7 +473,7 @@ export default function TourPage() {
           {activeTab === 'travel' && (
             <div style={{ padding: '28px 32px' }}>
               {events.length === 0 ? (
-                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No events on this tour yet.</div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>No events on this tour yet.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
                   {events.map(event => (
@@ -480,18 +481,18 @@ export default function TourPage() {
                       key={event.id}
                       className="glass-card"
                       onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
-                      style={{ padding: '16px 18px', cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.05)'; e.currentTarget.style.borderColor = 'rgba(51,255,153,0.3)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-bg)'; e.currentTarget.style.borderColor = 'var(--glass-border)' }}
+                      style={{ padding: '16px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
                     >
-                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: '#1a1a1a' }}>
                         {event.city}{event.state && `, ${event.state}`}
                       </div>
-                      <div style={{ fontSize: 13, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', marginBottom: 10 }}>
+                      <div style={{ fontSize: 13, color: event.venue_name ? '#444444' : '#9ca3af', marginBottom: 10 }}>
                         {event.venue_name || 'Venue TBC'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Load-In {fmt(event.load_in_date)}</div>
+                        <div style={{ fontSize: 12, color: '#6b6b6b' }}>Load-In {fmt(event.load_in_date)}</div>
                         <StatusBadge status={event.status} />
                       </div>
                     </div>
@@ -504,7 +505,7 @@ export default function TourPage() {
           {activeTab === 'venues' && (
             <div style={{ padding: '28px 32px' }}>
               {venues.length === 0 ? (
-                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No venues linked to this tour yet.</div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>No venues linked to this tour yet.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
                   {venues.map(venue => (
@@ -512,12 +513,12 @@ export default function TourPage() {
                       key={venue.id}
                       className="glass-card"
                       onClick={() => router.push(`/venues/${venue.id}`)}
-                      style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,255,153,0.05)'; e.currentTarget.style.borderColor = 'rgba(51,255,153,0.3)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-bg)'; e.currentTarget.style.borderColor = 'var(--glass-border)' }}
+                      style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
                     >
-                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{venue.name}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#1a1a1a' }}>{venue.name}</div>
+                      <div style={{ fontSize: 13, color: '#6b6b6b' }}>
                         {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
                       </div>
                     </div>
@@ -530,27 +531,27 @@ export default function TourPage() {
           {activeTab === 'files' && (
             <div style={{ padding: '28px 32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>Tour Files</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff' }}>Tour Files</div>
                 <button
                   disabled
                   title="Coming soon"
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
                 >
                   + Upload File
                 </button>
               </div>
               <div className="glass-card" style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
                 <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-                  <path d="M6 12a3 3 0 0 1 3-3h9l4 4h17a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V12Z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M6 12a3 3 0 0 1 3-3h9l4 4h17a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V12Z" stroke="#9ca3af" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
-                <div style={{ fontSize: 15, fontWeight: 500 }}>No files uploaded yet</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>File uploads coming in a future update</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: '#1a1a1a' }}>No files uploaded yet</div>
+                <div style={{ fontSize: 13, color: '#6b6b6b' }}>File uploads coming in a future update</div>
               </div>
             </div>
           )}
 
           {activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && (
-            <div style={{ padding: '28px 32px', fontSize: 14, color: 'var(--text-muted)' }}>
+            <div style={{ padding: '28px 32px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
           )}

@@ -247,7 +247,7 @@ function buildHolidayMap(year, saturdays) {
 // ── SHARED STYLES ─────────────────────────────────────────────────────────────
 
 const inputStyle = {
-  fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 10px',
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 10px',
   borderRadius: 6, border: '0.5px solid var(--glass-border)',
   background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
   outline: 'none', width: '100%', boxSizing: 'border-box',
@@ -259,7 +259,7 @@ const labelStyle = {
 }
 
 const mintOutlineBtn = {
-  fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 14px', borderRadius: 6,
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '8px 14px', borderRadius: 6,
   border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer',
 }
 
@@ -359,7 +359,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
           >Cancel</button>
           <button className="btn-primary" onClick={handleSaveNew} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save & Select'}</button>
         </div>
@@ -755,11 +755,11 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
             <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Delete this event? This cannot be undone.</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setConfirmingDelete(false)} style={{ flex: 1, ...mintOutlineBtn }}>Cancel</button>
-              <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
+              <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '8px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: '#FF6666', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
             </div>
           </div>
         ) : (
-          <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px', border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
+          <button onClick={() => setConfirmingDelete(true)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '8px', border: 'none', background: 'transparent', color: '#FF6666', cursor: 'pointer' }}>Delete Event</button>
         )}
       </div>
     </div>,
@@ -1326,7 +1326,7 @@ export default function BookingPage() {
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading booking grid...</div>
+      <div style={{ marginTop: 62, padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading booking grid...</div>
     </div>
   )
 
@@ -1337,7 +1337,7 @@ export default function BookingPage() {
       <TopNav />
 
       <div style={{ marginTop: 62, padding: '14px 28px 0', background: 'var(--bg)' }}>
-        <div style={{ fontSize: 22, fontWeight: 600 }}>All Events</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>All Events</div>
         <YearPills
           years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
           dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}

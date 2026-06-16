@@ -256,14 +256,14 @@ export default function NewEvent() {
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 14px',
-    borderRadius: 8, border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px',
+    borderRadius: 8, border: '1px solid #d4cfc8',
+    background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
     outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em',
+    fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em',
     marginBottom: 6, display: 'block',
   }
 
@@ -275,13 +275,13 @@ export default function NewEvent() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push(`/tours/${id}`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 26, fontWeight: 600 }}>Add Event</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Add Event</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -290,21 +290,21 @@ export default function NewEvent() {
           <div>
             <label style={labelStyle}>Venue</label>
             {selectedVenue ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(51,255,153,0.35)', background: 'rgba(51,255,153,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid #16a34a', background: 'rgba(22,163,74,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mint)' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16a34a' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#6b6b6b', cursor: 'pointer', padding: '4px 8px' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
                   × Clear
                 </div>
               </div>
             ) : creatingVenue ? (
               /* Inline Create Venue Form */
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid var(--glass-border)', borderRadius: 10, padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--mint)', marginBottom: 16 }}>New Venue</div>
+              <div style={{ background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: 10, padding: '20px' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#16a34a', marginBottom: 16 }}>New Venue</div>
 
                 {/* Google Places name search */}
                 <div style={{ position: 'relative', marginBottom: 14 }}>
@@ -355,13 +355,13 @@ export default function NewEvent() {
                   </div>
                 </div>
 
-                {venueError && <div style={{ fontSize: 12, color: 'var(--red)', marginBottom: 12 }}>{venueError}</div>}
+                {venueError && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 12 }}>{venueError}</div>}
 
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => { setCreatingVenue(false); setNewVenue({ name: '', address: '', city: '', state: '', country: '', full_address: '', place_id: '', latitude: null, longitude: null, zip: '', region: '' }); setVenueError('') }}
-                    style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     Cancel
                   </button>
@@ -473,10 +473,10 @@ export default function NewEvent() {
           <div>
             <div onClick={() => setExtendedLoadOut(!extendedLoadOut)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : 'rgba(255,255,255,0.4)', transition: 'left 0.2s' }} />
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : '#d4cfc8', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? 'var(--text-primary)' : 'var(--text-muted)' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 13, color: extendedLoadOut ? '#1a1a1a' : '#6b6b6b' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -494,15 +494,15 @@ export default function NewEvent() {
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <input style={{ ...inputStyle, flex: 2 }} type="date" value={show.show_date} onChange={e => updateShow(i, 'show_date', e.target.value)} />
                   <input style={{ ...inputStyle, flex: 1 }} type="time" value={show.show_time} onChange={e => updateShow(i, 'show_time', e.target.value)} />
-                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
-                    onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: '#6b6b6b', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
                     ×
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={addShow} type="button" style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 10 }}>
+            <button onClick={addShow} type="button" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#16a34a', cursor: 'pointer', marginTop: 10 }}>
               + Add Show
             </button>
           </div>
@@ -513,13 +513,13 @@ export default function NewEvent() {
             <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this event..." value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
-          {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Add Event'}</button>

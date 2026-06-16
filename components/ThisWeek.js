@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 
 const PILL_STYLES = {
-  loadin:  { background: 'rgba(255,204,0,0.1)',    color: '#FFCC00' },
-  loadout: { background: 'rgba(255,204,0,0.1)',    color: '#FFCC00' },
-  show:    { background: 'rgba(51,255,153,0.1)',   color: '#33FF99' },
+  loadin:  { background: '#fef9c3', color: '#854d0e' },
+  loadout: { background: '#fef9c3', color: '#854d0e' },
+  show:    { background: '#dcfce7', color: '#15803d' },
 }
 
 function getPills(event, today, todayShows) {
@@ -76,13 +76,11 @@ export default function ThisWeek({ showAll = false }) {
       const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
 
       const enriched = await Promise.all(data.map(async (ev) => {
-        // Count total shows
         const { count: totalShows } = await supabase
           .from('show_list')
           .select('id', { count: 'exact', head: true })
           .eq('event_id', ev.id)
 
-        // Count shows today specifically
         const { count: todayShows } = await supabase
           .from('show_list')
           .select('id', { count: 'exact', head: true })
@@ -110,20 +108,20 @@ export default function ThisWeek({ showAll = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
           This Week
         </div>
-        <div style={{ fontSize: 14, color: 'var(--mint)', cursor: 'pointer' }} onClick={() => router.push('/calendar')}>
+        <div style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/calendar')}>
           Calendar →
         </div>
       </div>
 
       {loading && (
-        <div style={{ color: 'var(--text-muted)', fontSize: 14, padding: '10px 0' }}>Loading...</div>
+        <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, padding: '10px 0' }}>Loading...</div>
       )}
 
       {!loading && !events.length && (
-        <div className="glass-card" style={{ padding: '16px', color: 'var(--text-muted)', fontSize: 14 }}>
+        <div className="glass-card" style={{ padding: '16px', color: '#6b6b6b', fontSize: 14 }}>
           No events this week.
         </div>
       )}
@@ -136,31 +134,31 @@ export default function ThisWeek({ showAll = false }) {
           style={{
             display: 'flex', alignItems: 'flex-start', gap: 12,
             padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
-            transition: 'background 0.12s',
+            transition: 'background 0.12s, box-shadow 0.12s',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+          onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
         >
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: ev.tourColor, flexShrink: 0, marginTop: 5 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 600 }}>{ev.city}</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>{ev.tourName}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>{formatDateRange(ev.load_in_date, ev.load_out_date)}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{ev.city}</div>
+            <div style={{ fontSize: 13, color: '#6b6b6b', marginTop: 3 }}>{ev.tourName}</div>
+            <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{formatDateRange(ev.load_in_date, ev.load_out_date)}</div>
+            <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>
               {ev.showCount === 1 ? '1 show' : `${ev.showCount} shows`}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end', flexShrink: 0 }}>
             {ev.pills.map((pill, i) => (
               <div key={i} style={{
-                fontSize: 12, fontWeight: 500, padding: '4px 11px', borderRadius: 20,
+                fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
                 ...(PILL_STYLES[pill.type] ?? PILL_STYLES.show),
               }}>
                 {pill.label}
               </div>
             ))}
             {ev.pills.length === 0 && (
-              <div style={{ fontSize: 12, fontWeight: 500, padding: '4px 11px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)' }}>
+              <div style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20, background: '#f0ece4', color: '#6b6b6b' }}>
                 In Progress
               </div>
             )}

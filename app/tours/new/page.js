@@ -60,20 +60,21 @@ export default function NewTour() {
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
     fontSize: 14,
     padding: '10px 14px',
     borderRadius: 8,
-    border: '0.5px solid var(--glass-border)',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-primary)',
+    border: '1px solid #d4cfc8',
+    background: '#ffffff',
+    color: '#1a1a1a',
+    caretColor: '#0a1628',
     outline: 'none',
     width: '100%',
   }
 
   const labelStyle = {
     fontSize: 12,
-    color: 'var(--text-muted)',
+    color: '#6b6b6b',
     letterSpacing: '0.05em',
     marginBottom: 6,
     display: 'block',
@@ -87,13 +88,13 @@ export default function NewTour() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push('/tours')}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 26, fontWeight: 600 }}>New Tour</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>New Tour</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -169,29 +170,29 @@ export default function NewTour() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {TOUR_COLORS.map(c => (
                 <div key={c.value} onClick={() => { set('color', c.value); setCustomColor(false) }}
-                  style={{ width: 32, height: 32, borderRadius: '50%', background: c.value, cursor: 'pointer', border: form.color === c.value && !customColor ? '3px solid white' : '3px solid transparent', transition: 'border 0.15s' }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', background: c.value, cursor: 'pointer', border: form.color === c.value && !customColor ? '3px solid #1a1a1a' : '3px solid transparent', transition: 'border 0.15s' }}
                   title={c.label} />
               ))}
               <div style={{ position: 'relative' }}>
                 <div onClick={() => setCustomColor(true)}
-                  style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'rgba(255,255,255,0.1)', cursor: 'pointer', border: customColor ? '3px solid white' : '3px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'rgba(255,255,255,0.6)', transition: 'border 0.15s' }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : '#f0ece5', cursor: 'pointer', border: customColor ? '3px solid #1a1a1a' : '3px solid #d4cfc8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#6b6b6b', transition: 'border 0.15s' }}
                   title="Custom color">+</div>
               </div>
               {customColor && (
                 <input type="color" value={form.color} onChange={e => set('color', e.target.value)}
-                  style={{ width: 40, height: 32, borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'transparent', cursor: 'pointer', padding: 2 }} />
+                  style={{ width: 40, height: 32, borderRadius: 8, border: '1px solid #d4cfc8', background: 'transparent', cursor: 'pointer', padding: 2 }} />
               )}
             </div>
             <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: form.color, width: '100%', transition: 'background 0.2s' }} />
           </div>
 
-          {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push('/tours')}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Create Tour'}</button>

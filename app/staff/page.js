@@ -19,7 +19,7 @@ function getEmployeeType(s) {
 
 function ChevronIcon({ open }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0, color: 'rgba(255,255,255,0.45)' }}>
       <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -69,15 +69,15 @@ export default function StaffPage() {
         <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 600 }}>Staff</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>Staff</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
                 {staff.length} {staff.length === 1 ? 'person' : 'people'}
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
                 onClick={() => router.push('/staffing-grid')}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--mint)', color: '#0a1628', cursor: 'pointer' }}
               >
                 All Tours Staffing Grid
               </button>
@@ -94,11 +94,11 @@ export default function StaffPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 14,
+              fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
               padding: '10px 16px', borderRadius: 8,
-              border: '0.5px solid var(--glass-border)',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'var(--text-primary)', outline: 'none',
+              border: '1px solid #d4cfc8',
+              background: '#ffffff',
+              color: '#1a1a1a', outline: 'none', caretColor: '#0a1628',
               width: '100%', maxWidth: 420,
             }}
           />
@@ -127,16 +127,16 @@ export default function StaffPage() {
               onClick={() => toggleSection(key)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[key] ? 16 : 0, userSelect: 'none' }}
             >
-              <span style={{ color: 'var(--text-muted)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.45)' }}>
                 <ChevronIcon open={!!expanded[key]} />
               </span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 {label}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
                 {members.length} {members.length === 1 ? 'person' : 'people'}
               </span>
-              <div style={{ flex: 1, height: '0.5px', background: 'var(--glass-border)', marginLeft: 4 }} />
+              <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
             </div>
 
             {expanded[key] && (
@@ -146,9 +146,9 @@ export default function StaffPage() {
                     key={s.id}
                     className="glass-card"
                     onClick={() => router.push(`/staff/${s.id}`)}
-                    style={{ padding: '18px 20px', cursor: 'pointer', transition: 'background 0.15s', position: 'relative' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+                    style={{ padding: '18px 20px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s', position: 'relative', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       {/* Avatar */}
@@ -162,15 +162,15 @@ export default function StaffPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {s.first_name} {s.last_name}{s.suffix && ` ${s.suffix}`}
                           </div>
                           {s.attention_flag && (
-                            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#FFCC00', flexShrink: 0 }} title={s.attention_note || 'Needs attention'} />
+                            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} title={s.attention_note || 'Needs attention'} />
                           )}
                         </div>
-                        {s.email && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
-                        {s.phone && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{s.phone}</div>}
+                        {s.email && <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
+                        {s.phone && <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 1 }}>{s.phone}</div>}
                       </div>
                     </div>
                   </div>

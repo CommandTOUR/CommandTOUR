@@ -6,10 +6,10 @@ import { getSupabase } from '../lib/supabase'
 const ROW_GRID = '28px 100px 100px 1.2fr 1.2fr 1.6fr 28px'
 
 const DAY_TYPE_STYLES = {
-  'Load In': { color: '#FFCC00', background: 'rgba(255,204,0,0.15)', border: '#FFCC00' },
-  'Show Day': { color: '#33FF99', background: 'rgba(51,255,153,0.15)', border: '#33FF99' },
-  'Load Out': { color: '#FF3333', background: 'rgba(255,51,51,0.15)', border: '#FF3333' },
-  'Day Off': { color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.2)' },
+  'Load In': { color: '#854d0e', background: '#fef9c3', border: '#fde68a' },
+  'Show Day': { color: '#15803d', background: '#dcfce7', border: '#bbf7d0' },
+  'Load Out': { color: '#dc2626', background: '#fee2e2', border: '#fecaca' },
+  'Day Off': { color: '#6b6b6b', background: '#f0ece4', border: '#e8e2d9' },
 }
 
 const addDays = (dateStr, n) => {
@@ -25,11 +25,11 @@ const todayStr = () => {
 
 const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000)
 
-const headerLabelStyle = { fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px' }
+const headerLabelStyle = { fontSize: 10.5, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px' }
 
 const addRowBtnStyle = {
-  fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
-  border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)',
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
+  border: '0.5px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b',
   cursor: 'pointer', alignSelf: 'flex-start',
 }
 
@@ -54,9 +54,9 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid var(--glass-border)' }}
+      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid #e8e2d9' }}
     >
-      <div style={{ cursor: 'grab', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
+      <div style={{ cursor: 'grab', color: '#6b6b6b', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
         <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
           <circle cx="2" cy="2" r="1.4" fill="currentColor"/><circle cx="8" cy="2" r="1.4" fill="currentColor"/>
           <circle cx="2" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/>
@@ -71,9 +71,9 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       <div
         className="schedule-row-delete"
         onClick={() => onDelete(item.id)}
-        style={{ cursor: 'pointer', color: 'var(--text-muted)', textAlign: 'center', fontSize: 16, lineHeight: 1 }}
-        onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+        style={{ cursor: 'pointer', color: '#6b6b6b', textAlign: 'center', fontSize: 16, lineHeight: 1 }}
+        onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+        onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
       >×</div>
     </div>
   )
@@ -88,10 +88,10 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
     <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid #C9A84C', overflow: 'hidden', width: '100%' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 4l4 4 4-4" stroke="#6b6b6b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{dayName}</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{dateLabel}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{dayName}</div>
+        <div style={{ fontSize: 13, color: '#6b6b6b' }}>{dateLabel}</div>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 6 }}>
           {dayTypes.map(dayType => {
@@ -290,15 +290,15 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
     setCopyDone(true)
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading schedule...</div>
+  if (loading) return <div style={{ fontSize: 14, color: '#6b6b6b' }}>Loading schedule...</div>
 
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 15, fontWeight: 600 }}>Schedule</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>Schedule</div>
         <button
           onClick={openCopyModal}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
@@ -307,7 +307,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
       </div>
 
       {days.length === 0 && (
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set a load-in date on this event to build a schedule.</div>
+        <div style={{ fontSize: 13, color: '#6b6b6b' }}>Set a load-in date on this event to build a schedule.</div>
       )}
 
       {days.map((dateStr, idx) => {
@@ -344,7 +344,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
                 <div>
                   <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Target Event</label>
                   <select
-                    style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%', cursor: 'pointer' }}
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: '#ffffff', outline: 'none', width: '100%', cursor: 'pointer' }}
                     value={copyTarget}
                     onChange={e => setCopyTarget(e.target.value)}
                   >
@@ -364,7 +364,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowCopyModal(false)}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >

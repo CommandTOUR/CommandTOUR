@@ -35,9 +35,9 @@ function buildPositionKeys(departments) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Scheduled', color: '#FFCC00', bg: 'rgba(255,204,0,0.1)', border: 'rgba(255,204,0,0.35)' },
-  { value: 'confirmed', label: 'Confirmed', color: '#33FF99', bg: 'rgba(51,255,153,0.1)', border: 'rgba(51,255,153,0.35)' },
-  { value: 'attention', label: 'Attention', color: '#FF3333', bg: 'rgba(255,51,51,0.1)', border: 'rgba(255,51,51,0.35)' },
+  { value: 'scheduled', label: 'Scheduled', color: '#854d0e', dot: '#d97706', bg: '#fef9c3', border: '#fde68a' },
+  { value: 'confirmed', label: 'Confirmed', color: '#15803d', dot: '#16a34a', bg: '#dcfce7', border: '#bbf7d0' },
+  { value: 'attention', label: 'Attention', color: '#dc2626', dot: '#dc2626', bg: '#fee2e2', border: '#fecaca' },
 ]
 
 function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
@@ -64,8 +64,8 @@ function StatusPill({ status, onChange }) {
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', background: status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
               onMouseLeave={e => e.currentTarget.style.background = status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent'}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: opt.color }}>{opt.label}</span>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.dot, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: '#ffffff' }}>{opt.label}</span>
             </div>
           ))}
         </div>
@@ -83,7 +83,7 @@ function NotesCell({ assignment, onSave }) {
   if (editing) {
     return (
       <input ref={inputRef}
-        style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid #d4cfc8', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%' }}
         value={value} onChange={e => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setValue(assignment.notes || '') } }}
@@ -92,8 +92,8 @@ function NotesCell({ assignment, onSave }) {
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 13, cursor: 'text', color: value ? 'var(--text-secondary)' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s' }}
-      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.15)'; if (!value) e.currentTarget.style.color = 'var(--text-muted)' }}
+      style={{ fontSize: 13, cursor: 'text', color: value ? '#444444' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = '#d4cfc8'; if (!value) e.currentTarget.style.color = '#6b6b6b' }}
       onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent'; if (!value) e.currentTarget.style.color = 'transparent' }}>
       {value || '+ add note'}
     </div>
@@ -110,7 +110,7 @@ function DateCell({ value, onSave }) {
   if (editing) {
     return (
       <input ref={inputRef} type="date"
-        style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', outline: 'none', width: '108px' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '1px solid #d4cfc8', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '108px' }}
         value={val} onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
@@ -119,8 +119,8 @@ function DateCell({ value, onSave }) {
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 13, cursor: 'text', color: val ? 'var(--text-secondary)' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s' }}
-      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.15)'; if (!val) e.currentTarget.style.color = 'var(--text-muted)' }}
+      style={{ fontSize: 13, cursor: 'text', color: val ? '#444444' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = '#d4cfc8'; if (!val) e.currentTarget.style.color = '#6b6b6b' }}
       onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent'; if (!val) e.currentTarget.style.color = 'transparent' }}>
       {fmt(val) || '+ date'}
     </div>
@@ -182,9 +182,9 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
   const dotColor = (staffId) => {
     const a = availability[staffId]
     if (!a) return null
-    if (a.status === 'free') return '#33FF99'
-    if (a.status === 'same_event') return '#FFCC00'
-    if (a.status === 'conflict') return '#FF3333'
+    if (a.status === 'free') return '#16a34a'
+    if (a.status === 'same_event') return '#d97706'
+    if (a.status === 'conflict') return '#dc2626'
     return null
   }
   const tooltip = (staffId) => {
@@ -201,12 +201,12 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
         <div onClick={onClear} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: 'rgba(255,51,51,0.05)' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,51,51,0.1)'}
           onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,51,51,0.05)'}>
-          <span style={{ fontSize: 13, color: '#FF3333' }}>× Remove — open this position</span>
+          <span style={{ fontSize: 13, color: '#fca5a5' }}>× Remove — open this position</span>
         </div>
       )}
       <div style={{ padding: '8px 12px', borderBottom: '0.5px solid var(--glass-border)' }}>
         <input ref={inputRef}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
+          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 8px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: '#ffffff', caretColor: '#ffffff', outline: 'none', width: '100%' }}
           placeholder="Type 3+ letters to search..."
           value={search} onChange={e => setSearch(e.target.value)}
           onKeyDown={e => { if (e.key === 'Escape') onClose() }}
@@ -266,13 +266,13 @@ function AssignedCell({ assignment, staff, positionKey, eventId, event, onAssign
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 7 }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <span style={{ fontSize: 13 }}>{staff.first_name} {staff.last_name}</span>
+      <span style={{ fontSize: 13, color: '#1a1a1a' }}>{staff.first_name} {staff.last_name}</span>
       {hovered && (
         <div onClick={() => setOpen(true)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, background: 'rgba(255,255,255,0.08)', cursor: 'pointer', flexShrink: 0 }}>
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, background: '#f0ece4', cursor: 'pointer', flexShrink: 0 }}>
           <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-            <path d="M1 4h9M7 1l3 3-3 3" stroke="rgba(255,255,255,0.6)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M13 10H4M7 7l-3 3 3 3" stroke="rgba(255,255,255,0.6)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 4h9M7 1l3 3-3 3" stroke="#6b6b6b" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M13 10H4M7 7l-3 3 3 3" stroke="#6b6b6b" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
       )}
@@ -296,10 +296,10 @@ function TravelTypeSelect({ assignment, onSave }) {
       onChange={e => { if (hasAssignment) onSave(assignment.id, e.target.value) }}
       disabled={!hasAssignment}
       style={{
-        fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5,
-        border: '0.5px solid var(--glass-border)',
-        background: hasAssignment ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
-        color: assignment?.travel_type ? 'var(--text-primary)' : 'var(--text-muted)',
+        fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5,
+        border: '1px solid #d4cfc8',
+        background: hasAssignment ? '#ffffff' : '#f0ece4',
+        color: assignment?.travel_type ? '#1a1a1a' : '#6b6b6b',
         outline: 'none', cursor: hasAssignment ? 'pointer' : 'default', width: '100%',
         opacity: hasAssignment ? 1 : 0.4,
       }}>
@@ -314,39 +314,39 @@ function TravelTypeSelect({ assignment, onSave }) {
 function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, event, onAssign, onClear, onRemove, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, isLast, GRID, showTravelToGrid = true }) {
   const isOpen = !assignment?.staff_id
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '11px 16px', borderBottom: isLast ? 'none' : '0.5px solid var(--glass-border)', alignItems: 'center', background: 'var(--glass-bg)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '11px 16px', borderBottom: isLast ? 'none' : '0.5px solid #e8e2d9', alignItems: 'center', background: 'transparent' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isOpen && (
           <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
-            <path d="M1 1v11" stroke="#FFCC00" strokeWidth="1.3" strokeLinecap="round"/>
-            <path d="M1 1.5h8L6.5 5l2.5 3.5H1" stroke="#FFCC00" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 1v11" stroke="#d97706" strokeWidth="1.3" strokeLinecap="round"/>
+            <path d="M1 1.5h8L6.5 5l2.5 3.5H1" stroke="#d97706" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         )}
       </div>
-      <div style={{ fontSize: 13, color: isOpen ? 'var(--text-muted)' : 'var(--text-primary)' }}>{positionLabel}</div>
+      <div style={{ fontSize: 13, color: isOpen ? '#6b6b6b' : '#1a1a1a' }}>{positionLabel}</div>
       <AssignedCell assignment={assignment} staff={staff} positionKey={positionKey} eventId={eventId} event={event} onAssign={onAssign} onClear={onClear} />
       <div>
         {assignment?.staff_id
           ? <StatusPill status={assignment.status || 'scheduled'} onChange={(s) => onSetStatus(positionKey, s)} />
-          : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}
+          : <span style={{ fontSize: 13, color: '#6b6b6b', opacity: 0.3 }}>—</span>}
       </div>
       {/* Travel In */}
-      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_in_date} onSave={(d) => onSaveTravelIn(assignment.id, d)} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
+      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_in_date} onSave={(d) => onSaveTravelIn(assignment.id, d)} /> : <span style={{ fontSize: 13, color: '#6b6b6b', opacity: 0.3 }}>—</span>}</div>
       {/* Travel Out */}
-      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_out_date} onSave={(d) => onSaveTravelOut(assignment.id, d)} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
+      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_out_date} onSave={(d) => onSaveTravelOut(assignment.id, d)} /> : <span style={{ fontSize: 13, color: '#6b6b6b', opacity: 0.3 }}>—</span>}</div>
       {/* Travel Type — always a dropdown, disabled when no assignment */}
       <div>
         {showTravelToGrid
           ? <TravelTypeSelect assignment={assignment || {}} onSave={onSaveTravelType} />
-          : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}
+          : <span style={{ fontSize: 13, color: '#6b6b6b', opacity: 0.3 }}>—</span>}
       </div>
       {/* Notes */}
-      <div>{assignment ? <NotesCell assignment={assignment} onSave={onSaveNotes} /> : <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.3 }}>—</span>}</div>
+      <div>{assignment ? <NotesCell assignment={assignment} onSave={onSaveNotes} /> : <span style={{ fontSize: 13, color: '#6b6b6b', opacity: 0.3 }}>—</span>}</div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div onClick={() => onRemove(positionKey)}
-          style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, opacity: 0.4 }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.opacity = '1' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.opacity = '0.4' }}>×</div>
+          style={{ fontSize: 18, color: '#6b6b6b', cursor: 'pointer', lineHeight: 1, opacity: 0.4 }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.opacity = '1' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#6b6b6b'; e.currentTarget.style.opacity = '0.4' }}>×</div>
       </div>
     </div>
   )
@@ -361,12 +361,12 @@ function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePosi
   return (
     <div>
       <div onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', borderBottom: '0.5px solid var(--glass-border)', userSelect: 'none' }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
-        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{dept.name}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({filled}/{deptKeys.length})</span>
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: '#f0ece4', borderBottom: '0.5px solid #e8e2d9', userSelect: 'none' }}
+        onMouseEnter={e => e.currentTarget.style.background = '#e8e2d9'}
+        onMouseLeave={e => e.currentTarget.style.background = '#f0ece4'}>
+        <span style={{ fontSize: 10, color: '#6b6b6b' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#444444' }}>{dept.name}</span>
+        <span style={{ fontSize: 11, color: '#6b6b6b', fontWeight: 400 }}>({filled}/{deptKeys.length})</span>
       </div>
       {open && deptKeys.map((pk, i) => {
         const assignment = assignments.find(a => a.position_key === pk.key)
@@ -550,12 +550,12 @@ export default function StaffingTab({ eventId, event }) {
 
   const GRID = '28px 180px 160px 110px 100px 100px 110px 1fr 44px'
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 14, color: '#6b6b6b' }}>Loading...</div>
 
   if (!event?.event_type) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 14 }}>
-      <div style={{ fontSize: 16, fontWeight: 600 }}>No event type set</div>
-      <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Set the event type in Edit Event to load the staffing template</div>
+      <div style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a' }}>No event type set</div>
+      <div style={{ fontSize: 14, color: '#6b6b6b' }}>Set the event type in Edit Event to load the staffing template</div>
     </div>
   )
 
@@ -563,11 +563,11 @@ export default function StaffingTab({ eventId, event }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>
             Staffing
-            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>({filledCount}/{totalCount} filled)</span>
+            <span style={{ fontSize: 13, color: '#6b6b6b', fontWeight: 400, marginLeft: 8 }}>({filledCount}/{totalCount} filled)</span>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
             {event.event_type === 'hwss' ? 'Hot Wheels Stunt Show' : 'Hot Wheels Monster Trucks Live'}
           </div>
         </div>
@@ -577,12 +577,12 @@ export default function StaffingTab({ eventId, event }) {
       {addingPosition && (
         <div className="glass-card" style={{ padding: '16px 20px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
           <select value={newPositionDept} onChange={e => setNewPositionDept(e.target.value)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: newPositionDept ? 'var(--text-primary)' : 'var(--text-muted)', outline: 'none', cursor: 'pointer', minWidth: 200 }}>
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '1px solid #d4cfc8', background: '#ffffff', color: newPositionDept ? '#1a1a1a' : '#6b6b6b', outline: 'none', cursor: 'pointer', minWidth: 200 }}>
             <option value="">Select department...</option>
             {deptNames.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
           <input
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', outline: 'none', flex: 1 }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '8px 12px', borderRadius: 7, border: '1px solid #d4cfc8', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', flex: 1 }}
             placeholder="Position title..."
             value={newPositionLabel} onChange={e => setNewPositionLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleAddPosition(); if (e.key === 'Escape') setAddingPosition(false) }}
@@ -591,14 +591,14 @@ export default function StaffingTab({ eventId, event }) {
           <button className="btn-primary" onClick={handleAddPosition} style={{ fontSize: 13 }}>Add</button>
           <button
             onClick={() => { setAddingPosition(false); setNewPositionLabel(''); setNewPositionDept('') }}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
         </div>
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '0.5px solid var(--glass-border)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '0.5px solid #e8e2d9' }}>
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '8px 16px', position: 'sticky', top: 0, zIndex: 10, background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)' }}>
           <div />
           {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Travel Type', 'Notes', ''].map((h, i) => (
@@ -629,18 +629,18 @@ export default function StaffingTab({ eventId, event }) {
 
         <div>
           <div onClick={() => setExecOpen(o => !o)}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', borderBottom: '0.5px solid var(--glass-border)', userSelect: 'none' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{execOpen ? '▾' : '▸'}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Executives & Visitors</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({execAssignments.length}) · not counted in total</span>
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: '#f0ece4', borderBottom: '0.5px solid #e8e2d9', userSelect: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#e8e2d9'}
+            onMouseLeave={e => e.currentTarget.style.background = '#f0ece4'}>
+            <span style={{ fontSize: 10, color: '#6b6b6b' }}>{execOpen ? '▾' : '▸'}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#444444' }}>Executives & Visitors</span>
+            <span style={{ fontSize: 11, color: '#6b6b6b', fontWeight: 400 }}>({execAssignments.length}) · not counted in total</span>
             {execOpen && (
               <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }} onClick={e => e.stopPropagation()}>
-                <button onClick={() => handleAddExec('Executive')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--glass-border)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Executive</button>
+                <button onClick={() => handleAddExec('Executive')} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid #d4cfc8', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Executive</button>
                 <button
                   onClick={() => handleAddExec('Visitor')}
-                  style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >+ Visitor</button>
@@ -656,7 +656,7 @@ export default function StaffingTab({ eventId, event }) {
               onSaveTravelType={handleSaveTravelType} isLast={i === execAssignments.length - 1} GRID={GRID} showTravelToGrid={false} />
           ))}
           {execOpen && execAssignments.length === 0 && (
-            <div style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)' }}>No executives or visitors added.</div>
+            <div style={{ padding: '14px 16px', fontSize: 13, color: '#6b6b6b' }}>No executives or visitors added.</div>
           )}
         </div>
       </div>
@@ -675,11 +675,11 @@ export default function StaffingTab({ eventId, event }) {
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmOverride(null)}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >Cancel</button>
-              <button onClick={() => doAssign(confirmOverride.staffMember, confirmOverride.positionKey)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
+              <button onClick={() => doAssign(confirmOverride.staffMember, confirmOverride.positionKey)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
             </div>
           </div>
         </div>

@@ -35,7 +35,7 @@ function EventBar({ event, faded, onClick }) {
       onMouseLeave={e => e.currentTarget.style.background = `${event.tour_color}22`}
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
-      <span style={{ fontSize: 11, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontSize: 11, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country ? `, ${event.country_short}` : ''}
       </span>
     </div>
@@ -131,20 +131,20 @@ export default function TourCalendar({ tourId, tourColor }) {
     return `${fmt(toYMD(weekStart))} – ${fmt(toYMD(end))}`
   })()
 
-  if (loading) return <div style={{ padding: 28, fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+  if (loading) return <div style={{ padding: 28, fontSize: 14, color: '#6b6b6b' }}>Loading...</div>
 
   return (
     <div style={{ padding: '20px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
-        <div style={{ display: 'flex', background: 'var(--glass-bg)', border: '0.5px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', background: '#f0ece4', border: '0.5px solid #e8e2d9', borderRadius: 8, overflow: 'hidden' }}>
           {['month', 'week'].map(v => (
             <button key={v} onClick={() => setView(v)} style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 16px',
+              fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 16px',
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-              background: view === v ? 'rgba(51,255,153,0.12)' : 'transparent',
-              color: view === v ? 'var(--mint)' : 'var(--text-muted)',
+              background: view === v ? 'rgba(51,255,153,0.18)' : 'transparent',
+              color: view === v ? '#15803d' : '#6b6b6b',
               fontWeight: view === v ? 500 : 400,
             }}>
               {v.charAt(0).toUpperCase() + v.slice(1)}
@@ -154,23 +154,23 @@ export default function TourCalendar({ tourId, tourColor }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
             onClick={view === 'month' ? prevMonth : prevWeek}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >‹</button>
-          <div style={{ fontSize: 15, fontWeight: 600, minWidth: 170, textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, minWidth: 170, textAlign: 'center', color: '#1a1a1a' }}>
             {view === 'month' ? `${MONTHS[current.month]} ${current.year}` : weekLabel}
           </div>
           <button
             onClick={view === 'month' ? nextMonth : nextWeek}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >›</button>
         </div>
         <button
           onClick={goToday}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >Today</button>
@@ -178,9 +178,9 @@ export default function TourCalendar({ tourId, tourColor }) {
 
       {/* Calendar grid */}
       <div className="glass-card" style={{ overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid var(--glass-border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid #e8e2d9' }}>
           {DAYS.map(d => (
-            <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
+            <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
           ))}
         </div>
 
@@ -193,14 +193,14 @@ export default function TourCalendar({ tourId, tourColor }) {
               const overflow = dayEvents.length - MAX_VISIBLE
               return (
                 <div key={i} style={{
-                  borderRight: (i + 1) % 7 === 0 ? 'none' : '0.5px solid var(--glass-border)',
-                  borderBottom: i < 35 ? '0.5px solid var(--glass-border)' : 'none',
+                  borderRight: (i + 1) % 7 === 0 ? 'none' : '0.5px solid #e8e2d9',
+                  borderBottom: i < 35 ? '0.5px solid #e8e2d9' : 'none',
                   padding: '6px 5px',
-                  background: isToday ? 'rgba(51,255,153,0.04)' : 'transparent',
+                  background: isToday ? 'rgba(51,255,153,0.1)' : 'transparent',
                 }}>
                   <div style={{
                     fontSize: 12, fontWeight: isToday ? 700 : 400,
-                    color: isToday ? 'var(--mint)' : cell.inMonth ? 'var(--text-secondary)' : 'var(--text-muted)',
+                    color: isToday ? '#15803d' : cell.inMonth ? '#444444' : '#6b6b6b',
                     marginBottom: 4, textAlign: 'right', paddingRight: 2,
                     opacity: cell.inMonth ? 1 : 0.5,
                   }}>
@@ -209,7 +209,7 @@ export default function TourCalendar({ tourId, tourColor }) {
                   {visible.map(ev => <EventBar key={ev.id} event={ev} faded={!cell.inMonth} onClick={navigateEvent} />)}
                   {overflow > 0 && (
                     <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                      style={{ fontSize: 10, color: 'var(--mint)', cursor: 'pointer', padding: '2px 7px' }}>
+                      style={{ fontSize: 10, color: '#2563eb', cursor: 'pointer', padding: '2px 7px' }}>
                       +{overflow} more
                     </div>
                   )}
@@ -228,18 +228,18 @@ export default function TourCalendar({ tourId, tourColor }) {
               const overflow = dayEvents.length - 5
               return (
                 <div key={i} style={{
-                  borderRight: i < 6 ? '0.5px solid var(--glass-border)' : 'none',
+                  borderRight: i < 6 ? '0.5px solid #e8e2d9' : 'none',
                   padding: '8px 6px',
-                  background: isToday ? 'rgba(51,255,153,0.04)' : 'transparent',
+                  background: isToday ? 'rgba(51,255,153,0.1)' : 'transparent',
                 }}>
                   <div style={{ marginBottom: 6, textAlign: 'right', paddingRight: 2 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
-                    <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--mint)' : 'var(--text-secondary)' }}>{cell.date.getDate()}</div>
+                    <div style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
+                    <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? '#15803d' : '#444444' }}>{cell.date.getDate()}</div>
                   </div>
                   {visible.map(ev => <EventBar key={ev.id} event={ev} faded={false} onClick={navigateEvent} />)}
                   {overflow > 0 && (
                     <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                      style={{ fontSize: 10, color: 'var(--mint)', cursor: 'pointer', padding: '2px 7px' }}>
+                      style={{ fontSize: 10, color: '#2563eb', cursor: 'pointer', padding: '2px 7px' }}>
                       +{overflow} more
                     </div>
                   )}
@@ -270,7 +270,7 @@ export default function TourCalendar({ tourId, tourColor }) {
             ))}
             <button
               onClick={() => setOverflowDay(null)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '8px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 8 }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 8 }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Close</button>

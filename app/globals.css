@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -11,8 +10,8 @@
   --bg: #0a1628;
   --mint: #33FF99;
   --gold: #C9A84C;
-  --red: #FF3333;
-  --yellow: #FFCC00;
+  --red: #dc2626;
+  --yellow: #d97706;
   --orange: #FF8C00;
   --pink: #FF69B4;
   --gray: #888888;
@@ -25,6 +24,12 @@
   --text-secondary: rgba(255,255,255,0.65);
   --text-muted: rgba(255,255,255,0.45);
 
+  --card-bg: #faf8f4;
+  --card-header: #f0ece4;
+  --card-border: #e8e2d9;
+  --card-text: #1a1a1a;
+  --card-muted: #6b6b6b;
+
   --nav-width: 220px;
   --topbar-height: 56px;
 
@@ -34,13 +39,12 @@
 }
 
 html, body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--bg);
   color: var(--text-primary);
   height: 100%;
   overflow-y: auto;
 }
-
 
 #__next, main {
   height: 100%;
@@ -49,24 +53,24 @@ html, body {
 /* Scrollbars */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 2px; }
 
-/* Glass card */
+/* Light card — tan/white card on dark navy shell */
 .glass-card {
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #faf8f4;
+  border: 1px solid #e8e2d9;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  color: #1a1a1a;
 }
 
 /* Buttons */
 .btn-primary {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   padding: 8px 16px;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   background: var(--mint);
@@ -79,65 +83,93 @@ html, body {
 .btn-primary:hover { opacity: 0.88; }
 
 .btn-ghost {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 400;
   padding: 7px 14px;
-  border-radius: var(--radius-md);
-  border: 0.5px solid var(--glass-border);
+  border-radius: 8px;
+  border: 1px solid #e8e2d9;
   cursor: pointer;
   background: transparent;
-  color: var(--text-secondary);
+  color: #1a1a1a;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
-.btn-ghost:hover { background: var(--glass-bg); color: var(--text-primary); }
+.btn-ghost:hover { background: #f0ece4; }
 
-/* Status badges */
+/* Status badges — toned for light card backgrounds */
 .badge {
   font-size: 10px;
-  font-weight: 500;
-  padding: 2px 8px;
+  font-weight: 600;
+  padding: 2px 9px;
   border-radius: 20px;
-  border: 0.5px solid;
+  border: 1px solid;
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-.badge-confirmed { color: var(--mint); border-color: rgba(51,255,153,0.35); background: rgba(51,255,153,0.08); }
-.badge-hold1 { color: var(--yellow); border-color: rgba(255,204,0,0.35); background: rgba(255,204,0,0.08); }
-.badge-hold2 { color: var(--orange); border-color: rgba(255,140,0,0.35); background: rgba(255,140,0,0.08); }
-.badge-hold3 { color: var(--red); border-color: rgba(255,51,51,0.35); background: rgba(255,51,51,0.08); }
-.badge-tentative { color: var(--pink); border-color: rgba(255,105,180,0.35); background: rgba(255,105,180,0.08); }
-.badge-active { color: var(--mint); border-color: rgba(51,255,153,0.35); background: rgba(51,255,153,0.08); }
-.badge-upcoming { color: var(--yellow); border-color: rgba(255,204,0,0.35); background: rgba(255,204,0,0.08); }
+.badge-confirmed, .badge-active {
+  color: #15803d;
+  border-color: #86efac;
+  background: #dcfce7;
+}
+.badge-hold1, .badge-upcoming {
+  color: #854d0e;
+  border-color: #fde68a;
+  background: #fef9c3;
+}
+.badge-hold2 {
+  color: #9a3412;
+  border-color: #fdba74;
+  background: #ffedd5;
+}
+.badge-hold3 {
+  color: #991b1b;
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+.badge-tentative {
+  color: #6b21a8;
+  border-color: #d8b4fe;
+  background: #f3e8ff;
+}
+.badge-completed {
+  color: #374151;
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+.badge-cancelled {
+  color: #6b7280;
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
 
 /* Inline-editable schedule cell */
 .sched-input {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   padding: 6px 8px;
   border: none;
   border-radius: 5px;
   background: transparent;
-  color: var(--text-primary);
+  color: #1a1a1a;
   outline: none;
   width: 100%;
   transition: background 0.15s;
 }
-.sched-input:hover, .sched-input:focus { background: rgba(255,255,255,0.06); }
-.sched-input::placeholder { color: var(--text-muted); }
+.sched-input:hover, .sched-input:focus { background: #f0ece4; }
+.sched-input::placeholder { color: #9ca3af; }
 
-/* Schedule row delete button — visible on row hover */
+/* Schedule row delete button */
 .schedule-row-delete { opacity: 0; transition: opacity 0.15s; }
 .schedule-row:hover .schedule-row-delete { opacity: 1; }
 
 /* Rich text notes editor placeholder */
 .notes-editor:empty:before {
   content: attr(data-placeholder);
-  color: var(--text-muted);
+  color: #9ca3af;
 }
 .notes-editor ul, .notes-editor ol {
   padding-left: 24px;

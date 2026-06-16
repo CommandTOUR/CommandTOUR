@@ -27,6 +27,7 @@ export default function TopNav() {
   return (
     <nav style={{
       height: 62,
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
       background: '#0d1f38',
       borderBottom: '0.5px solid rgba(255,255,255,0.12)',
       display: 'flex',

@@ -6,8 +6,8 @@ import { getSupabase } from '../lib/supabase'
 const BUCKET_ORDER = ['12 Weeks Out', '6 Weeks Out', '5 Weeks Out', '1 Month Out', '2 Weeks Out', 'Week Of', 'Load-In', 'During Shows', 'Post Show']
 
 const addRowBtnStyle = {
-  fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
-  border: '0.5px dashed var(--glass-border)', background: 'transparent', color: 'var(--text-muted)',
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
+  border: '0.5px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b',
   cursor: 'pointer', alignSelf: 'flex-start',
 }
 
@@ -16,7 +16,7 @@ function Checkbox({ checked, onChange }) {
     <div
       onClick={onChange}
       style={{
-        width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${checked ? 'var(--mint)' : 'var(--glass-border)'}`,
+        width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${checked ? 'var(--mint)' : '#d4cfc8'}`,
         background: checked ? 'var(--mint)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
       }}
@@ -82,18 +82,18 @@ function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, 
     <div className="glass-card" style={{ marginBottom: 12, overflow: 'hidden', width: '100%' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M2 4l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M2 4l4 4 4-4" stroke="#6b6b6b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{bucket}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{bucket}</div>
         <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{completed}/{total} complete</div>
+        <div style={{ fontSize: 12, color: '#6b6b6b' }}>{completed}/{total} complete</div>
       </div>
       {expanded && (
         <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column' }}>
           {tasks.map(task => (
-            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '0.5px solid var(--glass-border)' }}>
+            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '0.5px solid #e8e2d9' }}>
               <Checkbox checked={task.completed} onChange={() => onToggleTask(task.id, !task.completed)} />
-              <div style={{ fontSize: 13, color: task.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: task.completed ? 'line-through' : 'none', minWidth: 220 }}>
+              <div style={{ fontSize: 13, color: task.completed ? '#6b6b6b' : '#1a1a1a', textDecoration: task.completed ? 'line-through' : 'none', minWidth: 220 }}>
                 {task.task_name}
               </div>
               <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -189,12 +189,12 @@ export default function TasksTab({ eventId, event }) {
     if (!error) setTasks(prev => [...prev, data])
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading tasks...</div>
+  if (loading) return <div style={{ fontSize: 14, color: '#6b6b6b' }}>Loading tasks...</div>
 
   if (needsTemplateChoice) {
     return (
       <div style={{ maxWidth: 600 }}>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 16 }}>
+        <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 16 }}>
           This event doesn&apos;t have a tour type set. Choose a checklist template to get started:
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -219,8 +219,8 @@ export default function TasksTab({ eventId, event }) {
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 15, fontWeight: 600 }}>Tasks</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{pct}% complete ({completed}/{total})</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>Tasks</div>
+        <div style={{ fontSize: 13, color: '#6b6b6b' }}>{pct}% complete ({completed}/{total})</div>
       </div>
       {buckets.map(bucket => (
         <BucketSection

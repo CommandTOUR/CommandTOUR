@@ -4,23 +4,23 @@ import { useEffect, useRef, useState } from 'react'
 import { getSupabase } from '../lib/supabase'
 
 const TOOLBAR_BTN = {
-  fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, minWidth: 32, height: 32, padding: '0 8px', borderRadius: 6,
-  border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)',
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 600, minWidth: 32, height: 32, padding: '0 8px', borderRadius: 6,
+  border: '0.5px solid #d4cfc8', background: '#ffffff', color: '#444444',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
 }
 
 const SELECT_STYLE = {
-  fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6,
-  border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)',
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6,
+  border: '1px solid #d4cfc8', background: '#ffffff', color: '#444444',
   outline: 'none', cursor: 'pointer',
 }
 
 const COLOR_SWATCHES = [
-  { name: 'White', value: '#FFFFFF' },
-  { name: 'Mint', value: '#33FF99' },
-  { name: 'Yellow', value: '#FFCC00' },
-  { name: 'Red', value: '#FF3333' },
-  { name: 'Muted', value: '#888888' },
+  { name: 'Black', value: '#1a1a1a' },
+  { name: 'Green', value: '#16a34a' },
+  { name: 'Amber', value: '#d97706' },
+  { name: 'Red', value: '#dc2626' },
+  { name: 'Blue', value: '#2563eb' },
 ]
 
 const FONT_SIZE_OPTIONS = [
@@ -103,11 +103,11 @@ export default function NotesTab({ eventId }) {
     queueSave()
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading notes...</div>
+  if (loading) return <div style={{ fontSize: 14, color: '#6b6b6b' }}>Loading notes...</div>
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Notes</div>
+      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#1a1a1a' }}>Notes</div>
 
       <div className="glass-card" style={{ padding: 12, marginBottom: 10, display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 4, overflowX: 'auto' }}>
         {/* Text style */}
@@ -116,7 +116,7 @@ export default function NotesTab({ eventId }) {
         <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'underline' }} onClick={() => exec('underline')} title="Underline">U</button>
         <button type="button" style={{ ...TOOLBAR_BTN, textDecoration: 'line-through' }} onClick={() => exec('strikeThrough')} title="Strikethrough">S</button>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 20, background: '#e8e2d9', margin: '0 6px', flexShrink: 0 }} />
 
         {/* Alignment */}
         <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyLeft')} title="Align left"><AlignIcon align="left" /></button>
@@ -124,13 +124,13 @@ export default function NotesTab({ eventId }) {
         <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyRight')} title="Align right"><AlignIcon align="right" /></button>
         <button type="button" style={TOOLBAR_BTN} onClick={() => exec('justifyFull')} title="Justify"><AlignIcon align="justify" /></button>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 20, background: '#e8e2d9', margin: '0 6px', flexShrink: 0 }} />
 
         {/* Lists */}
         <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertUnorderedList')} title="Bullet list">• ≡</button>
         <button type="button" style={TOOLBAR_BTN} onClick={() => exec('insertOrderedList')} title="Numbered list">1. ≡</button>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 20, background: '#e8e2d9', margin: '0 6px', flexShrink: 0 }} />
 
         {/* Font size */}
         <select style={SELECT_STYLE} defaultValue="14" onChange={e => applyFontSize(e.target.value)}>
@@ -139,7 +139,7 @@ export default function NotesTab({ eventId }) {
           ))}
         </select>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 20, background: '#e8e2d9', margin: '0 6px', flexShrink: 0 }} />
 
         {/* Text color */}
         {COLOR_SWATCHES.map(c => (
@@ -147,14 +147,14 @@ export default function NotesTab({ eventId }) {
             key={c.value}
             onClick={() => exec('foreColor', c.value)}
             title={c.name}
-            style={{ width: 22, height: 22, borderRadius: '50%', background: c.value, border: '1px solid var(--glass-border)', cursor: 'pointer', flexShrink: 0 }}
+            style={{ width: 22, height: 22, borderRadius: '50%', background: c.value, border: '1px solid #d4cfc8', cursor: 'pointer', flexShrink: 0 }}
           />
         ))}
         <input
           type="color"
           onChange={e => exec('foreColor', e.target.value)}
           title="Custom color"
-          style={{ width: 28, height: 28, padding: 0, border: '0.5px solid var(--glass-border)', borderRadius: 6, background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
+          style={{ width: 28, height: 28, padding: 0, border: '0.5px solid #d4cfc8', borderRadius: 6, background: 'transparent', cursor: 'pointer', flexShrink: 0 }}
         />
       </div>
 
@@ -167,14 +167,14 @@ export default function NotesTab({ eventId }) {
         onBlur={handleBlur}
         data-placeholder="Add notes about this event..."
         style={{
-          fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '14px 16px', borderRadius: 10,
-          border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)',
+          fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '14px 16px', borderRadius: 10,
+          border: '1px solid #d4cfc8', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
           outline: 'none', width: '100%', minHeight: 400, lineHeight: 1.6,
         }}
       />
 
       {updatedAt && (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+        <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 8 }}>
           Last updated {new Date(updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
         </div>
       )}

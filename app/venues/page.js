@@ -98,7 +98,7 @@ export default function Venues() {
 
         {/* Sticky page header */}
         <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '16px 28px', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>Venues</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>Venues</div>
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <input
               type="text"
@@ -106,9 +106,9 @@ export default function Venues() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
-                fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 16px',
-                borderRadius: 8, border: '0.5px solid var(--glass-border)',
-                background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)',
+                fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 16px',
+                borderRadius: 8, border: '1px solid #d4cfc8',
+                background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
                 outline: 'none', width: '100%', maxWidth: 340,
               }}
             />
@@ -117,7 +117,7 @@ export default function Venues() {
             {sections.length > 0 && (
               <button
                 onClick={toggleAll}
-                style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -132,20 +132,20 @@ export default function Venues() {
 
         <div style={{ padding: 28 }}>
 
-        {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading venues...</div>}
+        {loading && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>Loading venues...</div>}
 
         {/* Empty state */}
         {!loading && venues.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
-            <div style={{ fontSize: 20, fontWeight: 600 }}>No venues yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Add your first venue to build your database</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: '#ffffff' }}>No venues yet</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>Add your first venue to build your database</div>
             <button className="btn-primary" onClick={() => router.push('/venues/new')}>+ Add Venue</button>
           </div>
         )}
 
         {/* No search results */}
         {!loading && venues.length > 0 && filtered.length === 0 && (
-          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No venues match "{search}"</div>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>No venues match "{search}"</div>
         )}
 
         {/* Regional sections */}
@@ -162,16 +162,16 @@ export default function Venues() {
                     onClick={() => hasMore && toggleSection(region)}
                     style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: hasMore ? 'pointer' : 'default', marginBottom: 12, userSelect: 'none' }}
                   >
-                    <span style={{ color: 'var(--text-muted)' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.45)' }}>
                       <ChevronIcon open={!hasMore || isFull} />
                     </span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       {region}
                     </span>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
                       {sectionVenues.length} {sectionVenues.length === 1 ? 'venue' : 'venues'}
                     </span>
-                    <div style={{ flex: 1, height: '0.5px', background: 'var(--glass-border)', marginLeft: 4 }} />
+                    <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
                   </div>
 
                   {/* Venue tiles */}
@@ -181,12 +181,12 @@ export default function Venues() {
                         key={venue.id}
                         className="glass-card"
                         onClick={() => router.push(`/venues/${venue.id}`)}
-                        style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-hover)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-bg)'}
+                        style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
                       >
-                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>{venue.name}</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#1a1a1a' }}>{venue.name}</div>
+                        <div style={{ fontSize: 13, color: '#6b6b6b' }}>
                           {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export default function Venues() {
                   {hasMore && (
                     <button
                       onClick={() => toggleSection(region)}
-                      style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginBottom: 8 }}
+                      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginBottom: 8 }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >

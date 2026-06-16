@@ -154,16 +154,16 @@ export default function EditEvent() {
   }
 
   const inputStyle = {
-    fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
-    border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-primary)', outline: 'none', width: '100%',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
+    border: '1px solid #d4cfc8', background: '#ffffff',
+    color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
   }
-  const labelStyle = { fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
+  const labelStyle = { fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ marginTop: 62, padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading...</div>
     </div>
   )
 
@@ -175,13 +175,13 @@ export default function EditEvent() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 26, fontWeight: 600 }}>Edit Event</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Edit Event</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -190,14 +190,14 @@ export default function EditEvent() {
           <div>
             <label style={labelStyle}>Venue</label>
             {selectedVenue ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(51,255,153,0.35)', background: 'rgba(51,255,153,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid #16a34a', background: 'rgba(22,163,74,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mint)' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.state, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16a34a' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.state, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#6b6b6b', cursor: 'pointer', padding: '4px 8px' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
                   x Clear
                 </div>
               </div>
@@ -294,10 +294,10 @@ export default function EditEvent() {
           {/* Extended Load-Out toggle */}
           <div>
             <div onClick={() => setExtendedLoadOut(!extendedLoadOut)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : 'rgba(255,255,255,0.4)', transition: 'left 0.2s' }} />
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : '#d4cfc8', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? 'var(--text-primary)' : 'var(--text-muted)' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 13, color: extendedLoadOut ? '#1a1a1a' : '#6b6b6b' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -313,13 +313,13 @@ export default function EditEvent() {
             <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this event..." value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
-          {error && <div style={{ fontSize: 13, color: 'var(--red)' }}>{error}</div>}
+          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
