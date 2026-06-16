@@ -401,8 +401,9 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     const status = isExec ? null : 'scheduled'
 
     // Check for an existing row by event_id + position_key to prevent duplicate inserts
-    const { data: existing } = await supabase.from('event_staff')
-      .select('id').eq('event_id', eventId).eq('position_key', positionRow.key).maybeSingle()
+    const { data: existingRows } = await supabase.from('event_staff')
+      .select('id').eq('event_id', eventId).eq('position_key', positionRow.key).limit(1)
+    const existing = existingRows && existingRows[0]
 
     let writeError = null
     if (existing) {
@@ -622,7 +623,7 @@ export default function StaffingGrid() {
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
       supabase.from('events').select('id, city, state, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
-      supabase.from('event_staff').select('*, staff(id, first_name, last_name)'),
+      supabase.from('event_staff').select('*'),
     ])
     setTours(toursRes.data || [])
     setEvents(eventsRes.data || [])
@@ -631,11 +632,22 @@ export default function StaffingGrid() {
       metas[ev.id] = { hidden_positions: ev.hidden_positions || [], unlocked_positions: ev.unlocked_positions || [] }
     }
     setEventMetas(metas)
+
+    const assignmentRows = assignmentsRes.data || []
+    // No FK constraint on staff_id, so join staff manually
+    const staffIds = [...new Set(assignmentRows.map(a => a.staff_id).filter(Boolean))]
+    let staffMap = {}
+    if (staffIds.length > 0) {
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name').in('id', staffIds)
+      for (const s of (staffData || [])) staffMap[s.id] = s
+    }
+
     const aMap = {}
     const customMap = {}
-    for (const a of (assignmentsRes.data || [])) {
+    for (const a of assignmentRows) {
+      const enriched = { ...a, staff: a.staff_id ? (staffMap[a.staff_id] || null) : null }
       if (!aMap[a.event_id]) aMap[a.event_id] = []
-      aMap[a.event_id].push(a)
+      aMap[a.event_id].push(enriched)
       if (a.position_key && a.position_key.startsWith('custom__')) {
         if (!customMap[a.event_id]) customMap[a.event_id] = []
         if (!customMap[a.event_id].find(p => p.key === a.position_key)) {
@@ -692,8 +704,8 @@ export default function StaffingGrid() {
       const nextHidden = hidden.filter(k => k !== positionKey)
       await supabase.from('events').update({ hidden_positions: nextHidden }).eq('id', eventId)
       // Re-insert blank event_staff row so it shows on event tab
-      const existing = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).maybeSingle()
-      if (!existing.data) {
+      const { data: existingRowsA } = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).limit(1)
+      if (!existingRowsA || existingRowsA.length === 0) {
         await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
       }
       setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden } }))
@@ -701,8 +713,8 @@ export default function StaffingGrid() {
       // Case B: template-hatched → add to unlocked + insert blank event_staff row
       const nextUnlocked = [...unlocked, positionKey]
       await supabase.from('events').update({ unlocked_positions: nextUnlocked }).eq('id', eventId)
-      const existing = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).maybeSingle()
-      if (!existing.data) {
+      const { data: existingRowsB } = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).limit(1)
+      if (!existingRowsB || existingRowsB.length === 0) {
         await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
       }
       setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], unlocked_positions: nextUnlocked } }))
