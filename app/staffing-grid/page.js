@@ -123,9 +123,9 @@ function formatStatusLabel(status) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Scheduled', color: '#FFCC00', pill: 'rgba(255,204,0,0.18)', border: 'rgba(255,204,0,0.5)' },
-  { value: 'confirmed', label: 'Confirmed', color: '#33FF99', pill: 'rgba(51,255,153,0.18)', border: 'rgba(51,255,153,0.5)' },
-  { value: 'attention', label: 'Attention', color: '#FF3333', pill: 'rgba(255,51,51,0.18)', border: 'rgba(255,51,51,0.5)' },
+  { value: 'scheduled', label: 'Pending', color: '#FFCC00', pill: 'rgba(255,204,0,0.15)', border: 'rgba(255,204,0,0.5)' },
+  { value: 'confirmed', label: 'Confirmed', color: '#ffffff', pill: 'rgba(255,255,255,0.12)', border: 'rgba(255,255,255,0.3)' },
+  { value: 'attention', label: 'Attention', color: '#FF3333', pill: 'rgba(255,51,51,0.15)', border: 'rgba(255,51,51,0.5)' },
 ]
 
 function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
@@ -483,8 +483,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
 
   const cellBg = assignError ? 'rgba(255,51,51,0.15)' : (isHatched && !assignment ? HATCH_BG : 'transparent')
   const cellBgSize = isHatched && !assignment ? HATCH_SIZE : 'auto'
-  const pillColor = isExec ? 'rgba(255,255,255,0.5)' : (statusStyle ? statusStyle.color : '#FFCC00')
-  const pillBg = isExec ? 'rgba(255,255,255,0.08)' : colorWithAlpha(statusStyle ? statusStyle.color : '#FFCC00', 0.2)
+  const pillColor = isExec ? '#ffffff' : (statusStyle ? statusStyle.color : '#FFCC00')
+  const pillBg = isExec ? 'rgba(255,255,255,0.08)' : (statusStyle ? statusStyle.pill : 'rgba(255,204,0,0.15)')
 
   const handleCellClick = (e) => {
     if (isActive) return
@@ -996,7 +996,7 @@ export default function StaffingGrid() {
                     {ev.venue_id ? (
                       <span
                         onClick={() => router.push('/venues/' + ev.venue_id)}
-                        style={{ color: 'var(--mint)', cursor: 'pointer' }}
+                        style={{ color: 'var(--text-primary)', cursor: 'pointer' }}
                         onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
                         onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
                         {ev.venue_name || '\u2014'}
