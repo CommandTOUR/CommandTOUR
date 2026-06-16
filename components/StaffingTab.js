@@ -423,10 +423,17 @@ export default function StaffingTab({ eventId, event }) {
   const fetchAssignments = async () => {
     const supabase = getSupabase()
     const [staffRes, eventRes] = await Promise.all([
-      supabase.from('event_staff').select('*, staff(id, first_name, last_name)').eq('event_id', eventId).order('created_at', { ascending: true }),
+      supabase.from('event_staff').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
       supabase.from('events').select('hidden_positions, unlocked_positions').eq('id', eventId).single(),
     ])
-    setAssignments(staffRes.data || [])
+    const rows = staffRes.data || []
+    const staffIds = [...new Set(rows.map(r => r.staff_id).filter(Boolean))]
+    let staffMap = {}
+    if (staffIds.length > 0) {
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name').in('id', staffIds)
+      for (const s of (staffData || [])) staffMap[s.id] = s
+    }
+    setAssignments(rows.map(r => ({ ...r, staff: r.staff_id ? (staffMap[r.staff_id] || null) : null })))
     setHiddenTemplatePositions(eventRes.data?.hidden_positions || [])
     setUnlockedPositions(eventRes.data?.unlocked_positions || [])
     setLoading(false)
