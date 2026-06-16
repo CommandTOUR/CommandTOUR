@@ -1114,7 +1114,7 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const color = getTourColor(ev.tour_id)
@@ -1127,7 +1127,7 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: DEPT_BG, borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
@@ -1143,7 +1143,7 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const statusColor = getEventStatusColor(ev.status)
@@ -1162,7 +1162,7 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1205,7 +1205,7 @@ export default function StaffingGrid() {
                     </tr>
                     {!collapsed && deptRows.map(posRow => (
                       <tr key={posRow.key}>
-                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: '#faf8f4', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#555555', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: '#faf8f4', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#555555', whiteSpace: 'nowrap' }}>
                           {posRow.displayLabel}
                         </td>
                         {orderedEvents.map((ev, i) => {
