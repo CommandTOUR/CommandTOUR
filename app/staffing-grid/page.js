@@ -511,7 +511,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         ref={cellRef}
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
-          padding: '4px 8px', cursor: isActive ? 'default' : 'pointer',
+          padding: '6px 10px', cursor: isActive ? 'default' : 'pointer',
           backgroundColor: assignError ? 'rgba(255,51,51,0.15)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(255,204,0,0.06)' : '#ffffff'),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
@@ -528,18 +528,13 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
         ) : staffName ? (
           <React.Fragment>
-            <span style={{ fontSize: 12, fontWeight: nameWeight, color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: hovered && !isActive ? 0.7 : 1, transition: 'opacity 0.1s' }}>{staffName}</span>
+            <span style={{ fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: hovered && !isActive ? 0.7 : 1, transition: 'opacity 0.1s' }}>{staffName}</span>
             {isSelected && (
               <div style={{ position: 'absolute', top: 2, left: 2, width: 13, height: 13, borderRadius: '50%', background: '#1a2a42', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: 'white', fontWeight: 800, lineHeight: 1 }}>✓</div>
             )}
           </React.Fragment>
-        ) : isLocked ? (
-          <svg width={11} height={13} viewBox="0 0 14 16" fill="none" style={{ opacity: 0.4 }}>
-            <rect x="2" y="7" width="10" height="8" rx="1.5" stroke="#888" strokeWidth="1.2"/>
-            <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="#888" strokeWidth="1.2" strokeLinecap="round"/>
-            <circle cx="7" cy="11" r="1" fill="#888"/>
-          </svg>
-        ) : isEmptyAssignable ? (
+        ) : isLocked ? null
+        : isEmptyAssignable ? (
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFCC00" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             <line x1="12" y1="9" x2="12" y2="13" stroke="#FFCC00" strokeWidth="1.8" strokeLinecap="round"/>
@@ -561,7 +556,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
               width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10,
               opacity: showLockIcon ? 1 : 0, transition: 'opacity 0.1s',
             }}>
-            <LockIcon locked={isHatched} size={14} color={isHatched ? 'var(--mint)' : 'var(--text-muted)'} />
+            <LockIcon locked={isHatched} size={14} color={isHatched ? '#33FF99' : '#1a2a42'} />
           </div>
         )}
       </td>
@@ -724,6 +719,7 @@ export default function StaffingGrid() {
   const [cellColors, setCellColors] = useState({})
   const [rightClickMenu, setRightClickMenu] = useState(null) // { x, y, eventId, positionKey }
   const [copyModalOpen, setCopyModalOpen] = useState(false)
+  const [selectedYear, setSelectedYear] = useState(2026)
   const activeCellElRef = useRef(null)
 
   const COL_WIDTH = 140
@@ -737,17 +733,17 @@ export default function StaffingGrid() {
   const H5 = 32
   const TOTAL_HDR = H1 + H2 + H3 + H4 + H5
 
-  // Header rows stay dark navy; body rows use light palette
-  const B_HDR_INNER = '0.5px solid rgba(255,255,255,0.1)'
-  const B_HDR_WEEKEND = '2px solid rgba(255,255,255,0.2)'
+  const B_HDR_INNER = '0.5px solid #e8e4dc'
+  const B_HDR_WEEKEND = '2px solid #d0c8bc'
   const B_BODY_INNER = '0.5px solid #e8e4dc'
   const B_BODY_WEEKEND = '2px solid #d0c8bc'
   const B_HEADER_BOTTOM = '2px solid #d0c8bc'
   const B_LEFT_COL = '2px solid #d0c8bc'
   const B_DEPT_TOP = '1px solid #d8d4cc'
-  const HDR_BG = '#0d1628'
-  const DEPT_BG = '#0d1628'
-  const BODY_DEPT_BG = '#f0ece4'
+  const HDR_BG = '#ffffff'
+  const WEEKEND_HDR_BG = '#f0ece4'
+  const DEPT_BG = '#ffffff'
+  const BODY_DEPT_BG = '#e8e2d8'
 
   useEffect(() => { fetchAll() }, [])
 
@@ -892,7 +888,7 @@ export default function StaffingGrid() {
 
   const today = toYMD(new Date())
 
-  // Build weekend groups from ALL events first (for past count)
+  // Build weekend groups from ALL events first
   const allWeekendGroups = []
   const allWeekendMap = {}
   events.forEach(ev => {
@@ -902,10 +898,13 @@ export default function StaffingGrid() {
   })
   allWeekendGroups.sort()
   const allOrderedEvents = allWeekendGroups.flatMap(wk => allWeekendMap[wk])
-  const pastEvents = allOrderedEvents.filter(ev => (ev.load_out_date || ev.load_in_date) < today)
 
-  // Filter events first, then rebuild weekend groups from filtered set
-  const filteredEvents = showPast ? allOrderedEvents : allOrderedEvents.filter(ev => (ev.load_out_date || ev.load_in_date) >= today)
+  const availableYears = [...new Set(allOrderedEvents.map(ev => ev.load_in_date ? new Date(ev.load_in_date + 'T00:00:00').getFullYear() : null).filter(Boolean))].sort()
+
+  // Apply year filter, then past/future filter
+  const yearFilteredEvents = allOrderedEvents.filter(ev => ev.load_in_date && new Date(ev.load_in_date + 'T00:00:00').getFullYear() === selectedYear)
+  const pastEvents = yearFilteredEvents.filter(ev => (ev.load_out_date || ev.load_in_date) < today)
+  const filteredEvents = showPast ? yearFilteredEvents : yearFilteredEvents.filter(ev => (ev.load_out_date || ev.load_in_date) >= today)
   const weekendGroups = []
   const weekendMap = {}
   filteredEvents.forEach(ev => {
@@ -1056,16 +1055,31 @@ export default function StaffingGrid() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0d1628', overflow: 'hidden', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       <TopNav />
       <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 12px', borderBottom: '0.5px solid rgba(255,255,255,0.08)', background: '#0d1628' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>Staffing Grid</div>
-          {pastEvents.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+          <button
+            onClick={() => router.push('/staff')}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', flexShrink: 0 }}>
+            ← Back to Staff
+          </button>
+          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>All Tours Staffing Grid</div>
+          {pastEvents.length > 0 ? (
             <button
               onClick={() => setShowPast(p => !p)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: showPast ? 'rgba(255,255,255,0.08)' : 'transparent', color: showPast ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: showPast ? 'rgba(255,255,255,0.08)' : 'transparent', color: showPast ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', flexShrink: 0 }}>
               {showPast ? 'Hide Past Events' : 'Show Past Events (' + pastEvents.length + ')'}
             </button>
-          )}
+          ) : <div />}
         </div>
+        {availableYears.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+            <select
+              value={selectedYear}
+              onChange={e => setSelectedYear(Number(e.target.value))}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d0c8bc', background: 'white', color: '#1a2a42', cursor: 'pointer', outline: 'none' }}>
+              {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       {events.length === 0 ? (
@@ -1087,16 +1101,16 @@ export default function StaffingGrid() {
                 {weekendGroups.map((wk, wi) => {
                   const wkEvs = weekendMap[wk]
                   return (
-                    <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: HDR_BG, borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Weekend</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>{fmtWeekend(wk)}</div>
+                    <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: WEEKEND_HDR_BG, borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
+                      <div style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Weekend</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1a2a42', marginTop: 2 }}>{fmtWeekend(wk)}</div>
                     </th>
                   )
                 })}
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Tour</span>
+                  <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Tour</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const color = getTourColor(ev.tour_id)
@@ -1109,14 +1123,14 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: DEPT_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</span>
+                  <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: '0.07em' }}>City</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: DEPT_BG, borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                     <span
                       onClick={() => router.push('/tours/' + ev.tour_id + '/events/' + ev.id + '?tab=staffing')}
-                      style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
-                      onMouseEnter={e => { e.currentTarget.style.opacity = '0.65' }}
+                      style={{ fontSize: 12, fontWeight: 600, color: '#1a2a42', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                      onMouseEnter={e => { e.currentTarget.style.opacity = '0.55' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
                       {ev.city}{ev.state ? ', ' + ev.state : ''}
                     </span>
@@ -1125,7 +1139,7 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: DEPT_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Status</span>
+                  <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Status</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const statusColor = getEventStatusColor(ev.status)
@@ -1140,20 +1154,20 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</span>
+                  <span style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {ev.venue_id ? (
                       <span
                         onClick={() => router.push('/venues/' + ev.venue_id)}
-                        style={{ color: 'rgba(255,255,255,0.9)', cursor: 'pointer' }}
+                        style={{ color: '#1a2a42', cursor: 'pointer' }}
                         onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
                         onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
                         {ev.venue_name || '\u2014'}
                       </span>
                     ) : (
-                      <span style={{ color: 'rgba(255,255,255,0.35)' }}>{ev.venue_name || '\u2014'}</span>
+                      <span style={{ color: '#aaa' }}>{ev.venue_name || '\u2014'}</span>
                     )}
                   </th>
                 ))}
