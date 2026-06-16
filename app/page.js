@@ -20,7 +20,7 @@ export default function Dashboard() {
         <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 28 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24, alignItems: 'start' }}>
             <ThisWeek />
-            <TourTiles />
+            <TourTiles glassMorphism={true} />
           </div>
         </div>
       </div>
