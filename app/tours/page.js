@@ -121,7 +121,7 @@ export default function Tours() {
         key={tour.id}
         className="glass-card"
         onClick={() => router.push(`/tours/${tour.id}`)}
-        style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s, box-shadow 0.15s' }}
+        style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s, box-shadow 0.15s', borderTop: 'none', borderLeft: '1px solid #e8e2d9', borderRight: '1px solid #e8e2d9', borderBottom: '1px solid #e8e2d9' }}
         onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
         onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
       >

@@ -68,7 +68,8 @@ html, body {
 .btn-primary {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
@@ -86,6 +87,7 @@ html, body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 400;
+  letter-spacing: 0.02em;
   padding: 7px 14px;
   border-radius: 8px;
   border: 1px solid #e8e2d9;
