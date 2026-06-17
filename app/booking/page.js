@@ -498,7 +498,7 @@ function HolidayCell({ value, onSave }) {
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 500 : 400, color: value ? '#63b3ed' : '#64748b', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 600 : 400, color: value ? '#63b3ed' : '#475569', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -526,7 +526,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
         if (selected || glow) {
           border = 'none'
           color = '#0a1628'
-          background = '#FFD60A'
+          background = '#33FF99'
           fontWeight = 700
         } else {
           if (isPast) opacity = 0.6
@@ -813,10 +813,10 @@ const H2 = 34
 const ROW_H = 36
 
 const HDR_BG = 'rgba(255,255,255,0.06)'
-const STICKY_BG = '#0d1f3c'
+const STICKY_BG = '#1e3a5f'
 const B_INNER = '0.5px solid rgba(255,255,255,0.08)'
 const B_HEADER_BOTTOM = '1px solid rgba(255,255,255,0.08)'
-const B_LEFT_COL = '2px solid rgba(255,255,255,0.10)'
+const B_LEFT_COL = '2px solid rgba(255,255,255,0.12)'
 const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.12)'
 const B_TOUR_DIVIDER = '2px solid rgba(255,255,255,0.12)'
 
@@ -824,14 +824,14 @@ const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
 
 const leftThStyle = (left, width) => ({
   position: 'sticky', left, zIndex: 60, width, minWidth: width, height: H1 + H2,
-  background: '#0d1f3c', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
-  fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em',
-  borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
+  background: '#1e3a5f', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
+  fontSize: 11, fontWeight: 700, color: '#63b3ed', textTransform: 'uppercase', letterSpacing: '0.06em',
+  borderBottom: B_HEADER_BOTTOM, borderRight: '2px solid rgba(255,255,255,0.12)',
 })
 
-const subHeaderStyle = (width, borderRight, tourColor) => ({
-  height: H2, background: tourColor ? hexToRgba(tourColor, 0.15) : HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight,
-  padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#94a3b8',
+const subHeaderStyle = (width, borderRight, isIntl, tourColor) => ({
+  height: H2, background: isIntl && tourColor ? hexToRgba(tourColor, 0.15) : 'rgba(255,255,255,0.04)', borderBottom: B_HEADER_BOTTOM, borderRight,
+  padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#FFD60A', fontWeight: 700,
   textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
 })
 
@@ -946,7 +946,7 @@ function GridCell({
         style={{
           ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
           cursor: 'pointer', zIndex: isVenueActive ? 300 : 1, overflow: isVenueActive ? 'visible' : 'hidden',
-          color: isVenueActive ? '#f1f5f9' : '#94a3b8',
+          color: '#f1f5f9',
           ...dropHighlight,
         }}>
         {isVenueActive ? (
@@ -999,9 +999,12 @@ function YearGrid({
                 <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
-                  const tourBg = hexToRgba(tourColor, 0.35)
+                  const isIntl = (tour.name || '').toLowerCase().includes('international')
+                  const tier1Bg = isIntl ? hexToRgba(tourColor, 0.35) : 'rgba(255,255,255,0.08)'
+                  const tier1Color = isIntl ? '#FFD60A' : '#94a3b8'
+                  const tier1Border = isIntl ? `2px solid ${tourColor}` : '1px solid rgba(255,255,255,0.08)'
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tier1Bg, borderBottom: tier1Border, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tier1Color }}>
                       {tour.name}
                     </th>
                   )
@@ -1016,12 +1019,13 @@ function YearGrid({
               <tr>
                 {yearTours.map((tour, ti) => {
                   const isLastTour = ti === yearTours.length - 1
+                  const isIntl = (tour.name || '').toLowerCase().includes('international')
                   return (
                     <React.Fragment key={tour.id}>
-                      <th style={subHeaderStyle(CITY_W, B_INNER, tour.color)}>City</th>
-                      <th style={subHeaderStyle(VENUE_W, B_INNER, tour.color)}>Venue</th>
-                      <th style={subHeaderStyle(STATUS_W, B_INNER, tour.color)}>Status</th>
-                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP, tour.color)}>Note</th>
+                      <th style={subHeaderStyle(CITY_W, B_INNER, isIntl, tour.color)}>City</th>
+                      <th style={subHeaderStyle(VENUE_W, B_INNER, isIntl, tour.color)}>Venue</th>
+                      <th style={subHeaderStyle(STATUS_W, B_INNER, isIntl, tour.color)}>Status</th>
+                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP, isIntl, tour.color)}>Note</th>
                     </React.Fragment>
                   )
                 })}
@@ -1033,16 +1037,16 @@ function YearGrid({
                 const rowBg = isCurrentWeek ? 'rgba(51,255,153,0.06)' : (row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent')
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 8px', fontSize: 12, color: '#64748b', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 8px', fontSize: 11, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
                       {row.weekNum}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: row.holiday ? '3px solid #63b3ed' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: row.holiday ? '3px solid #63b3ed' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
                       <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: '#cbd5e1', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.saturday, 'Sat')}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: '#cbd5e1', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.sunday, 'Sun')}
                     </td>
                     {yearTours.map((tour, ti) => {
