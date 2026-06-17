@@ -119,13 +119,21 @@ export default function Tours() {
     return (
       <div
         key={tour.id}
-        className="glass-card"
         onClick={() => router.push(`/tours/${tour.id}`)}
-        style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s, box-shadow 0.15s', borderTop: 'none' }}
+        style={{
+          padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
+          background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 12,
+          borderTop: `7px solid ${tileColor}`,
+          borderLeft: `2px solid ${tileColor}`,
+          borderRight: `2px solid ${tileColor}`,
+          borderBottom: `2px solid ${tileColor}`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10)',
+          transition: 'background 0.15s, box-shadow 0.15s',
+        }}
         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: tileColor }} />
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>

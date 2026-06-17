@@ -64,6 +64,13 @@ function tourOrderIndex(tour) {
   return TOUR_ORDER.length
 }
 
+function hexToRgba(hex, alpha) {
+  const r = parseInt((hex || '#ffffff').slice(1, 3), 16) || 255
+  const g = parseInt((hex || '#ffffff').slice(3, 5), 16) || 255
+  const b = parseInt((hex || '#ffffff').slice(5, 7), 16) || 255
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
 function tourSort(a, b) {
   const ai = tourOrderIndex(a)
   const bi = tourOrderIndex(b)
@@ -491,7 +498,7 @@ function HolidayCell({ value, onSave }) {
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? '#f1f5f9' : '#64748b', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? '#63b3ed' : '#64748b', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -845,7 +852,7 @@ function GridCell({
     verticalAlign: 'middle', textAlign: 'center', position: 'relative',
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.08)'
-  const groupBorder = '2px solid rgba(255,255,255,0.08)'
+  const groupBorder = isLast ? innerBorder : `3px solid ${hexToRgba(tour.color || '#ffffff', 0.60)}`
 
   const handleCityClick = () => {
     if (event) onOpenPanel(event, row, tour)
@@ -990,8 +997,10 @@ function YearGrid({
                 <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
+                  const tourBg = hexToRgba(tourColor, 0.20)
+                  const tourDivider = `3px solid ${hexToRgba(tourColor, 0.60)}`
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: HDR_BG, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_GROUP : (showPlaceholder ? B_TOUR_GROUP : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 600, color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? tourDivider : (showPlaceholder ? tourDivider : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.03em', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
@@ -1021,7 +1030,7 @@ function YearGrid({
               {rows.map(row => {
                 const isCurrentWeek = row.saturday === currentWeekendSaturday
                 const zebra = row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent'
-                const rowBg = row.holiday ? 'rgba(255,255,255,0.06)' : (isCurrentWeek ? 'rgba(51,255,153,0.06)' : zebra)
+                const rowBg = row.holiday ? 'rgba(99,179,237,0.08)' : (isCurrentWeek ? 'rgba(51,255,153,0.06)' : zebra)
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
                     <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: '#64748b', textAlign: 'center', verticalAlign: 'middle' }}>

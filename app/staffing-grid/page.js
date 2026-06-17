@@ -130,13 +130,11 @@ const STATUS_OPTIONS = [
 
 function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
 
-// Diagonal stripe for locked cells — background-position: 0 0 so adjacent cells tile seamlessly
-const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 7px)'
-const LOCKED_BG_COLOR = '#f5f2ec'
+const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 7px)'
+const LOCKED_BG_COLOR = '#0a1628'
 
-// Staff name colors and weights for the light-background grid
-const STAFF_NAME_COLORS = { confirmed: '#1a2a42', scheduled: '#CC8800', attention: '#CC2200' }
-const STAFF_NAME_WEIGHTS = { confirmed: 600, scheduled: 500, attention: 500 }
+const STAFF_NAME_COLORS = { confirmed: '#e2e8f0', scheduled: '#FFD60A', attention: '#f87171' }
+const STAFF_NAME_WEIGHTS = { confirmed: 400, scheduled: 400, attention: 400 }
 
 // SVG lock icon (locked = closed padlock "ti-lock", unlocked = open padlock "ti-lock-open")
 function LockIcon({ locked, size = 13, color = 'rgba(255,255,255,0.5)' }) {
@@ -234,19 +232,12 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
     return () => clearTimeout(timer)
   }, [query, event, eventId])
 
-  const dotColor = (id) => {
-    const a = availability[id]
-    if (!a) return null
-    if (a.status === 'free') return '#16a34a'
-    if (a.status === 'same_event') return '#d97706'
-    if (a.status === 'conflict') return '#dc2626'
-    return null
-  }
+  const availStatus = (id) => availability[id]?.status || null
   const tipText = (id) => {
     const a = availability[id]
     if (!a || a.status === 'free') return ''
     if (a.status === 'same_event') return 'Already on this event'
-    if (a.status === 'conflict') return 'Booked — ' + (a.city || 'another event')
+    if (a.status === 'conflict') return 'Already assigned to ' + (a.city || 'another event')
     return ''
   }
 
@@ -300,14 +291,14 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
         onKeyDown={handleKeyDown}
         autoComplete="off"
         placeholder="Type a name..."
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid #0a1628', background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {showDropdown && (
         <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
           {loading && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results.length === 0 && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>No results</div>}
           {results.map((s, i) => {
-            const color = dotColor(s.id)
+            const status = availStatus(s.id)
             const t = tipText(s.id)
             return (
               <div key={s.id}
@@ -315,7 +306,17 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
                 onMouseEnter={() => setActiveIndex(i)}
                 title={t}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
-                {color && <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />}
+                {status === 'conflict' ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
+                  </svg>
+                ) : status === 'same_event' ? (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                ) : status === 'free' ? (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#33FF99', flexShrink: 0 }} />
+                ) : null}
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.first_name} {s.last_name}</span>
               </div>
             )
@@ -491,7 +492,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
   const isLocked = isHatched && !assignment
   const isEmptyAssignable = !assignment && !isHatched && !isActive
   const status = assignment?.status
-  const nameColor = cellColor?.text || (isExec ? '#1a2a42' : (STAFF_NAME_COLORS[status] || '#CC8800'))
+  const nameColor = cellColor?.text || (isExec ? '#e2e8f0' : (STAFF_NAME_COLORS[status] || '#FFD60A'))
   const nameWeight = isExec ? 500 : (STAFF_NAME_WEIGHTS[status] || 500)
 
   const handleCellClick = (e) => {
@@ -515,12 +516,12 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '6px 10px', cursor: isActive ? 'default' : 'pointer',
-          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : '#ffffff'),
+          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
           textAlign: 'center', verticalAlign: 'middle',
-          boxSizing: 'border-box', borderRight, borderBottom: '0.5px solid #e8e4dc',
-          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : (isFocused && !isActive ? 'inset 0 0 0 1.5px #1a2a42' : 'none'),
+          boxSizing: 'border-box', borderRight, borderBottom: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
@@ -545,13 +546,13 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
           </React.Fragment>
         ) : isLocked ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.4, transition: 'opacity 0.15s' }}>
-            <LockIcon locked={true} size={13} color={hovered ? '#1a9955' : '#1a2a42'} />
+            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#334155'} />
           </div>
         ) : isEmptyAssignable ? (
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="9" x2="12" y2="13" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="12" cy="17" r="0.5" fill="#d97706" stroke="#d97706" strokeWidth="1.5"/>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
           </svg>
         ) : null}
 
@@ -569,7 +570,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
               width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10,
               opacity: showLockIcon ? 1 : 0, transition: 'opacity 0.1s',
             }}>
-            <LockIcon locked={false} size={14} color={isEmptyAssignable ? '#CC0000' : '#1a2a42'} />
+            <LockIcon locked={false} size={14} color='#334155' />
           </div>
         )}
       </td>
@@ -604,19 +605,19 @@ function RightClickMenu({ x, y, eventId, positionKey, onSetBg, onSetText, onClos
     return () => document.removeEventListener('mousedown', handler)
   }, [])
   return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', left: x, top: y, zIndex: 3000, background: 'white', border: '0.5px solid #d0c8bc', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.15)', overflow: 'hidden', minWidth: 186, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <div style={{ padding: '7px 12px', fontSize: 10, color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid #e8e4dc' }}>Cell Background</div>
-      <div style={{ display: 'flex', gap: 7, padding: '9px 12px', borderBottom: '0.5px solid #e8e4dc', flexWrap: 'wrap' }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', left: x, top: y, zIndex: 3000, background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.6)', overflow: 'hidden', minWidth: 186, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <div style={{ padding: '7px 12px', fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>Cell Background</div>
+      <div style={{ display: 'flex', gap: 7, padding: '9px 12px', borderBottom: '0.5px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
         {CELL_COLOR_SWATCHES.map(c => (
           <div key={c.label} onClick={() => { onSetBg(eventId, positionKey, c.bg); onClose() }} title={c.label}
-            style={{ width: 20, height: 20, borderRadius: 5, background: c.bg || '#f0ece4', border: '1.5px solid #d0c8bc', cursor: 'pointer', flexShrink: 0 }} />
+            style={{ width: 20, height: 20, borderRadius: 5, background: c.bg || 'rgba(255,255,255,0.10)', border: '1.5px solid rgba(255,255,255,0.20)', cursor: 'pointer', flexShrink: 0 }} />
         ))}
       </div>
-      <div style={{ padding: '7px 12px', fontSize: 10, color: '#999', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid #e8e4dc' }}>Text Color</div>
+      <div style={{ padding: '7px 12px', fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>Text Color</div>
       <div style={{ display: 'flex', gap: 7, padding: '9px 12px', flexWrap: 'wrap' }}>
         {CELL_COLOR_SWATCHES.map(c => (
           <div key={c.label} onClick={() => { onSetText(eventId, positionKey, c.text); onClose() }} title={c.label}
-            style={{ width: 20, height: 20, borderRadius: 5, background: c.text || '#d0ccc4', border: '1.5px solid transparent', cursor: 'pointer', flexShrink: 0 }} />
+            style={{ width: 20, height: 20, borderRadius: 5, background: c.text || 'rgba(255,255,255,0.15)', border: '1.5px solid transparent', cursor: 'pointer', flexShrink: 0 }} />
         ))}
       </div>
     </div>
@@ -625,7 +626,7 @@ function RightClickMenu({ x, y, eventId, positionKey, onSetBg, onSetText, onClos
 
 // ── COPY TO EVENTS MODAL ──────────────────────────────────────────────────────
 
-function CopyToEventsModal({ selectedIds, assignments, allEvents, currentEventId, onClose }) {
+function CopyToEventsModal({ selectedIds, assignments, allEvents, currentEventId, onClose, onRefreshGrid }) {
   const [checked, setChecked] = useState([])
   const [copying, setCopying] = useState(false)
   const [done, setDone] = useState(null)
@@ -658,37 +659,40 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, currentEventId
         }
       }
     }
-    setDone(checked.length)
+    const staffCount = selectedRows.length
+    const evCount = checked.length
+    setDone({ staffCount, evCount })
     setCopying(false)
+    if (onRefreshGrid) onRefreshGrid()
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'white', borderRadius: 16, padding: 28, width: 460, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.25)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 28, width: 460, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.7)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#1a2a42' }}>Copy selected staff to events</div>
-          <div onClick={onClose} style={{ fontSize: 22, color: '#bbb', cursor: 'pointer', lineHeight: 1 }}>×</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Copy selected staff to events</div>
+          <div onClick={onClose} style={{ fontSize: 22, color: '#64748b', cursor: 'pointer', lineHeight: 1 }}>×</div>
         </div>
         {done != null ? (
-          <div style={{ textAlign: 'center', padding: '28px 0', color: '#1a2a42', fontSize: 15 }}>
-            ✓ Copied to {done} event{done === 1 ? '' : 's'}
+          <div style={{ textAlign: 'center', padding: '28px 0', color: '#33FF99', fontSize: 15 }}>
+            ✓ {done.staffCount} staff copied to {done.evCount} event{done.evCount === 1 ? '' : 's'}
           </div>
         ) : (
           <>
             <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
-              {otherEvents.length === 0 && <div style={{ color: '#aaa', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No other events available</div>}
+              {otherEvents.length === 0 && <div style={{ color: '#64748b', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No other events available</div>}
               {otherEvents.map(ev => (
-                <label key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '0.5px solid #e8e4dc', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={checked.includes(ev.id)} onChange={() => toggle(ev.id)} style={{ width: 15, height: 15, accentColor: '#1a2a42' }} />
-                  <span style={{ fontSize: 14, color: '#1a2a42', fontWeight: 500 }}>{ev.city}{ev.state ? ', ' + ev.state : ''}</span>
-                  <span style={{ fontSize: 12, color: '#aaa', marginLeft: 'auto' }}>{fmtDate(ev.load_in_date)}</span>
+                <label key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '0.5px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={checked.includes(ev.id)} onChange={() => toggle(ev.id)} style={{ width: 15, height: 15, accentColor: '#33FF99' }} />
+                  <span style={{ fontSize: 14, color: '#f1f5f9', fontWeight: 500 }}>{ev.city}{ev.state ? ', ' + ev.state : ''}</span>
+                  <span style={{ fontSize: 12, color: '#64748b', marginLeft: 'auto' }}>{fmtDate(ev.load_in_date)}</span>
                 </label>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={onClose} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid #d0c8bc', background: 'transparent', color: '#666', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={onClose} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleCopy} disabled={copying || checked.length === 0}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? '#ccc' : '#1a2a42', color: 'white', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 500 }}>
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
                 {copying ? 'Copying…' : `Copy to ${checked.length || 0} event${checked.length === 1 ? '' : 's'}`}
               </button>
             </div>
@@ -740,10 +744,19 @@ export default function StaffingGrid() {
   const [focusedCell, setFocusedCell] = useState(null) // { eventId, positionKey } | null
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [cellColors, setCellColors] = useState({})
-  const [rightClickMenu, setRightClickMenu] = useState(null) // { x, y, eventId, positionKey }
+  const [rightClickMenu, setRightClickMenu] = useState(null)
   const [copyModalOpen, setCopyModalOpen] = useState(false)
   const [selectedYear, setSelectedYear] = useState(2026)
+  const [toast, setToast] = useState(null)
+  const [draggedPosKey, setDraggedPosKey] = useState(null)
+  const [dropPosKey, setDropPosKey] = useState(null)
+  const [positionOrder, setPositionOrder] = useState({})
   const activeCellElRef = useRef(null)
+
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
@@ -756,17 +769,17 @@ export default function StaffingGrid() {
   const H5 = 32
   const TOTAL_HDR = H1 + H2 + H3 + H4 + H5
 
-  const B_HDR_INNER = '0.5px solid #e8e4dc'
-  const B_HDR_WEEKEND = '2px solid #d0c8bc'
-  const B_BODY_INNER = '0.5px solid #e8e4dc'
-  const B_BODY_WEEKEND = '2px solid #d0c8bc'
-  const B_HEADER_BOTTOM = '2px solid #d0c8bc'
-  const B_LEFT_COL = '2px solid #d0c8bc'
-  const B_DEPT_TOP = '1px solid #d8d4cc'
-  const HDR_BG = '#ffffff'
-  const WEEKEND_HDR_BG = '#f0ece4'
-  const DEPT_BG = '#ffffff'
-  const BODY_DEPT_BG = '#e8e2d8'
+  const B_HDR_INNER = '1px solid rgba(255,255,255,0.06)'
+  const B_HDR_WEEKEND = '2px solid rgba(255,255,255,0.14)'
+  const B_BODY_INNER = '1px solid rgba(255,255,255,0.06)'
+  const B_BODY_WEEKEND = '2px solid rgba(255,255,255,0.14)'
+  const B_HEADER_BOTTOM = '1px solid rgba(255,255,255,0.08)'
+  const B_LEFT_COL = '2px solid rgba(255,255,255,0.10)'
+  const B_DEPT_TOP = '1px solid rgba(255,255,255,0.08)'
+  const HDR_BG = 'rgba(255,255,255,0.08)'
+  const WEEKEND_HDR_BG = 'rgba(255,255,255,0.08)'
+  const DEPT_BG = 'rgba(255,255,255,0.08)'
+  const BODY_DEPT_BG = 'rgba(255,255,255,0.05)'
 
   useEffect(() => { fetchAll() }, [])
 
@@ -974,7 +987,38 @@ export default function StaffingGrid() {
         }
       }
     }
-    return [...templateRows, ...customRows]
+    const allRows = [...templateRows, ...customRows]
+    const order = positionOrder[dept]
+    if (!order || order.length === 0) return allRows
+    return [...allRows].sort((a, b) => {
+      const ai = order.indexOf(a.key)
+      const bi = order.indexOf(b.key)
+      if (ai === -1 && bi === -1) return 0
+      if (ai === -1) return 1
+      if (bi === -1) return -1
+      return ai - bi
+    })
+  }
+
+  const handlePosDragStart = (dept, posKey) => {
+    setDraggedPosKey(posKey)
+  }
+  const handlePosDragOver = (dept, posKey) => {
+    if (posKey !== draggedPosKey) setDropPosKey(posKey)
+  }
+  const handlePosDrop = (dept, posKey) => {
+    if (!draggedPosKey || draggedPosKey === posKey) { setDraggedPosKey(null); setDropPosKey(null); return }
+    const rows = getPositionRowsForDept(dept)
+    const keys = rows.map(r => r.key)
+    const fromIdx = keys.indexOf(draggedPosKey)
+    const toIdx = keys.indexOf(posKey)
+    if (fromIdx === -1 || toIdx === -1) { setDraggedPosKey(null); setDropPosKey(null); return }
+    const reordered = [...keys]
+    reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, draggedPosKey)
+    setPositionOrder(prev => ({ ...prev, [dept]: reordered }))
+    setDraggedPosKey(null)
+    setDropPosKey(null)
   }
 
   const visiblePositionRows = DEPARTMENT_ORDER.flatMap(dept => collapsedDepts[dept] ? [] : getPositionRowsForDept(dept))
@@ -1098,7 +1142,7 @@ export default function StaffingGrid() {
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid #d0c8bc', background: 'white', color: '#1a2a42', cursor: 'pointer', outline: 'none' }}>
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', cursor: 'pointer', outline: 'none' }}>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
@@ -1116,7 +1160,7 @@ export default function StaffingGrid() {
             <BulkActionBar count={selectedIds.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedIds(new Set())} />
           )}
           <div style={{ flex: 1 }}>
-          <div style={{ margin: 16, borderRadius: 16, overflow: 'hidden', border: '0.5px solid #e0d8cc', boxShadow: '0 2px 16px rgba(0,0,0,0.08)', background: 'white' }}>
+          <div style={{ margin: 16, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.06)' }}>
           <div style={{ overflow: 'auto', height: 'calc(100vh - 160px)', transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 'max-content' }}>
             <thead>
@@ -1126,15 +1170,15 @@ export default function StaffingGrid() {
                   const wkEvs = weekendMap[wk]
                   return (
                     <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: WEEKEND_HDR_BG, borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1a2a42', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
                     </th>
                   )
                 })}
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const color = getTourColor(ev.tour_id)
@@ -1147,13 +1191,13 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: DEPT_BG, borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                     <span
                       onClick={() => router.push('/tours/' + ev.tour_id + '/events/' + ev.id + '?tab=staffing')}
-                      style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.01em', color: '#1a2a42', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                      style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.01em', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.55' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
                       {ev.city}{ev.state ? ', ' + ev.state : ''}
@@ -1163,17 +1207,15 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
                   const statusColor = getEventStatusColor(ev.status)
-                  const isConfirmedEvt = ev.status === 'confirmed'
-                  const pillBg = isConfirmedEvt ? 'rgba(0,160,80,0.15)' : colorWithAlpha(statusColor, 0.1)
-                  const pillBorder = isConfirmedEvt ? 'rgba(0,160,80,0.5)' : statusColor
-                  const pillColor = isConfirmedEvt ? '#007A3D' : statusColor
+                  const pillBg = colorWithAlpha(statusColor, 0.12)
+                  const pillBorder = colorWithAlpha(statusColor, 0.40)
                   return (
                     <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: DEPT_BG, borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
-                      <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 600, letterSpacing: '0.01em', padding: '2px 8px', borderRadius: 20, border: '0.5px solid ' + pillBorder, background: pillBg, color: pillColor }}>
+                      <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 600, letterSpacing: '0.01em', padding: '2px 8px', borderRadius: 20, border: '0.5px solid ' + pillBorder, background: pillBg, color: statusColor }}>
                         {formatStatusLabel(ev.status)}
                       </span>
                     </th>
@@ -1182,20 +1224,20 @@ export default function StaffingGrid() {
               </tr>
               <tr>
                 <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
                   <th key={ev.id} style={{ position: 'sticky', top: H1 + H2 + H3 + H4, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {ev.venue_id ? (
                       <span
                         onClick={() => router.push('/venues/' + ev.venue_id)}
-                        style={{ fontWeight: 600, letterSpacing: '0.01em', color: '#1a2a42', cursor: 'pointer' }}
+                        style={{ fontWeight: 500, letterSpacing: '0.01em', color: '#f1f5f9', cursor: 'pointer' }}
                         onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
                         onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
                         {ev.venue_name || '\u2014'}
                       </span>
                     ) : (
-                      <span style={{ color: '#aaa' }}>{ev.venue_name || '\u2014'}</span>
+                      <span style={{ color: '#64748b' }}>{ev.venue_name || '\u2014'}</span>
                     )}
                   </th>
                 ))}
@@ -1212,21 +1254,39 @@ export default function StaffingGrid() {
                       <td
                         onClick={() => toggleDept(dept)}
                         style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 14px', cursor: 'pointer', userSelect: 'none', background: BODY_DEPT_BG, borderLeft: '3px solid #C9A84C', borderRight: B_LEFT_COL, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, willChange: 'transform' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#e8e4da' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = BODY_DEPT_BG }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ fontSize: 9, color: '#C9A84C' }}>{collapsed ? '\u25b8' : '\u25be'}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#1a2a42', whiteSpace: 'nowrap' }}>{dept}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', whiteSpace: 'nowrap' }}>{dept}</span>
                         </div>
                       </td>
                       {orderedEvents.map((ev, i) => (
                         <td key={ev.id} style={{ height: DEPT_H, background: BODY_DEPT_BG, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: cellBorderRight(ev, i) }} />
                       ))}
                     </tr>
-                    {!collapsed && deptRows.map(posRow => (
-                      <tr key={posRow.key}>
-                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: '#faf8f4', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#555555', whiteSpace: 'nowrap', willChange: 'transform' }}>
-                          {posRow.displayLabel}
+                    {!collapsed && deptRows.map((posRow, posIdx) => {
+                      const rowBg = posIdx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent'
+                      const isDragTarget = dropPosKey === posRow.key
+                      const isDraggingThis = draggedPosKey === posRow.key
+                      return (
+                      <tr key={posRow.key}
+                        draggable
+                        onDragStart={() => handlePosDragStart(dept, posRow.key)}
+                        onDragOver={e => { e.preventDefault(); handlePosDragOver(dept, posRow.key) }}
+                        onDrop={() => handlePosDrop(dept, posRow.key)}
+                        onDragEnd={() => { setDraggedPosKey(null); setDropPosKey(null) }}
+                        style={{ background: rowBg, opacity: isDraggingThis ? 0.4 : 1, borderTop: isDragTarget ? '2px solid #33FF99' : 'none' }}>
+                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 10px 0 6px', background: rowBg, borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', willChange: 'transform' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#64748b' }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                <circle cx="9" cy="5" r="1.5" fill="#64748b"/><circle cx="9" cy="12" r="1.5" fill="#64748b"/><circle cx="9" cy="19" r="1.5" fill="#64748b"/>
+                                <circle cx="15" cy="5" r="1.5" fill="#64748b"/><circle cx="15" cy="12" r="1.5" fill="#64748b"/><circle cx="15" cy="19" r="1.5" fill="#64748b"/>
+                              </svg>
+                            </div>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{posRow.displayLabel}</span>
+                          </div>
                         </td>
                         {orderedEvents.map((ev, i) => {
                           const meta = eventMetas[ev.id] || {}
@@ -1264,7 +1324,7 @@ export default function StaffingGrid() {
                           )
                         })}
                       </tr>
-                    ))}
+                    )})}
                   </React.Fragment>
                 )
               })}
@@ -1290,7 +1350,13 @@ export default function StaffingGrid() {
           allEvents={events}
           currentEventId={focusedCell?.eventId}
           onClose={() => { setCopyModalOpen(false); setSelectedIds(new Set()) }}
+          onRefreshGrid={() => { fetchAll(); showToast('Staff copied successfully') }}
         />
+      )}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 4000, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          ✓ {toast}
+        </div>
       )}
     </div>
     </>
