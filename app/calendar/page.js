@@ -177,9 +177,10 @@ export default function Calendar() {
                 <button key={v} onClick={() => setView(v)} style={{
                   fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 16px',
                   border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                  background: view === v ? 'rgba(51,255,153,0.12)' : 'transparent',
-                  color: view === v ? 'var(--mint)' : 'var(--text-muted)',
-                  fontWeight: view === v ? 500 : 400,
+                  background: view === v ? '#33FF99' : 'rgba(255,255,255,0.08)',
+                  color: view === v ? '#0a1628' : '#94a3b8',
+                  fontWeight: view === v ? 700 : 400,
+                  borderRadius: view === v ? 6 : 0,
                 }}>
                   {v.charAt(0).toUpperCase() + v.slice(1)}
                 </button>
@@ -189,25 +190,25 @@ export default function Calendar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
                 onClick={view === 'month' ? prevMonth : prevWeek}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#33FF99'}
+                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
               >‹</button>
               <div style={{ fontSize: 16, fontWeight: 600, minWidth: 180, textAlign: 'center' }}>
                 {view === 'month' ? `${MONTHS[current.month]} ${current.year}` : weekLabel}
               </div>
               <button
                 onClick={view === 'month' ? nextMonth : nextWeek}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#33FF99'}
+                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
               >›</button>
             </div>
             <button
               onClick={goToday}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.30)', background: 'rgba(51,255,153,0.15)', color: '#33FF99', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.25)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(51,255,153,0.15)'}
             >Today</button>
           </div>
         </div>
@@ -242,9 +243,9 @@ export default function Calendar() {
         ) : (
           <div className="glass-card" style={{ overflow: 'hidden' }}>
             {/* Day headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'rgba(0,0,0,0.30)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
               {DAYS.map(d => (
-                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
+                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#33FF99', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{d}</div>
               ))}
             </div>
 
@@ -258,14 +259,14 @@ export default function Calendar() {
                   const overflow = dayEvents.length - MAX_VISIBLE
                   return (
                     <div key={i} style={{
-                      borderRight: (i + 1) % 7 === 0 ? 'none' : '0.5px solid rgba(255,255,255,0.08)',
-                      borderBottom: i < 35 ? '0.5px solid rgba(255,255,255,0.08)' : 'none',
+                      borderRight: (i + 1) % 7 === 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                      borderBottom: i < 35 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                       padding: '6px 5px', position: 'relative',
-                      background: isToday ? 'rgba(51,255,153,0.08)' : 'transparent',
+                      background: isToday ? 'rgba(51,255,153,0.08)' : (cell.inMonth ? 'transparent' : 'rgba(255,255,255,0.02)'),
                     }}>
                       <div style={{
                         fontSize: 12, fontWeight: isToday ? 700 : 400,
-                        color: isToday ? '#33FF99' : cell.inMonth ? '#f1f5f9' : '#9ca3af',
+                        color: isToday ? '#33FF99' : cell.inMonth ? '#94a3b8' : '#9ca3af',
                         marginBottom: 4, textAlign: 'right', paddingRight: 2,
                         opacity: cell.inMonth ? 1 : 0.5,
                       }}>

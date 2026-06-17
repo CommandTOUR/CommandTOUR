@@ -106,15 +106,14 @@ export default function TopNav() {
               padding: '7px 14px',
               borderRadius: 7,
               textDecoration: 'none',
-              color: active ? '#33FF99' : 'rgba(255,255,255,0.5)',
-              background: active ? 'rgba(51,255,153,0.08)' : 'transparent',
-              fontWeight: active ? 500 : 400,
-              transition: 'all 0.15s',
+              color: active ? '#33FF99' : '#94a3b8',
+              background: 'transparent',
+              fontWeight: active ? 700 : 400,
+              transition: 'color 0.15s',
               whiteSpace: 'nowrap',
-              borderBottom: active ? '2px solid #33FF99' : '2px solid transparent',
             }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; e.currentTarget.style.background = 'transparent' }}}
+              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#f1f5f9' }}}
+              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#94a3b8' }}}
             >
               {link.label}
             </Link>

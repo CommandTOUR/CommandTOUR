@@ -515,7 +515,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         ref={cellRef}
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
-          padding: '6px 10px', cursor: isActive ? 'default' : 'pointer',
+          padding: '0 8px 0 28px', cursor: isActive ? 'default' : 'pointer',
           backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
@@ -535,7 +535,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
             <span style={{ fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: hovered && !isActive ? 0.7 : 1, transition: 'opacity 0.1s' }}>{staffName}</span>
             <div
               onClick={e => { e.stopPropagation(); onToggleSelect(assignment.id) }}
-              style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.12s ease', cursor: 'pointer', zIndex: 5 }}
+              style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.12s ease', cursor: 'pointer', zIndex: 5 }}
             >
               {isSelected ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#33FF99"/><path d="M7 12l3 3 7-7" stroke="#0a1628" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -760,8 +760,8 @@ export default function StaffingGrid() {
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
-  const ROW_HEIGHT = 28
-  const DEPT_H = 28
+  const ROW_HEIGHT = 38
+  const DEPT_H = 32
   const H1 = 46
   const H2 = 32
   const H3 = 32
@@ -779,7 +779,7 @@ export default function StaffingGrid() {
   const HDR_BG = 'rgba(255,255,255,0.08)'
   const WEEKEND_HDR_BG = 'rgba(255,255,255,0.08)'
   const DEPT_BG = 'rgba(255,255,255,0.08)'
-  const BODY_DEPT_BG = 'rgba(255,255,255,0.05)'
+  const BODY_DEPT_BG = 'rgba(0,0,0,0.35)'
 
   useEffect(() => { fetchAll() }, [])
 
@@ -1165,7 +1165,7 @@ export default function StaffingGrid() {
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 'max-content' }}>
             <thead>
               <tr>
-                <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
+                <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
                 {weekendGroups.map((wk, wi) => {
                   const wkEvs = weekendMap[wk]
                   return (
@@ -1177,7 +1177,7 @@ export default function StaffingGrid() {
                 })}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
@@ -1190,7 +1190,7 @@ export default function StaffingGrid() {
                 })}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1 + H2, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
@@ -1206,7 +1206,7 @@ export default function StaffingGrid() {
                 ))}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1 + H2 + H3, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
                 </th>
                 {orderedEvents.map((ev, i) => {
@@ -1223,7 +1223,7 @@ export default function StaffingGrid() {
                 })}
               </tr>
               <tr>
-                <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: WEEKEND_HDR_BG, borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                <th style={{ position: 'sticky', top: H1 + H2 + H3 + H4, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_HEADER_BOTTOM, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
                 </th>
                 {orderedEvents.map((ev, i) => (
@@ -1266,7 +1266,7 @@ export default function StaffingGrid() {
                       ))}
                     </tr>
                     {!collapsed && deptRows.map((posRow, posIdx) => {
-                      const rowBg = posIdx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent'
+                      const rowBg = 'rgba(255,255,255,0.03)'
                       const isDragTarget = dropPosKey === posRow.key
                       const isDraggingThis = draggedPosKey === posRow.key
                       return (
@@ -1277,7 +1277,7 @@ export default function StaffingGrid() {
                         onDrop={() => handlePosDrop(dept, posRow.key)}
                         onDragEnd={() => { setDraggedPosKey(null); setDropPosKey(null) }}
                         style={{ background: rowBg, opacity: isDraggingThis ? 0.4 : 1, borderTop: isDragTarget ? '2px solid #33FF99' : 'none' }}>
-                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 10px 0 6px', background: rowBg, borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', willChange: 'transform' }}>
+                        <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 10px 0 6px', background: '#0d1f3c', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap', willChange: 'transform' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#64748b' }}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">

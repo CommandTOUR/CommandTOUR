@@ -813,17 +813,18 @@ const H2 = 34
 const ROW_H = 36
 
 const HDR_BG = 'rgba(255,255,255,0.06)'
-const STICKY_BG = 'rgba(255,255,255,0.06)'
+const STICKY_BG = '#0d1f3c'
 const B_INNER = '0.5px solid rgba(255,255,255,0.08)'
 const B_HEADER_BOTTOM = '2px solid rgba(255,255,255,0.08)'
 const B_LEFT_COL = '2px solid rgba(255,255,255,0.08)'
 const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.08)'
+const B_TOUR_DIVIDER = '2px solid rgba(255,255,255,0.15)'
 
 const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
 
 const leftThStyle = (left, width) => ({
   position: 'sticky', left, zIndex: 60, width, minWidth: width, height: H1 + H2,
-  background: HDR_BG, padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
+  background: '#0d1f3c', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
   fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em',
   borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
 })
@@ -852,7 +853,7 @@ function GridCell({
     verticalAlign: 'middle', textAlign: 'center', position: 'relative',
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.08)'
-  const groupBorder = isLast ? innerBorder : `3px solid ${hexToRgba(tour.color || '#ffffff', 0.60)}`
+  const groupBorder = isLast ? innerBorder : B_TOUR_DIVIDER
 
   const handleCityClick = () => {
     if (event) onOpenPanel(event, row, tour)
@@ -997,10 +998,9 @@ function YearGrid({
                 <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
-                  const tourBg = hexToRgba(tourColor, 0.20)
-                  const tourDivider = `3px solid ${hexToRgba(tourColor, 0.60)}`
+                  const tourBg = hexToRgba(tourColor, 0.18)
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? tourDivider : (showPlaceholder ? tourDivider : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.03em', color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.03em', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
