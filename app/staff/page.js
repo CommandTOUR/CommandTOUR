@@ -98,9 +98,9 @@ export default function StaffPage() {
             style={{
               fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
               padding: '10px 16px', borderRadius: 8,
-              border: '1px solid #d4cfc8',
-              background: '#ffffff',
-              color: '#1a1a1a', outline: 'none', caretColor: '#0a1628',
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.08)',
+              color: '#f1f5f9', outline: 'none', caretColor: '#33FF99',
               width: '100%', maxWidth: 420,
             }}
           />
@@ -149,14 +149,14 @@ export default function StaffPage() {
                     className="glass-card"
                     onClick={() => router.push(`/staff/${s.id}`)}
                     style={{ padding: '18px 20px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s', position: 'relative', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       {/* Avatar */}
                       <div style={{
                         width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                        background: '#0a1628', border: 'none',
+                        background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,255,153,0.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 14, fontWeight: 700, color: '#33FF99',
                       }}>
@@ -164,15 +164,15 @@ export default function StaffPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {s.first_name} {s.last_name}{s.suffix && ` ${s.suffix}`}
                           </div>
                           {s.attention_flag && (
                             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} title={s.attention_note || 'Needs attention'} />
                           )}
                         </div>
-                        {s.email && <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
-                        {s.phone && <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 1 }}>{s.phone}</div>}
+                        {s.email && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
+                        {s.phone && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>{s.phone}</div>}
                       </div>
                     </div>
                   </div>

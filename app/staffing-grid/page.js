@@ -532,9 +532,16 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         ) : staffName ? (
           <React.Fragment>
             <span style={{ fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: hovered && !isActive ? 0.7 : 1, transition: 'opacity 0.1s' }}>{staffName}</span>
-            {isSelected && (
-              <div style={{ position: 'absolute', top: 2, left: 2, width: 13, height: 13, borderRadius: '50%', background: '#1a2a42', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, color: 'white', fontWeight: 800, lineHeight: 1 }}>✓</div>
-            )}
+            <div
+              onClick={e => { e.stopPropagation(); onToggleSelect(assignment.id) }}
+              style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.12s ease', cursor: 'pointer', zIndex: 5 }}
+            >
+              {isSelected ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#33FF99"/><path d="M7 12l3 3 7-7" stroke="#0a1628" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#94a3b8" strokeWidth="1.5"/></svg>
+              )}
+            </div>
           </React.Fragment>
         ) : isLocked ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.4, transition: 'opacity 0.15s' }}>
@@ -633,12 +640,22 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, currentEventId
     const allRows = Object.values(assignments).flat()
     const selectedRows = allRows.filter(a => selectedIds.has(a.id) && a.staff_id)
     for (const evId of checked) {
-      const inserts = selectedRows.map(a => ({
-        event_id: evId, staff_id: a.staff_id, position: a.position,
-        position_key: a.position_key, status: 'confirmed', confirmed: true,
-      }))
-      if (inserts.length > 0) {
-        await supabase.from('event_staff').upsert(inserts, { onConflict: 'event_id,position_key', ignoreDuplicates: false })
+      for (const a of selectedRows) {
+        try {
+          const { data: existing } = await supabase.from('event_staff')
+            .select('id').eq('event_id', evId).eq('position_key', a.position_key).limit(1)
+          if (existing && existing.length > 0) {
+            const { error } = await supabase.from('event_staff')
+              .update({ staff_id: a.staff_id, status: 'confirmed', confirmed: true }).eq('id', existing[0].id)
+            if (error) console.error('[copy] update error:', error)
+          } else {
+            const { error } = await supabase.from('event_staff')
+              .insert([{ event_id: evId, staff_id: a.staff_id, position: a.position, position_key: a.position_key, status: 'confirmed', confirmed: true }])
+            if (error) console.error('[copy] insert error:', error)
+          }
+        } catch (err) {
+          console.error('[copy] error for', a.position_key, err)
+        }
       }
     }
     setDone(checked.length)

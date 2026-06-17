@@ -281,18 +281,18 @@ export default function NewVenue() {
 
   const inputStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px',
-    borderRadius: 8, border: '1px solid #d4cfc8',
-    background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
+    borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99',
     outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em',
+    fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em',
     marginBottom: 6, display: 'block',
   }
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid #e8e2d9', marginBottom: 4 }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 4 }}>
       {title}
     </div>
   )
@@ -305,12 +305,12 @@ export default function NewVenue() {
 
   const removeBtnStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, lineHeight: 1, padding: '0 8px',
-    background: 'transparent', border: 'none', color: '#6b6b6b', cursor: 'pointer',
+    background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer',
   }
 
   const addFieldBtnStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 8,
-    border: '1px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b',
+    border: '1px dashed rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8',
     cursor: 'pointer', alignSelf: 'flex-start',
   }
 
@@ -325,7 +325,7 @@ export default function NewVenue() {
             onClick={() => removeCustomField(i)}
             style={removeBtnStyle}
             onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-            onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
+            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
           >×</button>
         </div>
       ))}
@@ -390,9 +390,9 @@ export default function NewVenue() {
 
             {/* Full address display */}
             {form.full_address && (
-              <div style={{ fontSize: 12, color: '#6b6b6b', padding: '8px 12px', background: '#f0ece5', borderRadius: 7, border: '1px solid #e8e2d9' }}>
-                <span style={{ color: '#6b6b6b', marginRight: 8 }}>Full address:</span>
-                <span style={{ color: '#444444' }}>{form.full_address}</span>
+              <div style={{ fontSize: 12, color: '#94a3b8', padding: '8px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ color: '#94a3b8', marginRight: 8 }}>Full address:</span>
+                <span style={{ color: '#94a3b8' }}>{form.full_address}</span>
               </div>
             )}
           </div>
@@ -450,18 +450,18 @@ export default function NewVenue() {
           {/* Custom sections */}
           {form.custom_sections.map(section => (
             <div key={section.id} className="glass-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 10, borderBottom: '1px solid #e8e2d9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <input
-                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', background: 'transparent', border: 'none', outline: 'none', flex: 1, padding: 0 }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', background: 'transparent', border: 'none', outline: 'none', flex: 1, padding: 0 }}
                   value={section.title}
                   placeholder="Section title"
                   onChange={e => updateCustomSectionTitle(section.id, e.target.value)}
                 />
                 <button
                   onClick={() => removeCustomSection(section.id)}
-                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, color: '#6b6b6b', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, color: '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                 >× Remove Section</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -473,7 +473,7 @@ export default function NewVenue() {
                       onClick={() => removeCustomSectionField(section.id, i)}
                       style={removeBtnStyle}
                       onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                      onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                     >×</button>
                   </div>
                 ))}
@@ -485,7 +485,7 @@ export default function NewVenue() {
           <div>
             <button
               onClick={addCustomSection}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px dashed rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
             >+ Add Section</button>
           </div>
 
@@ -502,8 +502,8 @@ export default function NewVenue() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
             <button
               onClick={() => router.push('/venues')}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Add Venue'}</button>

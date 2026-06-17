@@ -92,17 +92,17 @@ export default function EditTour() {
     fontSize: 14,
     padding: '10px 14px',
     borderRadius: 8,
-    border: '1px solid #d4cfc8',
-    background: '#ffffff',
-    color: '#1a1a1a',
-    caretColor: '#0a1628',
+    border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#f1f5f9',
+    caretColor: '#33FF99',
     outline: 'none',
     width: '100%',
   }
 
   const labelStyle = {
     fontSize: 12,
-    color: '#6b6b6b',
+    color: '#94a3b8',
     letterSpacing: '0.05em',
     marginBottom: 6,
     display: 'block',
@@ -204,15 +204,15 @@ export default function EditTour() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {COLORS.map(c => (
                 <div key={c.value} onClick={() => { set('color', c.value); setCustomColor(false) }}
-                  style={{ width: 32, height: 32, borderRadius: '50%', background: c.value, cursor: 'pointer', border: form.color === c.value && !customColor ? '3px solid #1a1a1a' : '3px solid transparent', boxSizing: 'border-box', transition: 'border 0.15s' }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', background: c.value, cursor: 'pointer', border: form.color === c.value && !customColor ? '3px solid #f1f5f9' : '3px solid transparent', boxSizing: 'border-box', transition: 'border 0.15s' }}
                   title={c.label} />
               ))}
               <div onClick={() => setCustomColor(true)}
-                style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : '#f0ece5', cursor: 'pointer', border: customColor ? '3px solid #1a1a1a' : '3px solid #d4cfc8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#6b6b6b', transition: 'border 0.15s', boxSizing: 'border-box' }}
+                style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'rgba(255,255,255,0.10)', cursor: 'pointer', border: customColor ? '3px solid #f1f5f9' : '3px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#94a3b8', transition: 'border 0.15s', boxSizing: 'border-box' }}
                 title="Custom color">+</div>
               {customColor && (
                 <input type="color" value={form.color} onChange={e => set('color', e.target.value)}
-                  style={{ width: 40, height: 32, borderRadius: 8, border: '1px solid #d4cfc8', background: 'transparent', cursor: 'pointer', padding: 2 }} />
+                  style={{ width: 40, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', cursor: 'pointer', padding: 2 }} />
               )}
             </div>
             <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: form.color, width: '100%', transition: 'background 0.2s' }} />
@@ -229,8 +229,8 @@ export default function EditTour() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>

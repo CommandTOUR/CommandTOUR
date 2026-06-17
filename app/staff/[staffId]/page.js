@@ -43,15 +43,15 @@ export default function StaffProfile() {
   }
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid #e8e2d9' }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
       {title}
     </div>
   )
 
   const field = (label, value) => value ? (
     <div>
-      <div style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 14, color: '#1a1a1a' }}>{value}</div>
+      <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: '#f1f5f9' }}>{value}</div>
     </div>
   ) : null
 
@@ -85,25 +85,25 @@ export default function StaffProfile() {
         className="glass-card"
         onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
         style={{ padding: '14px 16px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-        onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
       >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: tourColor }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>
           {ev.city}{ev.country && `, ${ev.country}`}
         </div>
-        <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>
           {fmtShort(ev.load_in_date)}
         </div>
-        <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 4 }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>
           {eventTypeName(ev.event_type)}
         </div>
-        <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>
           {es.position}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: es.confirmed ? '#16a34a' : '#d97706', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: es.confirmed ? '#15803d' : '#d97706' }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: es.confirmed ? '#33FF99' : '#d97706', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: es.confirmed ? '#33FF99' : '#d97706' }}>
             {es.confirmed ? 'Confirmed' : 'Scheduled'}
           </span>
         </div>
@@ -167,8 +167,8 @@ export default function StaffProfile() {
                 {field('Date of Birth', fmt(person.dob))}
                 {(person.address || person.city) && (
                   <div>
-                    <div style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
-                    <div style={{ fontSize: 14, color: '#1a1a1a', lineHeight: 1.6 }}>
+                    <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
+                    <div style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.6 }}>
                       {person.address && <div>{person.address}</div>}
                       <div>{[person.city, person.state, person.zip, person.country].filter(Boolean).join(', ')}</div>
                     </div>
@@ -187,14 +187,14 @@ export default function StaffProfile() {
               </div>
               {airlines.length > 0 && (
                 <>
-                  <div style={{ height: 0.5, background: '#e8e2d9', marginBottom: 14 }} />
-                  <div style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Airlines</div>
+                  <div style={{ height: 0.5, background: 'rgba(255,255,255,0.08)', marginBottom: 14 }} />
+                  <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Airlines</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {airlines.map(a => (
                       <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         {a.preferred && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />}
-                        <div style={{ fontSize: 14, fontWeight: a.preferred ? 500 : 400, color: '#1a1a1a' }}>{a.airline}</div>
-                        {a.frequent_flyer_number && <div style={{ fontSize: 12, color: '#6b6b6b' }}>#{a.frequent_flyer_number}</div>}
+                        <div style={{ fontSize: 14, fontWeight: a.preferred ? 500 : 400, color: '#f1f5f9' }}>{a.airline}</div>
+                        {a.frequent_flyer_number && <div style={{ fontSize: 12, color: '#94a3b8' }}>#{a.frequent_flyer_number}</div>}
                         {a.preferred && <div style={{ fontSize: 11, color: 'var(--mint)', marginLeft: 'auto' }}>Preferred</div>}
                       </div>
                     ))}
@@ -210,13 +210,13 @@ export default function StaffProfile() {
               {person.allergies && (
                 <div className="glass-card" style={{ padding: '20px 24px' }}>
                   {sectionLabel('Food Allergies')}
-                  <div style={{ fontSize: 14, color: '#1a1a1a' }}>{person.allergies}</div>
+                  <div style={{ fontSize: 14, color: '#f1f5f9' }}>{person.allergies}</div>
                 </div>
               )}
               {person.notes && (
                 <div className="glass-card" style={{ padding: '20px 24px' }}>
                   {sectionLabel('Notes')}
-                  <div style={{ fontSize: 14, color: '#6b6b6b', lineHeight: 1.6 }}>{person.notes}</div>
+                  <div style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6 }}>{person.notes}</div>
                 </div>
               )}
             </div>
@@ -239,7 +239,7 @@ export default function StaffProfile() {
                 onClick={() => setShowPast(!showPast)}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: showPast ? 16 : 0 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
                   {showPast ? '▾' : '▸'} Past Events ({pastEvents.length})
                 </div>
               </div>

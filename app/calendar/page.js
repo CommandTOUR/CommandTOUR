@@ -36,7 +36,7 @@ function EventBar({ event, faded, onClick }) {
       onMouseLeave={e => e.currentTarget.style.background = `${event.tour_color}22`}
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
-      <span style={{ fontSize: 11, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontSize: 11, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country ? `, ${event.country_short}` : ''}
       </span>
     </div>
@@ -242,9 +242,9 @@ export default function Calendar() {
         ) : (
           <div className="glass-card" style={{ overflow: 'hidden' }}>
             {/* Day headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid #e8e2d9' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
               {DAYS.map(d => (
-                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
+                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
               ))}
             </div>
 
@@ -258,14 +258,14 @@ export default function Calendar() {
                   const overflow = dayEvents.length - MAX_VISIBLE
                   return (
                     <div key={i} style={{
-                      borderRight: (i + 1) % 7 === 0 ? 'none' : '0.5px solid #e8e2d9',
-                      borderBottom: i < 35 ? '0.5px solid #e8e2d9' : 'none',
+                      borderRight: (i + 1) % 7 === 0 ? 'none' : '0.5px solid rgba(255,255,255,0.08)',
+                      borderBottom: i < 35 ? '0.5px solid rgba(255,255,255,0.08)' : 'none',
                       padding: '6px 5px', position: 'relative',
-                      background: isToday ? 'rgba(22,163,74,0.08)' : 'transparent',
+                      background: isToday ? 'rgba(51,255,153,0.08)' : 'transparent',
                     }}>
                       <div style={{
                         fontSize: 12, fontWeight: isToday ? 700 : 400,
-                        color: isToday ? '#15803d' : cell.inMonth ? '#1a1a1a' : '#9ca3af',
+                        color: isToday ? '#33FF99' : cell.inMonth ? '#f1f5f9' : '#9ca3af',
                         marginBottom: 4, textAlign: 'right', paddingRight: 2,
                         opacity: cell.inMonth ? 1 : 0.5,
                       }}>
@@ -274,7 +274,7 @@ export default function Calendar() {
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={!cell.inMonth} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: '#15803d', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 10, color: '#33FF99', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}
@@ -294,18 +294,18 @@ export default function Calendar() {
                   const overflow = dayEvents.length - 6
                   return (
                     <div key={i} style={{
-                      borderRight: i < 6 ? '0.5px solid #e8e2d9' : 'none',
+                      borderRight: i < 6 ? '0.5px solid rgba(255,255,255,0.08)' : 'none',
                       padding: '8px 6px',
-                      background: isToday ? 'rgba(22,163,74,0.08)' : 'transparent',
+                      background: isToday ? 'rgba(51,255,153,0.08)' : 'transparent',
                     }}>
                       <div style={{ marginBottom: 6, textAlign: 'right', paddingRight: 2 }}>
-                        <div style={{ fontSize: 11, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
-                        <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? '#15803d' : '#1a1a1a' }}>{cell.date.getDate()}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
+                        <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? '#33FF99' : '#f1f5f9' }}>{cell.date.getDate()}</div>
                       </div>
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={false} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: '#15803d', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 10, color: '#33FF99', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}

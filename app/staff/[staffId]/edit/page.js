@@ -120,18 +120,18 @@ export default function EditStaff() {
   const inputStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
     padding: '10px 14px', borderRadius: 8,
-    border: '1px solid #d4cfc8',
-    background: '#ffffff',
-    color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
+    border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: '#6b6b6b',
+    fontSize: 12, color: '#94a3b8',
     letterSpacing: '0.05em', marginBottom: 6, display: 'block',
   }
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid #e8e2d9', marginBottom: 4 }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 4 }}>
       {title}
     </div>
   )
@@ -252,24 +252,24 @@ export default function EditStaff() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>Airlines & Frequent Flyer Numbers</label>
-                <button onClick={addAirline} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#16a34a', cursor: 'pointer' }}>
+                <button onClick={addAirline} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#33FF99', cursor: 'pointer' }}>
                   + Add Airline
                 </button>
               </div>
               {airlines.length === 0 && (
-                <div style={{ fontSize: 13, color: '#6b6b6b' }}>No airlines added yet.</div>
+                <div style={{ fontSize: 13, color: '#94a3b8' }}>No airlines added yet.</div>
               )}
               {airlines.map((a, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', gap: 12, alignItems: 'center', marginBottom: 10 }}>
                   <input style={inputStyle} placeholder="Airline (e.g. Delta)" value={a.airline} onChange={e => setAirlineField(i, 'airline', e.target.value)} />
                   <input style={inputStyle} placeholder="FF Number" value={a.frequent_flyer_number || ''} onChange={e => setAirlineField(i, 'frequent_flyer_number', e.target.value)} />
                   <div onClick={() => togglePreferred(i)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: a.preferred ? '#16a34a' : 'transparent', border: a.preferred ? 'none' : '1.5px solid #d4cfc8', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: a.preferred ? '#16a34a' : '#6b6b6b', whiteSpace: 'nowrap' }}>Preferred</span>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: a.preferred ? '#33FF99' : 'transparent', border: a.preferred ? 'none' : '1.5px solid rgba(255,255,255,0.15)', flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: a.preferred ? '#33FF99' : '#94a3b8', whiteSpace: 'nowrap' }}>Preferred</span>
                   </div>
-                  <div onClick={() => removeAirline(i)} style={{ cursor: 'pointer', color: '#6b6b6b', fontSize: 20, lineHeight: 1, padding: '0 4px' }}
+                  <div onClick={() => removeAirline(i)} style={{ cursor: 'pointer', color: '#94a3b8', fontSize: 20, lineHeight: 1, padding: '0 4px' }}
                     onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                   >×</div>
                 </div>
               ))}
@@ -281,10 +281,10 @@ export default function EditStaff() {
             {sectionLabel('Attention Flag')}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div onClick={() => set('attention_flag', !form.attention_flag)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-                <div style={{ width: 36, height: 20, borderRadius: 10, background: form.attention_flag ? '#d97706' : '#d4cfc8', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 20, borderRadius: 10, background: form.attention_flag ? '#d97706' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                   <div style={{ position: 'absolute', top: 2, left: form.attention_flag ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: form.attention_flag ? '#ffffff' : '#ffffff', transition: 'left 0.2s' }} />
                 </div>
-                <span style={{ fontSize: 13, color: form.attention_flag ? '#d97706' : '#6b6b6b' }}>Flag this person for attention</span>
+                <span style={{ fontSize: 13, color: form.attention_flag ? '#d97706' : '#94a3b8' }}>Flag this person for attention</span>
               </div>
               {form.attention_flag && (
                 <div>
@@ -313,8 +313,8 @@ export default function EditStaff() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
             <button
               onClick={() => router.push(`/staff/${staffId}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               Cancel

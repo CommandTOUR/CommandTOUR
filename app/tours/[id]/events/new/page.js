@@ -257,13 +257,13 @@ export default function NewEvent() {
 
   const inputStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px',
-    borderRadius: 8, border: '1px solid #d4cfc8',
-    background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
+    borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+    background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99',
     outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em',
+    fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em',
     marginBottom: 6, display: 'block',
   }
 
@@ -290,21 +290,21 @@ export default function NewEvent() {
           <div>
             <label style={labelStyle}>Venue</label>
             {selectedVenue ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid #16a34a', background: 'rgba(22,163,74,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16a34a' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#6b6b6b', cursor: 'pointer', padding: '4px 8px' }}
+                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
+                  onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                   × Clear
                 </div>
               </div>
             ) : creatingVenue ? (
               /* Inline Create Venue Form */
-              <div style={{ background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: 10, padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#16a34a', marginBottom: 16 }}>New Venue</div>
+              <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '20px' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#33FF99', marginBottom: 16 }}>New Venue</div>
 
                 {/* Google Places name search */}
                 <div style={{ position: 'relative', marginBottom: 14 }}>
@@ -360,8 +360,8 @@ export default function NewEvent() {
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => { setCreatingVenue(false); setNewVenue({ name: '', address: '', city: '', state: '', country: '', full_address: '', place_id: '', latitude: null, longitude: null, zip: '', region: '' }); setVenueError('') }}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     Cancel
                   </button>
@@ -473,10 +473,10 @@ export default function NewEvent() {
           <div>
             <div onClick={() => setExtendedLoadOut(!extendedLoadOut)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : '#d4cfc8', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? '#1a1a1a' : '#6b6b6b' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 13, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -494,15 +494,15 @@ export default function NewEvent() {
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <input style={{ ...inputStyle, flex: 2 }} type="date" value={show.show_date} onChange={e => updateShow(i, 'show_date', e.target.value)} />
                   <input style={{ ...inputStyle, flex: 1 }} type="time" value={show.show_time} onChange={e => updateShow(i, 'show_time', e.target.value)} />
-                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: '#6b6b6b', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
+                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: '#94a3b8', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
                     onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
+                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                     ×
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={addShow} type="button" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#16a34a', cursor: 'pointer', marginTop: 10 }}>
+            <button onClick={addShow} type="button" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#33FF99', cursor: 'pointer', marginTop: 10 }}>
               + Add Show
             </button>
           </div>
@@ -518,8 +518,8 @@ export default function NewEvent() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Add Event'}</button>

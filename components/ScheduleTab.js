@@ -6,10 +6,10 @@ import { getSupabase } from '../lib/supabase'
 const ROW_GRID = '28px 100px 100px 1.2fr 1.2fr 1.6fr 28px'
 
 const DAY_TYPE_STYLES = {
-  'Load In': { color: '#854d0e', background: '#fef9c3', border: '#fde68a' },
-  'Show Day': { color: '#15803d', background: '#dcfce7', border: '#bbf7d0' },
-  'Load Out': { color: '#dc2626', background: '#fee2e2', border: '#fecaca' },
-  'Day Off': { color: '#6b6b6b', background: '#f0ece4', border: '#e8e2d9' },
+  'Load In': { color: '#FFD60A', background: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
+  'Show Day': { color: '#33FF99', background: 'rgba(51,255,153,0.15)', border: 'rgba(51,255,153,0.30)' },
+  'Load Out': { color: '#f87171', background: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.30)' },
+  'Day Off': { color: '#64748b', background: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)' },
 }
 
 const addDays = (dateStr, n) => {
@@ -25,11 +25,11 @@ const todayStr = () => {
 
 const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000)
 
-const headerLabelStyle = { fontSize: 10.5, color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px' }
+const headerLabelStyle = { fontSize: 10.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px' }
 
 const addRowBtnStyle = {
   fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
-  border: '0.5px dashed #d4cfc8', background: 'transparent', color: '#6b6b6b',
+  border: '0.5px dashed rgba(255,255,255,0.20)', background: 'transparent', color: '#64748b',
   cursor: 'pointer', alignSelf: 'flex-start',
 }
 
@@ -54,9 +54,9 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid #e8e2d9' }}
+      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}
     >
-      <div style={{ cursor: 'grab', color: '#6b6b6b', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
+      <div style={{ cursor: 'grab', color: '#64748b', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
         <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
           <circle cx="2" cy="2" r="1.4" fill="currentColor"/><circle cx="8" cy="2" r="1.4" fill="currentColor"/>
           <circle cx="2" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/>
@@ -71,9 +71,9 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       <div
         className="schedule-row-delete"
         onClick={() => onDelete(item.id)}
-        style={{ cursor: 'pointer', color: '#6b6b6b', textAlign: 'center', fontSize: 16, lineHeight: 1 }}
-        onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-        onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}
+        style={{ cursor: 'pointer', color: '#64748b', textAlign: 'center', fontSize: 16, lineHeight: 1 }}
+        onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+        onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
       >×</div>
     </div>
   )
@@ -85,13 +85,13 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
   const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
-    <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid #C9A84C', overflow: 'hidden', width: '100%' }}>
+    <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid rgba(255,255,255,0.15)', overflow: 'hidden', width: '100%' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M2 4l4 4 4-4" stroke="#6b6b6b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 4l4 4 4-4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{dayName}</div>
-        <div style={{ fontSize: 13, color: '#6b6b6b' }}>{dateLabel}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>{dayName}</div>
+        <div style={{ fontSize: 13, color: '#94a3b8' }}>{dateLabel}</div>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', gap: 6 }}>
           {dayTypes.map(dayType => {
@@ -290,12 +290,12 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
     setCopyDone(true)
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: '#6b6b6b' }}>Loading schedule...</div>
+  if (loading) return <div style={{ fontSize: 14, color: '#94a3b8' }}>Loading schedule...</div>
 
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>Schedule</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>Schedule</div>
         <button
           onClick={openCopyModal}
           style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
@@ -307,7 +307,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
       </div>
 
       {days.length === 0 && (
-        <div style={{ fontSize: 13, color: '#6b6b6b' }}>Set a load-in date on this event to build a schedule.</div>
+        <div style={{ fontSize: 13, color: '#94a3b8' }}>Set a load-in date on this event to build a schedule.</div>
       )}
 
       {days.map((dateStr, idx) => {

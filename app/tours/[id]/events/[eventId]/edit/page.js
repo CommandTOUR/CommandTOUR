@@ -155,10 +155,10 @@ export default function EditEvent() {
 
   const inputStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
-    border: '1px solid #d4cfc8', background: '#ffffff',
-    color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
+    border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)',
+    color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%',
   }
-  const labelStyle = { fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
+  const labelStyle = { fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -190,14 +190,14 @@ export default function EditEvent() {
           <div>
             <label style={labelStyle}>Venue</label>
             {selectedVenue ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid #16a34a', background: 'rgba(22,163,74,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16a34a' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.state, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.state, selectedVenue.country].filter(Boolean).join(', ')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#6b6b6b', cursor: 'pointer', padding: '4px 8px' }}
+                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#6b6b6b'}>
+                  onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                   x Clear
                 </div>
               </div>
@@ -294,10 +294,10 @@ export default function EditEvent() {
           {/* Extended Load-Out toggle */}
           <div>
             <div onClick={() => setExtendedLoadOut(!extendedLoadOut)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : '#d4cfc8', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? '#1a1a1a' : '#6b6b6b' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 13, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -318,8 +318,8 @@ export default function EditEvent() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid #e8e2d9', background: 'transparent', color: '#1a1a1a', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f0ece5'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>

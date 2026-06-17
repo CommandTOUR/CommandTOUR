@@ -107,8 +107,8 @@ export default function Venues() {
               onChange={e => setSearch(e.target.value)}
               style={{
                 fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 16px',
-                borderRadius: 8, border: '1px solid #d4cfc8',
-                background: '#ffffff', color: '#1a1a1a', caretColor: '#0a1628',
+                borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99',
                 outline: 'none', width: '100%', maxWidth: 340,
               }}
             />
@@ -182,11 +182,11 @@ export default function Venues() {
                         className="glass-card"
                         onClick={() => router.push(`/venues/${venue.id}`)}
                         style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#f0ece4'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
                       >
-                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#1a1a1a' }}>{venue.name}</div>
-                        <div style={{ fontSize: 13, color: '#6b6b6b' }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#f1f5f9' }}>{venue.name}</div>
+                        <div style={{ fontSize: 13, color: '#94a3b8' }}>
                           {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
                         </div>
                       </div>

@@ -49,7 +49,7 @@ export default function Login() {
         />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Email</label>
+            <label style={{ fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Email</label>
             <input
               type="email"
               value={email}
@@ -58,14 +58,14 @@ export default function Login() {
               style={{
                 fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
-                border: '1px solid #d4cfc8',
-                background: '#ffffff',
-                color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)',
+                color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%',
               }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: '#6b6b6b', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Password</label>
+            <label style={{ fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Password</label>
             <input
               type="password"
               value={password}
@@ -74,9 +74,9 @@ export default function Login() {
               style={{
                 fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14,
                 padding: '10px 14px', borderRadius: 8,
-                border: '1px solid #d4cfc8',
-                background: '#ffffff',
-                color: '#1a1a1a', caretColor: '#0a1628', outline: 'none', width: '100%',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.08)',
+                color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%',
               }}
             />
           </div>
