@@ -498,7 +498,7 @@ function HolidayCell({ value, onSave }) {
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, color: value ? '#63b3ed' : '#64748b', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 500 : 400, color: value ? '#63b3ed' : '#64748b', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -517,16 +517,16 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
         const glow = dragging && hoveredPillYear === y
         const isHovered = hovered === y
 
-        let border = '1px solid rgba(255,255,255,0.15)'
+        let border = '1px solid rgba(255,255,255,0.20)'
         let color = '#94a3b8'
         let background = 'transparent'
         let opacity = 1
         let fontWeight = 500
 
         if (selected || glow) {
-          border = '1px solid #33FF99'
+          border = 'none'
           color = '#0a1628'
-          background = '#33FF99'
+          background = '#FFD60A'
           fontWeight = 700
         } else {
           if (isPast) opacity = 0.6
@@ -545,7 +545,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
             onDragLeave={dragging ? () => onPillDragLeave(y) : undefined}
             style={{
               border, color, background, opacity, fontWeight,
-              borderRadius: 20, padding: '4px 16px', fontSize: 13, cursor: 'pointer',
+              borderRadius: 999, padding: '4px 16px', fontSize: 13, cursor: 'pointer',
               transition: 'border-color 0.15s, background 0.15s, color 0.15s',
             }}>
             {y}
@@ -815,10 +815,10 @@ const ROW_H = 36
 const HDR_BG = 'rgba(255,255,255,0.06)'
 const STICKY_BG = '#0d1f3c'
 const B_INNER = '0.5px solid rgba(255,255,255,0.08)'
-const B_HEADER_BOTTOM = '2px solid rgba(255,255,255,0.08)'
-const B_LEFT_COL = '2px solid rgba(255,255,255,0.08)'
-const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.08)'
-const B_TOUR_DIVIDER = '2px solid rgba(255,255,255,0.15)'
+const B_HEADER_BOTTOM = '1px solid rgba(255,255,255,0.08)'
+const B_LEFT_COL = '2px solid rgba(255,255,255,0.10)'
+const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.12)'
+const B_TOUR_DIVIDER = '2px solid rgba(255,255,255,0.12)'
 
 const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
 
@@ -829,8 +829,8 @@ const leftThStyle = (left, width) => ({
   borderBottom: B_HEADER_BOTTOM, borderRight: B_INNER,
 })
 
-const subHeaderStyle = (width, borderRight) => ({
-  height: H2, background: HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight,
+const subHeaderStyle = (width, borderRight, tourColor) => ({
+  height: H2, background: tourColor ? hexToRgba(tourColor, 0.15) : HDR_BG, borderBottom: B_HEADER_BOTTOM, borderRight,
   padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#94a3b8',
   textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
 })
@@ -847,7 +847,7 @@ function GridCell({
   const isDragOver = dragOverKey === cellKey
   const cellBase = {
     height: rowHeight, padding: '0 8px',
-    borderBottom: '0.5px solid rgba(255,255,255,0.08)',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
     fontSize: 12, color: '#f1f5f9',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     verticalAlign: 'middle', textAlign: 'center', position: 'relative',
@@ -935,7 +935,7 @@ function GridCell({
                 </svg>
               </div>
             )}
-            {formatCityState(event)}
+            <span style={{ fontWeight: 500 }}>{formatCityState(event)}</span>
           </>
         ) : ''}
       </td>
@@ -946,6 +946,7 @@ function GridCell({
         style={{
           ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
           cursor: 'pointer', zIndex: isVenueActive ? 300 : 1, overflow: isVenueActive ? 'visible' : 'hidden',
+          color: isVenueActive ? '#f1f5f9' : '#94a3b8',
           ...dropHighlight,
         }}>
         {isVenueActive ? (
@@ -998,9 +999,9 @@ function YearGrid({
                 <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
-                  const tourBg = hexToRgba(tourColor, 0.18)
+                  const tourBg = hexToRgba(tourColor, 0.35)
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.03em', color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ height: H1, background: tourBg, borderBottom: `2px solid ${tourColor}`, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
@@ -1017,10 +1018,10 @@ function YearGrid({
                   const isLastTour = ti === yearTours.length - 1
                   return (
                     <React.Fragment key={tour.id}>
-                      <th style={subHeaderStyle(CITY_W, B_INNER)}>City</th>
-                      <th style={subHeaderStyle(VENUE_W, B_INNER)}>Venue</th>
-                      <th style={subHeaderStyle(STATUS_W, B_INNER)}>Status</th>
-                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP)}>Note</th>
+                      <th style={subHeaderStyle(CITY_W, B_INNER, tour.color)}>City</th>
+                      <th style={subHeaderStyle(VENUE_W, B_INNER, tour.color)}>Venue</th>
+                      <th style={subHeaderStyle(STATUS_W, B_INNER, tour.color)}>Status</th>
+                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP, tour.color)}>Note</th>
                     </React.Fragment>
                   )
                 })}
@@ -1029,20 +1030,19 @@ function YearGrid({
             <tbody>
               {rows.map(row => {
                 const isCurrentWeek = row.saturday === currentWeekendSaturday
-                const zebra = row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent'
-                const rowBg = row.holiday ? 'rgba(99,179,237,0.08)' : (isCurrentWeek ? 'rgba(51,255,153,0.06)' : zebra)
+                const rowBg = isCurrentWeek ? 'rgba(51,255,153,0.06)' : (row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent')
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 8px', fontSize: 12, color: '#64748b', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 8px', fontSize: 12, color: '#64748b', textAlign: 'center', verticalAlign: 'middle' }}>
                       {row.weekNum}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', verticalAlign: 'middle' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: row.holiday ? '3px solid #63b3ed' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
                       <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: '#f1f5f9', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_INNER, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.saturday, 'Sat')}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: B_INNER, padding: '0 10px', fontSize: 12, color: '#f1f5f9', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.sunday, 'Sun')}
                     </td>
                     {yearTours.map((tour, ti) => {
