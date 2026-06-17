@@ -817,21 +817,22 @@ const STICKY_BG = '#0d1f3c'
 const B_INNER = '0.5px solid rgba(255,255,255,0.08)'
 const B_HEADER_BOTTOM = '1px solid rgba(255,255,255,0.08)'
 const B_LEFT_COL = '2px solid rgba(255,255,255,0.12)'
-const B_TOUR_GROUP = '2px solid rgba(255,255,255,0.12)'
-const B_TOUR_DIVIDER = '2px solid rgba(255,255,255,0.12)'
+const B_TOUR_GROUP = '5px solid rgba(255,255,255,0.15)'
+const B_TOUR_DIVIDER = '5px solid rgba(255,255,255,0.15)'
 
 const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
 
 const leftThStyle = (left, width) => ({
-  position: 'sticky', left, zIndex: 60, width, minWidth: width, height: H1 + H2,
+  position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1 + H2,
   background: '#0d1f3c', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
   fontSize: 11, fontWeight: 700, color: '#63b3ed', textTransform: 'uppercase', letterSpacing: '0.06em',
   borderBottom: '4px solid #FFD60A', borderRight: '2px solid rgba(255,255,255,0.12)',
 })
 
 const subHeaderStyle = (width, borderRight) => ({
-  height: H2, background: 'rgba(255,255,255,0.03)', borderBottom: '4px solid #FFD60A', borderRight,
-  padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#FFD60A', fontWeight: 700,
+  position: 'sticky', top: H1, zIndex: 30,
+  height: H2, background: '#0d1f3c', borderBottom: '4px solid #FFD60A', borderRight,
+  padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#f1f5f9', fontWeight: 700,
   textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
 })
 
@@ -988,8 +989,8 @@ function YearGrid({
   const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
 
   return (
-    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.10)' }}>
-      <div style={{ overflowX: 'auto' }}>
+    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.10)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ overflow: 'auto', flex: 1 }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
             <thead>
               <tr>
@@ -1000,7 +1001,7 @@ function YearGrid({
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
                   return (
-                    <th key={tour.id} colSpan={4} style={{ height: H1, background: 'rgba(255,255,255,0.07)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: '#0d1f3c', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
@@ -1384,10 +1385,10 @@ export default function BookingPage() {
   const { rows, yearTours, eventMap } = buildYearData(selectedYear)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
       <TopNav />
 
-      <div style={{ marginTop: 62, padding: '14px 28px 0', background: 'var(--bg)' }}>
+      <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 0', background: 'var(--bg)' }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>All Events</div>
         <YearPills
           years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
@@ -1396,7 +1397,7 @@ export default function BookingPage() {
         />
       </div>
 
-      <div style={{ padding: '14px 28px 40px' }}>
+      <div style={{ flex: 1, padding: '14px 28px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <YearGrid
           year={selectedYear}
           rows={rows}
