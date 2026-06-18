@@ -148,6 +148,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
   const [copyTarget, setCopyTarget] = useState('')
   const [copying, setCopying] = useState(false)
   const [copyDone, setCopyDone] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const dragState = useRef({ dayDate: null, index: null })
 
   const days = []
@@ -205,7 +206,12 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
     const next = current === 'Show Day' ? 'Day Off' : 'Show Day'
     setDayOverrides(prev => ({ ...prev, [dateStr]: next }))
     const supabase = getSupabase()
-    await supabase.from('event_schedule_days').upsert({ event_id: eventId, day_date: dateStr, day_type: next }, { onConflict: 'event_id,day_date' })
+    const { error } = await supabase.from('event_schedule_days').upsert({ event_id: eventId, day_date: dateStr, day_type: next }, { onConflict: 'event_id,day_date' })
+    if (error) {
+      console.error('Failed to save day type:', error)
+      setSaveError('Failed to save. Please try again.')
+      setDayOverrides(prev => ({ ...prev, [dateStr]: current }))
+    }
   }
 
   const handleAddRow = async (dateStr) => {
@@ -227,15 +233,27 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
   }
 
   const handleUpdateRow = async (id, field, value) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i))
+    const oldValue = items.find(i => i.id === id)?.[field]
+    setItems(current => current.map(i => i.id === id ? { ...i, [field]: value } : i))
     const supabase = getSupabase()
-    await supabase.from('schedule_items').update({ [field]: value || null }).eq('id', id)
+    const { error } = await supabase.from('schedule_items').update({ [field]: value || null }).eq('id', id)
+    if (error) {
+      console.error('Failed to update row:', error)
+      setSaveError('Failed to save. Please try again.')
+      setItems(current => current.map(i => i.id === id ? { ...i, [field]: oldValue ?? null } : i))
+    }
   }
 
   const handleDeleteRow = async (id) => {
-    setItems(prev => prev.filter(i => i.id !== id))
+    const deleted = items.find(i => i.id === id)
+    setItems(current => current.filter(i => i.id !== id))
     const supabase = getSupabase()
-    await supabase.from('schedule_items').delete().eq('id', id)
+    const { error } = await supabase.from('schedule_items').delete().eq('id', id)
+    if (error) {
+      console.error('Failed to delete row:', error)
+      setSaveError('Failed to delete. Please try again.')
+      if (deleted) setItems(current => [...current, deleted].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)))
+    }
   }
 
   const handleDragStart = (dayDate, index) => { dragState.current = { dayDate, index } }
@@ -243,13 +261,20 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
   const handleDrop = async (dayDate, dropIndex) => {
     const { dayDate: fromDay, index: fromIndex } = dragState.current
     if (fromDay !== dayDate || fromIndex === dropIndex) return
+    const prevItems = [...items]
     const dayItems = items.filter(i => i.day_date === dayDate).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     const [moved] = dayItems.splice(fromIndex, 1)
     dayItems.splice(dropIndex, 0, moved)
     const reordered = dayItems.map((it, idx) => ({ ...it, sort_order: idx }))
-    setItems(prev => [...prev.filter(i => i.day_date !== dayDate), ...reordered])
+    setItems(current => [...current.filter(i => i.day_date !== dayDate), ...reordered])
     const supabase = getSupabase()
-    await Promise.all(reordered.map(it => supabase.from('schedule_items').update({ sort_order: it.sort_order }).eq('id', it.id)))
+    const results = await Promise.all(reordered.map(it => supabase.from('schedule_items').update({ sort_order: it.sort_order }).eq('id', it.id)))
+    const failed = results.find(r => r.error)
+    if (failed) {
+      console.error('Failed to reorder:', failed.error)
+      setSaveError('Failed to reorder. Please try again.')
+      setItems(prevItems)
+    }
   }
 
   const openCopyModal = async () => {
@@ -277,14 +302,30 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
       notes: item.notes,
       sort_order: item.sort_order,
     }))
-    if (newRows.length > 0) await supabase.from('schedule_items').insert(newRows)
+    if (newRows.length > 0) {
+      const { error } = await supabase.from('schedule_items').insert(newRows)
+      if (error) {
+        console.error('Failed to copy schedule items:', error)
+        setSaveError('Failed to copy schedule. Please try again.')
+        setCopying(false)
+        return
+      }
+    }
 
     const dayRows = Object.entries(dayOverrides).map(([dateStr, dayType]) => ({
       event_id: copyTarget,
       day_date: target?.load_in_date ? addDays(target.load_in_date, daysBetween(event.load_in_date, dateStr)) : dateStr,
       day_type: dayType,
     }))
-    if (dayRows.length > 0) await supabase.from('event_schedule_days').upsert(dayRows, { onConflict: 'event_id,day_date' })
+    if (dayRows.length > 0) {
+      const { error } = await supabase.from('event_schedule_days').upsert(dayRows, { onConflict: 'event_id,day_date' })
+      if (error) {
+        console.error('Failed to copy day overrides:', error)
+        setSaveError('Failed to copy schedule. Please try again.')
+        setCopying(false)
+        return
+      }
+    }
 
     setCopying(false)
     setCopyDone(true)
@@ -294,6 +335,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
 
   return (
     <div style={{ width: '100%' }}>
+      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 12px' }}>{saveError}</p>}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>Schedule</div>
         <button

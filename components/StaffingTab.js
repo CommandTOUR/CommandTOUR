@@ -392,6 +392,7 @@ export default function StaffingTab({ eventId, event }) {
   const [newPositionLabel, setNewPositionLabel] = useState('')
   const [newPositionDept, setNewPositionDept] = useState('')
   const [execOpen, setExecOpen] = useState(true)
+  const [saveError, setSaveError] = useState(null)
 
   const departments = getDepartments(event?.event_type)
   const positionKeys = buildPositionKeys(departments)
@@ -460,11 +461,13 @@ export default function StaffingTab({ eventId, event }) {
     const pk = positionKeys.find(p => p.key === positionKey)
     const positionLabel = pk?.position || positionKey.replace(/__\d+$/, '').replace(/^custom__/, '')
     const existing = getAssignmentByKey(positionKey)
+    let error
     if (existing) {
-      await supabase.from('event_staff').update({ staff_id: staffMember.id, status: 'scheduled', confirmed: false }).eq('id', existing.id)
+      ;({ error } = await supabase.from('event_staff').update({ staff_id: staffMember.id, status: 'scheduled', confirmed: false }).eq('id', existing.id))
     } else {
-      await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionLabel, position_key: positionKey, status: 'scheduled', confirmed: false }])
+      ;({ error } = await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionLabel, position_key: positionKey, status: 'scheduled', confirmed: false }]))
     }
+    if (error) { console.error('Failed to assign staff:', error); setSaveError('Failed to assign staff. Please try again.') }
     fetchAssignments()
     setConfirmOverride(null)
   }
@@ -473,19 +476,24 @@ export default function StaffingTab({ eventId, event }) {
     const assignment = getAssignmentByKey(positionKey)
     if (!assignment) return
     const supabase = getSupabase()
-    await supabase.from('event_staff').delete().eq('id', assignment.id)
+    const { error } = await supabase.from('event_staff').delete().eq('id', assignment.id)
+    if (error) { console.error('Failed to clear position:', error); setSaveError('Failed to clear position. Please try again.') }
     fetchAssignments()
   }
 
   const handleRemovePosition = async (positionKey) => {
     const assignment = getAssignmentByKey(positionKey)
     const supabase = getSupabase()
-    if (assignment) await supabase.from('event_staff').delete().eq('id', assignment.id)
+    if (assignment) {
+      const { error } = await supabase.from('event_staff').delete().eq('id', assignment.id)
+      if (error) { console.error('Failed to remove position:', error); setSaveError('Failed to remove position. Please try again.'); fetchAssignments(); return }
+    }
     const isTemplate = positionKeys.find(p => p.key === positionKey)
     if (isTemplate) {
       const { data: eventData } = await supabase.from('events').select('hidden_positions').eq('id', eventId).single()
       const current = eventData?.hidden_positions || []
-      await supabase.from('events').update({ hidden_positions: [...current, positionKey] }).eq('id', eventId)
+      const { error } = await supabase.from('events').update({ hidden_positions: [...current, positionKey] }).eq('id', eventId)
+      if (error) { console.error('Failed to hide position:', error); setSaveError('Failed to remove position. Please try again.') }
     }
     fetchAssignments()
   }
@@ -496,7 +504,8 @@ export default function StaffingTab({ eventId, event }) {
     const supabase = getSupabase()
     const confirmed = newStatus === 'confirmed'
     const isExec = positionKey.startsWith('exec__')
-    await supabase.from('event_staff').update({ status: newStatus, confirmed }).eq('id', assignment.id)
+    const { error } = await supabase.from('event_staff').update({ status: newStatus, confirmed }).eq('id', assignment.id)
+    if (error) { console.error('Failed to set status:', error); setSaveError('Failed to save status. Please try again.'); fetchAssignments(); return }
     if (assignment.staff_id && !isExec) {
       if (confirmed) {
         const existing = await supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle()
@@ -515,23 +524,45 @@ export default function StaffingTab({ eventId, event }) {
     fetchAssignments()
   }
 
-  const handleSaveNotes = async (id, notes) => { const s = getSupabase(); await s.from('event_staff').update({ notes }).eq('id', id); fetchAssignments() }
-  const handleSaveTravelIn = async (id, date) => { const s = getSupabase(); await s.from('event_staff').update({ travel_in_date: date || null }).eq('id', id); fetchAssignments() }
-  const handleSaveTravelOut = async (id, date) => { const s = getSupabase(); await s.from('event_staff').update({ travel_out_date: date || null }).eq('id', id); fetchAssignments() }
-  const handleSaveTravelType = async (id, travel_type) => { const s = getSupabase(); await s.from('event_staff').update({ travel_type }).eq('id', id); fetchAssignments() }
+  const handleSaveNotes = async (id, notes) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_staff').update({ notes }).eq('id', id)
+    if (error) { console.error('Failed to save notes:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAssignments()
+  }
+  const handleSaveTravelIn = async (id, date) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_staff').update({ travel_in_date: date || null }).eq('id', id)
+    if (error) { console.error('Failed to save travel in date:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAssignments()
+  }
+  const handleSaveTravelOut = async (id, date) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_staff').update({ travel_out_date: date || null }).eq('id', id)
+    if (error) { console.error('Failed to save travel out date:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAssignments()
+  }
+  const handleSaveTravelType = async (id, travel_type) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_staff').update({ travel_type }).eq('id', id)
+    if (error) { console.error('Failed to save travel type:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAssignments()
+  }
 
   const handleAddPosition = async () => {
     if (!newPositionLabel.trim() || !newPositionDept) return
     const supabase = getSupabase()
     const key = `custom__${newPositionDept}__${newPositionLabel.trim()}__${Date.now()}`
-    await supabase.from('event_staff').insert([{ event_id: eventId, position: newPositionLabel.trim(), position_key: key, confirmed: false, status: 'scheduled' }])
+    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: newPositionLabel.trim(), position_key: key, confirmed: false, status: 'scheduled' }])
+    if (error) { console.error('Failed to add position:', error); setSaveError('Failed to add position. Please try again.'); return }
     setNewPositionLabel(''); setNewPositionDept(''); setAddingPosition(false); fetchAssignments()
   }
 
   const handleAddExec = async (type) => {
     const supabase = getSupabase()
     const key = `exec__${type}__${Date.now()}`
-    await supabase.from('event_staff').insert([{ event_id: eventId, position: type, position_key: key, confirmed: false, status: 'scheduled' }])
+    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: type, position_key: key, confirmed: false, status: 'scheduled' }])
+    if (error) { console.error('Failed to add exec:', error); setSaveError('Failed to add. Please try again.'); return }
     fetchAssignments()
   }
 
@@ -539,7 +570,8 @@ export default function StaffingTab({ eventId, event }) {
     const assignment = getAssignmentByKey(positionKey)
     if (!assignment) return
     const supabase = getSupabase()
-    await supabase.from('event_staff').delete().eq('id', assignment.id)
+    const { error } = await supabase.from('event_staff').delete().eq('id', assignment.id)
+    if (error) { console.error('Failed to remove exec:', error); setSaveError('Failed to remove. Please try again.') }
     fetchAssignments()
   }
 
@@ -561,6 +593,7 @@ export default function StaffingTab({ eventId, event }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 8px', flexShrink: 0 }}>{saveError}</p>}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>

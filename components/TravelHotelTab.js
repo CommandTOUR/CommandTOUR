@@ -194,7 +194,8 @@ export default function TravelHotelTab({ eventId, event }) {
   const [arrivalsOpen, setArrivalsOpen] = useState(true)
   const [departuresOpen, setDeparturesOpen] = useState(true)
   const [hotelOpen, setHotelOpen] = useState(true)
-  const [selectedUnroomed, setSelectedUnroomed] = useState([]) 
+  const [selectedUnroomed, setSelectedUnroomed] = useState([])
+  const [saveError, setSaveError] = useState(null)
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -228,37 +229,86 @@ export default function TravelHotelTab({ eventId, event }) {
     else setDepartureSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }))
   }
 
-  const handleUpdateArrival = async (id, field, value) => { const s = getSupabase(); await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', id); fetchAll() }
-  const handleUpdateDeparture = async (id, field, value) => { const s = getSupabase(); await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', id); fetchAll() }
-  const handleRemoveArrival = async (id) => { const s = getSupabase(); await s.from('event_travel_arrivals').delete().eq('id', id); fetchAll() }
-  const handleRemoveDeparture = async (id) => { const s = getSupabase(); await s.from('event_travel_departures').delete().eq('id', id); fetchAll() }
+  const handleUpdateArrival = async (id, field, value) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', id)
+    if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAll()
+  }
+  const handleUpdateDeparture = async (id, field, value) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', id)
+    if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAll()
+  }
+  const handleRemoveArrival = async (id) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_travel_arrivals').delete().eq('id', id)
+    if (error) { console.error('Failed to remove arrival:', error); setSaveError('Failed to remove. Please try again.') }
+    fetchAll()
+  }
+  const handleRemoveDeparture = async (id) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_travel_departures').delete().eq('id', id)
+    if (error) { console.error('Failed to remove departure:', error); setSaveError('Failed to remove. Please try again.') }
+    fetchAll()
+  }
 
   const handleAddArrival = async (staffMember) => {
     const s = getSupabase()
-    await s.from('event_travel_arrivals').insert([{ event_id: eventId, staff_id: staffMember.id }])
-    setAddingArrival(false); fetchAll()
+    const { error } = await s.from('event_travel_arrivals').insert([{ event_id: eventId, staff_id: staffMember.id }])
+    if (error) { console.error('Failed to add arrival:', error); setSaveError('Failed to add. Please try again.') }
+    setAddingArrival(false)
+    fetchAll()
   }
   const handleAddDeparture = async (staffMember) => {
     const s = getSupabase()
-    await s.from('event_travel_departures').insert([{ event_id: eventId, staff_id: staffMember.id }])
-    setAddingDeparture(false); fetchAll()
+    const { error } = await s.from('event_travel_departures').insert([{ event_id: eventId, staff_id: staffMember.id }])
+    if (error) { console.error('Failed to add departure:', error); setSaveError('Failed to add. Please try again.') }
+    setAddingDeparture(false)
+    fetchAll()
   }
 
   const handleSaveHotel = async () => {
     const s = getSupabase()
-    if (hotel) await s.from('event_hotel').update(hotelForm).eq('id', hotel.id)
-    else await s.from('event_hotel').insert([{ ...hotelForm, event_id: eventId }])
-    setEditingHotel(false); fetchAll()
+    const { error } = hotel
+      ? await s.from('event_hotel').update(hotelForm).eq('id', hotel.id)
+      : await s.from('event_hotel').insert([{ ...hotelForm, event_id: eventId }])
+    if (error) { console.error('Failed to save hotel:', error); setSaveError('Failed to save hotel. Please try again.'); return }
+    setEditingHotel(false)
+    fetchAll()
   }
 
-  const handleAddRoom = async () => { const s = getSupabase(); await s.from('event_hotel_rooms').insert([{ event_id: eventId, room_type: 'Double' }]); fetchAll() }
-  const handleRemoveRoom = async (id) => { const s = getSupabase(); await s.from('event_hotel_rooms').delete().eq('id', id); fetchAll() }
-  const handleUpdateRoom = async (id, field, value) => { const s = getSupabase(); await s.from('event_hotel_rooms').update({ [field]: value || null }).eq('id', id); fetchAll() }
+  const handleAddRoom = async () => {
+    const s = getSupabase()
+    const { error } = await s.from('event_hotel_rooms').insert([{ event_id: eventId, room_type: 'Double' }])
+    if (error) { console.error('Failed to add room:', error); setSaveError('Failed to add room. Please try again.') }
+    fetchAll()
+  }
+  const handleRemoveRoom = async (id) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_hotel_rooms').delete().eq('id', id)
+    if (error) { console.error('Failed to remove room:', error); setSaveError('Failed to remove room. Please try again.') }
+    fetchAll()
+  }
+  const handleUpdateRoom = async (id, field, value) => {
+    const s = getSupabase()
+    const { error } = await s.from('event_hotel_rooms').update({ [field]: value || null }).eq('id', id)
+    if (error) { console.error('Failed to update room:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAll()
+  }
 
   const handleAssignRoomStaff = async (staffMember) => {
     const { roomId, slot } = roomStaffPicker
     const supabase = getSupabase()
-    await supabase.from('event_hotel_rooms').update({ [slot]: staffMember.id }).eq('id', roomId)
+    const { error: e1 } = await supabase.from('event_hotel_rooms').update({ [slot]: staffMember.id }).eq('id', roomId)
+    if (e1) {
+      console.error('Failed to assign staff to room:', e1)
+      setSaveError('Failed to assign staff. Please try again.')
+      setRoomStaffPicker(null)
+      fetchAll()
+      return
+    }
     setRoomStaffPicker(null)
     const arrival = arrivals.find(a => a.staff_id === staffMember.id)
     const departure = departures.find(d => d.staff_id === staffMember.id)
@@ -272,7 +322,10 @@ export default function TravelHotelTab({ eventId, event }) {
       const otherDeparture = departures.find(d => d.staff_id === otherStaffId)
       const depDates = [departure?.travel_date, otherDeparture?.travel_date].filter(Boolean)
       if (depDates.length > 0) updates.check_out_date = depDates.sort().reverse()[0]
-      if (Object.keys(updates).length > 0) await supabase.from('event_hotel_rooms').update(updates).eq('id', roomId)
+      if (Object.keys(updates).length > 0) {
+        const { error: e2 } = await supabase.from('event_hotel_rooms').update(updates).eq('id', roomId)
+        if (e2) console.error('Failed to update room dates:', e2)
+      }
     }
     fetchAll()
   }
@@ -301,13 +354,15 @@ export default function TravelHotelTab({ eventId, event }) {
   const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
   const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
   const handleAddSelectedToRooming = async () => {
-      const supabase = getSupabase()
-      await Promise.all(selectedUnroomed.map(staffId =>
-        supabase.from('event_hotel_rooms').insert([{ event_id: eventId, staff_id_1: staffId, room_type: 'Single' }])
-      ))
-      setSelectedUnroomed([])
-      fetchAll()
-    }
+    const supabase = getSupabase()
+    const results = await Promise.all(selectedUnroomed.map(staffId =>
+      supabase.from('event_hotel_rooms').insert([{ event_id: eventId, staff_id_1: staffId, room_type: 'Single' }])
+    ))
+    const failed = results.find(r => r.error)
+    if (failed) { console.error('Failed to add to rooming:', failed.error); setSaveError('Failed to add staff to rooming. Please try again.') }
+    setSelectedUnroomed([])
+    fetchAll()
+  }
 
   const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
@@ -336,6 +391,7 @@ export default function TravelHotelTab({ eventId, event }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 4px' }}>{saveError}</p>}
 
       {/* ARRIVALS */}
       <div>

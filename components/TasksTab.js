@@ -120,6 +120,7 @@ export default function TasksTab({ eventId, event }) {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
   const [needsTemplateChoice, setNeedsTemplateChoice] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   const populateFromTemplate = async (tourType) => {
     const supabase = getSupabase()
@@ -163,15 +164,27 @@ export default function TasksTab({ eventId, event }) {
   const toggleExpand = (bucket) => setExpanded(prev => ({ ...prev, [bucket]: !prev[bucket] }))
 
   const handleToggleTask = async (id, completed) => {
+    setSaveError(null)
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t))
     const supabase = getSupabase()
-    await supabase.from('event_tasks').update({ completed }).eq('id', id)
+    const { error } = await supabase.from('event_tasks').update({ completed }).eq('id', id)
+    if (error) {
+      console.error('Failed to save task:', error)
+      setSaveError('Failed to save task. Please try again.')
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t))
+    }
   }
 
   const handleSaveNotes = async (id, notes) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, notes } : t))
+    setSaveError(null)
     const supabase = getSupabase()
-    await supabase.from('event_tasks').update({ notes: notes || null }).eq('id', id)
+    const { error } = await supabase.from('event_tasks').update({ notes: notes || null }).eq('id', id)
+    if (error) {
+      console.error('Failed to save notes:', error)
+      setSaveError('Failed to save notes. Please try again.')
+      return
+    }
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, notes } : t))
   }
 
   const handleAddTask = async (bucket, taskName) => {
@@ -218,6 +231,7 @@ export default function TasksTab({ eventId, event }) {
 
   return (
     <div style={{ width: '100%' }}>
+      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 12px' }}>{saveError}</p>}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>Tasks</div>
         <div style={{ fontSize: 13, color: '#94a3b8' }}>{pct}% complete ({completed}/{total})</div>

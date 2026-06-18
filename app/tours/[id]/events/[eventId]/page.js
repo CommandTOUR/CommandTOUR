@@ -140,13 +140,15 @@ export default function EventPage() {
 
   const handleSaveShowNotes = async (showId, notes) => {
     const supabase = getSupabase()
-    await supabase.from('show_list').update({ notes }).eq('id', showId)
+    const { error } = await supabase.from('show_list').update({ notes }).eq('id', showId)
+    if (error) { console.error('Failed to save show notes:', error); return }
     setShows(prev => prev.map(s => s.id === showId ? { ...s, notes } : s))
   }
 
   const handleToggleComplete = async (show) => {
     const supabase = getSupabase()
-    await supabase.from('show_list').update({ completed: !show.completed }).eq('id', show.id)
+    const { error } = await supabase.from('show_list').update({ completed: !show.completed }).eq('id', show.id)
+    if (error) { console.error('Failed to toggle complete:', error); return }
     setShows(prev => prev.map(s => s.id === show.id ? { ...s, completed: !s.completed } : s))
   }
 
