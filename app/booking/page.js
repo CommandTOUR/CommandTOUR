@@ -568,6 +568,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   const [loadingShows, setLoadingShows] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moveOpen, setMoveOpen] = useState(false)
@@ -631,17 +632,24 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
       return
     }
 
+    const newShows = shows.filter(s => !s.id && s.show_date)
+    console.log('[Shows] Saving', newShows.length, 'new show(s) for event', event.id, newShows)
+
     const showErrors = []
     for (const show of shows) {
       if (!show.id) {
         if (show.show_date) {
-          const { error } = await supabase.from('show_list').insert([{ event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }])
+          const payload = { event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }
+          console.log('[Shows] Inserting:', payload)
+          const { data: insertedShow, error } = await supabase.from('show_list').insert([payload]).select().single()
+          console.log('[Shows] Insert result — data:', insertedShow, '  error:', error)
           if (error) showErrors.push(error.message)
         }
       } else {
         const orig = initialShows.find(s => s.id === show.id)
         if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
-          const { error } = await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id)
+          const { data: updatedShow, error } = await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id).select().single()
+          console.log('[Shows] Update result — data:', updatedShow, '  error:', error)
           if (error) showErrors.push(error.message)
         }
       }
@@ -655,9 +663,21 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
     await supabase.from('event_notes').upsert({ event_id: event.id, content: bookingNote, updated_at: new Date().toISOString() }, { onConflict: 'event_id' })
 
+    // Re-fetch shows from DB to confirm persistence before closing
+    const { data: freshShows, error: fetchErr } = await supabase
+      .from('show_list').select('*').eq('event_id', event.id)
+      .order('show_date', { ascending: true }).order('show_time', { ascending: true })
+    console.log('[Shows] Re-fetched from DB after save — data:', freshShows, '  error:', fetchErr)
+    setShows(freshShows || [])
+    setInitialShows(freshShows || [])
+
     setSaving(false)
+    setSaveSuccess(true)
     onSaved(updatedEvent)
-    handleClose()
+    setTimeout(() => {
+      setSaveSuccess(false)
+      handleClose()
+    }, 1000)
   }
 
   const handleDelete = async () => {
@@ -706,10 +726,19 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
             ×
           </button>
         </div>
-        {dirty && (
+        {(dirty || saveSuccess) && (
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px', justifyContent: 'center' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
-            <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
+            {saveSuccess ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 7, background: 'rgba(51,255,153,0.12)', border: '0.5px solid rgba(51,255,153,0.35)' }}>
+                <span style={{ color: '#33FF99', fontSize: 16 }}>✓</span>
+                <span style={{ fontSize: 13, color: '#33FF99', fontWeight: 600 }}>Shows saved</span>
+              </div>
+            ) : (
+              <>
+                <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px', justifyContent: 'center' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
+                <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
+              </>
+            )}
           </div>
         )}
         {saveError && (
@@ -1172,12 +1201,17 @@ export default function BookingPage() {
         }
       }
 
-      // One-time cleanup (per session): remove show_list rows that were auto-created
-      // by the booking page to mirror an event's saturday_date/sunday_date
+      // One-time cleanup (per device): remove show_list rows that were auto-created
+      // by the booking page to mirror an event's saturday_date/sunday_date.
+      // localStorage flag prevents re-running on each refresh, which would delete
+      // user-saved shows that naturally land on saturday/sunday.
       if (!cleanedShowsRef.current) {
         cleanedShowsRef.current = true
-        const supabase = getSupabase()
-        await cleanupAutoCreatedShows(supabase)
+        if (!localStorage.getItem('booking_cleanup_shows_done')) {
+          const supabase = getSupabase()
+          await cleanupAutoCreatedShows(supabase)
+          localStorage.setItem('booking_cleanup_shows_done', '1')
+        }
       }
     }
     fetchAll()

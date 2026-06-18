@@ -147,15 +147,19 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
           {groupRows.map((row) => {
             const zebra = rowCounter % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)'
             rowCounter++
+            const isPending = !row.flagged && !row.travel_date && !row.flight_number && !row.airport && !row.transport
             return (
             <div key={row.id} style={{
               display: 'grid', gridTemplateColumns: GRID, gap: '0 10px',
               padding: '10px 14px', alignItems: 'center',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
-              background: row.flagged ? 'rgba(239,68,68,0.12)' : zebra,
+              background: row.flagged ? 'rgba(239,68,68,0.12)' : isPending ? 'rgba(255,214,10,0.05)' : zebra,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {row.flagged && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171', flexShrink: 0 }} title="Staff no longer confirmed" />}
+                {isPending && (
+                  <div style={{ fontSize: 10, color: '#FFD60A', border: '0.5px solid rgba(255,214,10,0.40)', borderRadius: 4, padding: '1px 5px', flexShrink: 0 }}>Pending</div>
+                )}
                 <span style={{ fontSize: 13, color: row.flagged ? '#f87171' : '#f1f5f9', whiteSpace: 'nowrap' }}>{row.staff_name || '—'}</span>
               </div>
               <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />

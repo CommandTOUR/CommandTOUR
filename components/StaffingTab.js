@@ -508,15 +508,23 @@ export default function StaffingTab({ eventId, event }) {
     if (error) { console.error('Failed to set status:', error); setSaveError('Failed to save status. Please try again.'); fetchAssignments(); return }
     if (assignment.staff_id && !isExec) {
       if (confirmed) {
-        const existing = await supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle()
-        if (!existing.data) {
+        // Check arrivals and departures independently — insert whichever is missing
+        const [arrRes, depRes] = await Promise.all([
+          supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle(),
+          supabase.from('event_travel_departures').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle(),
+        ])
+        if (!arrRes.data) {
           await supabase.from('event_travel_arrivals').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
-          await supabase.from('event_travel_departures').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
         } else {
           await supabase.from('event_travel_arrivals').update({ flagged: false }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
+        }
+        if (!depRes.data) {
+          await supabase.from('event_travel_departures').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
+        } else {
           await supabase.from('event_travel_departures').update({ flagged: false }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
         }
       } else {
+        // Flag both — do NOT remove (flights may already be entered)
         await supabase.from('event_travel_arrivals').update({ flagged: true }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
         await supabase.from('event_travel_departures').update({ flagged: true }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
       }
