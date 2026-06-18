@@ -510,7 +510,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
   const [hovered, setHovered] = useState(null)
   if (years.length === 0) return null
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       {years.map(y => {
         const selected = y === selectedYear
         const isPast = y < currentYear
@@ -567,6 +567,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   const [initialShows, setInitialShows] = useState([])
   const [loadingShows, setLoadingShows] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moveOpen, setMoveOpen] = useState(false)
@@ -603,7 +604,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     setTimeout(onClose, 200)
   }
 
-  const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: '', show_time: '' }])
+  const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_time: '' }])
   const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
 
   const handleDeleteShow = async (idx) => {
@@ -618,26 +619,44 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
   const handleSaveClose = async () => {
     setSaving(true)
+    setSaveError(null)
     const supabase = getSupabase()
-    const { data: updatedEvent, error } = await supabase.from('events').update({
+    const { data: updatedEvent, error: eventError } = await supabase.from('events').update({
       status, load_in_date: loadInDate || null, booking_note: bookingNote,
     }).eq('id', event.id).select().single()
 
+    if (eventError) {
+      setSaving(false)
+      setSaveError('Failed to save: ' + eventError.message)
+      return
+    }
+
+    const showErrors = []
     for (const show of shows) {
       if (!show.id) {
-        if (show.show_date) await supabase.from('show_list').insert([{ event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }])
+        if (show.show_date) {
+          const { error } = await supabase.from('show_list').insert([{ event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }])
+          if (error) showErrors.push(error.message)
+        }
       } else {
         const orig = initialShows.find(s => s.id === show.id)
         if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
-          await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id)
+          const { error } = await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id)
+          if (error) showErrors.push(error.message)
         }
       }
+    }
+
+    if (showErrors.length > 0) {
+      setSaving(false)
+      setSaveError('Show save failed: ' + showErrors[0])
+      return
     }
 
     await supabase.from('event_notes').upsert({ event_id: event.id, content: bookingNote, updated_at: new Date().toISOString() }, { onConflict: 'event_id' })
 
     setSaving(false)
-    if (!error && updatedEvent) onSaved(updatedEvent)
+    onSaved(updatedEvent)
     handleClose()
   }
 
@@ -693,6 +712,9 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
             <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
           </div>
         )}
+        {saveError && (
+          <div style={{ fontSize: 12, color: '#f87171', marginTop: 8 }}>{saveError}</div>
+        )}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -731,16 +753,22 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Loading...</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {shows.map((s, i) => (
-                <div key={s.id || 'new-' + i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input type="date" style={{ ...inputStyle, flex: 2 }} value={s.show_date || ''} onChange={e => handleShowChange(i, { show_date: e.target.value })} />
-                  <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} />
-                  <div onClick={() => handleDeleteShow(i)}
-                    style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
-                    onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
-                </div>
-              ))}
+              {shows.map((s, i) => {
+                const showDateErr = s.show_date && loadInDate && s.show_date < loadInDate
+                return (
+                  <div key={s.id || 'new-' + i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input type="date" style={{ ...inputStyle, flex: 2 }} value={s.show_date || ''} min={loadInDate || ''} onChange={e => handleShowChange(i, { show_date: e.target.value })} />
+                      <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} />
+                      <div onClick={() => handleDeleteShow(i)}
+                        style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
+                    </div>
+                    {showDateErr && <div style={{ fontSize: 11, color: '#f87171' }}>Show date cannot be before load-in date</div>}
+                  </div>
+                )
+              })}
               <button onClick={handleAddShow} style={mintOutlineBtn}>+ Add Show</button>
             </div>
           )}
@@ -1395,7 +1423,7 @@ export default function BookingPage() {
 
       <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 0', background: 'var(--bg)' }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>All Events</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
           <YearPills
             years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
             dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
@@ -1404,7 +1432,7 @@ export default function BookingPage() {
           {pastWeekCount > 0 && (
             <button
               onClick={() => setShowPastWeeks(s => !s)}
-              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.20)', color: '#94a3b8', borderRadius: 999, fontSize: 12, padding: '4px 14px', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', flexShrink: 0 }}
+              style={{ background: '#FFD60A', color: '#0a1628', fontWeight: 700, borderRadius: 999, fontSize: 12, padding: '4px 14px', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', border: 'none', flexShrink: 0 }}
             >
               {showPastWeeks ? 'Hide Past Weeks' : `Show Past Weeks (${pastWeekCount})`}
             </button>
@@ -1433,6 +1461,7 @@ export default function BookingPage() {
 
       {activeCell && activeCell.type === 'panel' && (
         <EventSidePanel
+          key={activeCell.event.id}
           event={activeCell.event}
           tour={activeCell.tour}
           tours={tours}
