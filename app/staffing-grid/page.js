@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { confirmStaffMember } from '../../lib/confirmStaffMember'
 
 const DEPARTMENT_ORDER = [
   'Operations',
@@ -455,6 +456,11 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
       onAssignSuccess(eventId, { ...localRow, id: newRow.id })
     }
     // If the targeted fetch fails, the optimistic row stays — pill remains visible
+
+    if (!isExec && staffMember.id) {
+      const { error: travelErr } = await confirmStaffMember({ supabase, eventId, staffId: staffMember.id, confirm: true })
+      if (travelErr) console.error('Travel auto-populate failed:', travelErr)
+    }
   }
 
   const handleAssign = (staffMember, avail) => {
@@ -470,11 +476,11 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     const supabase = getSupabase()
     const confirmed = newStatus === 'confirmed'
     await supabase.from('event_staff').update({ status: newStatus, confirmed }).eq('id', assignment.id)
-    if (confirmed && assignment.staff_id) {
-      const existing = await supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle()
-      if (!existing.data) {
-        await supabase.from('event_travel_arrivals').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
-        await supabase.from('event_travel_departures').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
+    if (assignment.staff_id && !isExec) {
+      const wasConfirmed = assignment.status === 'confirmed'
+      if (confirmed || wasConfirmed) {
+        const { error } = await confirmStaffMember({ supabase, eventId, staffId: assignment.staff_id, confirm: confirmed })
+        if (error) console.error('Travel sync failed:', error)
       }
     }
     onCloseActive()
@@ -659,6 +665,13 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, currentEventId
         }
       }
     }
+    const travelRows = selectedRows.filter(a => !a.position_key?.startsWith('exec__'))
+    await Promise.all(checked.flatMap(evId =>
+      travelRows.map(a =>
+        confirmStaffMember({ supabase, eventId: evId, staffId: a.staff_id, confirm: true })
+          .then(({ error }) => { if (error) console.error('[copy] travel sync failed:', error) })
+      )
+    ))
     const staffCount = selectedRows.length
     const evCount = checked.length
     setDone({ staffCount, evCount })
@@ -913,6 +926,14 @@ export default function StaffingGrid() {
     const ids = Array.from(selectedIds)
     const confirmed = status === 'confirmed'
     await supabase.from('event_staff').update({ status, confirmed }).in('id', ids)
+    if (confirmed) {
+      const allRows = Object.values(assignments).flat()
+      const selectedRows = allRows.filter(a => ids.includes(a.id) && a.staff_id && !a.position_key?.startsWith('exec__'))
+      await Promise.all(selectedRows.map(a =>
+        confirmStaffMember({ supabase, eventId: a.event_id, staffId: a.staff_id, confirm: true })
+          .then(({ error }) => { if (error) console.error('Travel bulk sync failed:', error) })
+      ))
+    }
     setAssignments(prev => {
       const next = { ...prev }
       for (const eid of Object.keys(next)) {

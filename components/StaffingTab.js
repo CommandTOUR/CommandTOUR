@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
+import { confirmStaffMember } from '../lib/confirmStaffMember'
 
 const HWSS_DEPARTMENTS = [
   { name: 'Operations', positions: ['Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator', 'Registrar / GLT', 'Paddock Coordinator', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3'] },
@@ -507,27 +508,8 @@ export default function StaffingTab({ eventId, event }) {
     const { error } = await supabase.from('event_staff').update({ status: newStatus, confirmed }).eq('id', assignment.id)
     if (error) { console.error('Failed to set status:', error); setSaveError('Failed to save status. Please try again.'); fetchAssignments(); return }
     if (assignment.staff_id && !isExec) {
-      if (confirmed) {
-        // Check arrivals and departures independently — insert whichever is missing
-        const [arrRes, depRes] = await Promise.all([
-          supabase.from('event_travel_arrivals').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle(),
-          supabase.from('event_travel_departures').select('id').eq('event_id', eventId).eq('staff_id', assignment.staff_id).maybeSingle(),
-        ])
-        if (!arrRes.data) {
-          await supabase.from('event_travel_arrivals').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
-        } else {
-          await supabase.from('event_travel_arrivals').update({ flagged: false }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
-        }
-        if (!depRes.data) {
-          await supabase.from('event_travel_departures').insert([{ event_id: eventId, staff_id: assignment.staff_id }])
-        } else {
-          await supabase.from('event_travel_departures').update({ flagged: false }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
-        }
-      } else {
-        // Flag both — do NOT remove (flights may already be entered)
-        await supabase.from('event_travel_arrivals').update({ flagged: true }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
-        await supabase.from('event_travel_departures').update({ flagged: true }).eq('event_id', eventId).eq('staff_id', assignment.staff_id)
-      }
+      const { error: travelError } = await confirmStaffMember({ supabase, eventId, staffId: assignment.staff_id, confirm: confirmed })
+      if (travelError) console.error('Travel sync failed:', travelError)
     }
     fetchAssignments()
   }
