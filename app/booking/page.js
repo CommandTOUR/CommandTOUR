@@ -171,44 +171,6 @@ async function linkExistingEvents(supabase) {
   return updates
 }
 
-// One-time cleanup: remove show_list rows that were auto-created by the booking
-// page to mirror an event's saturday_date/sunday_date. If an event's show_list
-// entries all exactly match its weekend dates (nothing manual was added), delete
-// them — saturday_date/sunday_date are reference dates only, not actual shows.
-async function cleanupAutoCreatedShows(supabase) {
-  const { data: showList, error } = await supabase
-    .from('show_list')
-    .select('id, event_id, show_date')
-
-  if (error || !showList || showList.length === 0) return
-
-  const { data: events, error: eventsError } = await supabase
-    .from('events')
-    .select('id, saturday_date, sunday_date')
-
-  if (eventsError || !events) return
-
-  const eventById = new Map(events.map(e => [e.id, e]))
-  const showsByEvent = new Map()
-  for (const show of showList) {
-    if (!showsByEvent.has(show.event_id)) showsByEvent.set(show.event_id, [])
-    showsByEvent.get(show.event_id).push(show)
-  }
-
-  const idsToDelete = []
-  for (const [eventId, shows] of showsByEvent) {
-    const event = eventById.get(eventId)
-    if (!event) continue
-    const allMatch = shows.every(s => s.show_date === event.saturday_date || s.show_date === event.sunday_date)
-    if (allMatch) idsToDelete.push(...shows.map(s => s.id))
-  }
-
-  if (idsToDelete.length > 0) {
-    await supabase.from('show_list').delete().in('id', idsToDelete)
-  }
-  console.log(`Cleaned up ${idsToDelete.length} auto-created show entries`)
-}
-
 // ── HOLIDAYS ──────────────────────────────────────────────────────────────────
 
 function nthWeekday(year, month, weekday, n) {
@@ -1175,7 +1137,6 @@ export default function BookingPage() {
   const [showPastWeeks, setShowPastWeeks] = useState(false)
 
   const linkedEventsRef = useRef(false)
-  const cleanedShowsRef = useRef(false)
   const activeCellElRef = useRef(null)
   const pillHoverTimerRef = useRef(null)
 
@@ -1201,18 +1162,6 @@ export default function BookingPage() {
         }
       }
 
-      // One-time cleanup (per device): remove show_list rows that were auto-created
-      // by the booking page to mirror an event's saturday_date/sunday_date.
-      // localStorage flag prevents re-running on each refresh, which would delete
-      // user-saved shows that naturally land on saturday/sunday.
-      if (!cleanedShowsRef.current) {
-        cleanedShowsRef.current = true
-        if (!localStorage.getItem('booking_cleanup_shows_done')) {
-          const supabase = getSupabase()
-          await cleanupAutoCreatedShows(supabase)
-          localStorage.setItem('booking_cleanup_shows_done', '1')
-        }
-      }
     }
     fetchAll()
   }, [])
