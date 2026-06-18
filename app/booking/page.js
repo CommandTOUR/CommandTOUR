@@ -689,7 +689,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
         </div>
         {dirty && (
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
+            <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px', justifyContent: 'center' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
             <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
           </div>
         )}
@@ -1033,7 +1033,7 @@ function YearGrid({
                 const rowBg = isCurrentWeek ? 'rgba(51,255,153,0.06)' : (row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent')
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 8px', fontSize: 11, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: isCurrentWeek ? '3px solid #33FF99' : '3px solid transparent', padding: '0 8px', fontSize: 11, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
                       {row.weekNum}
                     </td>
                     <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: row.holiday ? '3px solid #63b3ed' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
@@ -1115,6 +1115,7 @@ export default function BookingPage() {
   const [hoveredPillYear, setHoveredPillYear] = useState(null)
 
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
+  const [showPastWeeks, setShowPastWeeks] = useState(false)
 
   const linkedEventsRef = useRef(false)
   const cleanedShowsRef = useRef(false)
@@ -1384,23 +1385,37 @@ export default function BookingPage() {
 
   const { rows, yearTours, eventMap } = buildYearData(selectedYear)
 
+  const today = toYMD(new Date())
+  const pastWeekCount = rows.filter(row => row.sunday < today).length
+  const visibleRows = showPastWeeks ? rows : rows.filter(row => row.sunday >= today)
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
       <TopNav />
 
       <div style={{ marginTop: 62, flexShrink: 0, padding: '14px 28px 0', background: 'var(--bg)' }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>All Events</div>
-        <YearPills
-          years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
-          dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
-          onPillDragOver={handlePillDragOver} onPillDragLeave={handlePillDragLeave}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <YearPills
+            years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
+            dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
+            onPillDragOver={handlePillDragOver} onPillDragLeave={handlePillDragLeave}
+          />
+          {pastWeekCount > 0 && (
+            <button
+              onClick={() => setShowPastWeeks(s => !s)}
+              style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.20)', color: '#94a3b8', borderRadius: 999, fontSize: 12, padding: '4px 14px', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', flexShrink: 0 }}
+            >
+              {showPastWeeks ? 'Hide Past Weeks' : `Show Past Weeks (${pastWeekCount})`}
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ flex: 1, padding: '14px 28px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <YearGrid
           year={selectedYear}
-          rows={rows}
+          rows={visibleRows}
           yearTours={yearTours}
           eventMap={eventMap}
           currentWeekendSaturday={currentWeekendSaturday}

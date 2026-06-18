@@ -368,7 +368,7 @@ export default function EventPage() {
                             )}
                           </div>
                           <div style={{ fontSize: 13, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                            Show #{i + 1} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
+                            Show #{i + 1} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? <span style={{ color: '#94a3b8' }}> · {fmtTime(show.show_time)}</span> : ''}
                           </div>
                         </div>
                       ))}
