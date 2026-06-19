@@ -21,7 +21,7 @@ export default function StaffProfile() {
         supabase.from('staff').select('*').eq('id', staffId).single(),
         supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
         supabase.from('event_staff')
-          .select('position, confirmed, events(id, city, country, load_in_date, event_type, tour_id, tours(name, color))')
+          .select('position, status, confirmed, events(id, city, country, load_in_date, event_type, tour_id, tours(name, color))')
           .eq('staff_id', staffId)
           .order('created_at', { ascending: false }),
       ])
@@ -76,10 +76,22 @@ export default function StaffProfile() {
   const upcomingEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') >= now)
   const pastEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') < now)
 
+  const STAFF_STATUS = {
+    confirmed: { color: '#33FF99', label: 'Confirmed' },
+    pending: { color: '#FFD60A', label: 'Pending' },
+    needs_attention: { color: '#f87171', label: 'Needs Attention' },
+  }
+  function normalizeStaffStatus(s) {
+    if (s === 'scheduled') return 'pending'
+    if (s === 'attention') return 'needs_attention'
+    return s
+  }
+
   const EventTile = ({ es }) => {
     const ev = es.events
     if (!ev) return null
     const tourColor = ev.tours?.color || 'var(--mint)'
+    const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
     return (
       <div
         className="glass-card"
@@ -102,10 +114,8 @@ export default function StaffProfile() {
           {es.position}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: es.confirmed ? '#33FF99' : '#d97706', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: es.confirmed ? '#33FF99' : '#d97706' }}>
-            {es.confirmed ? 'Confirmed' : 'Scheduled'}
-          </span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: st.color }}>{st.label}</span>
         </div>
       </div>
     )

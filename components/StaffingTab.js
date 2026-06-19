@@ -36,17 +36,23 @@ function buildPositionKeys(departments) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Scheduled', color: '#FFD60A', dot: '#FFD60A', bg: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
+  { value: 'pending', label: 'Pending', color: '#FFD60A', dot: '#FFD60A', bg: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
   { value: 'confirmed', label: 'Confirmed', color: '#33FF99', dot: '#33FF99', bg: 'rgba(51,255,153,0.15)', border: 'rgba(51,255,153,0.30)' },
-  { value: 'attention', label: 'Attention', color: '#f87171', dot: '#f87171', bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.30)' },
+  { value: 'needs_attention', label: 'Needs Attention', color: '#f87171', dot: '#f87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.30)' },
 ]
 
-function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
+function normalizeStatus(s) {
+  if (s === 'scheduled') return 'pending'
+  if (s === 'attention') return 'needs_attention'
+  return s
+}
+
+function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === normalizeStatus(status)) || STATUS_OPTIONS[0] }
 
 function StatusPill({ status, onChange }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
-  const current = getStatusStyle(status || 'scheduled')
+  const current = getStatusStyle(normalizeStatus(status) || 'pending')
   useEffect(() => {
     const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handleClick)
@@ -312,8 +318,15 @@ function TravelTypeSelect({ assignment, onSave }) {
   )
 }
 
-function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, event, onAssign, onClear, onRemove, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, isLast, GRID, showTravelToGrid = true }) {
+function fmtTravelDate(d) {
+  if (!d) return '—'
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, event, onAssign, onClear, onRemove, onSetStatus, onSaveNotes, travelArrivals, travelDepartures, isLast, GRID, showTravelToGrid = true }) {
   const isOpen = !assignment?.staff_id
+  const travelInDate = showTravelToGrid && assignment?.staff_id ? (travelArrivals[assignment.staff_id] || null) : null
+  const travelOutDate = showTravelToGrid && assignment?.staff_id ? (travelDepartures[assignment.staff_id] || null) : null
   return (
     <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '11px 16px', borderBottom: isLast ? 'none' : '0.5px solid rgba(255,255,255,0.06)', alignItems: 'center', background: 'transparent' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -328,18 +341,16 @@ function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, even
       <AssignedCell assignment={assignment} staff={staff} positionKey={positionKey} eventId={eventId} event={event} onAssign={onAssign} onClear={onClear} />
       <div>
         {assignment?.staff_id
-          ? <StatusPill status={assignment.status || 'scheduled'} onChange={(s) => onSetStatus(positionKey, s)} />
+          ? <StatusPill status={normalizeStatus(assignment.status) || 'pending'} onChange={(s) => onSetStatus(positionKey, s)} />
           : <span style={{ fontSize: 13, color: '#64748b', opacity: 0.3 }}>—</span>}
       </div>
-      {/* Travel In */}
-      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_in_date} onSave={(d) => onSaveTravelIn(assignment.id, d)} /> : <span style={{ fontSize: 13, color: '#64748b', opacity: 0.3 }}>—</span>}</div>
-      {/* Travel Out */}
-      <div>{assignment && showTravelToGrid ? <DateCell value={assignment.travel_out_date} onSave={(d) => onSaveTravelOut(assignment.id, d)} /> : <span style={{ fontSize: 13, color: '#64748b', opacity: 0.3 }}>—</span>}</div>
-      {/* Travel Type — always a dropdown, disabled when no assignment */}
-      <div>
-        {showTravelToGrid
-          ? <TravelTypeSelect assignment={assignment || {}} onSave={onSaveTravelType} />
-          : <span style={{ fontSize: 13, color: '#64748b', opacity: 0.3 }}>—</span>}
+      {/* Travel In — read-only from Travel & Hotel tab */}
+      <div style={{ fontSize: 13, color: travelInDate ? '#f1f5f9' : '#64748b', opacity: travelInDate ? 1 : 0.5 }}>
+        {showTravelToGrid ? fmtTravelDate(travelInDate) : '—'}
+      </div>
+      {/* Travel Out — read-only from Travel & Hotel tab */}
+      <div style={{ fontSize: 13, color: travelOutDate ? '#f1f5f9' : '#64748b', opacity: travelOutDate ? 1 : 0.5 }}>
+        {showTravelToGrid ? fmtTravelDate(travelOutDate) : '—'}
       </div>
       {/* Notes */}
       <div>{assignment ? <NotesCell assignment={assignment} onSave={onSaveNotes} /> : <span style={{ fontSize: 13, color: '#64748b', opacity: 0.3 }}>—</span>}</div>
@@ -353,7 +364,7 @@ function StaffRow({ assignment, staff, positionLabel, positionKey, eventId, even
   )
 }
 
-function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePositions, unlockedExtraRows, eventId, event, onAssign, onClear, onRemovePosition, onSetStatus, onSaveNotes, onSaveTravelIn, onSaveTravelOut, onSaveTravelType, GRID }) {
+function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePositions, unlockedExtraRows, eventId, event, onAssign, onClear, onRemovePosition, onSetStatus, onSaveNotes, travelArrivals, travelDepartures, GRID }) {
   const [open, setOpen] = useState(true)
   const templateKeys = positionKeys.filter(p => p.dept === dept.name && !hiddenTemplatePositions.includes(p.key))
   const extraKeys = (unlockedExtraRows || []).filter(p => p.dept === dept.name)
@@ -374,8 +385,8 @@ function DepartmentSection({ dept, positionKeys, assignments, hiddenTemplatePosi
         return (
           <StaffRow key={pk.key} assignment={assignment} staff={assignment?.staff} positionLabel={pk.position} positionKey={pk.key}
             eventId={eventId} event={event} onAssign={onAssign} onClear={onClear} onRemove={onRemovePosition}
-            onSetStatus={onSetStatus} onSaveNotes={onSaveNotes} onSaveTravelIn={onSaveTravelIn}
-            onSaveTravelOut={onSaveTravelOut} onSaveTravelType={onSaveTravelType}
+            onSetStatus={onSetStatus} onSaveNotes={onSaveNotes}
+            travelArrivals={travelArrivals} travelDepartures={travelDepartures}
             isLast={i === deptKeys.length - 1} GRID={GRID} showTravelToGrid={true} />
         )
       })}
@@ -394,6 +405,8 @@ export default function StaffingTab({ eventId, event }) {
   const [newPositionDept, setNewPositionDept] = useState('')
   const [execOpen, setExecOpen] = useState(true)
   const [saveError, setSaveError] = useState(null)
+  const [travelArrivals, setTravelArrivals] = useState({})
+  const [travelDepartures, setTravelDepartures] = useState({})
 
   const departments = getDepartments(event?.event_type)
   const positionKeys = buildPositionKeys(departments)
@@ -424,9 +437,11 @@ export default function StaffingTab({ eventId, event }) {
 
   const fetchAssignments = async () => {
     const supabase = getSupabase()
-    const [staffRes, eventRes] = await Promise.all([
+    const [staffRes, eventRes, arrRes, depRes] = await Promise.all([
       supabase.from('event_staff').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
       supabase.from('events').select('hidden_positions, unlocked_positions').eq('id', eventId).single(),
+      supabase.from('event_travel_arrivals').select('staff_id, travel_date').eq('event_id', eventId),
+      supabase.from('event_travel_departures').select('staff_id, travel_date').eq('event_id', eventId),
     ])
     const rows = staffRes.data || []
     const staffIds = [...new Set(rows.map(r => r.staff_id).filter(Boolean))]
@@ -438,6 +453,12 @@ export default function StaffingTab({ eventId, event }) {
     setAssignments(rows.map(r => ({ ...r, staff: r.staff_id ? (staffMap[r.staff_id] || null) : null })))
     setHiddenTemplatePositions(eventRes.data?.hidden_positions || [])
     setUnlockedPositions(eventRes.data?.unlocked_positions || [])
+    const arrMap = {}
+    for (const r of (arrRes.data || [])) { if (r.staff_id) arrMap[r.staff_id] = r.travel_date }
+    const depMap = {}
+    for (const r of (depRes.data || [])) { if (r.staff_id) depMap[r.staff_id] = r.travel_date }
+    setTravelArrivals(arrMap)
+    setTravelDepartures(depMap)
     setLoading(false)
   }
 
@@ -464,9 +485,9 @@ export default function StaffingTab({ eventId, event }) {
     const existing = getAssignmentByKey(positionKey)
     let error
     if (existing) {
-      ;({ error } = await supabase.from('event_staff').update({ staff_id: staffMember.id, status: 'scheduled', confirmed: false }).eq('id', existing.id))
+      ;({ error } = await supabase.from('event_staff').update({ staff_id: staffMember.id, status: 'pending', confirmed: false }).eq('id', existing.id))
     } else {
-      ;({ error } = await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionLabel, position_key: positionKey, status: 'scheduled', confirmed: false }]))
+      ;({ error } = await supabase.from('event_staff').insert([{ event_id: eventId, staff_id: staffMember.id, position: positionLabel, position_key: positionKey, status: 'pending', confirmed: false }]))
     }
     if (error) { console.error('Failed to assign staff:', error); setSaveError('Failed to assign staff. Please try again.') }
     fetchAssignments()
@@ -543,7 +564,7 @@ export default function StaffingTab({ eventId, event }) {
     if (!newPositionLabel.trim() || !newPositionDept) return
     const supabase = getSupabase()
     const key = `custom__${newPositionDept}__${newPositionLabel.trim()}__${Date.now()}`
-    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: newPositionLabel.trim(), position_key: key, confirmed: false, status: 'scheduled' }])
+    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: newPositionLabel.trim(), position_key: key, confirmed: false, status: 'pending' }])
     if (error) { console.error('Failed to add position:', error); setSaveError('Failed to add position. Please try again.'); return }
     setNewPositionLabel(''); setNewPositionDept(''); setAddingPosition(false); fetchAssignments()
   }
@@ -551,7 +572,7 @@ export default function StaffingTab({ eventId, event }) {
   const handleAddExec = async (type) => {
     const supabase = getSupabase()
     const key = `exec__${type}__${Date.now()}`
-    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: type, position_key: key, confirmed: false, status: 'scheduled' }])
+    const { error } = await supabase.from('event_staff').insert([{ event_id: eventId, position: type, position_key: key, confirmed: false, status: 'pending' }])
     if (error) { console.error('Failed to add exec:', error); setSaveError('Failed to add. Please try again.'); return }
     fetchAssignments()
   }
@@ -570,7 +591,7 @@ export default function StaffingTab({ eventId, event }) {
   const filledCount = assignments.filter(a => a.staff_id && !a.position_key?.startsWith('exec__')).length
   const totalCount = positionKeys.filter(p => !hiddenTemplatePositions.includes(p.key)).length + customAssignments.length
 
-  const GRID = '28px 180px 160px 110px 100px 100px 110px 1fr 44px'
+  const GRID = '28px 180px 160px 110px 100px 100px 1fr 44px'
 
   if (loading) return <div style={{ fontSize: 14, color: '#94a3b8' }}>Loading...</div>
 
@@ -624,7 +645,7 @@ export default function StaffingTab({ eventId, event }) {
       <div style={{ flex: 1, overflowY: 'auto', borderRadius: 12, border: '0.5px solid rgba(255,255,255,0.12)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '8px 16px', position: 'sticky', top: 0, zIndex: 10, background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)' }}>
           <div />
-          {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Travel Type', 'Notes', ''].map((h, i) => (
+          {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Notes', ''].map((h, i) => (
             <div key={i} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
           ))}
         </div>
@@ -633,8 +654,8 @@ export default function StaffingTab({ eventId, event }) {
           <DepartmentSection key={dept.name} dept={dept} positionKeys={positionKeys} assignments={assignments}
             hiddenTemplatePositions={hiddenTemplatePositions} unlockedExtraRows={unlockedExtraRows} eventId={eventId} event={event}
             onAssign={handleAssign} onClear={handleClearPosition} onRemovePosition={handleRemovePosition}
-            onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes} onSaveTravelIn={handleSaveTravelIn}
-            onSaveTravelOut={handleSaveTravelOut} onSaveTravelType={handleSaveTravelType} GRID={GRID} />
+            onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes}
+            travelArrivals={travelArrivals} travelDepartures={travelDepartures} GRID={GRID} />
         ))}
 
         {deptNames.map(deptName => {
@@ -645,8 +666,8 @@ export default function StaffingTab({ eventId, event }) {
               positionLabel={assignment.position} positionKey={assignment.position_key}
               eventId={eventId} event={event} onAssign={handleAssign} onClear={handleClearPosition}
               onRemove={handleRemovePosition} onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes}
-              onSaveTravelIn={handleSaveTravelIn} onSaveTravelOut={handleSaveTravelOut}
-              onSaveTravelType={handleSaveTravelType} isLast={i === deptCustom.length - 1} GRID={GRID} showTravelToGrid={true} />
+              travelArrivals={travelArrivals} travelDepartures={travelDepartures}
+              isLast={i === deptCustom.length - 1} GRID={GRID} showTravelToGrid={true} />
           ))
         })}
 
@@ -675,8 +696,8 @@ export default function StaffingTab({ eventId, event }) {
               positionLabel={assignment.position} positionKey={assignment.position_key}
               eventId={eventId} event={event} onAssign={handleAssign} onClear={handleClearPosition}
               onRemove={handleRemoveExec} onSetStatus={handleSetStatus} onSaveNotes={handleSaveNotes}
-              onSaveTravelIn={handleSaveTravelIn} onSaveTravelOut={handleSaveTravelOut}
-              onSaveTravelType={handleSaveTravelType} isLast={i === execAssignments.length - 1} GRID={GRID} showTravelToGrid={false} />
+              travelArrivals={travelArrivals} travelDepartures={travelDepartures}
+              isLast={i === execAssignments.length - 1} GRID={GRID} showTravelToGrid={false} />
           ))}
           {execOpen && execAssignments.length === 0 && (
             <div style={{ padding: '14px 16px', fontSize: 13, color: '#64748b' }}>No executives or visitors added.</div>

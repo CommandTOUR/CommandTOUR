@@ -1,10 +1,22 @@
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { confirmStaffMember } from '../../lib/confirmStaffMember'
+
+function normalizeStatus(s) {
+  if (s === 'scheduled') return 'pending'
+  if (s === 'attention') return 'needs_attention'
+  return s
+}
+
+function fmtDate(d) {
+  if (!d) return '—'
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 const DEPARTMENT_ORDER = [
   'Operations',
@@ -124,17 +136,17 @@ function formatStatusLabel(status) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'scheduled', label: 'Pending', color: '#FFCC00', pill: 'rgba(255,204,0,0.15)', border: 'rgba(255,204,0,0.5)' },
-  { value: 'confirmed', label: 'Confirmed', color: '#ffffff', pill: 'rgba(255,255,255,0.12)', border: 'rgba(255,255,255,0.3)' },
-  { value: 'attention', label: 'Attention', color: '#FF3333', pill: 'rgba(255,51,51,0.15)', border: 'rgba(255,51,51,0.5)' },
+  { value: 'pending', label: 'Pending', color: '#FFD60A', pill: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.5)' },
+  { value: 'confirmed', label: 'Confirmed', color: '#33FF99', pill: 'rgba(51,255,153,0.12)', border: 'rgba(51,255,153,0.3)' },
+  { value: 'needs_attention', label: 'Needs Attention', color: '#f87171', pill: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.5)' },
 ]
 
-function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0] }
+function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === normalizeStatus(status)) || STATUS_OPTIONS[0] }
 
-const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 7px)'
+const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 7px)'
 const LOCKED_BG_COLOR = '#0a1628'
 
-const STAFF_NAME_COLORS = { confirmed: '#e2e8f0', scheduled: '#FFD60A', attention: '#f87171' }
+const STAFF_NAME_COLORS = { confirmed: '#e2e8f0', pending: '#FFD60A', needs_attention: '#f87171' }
 const STAFF_NAME_WEIGHTS = { confirmed: 400, scheduled: 400, attention: 400 }
 
 // SVG lock icon (locked = closed padlock "ti-lock", unlocked = open padlock "ti-lock-open")
@@ -178,7 +190,7 @@ function isHatchedCell(posRow, event, eventMeta) {
 // Rendered inside an empty cell once it enters edit mode. Typing filters an
 // autocomplete dropdown; arrow keys navigate it, Enter selects, Escape cancels.
 
-function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) {
+function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, allBookings }) {
   const [query, setQuery] = useState(initialValue || '')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
@@ -204,34 +216,30 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue }) 
         .order('last_name', { ascending: true }).limit(8)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
       setResults(staffData)
-      const staffIds = staffData.map(s => s.id)
-      const { data: bookings } = await supabase.from('event_staff')
-        .select('staff_id, event_id, events(id, city, load_in_date, load_out_date)')
-        .in('staff_id', staffIds)
       const loadIn = event && event.load_in_date
       const loadOut = (event && event.load_out_date) || loadIn
       const avail = {}
-      staffIds.forEach(staffId => {
-        const records = (bookings || []).filter(r => r.staff_id === staffId)
-        if (records.length === 0) { avail[staffId] = { status: 'free' }; return }
+      for (const s of staffData) {
+        const records = (allBookings && allBookings[s.id]) || []
+        if (records.length === 0) { avail[s.id] = { status: 'free' }; continue }
         const sameEvent = records.find(r => r.event_id === eventId)
-        if (sameEvent) { avail[staffId] = { status: 'same_event' }; return }
+        if (sameEvent) { avail[s.id] = { status: 'same_event' }; continue }
         if (loadIn) {
           const conflict = records.find(r => {
-            const s = r.events && r.events.load_in_date
-            const e = (r.events && r.events.load_out_date) || s
-            if (!s) return false
-            return loadIn <= e && loadOut >= s
+            const s2 = r.load_in_date
+            const e2 = r.load_out_date || s2
+            if (!s2) return false
+            return loadIn <= e2 && loadOut >= s2
           })
-          if (conflict) { avail[staffId] = { status: 'conflict', city: conflict.events && conflict.events.city }; return }
+          if (conflict) { avail[s.id] = { status: 'conflict', city: conflict.city, event_id: conflict.event_id }; continue }
         }
-        avail[staffId] = { status: 'free' }
-      })
+        avail[s.id] = { status: 'free' }
+      }
       setAvailability(avail)
       setLoading(false)
     }, 200)
     return () => clearTimeout(timer)
-  }, [query, event, eventId])
+  }, [query, event, eventId, allBookings])
 
   const availStatus = (id) => availability[id]?.status || null
   const tipText = (id) => {
@@ -343,9 +351,9 @@ function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
       {STATUS_OPTIONS.map(opt => (
         <div key={opt.value}
           onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value) }}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', background: assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', background: assignment && normalizeStatus(assignment.status) === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}>
+          onMouseLeave={e => { e.currentTarget.style.background = assignment && normalizeStatus(assignment.status) === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: opt.color }}>{opt.label}</span>
         </div>
@@ -364,19 +372,28 @@ function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
 
 // ── CONFIRM OVERRIDE ──────────────────────────────────────────────────────────
 
-function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
+function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }) {
   const isSame = avail && avail.status === 'same_event'
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+  if (typeof document === 'undefined') return null
+  return ReactDOM.createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 440 }}>
         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>
           {isSame ? 'Already On This Event' : 'Double Booking Warning'}
         </div>
-        <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
+        <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: travelInfo ? 16 : 20 }}>
           {isSame
-            ? staffMember.first_name + ' ' + staffMember.last_name + ' is already assigned to another position on this event. Assign them here as well?'
-            : staffMember.first_name + ' ' + staffMember.last_name + ' is already booked' + (avail && avail.city ? ' in ' + avail.city : ' on another event') + '. Assign anyway?'}
+            ? staffMember.first_name + ' ' + staffMember.last_name + ' is already assigned to another position on this event.'
+            : staffMember.first_name + ' ' + staffMember.last_name + ' is already booked' + (avail?.city ? ' in ' + avail.city : ' on another event') + '.'}
         </div>
+        {travelInfo && !isSame && (
+          <div style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: '#f87171', lineHeight: 1.8 }}>
+            ⚠ {staffMember.first_name} has existing travel booked for {avail?.city}:
+            {travelInfo.arrival?.travel_date && <><br />Arrival: {fmtDate(travelInfo.arrival.travel_date)}{travelInfo.arrival.flight_number ? ' · ' + travelInfo.arrival.flight_number : ''}</>}
+            {travelInfo.departure?.travel_date && <><br />Departure: {fmtDate(travelInfo.departure.travel_date)}{travelInfo.departure.flight_number ? ' · ' + travelInfo.departure.flight_number : ''}</>}
+            <br />Reassigning will require travel changes.
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
@@ -384,25 +401,34 @@ function ConfirmOverride({ staffMember, avail, onConfirm, onCancel }) {
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
-          <button onClick={onConfirm} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Assign Anyway</button>
+          <button onClick={onConfirm} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>
+            {isSame ? 'Assign Dual Roles' : 'Reassign'}
+          </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
 // ── GRID CELL ─────────────────────────────────────────────────────────────────
 
-function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, isSelected, onToggleSelect, onRightClick, cellColor, COL_WIDTH, ROW_HEIGHT, borderRight }) {
+function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, isDragTarget, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
   const isExec = positionRow.isExec
   const staffName = assignment && assignment.staff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
 
-  const doAssign = async (staffMember) => {
+  const doAssign = async (staffMember, removeFromEventId = null) => {
     setConfirmOverride(null)
     const supabase = getSupabase()
+    if (removeFromEventId) {
+      await supabase.from('event_staff')
+        .update({ staff_id: null, status: 'pending', confirmed: false })
+        .eq('event_id', removeFromEventId)
+        .eq('staff_id', staffMember.id)
+    }
     const status = isExec ? null : 'confirmed'
     const confirmed = status === 'confirmed'
 
@@ -463,9 +489,20 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     }
   }
 
-  const handleAssign = (staffMember, avail) => {
+  const handleAssign = async (staffMember, avail) => {
     if (avail && (avail.status === 'conflict' || avail.status === 'same_event')) {
-      setConfirmOverride({ staffMember, avail })
+      let travelInfo = null
+      if (avail.status === 'conflict' && avail.event_id) {
+        const supabase = getSupabase()
+        const [arrRes, depRes] = await Promise.all([
+          supabase.from('event_travel_arrivals').select('travel_date, flight_number').eq('event_id', avail.event_id).eq('staff_id', staffMember.id).maybeSingle(),
+          supabase.from('event_travel_departures').select('travel_date, flight_number').eq('event_id', avail.event_id).eq('staff_id', staffMember.id).maybeSingle(),
+        ])
+        if (arrRes.data?.travel_date || depRes.data?.travel_date) {
+          travelInfo = { arrival: arrRes.data, departure: depRes.data }
+        }
+      }
+      setConfirmOverride({ staffMember, avail, travelInfo })
       return
     }
     doAssign(staffMember)
@@ -497,7 +534,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
 
   const isLocked = isHatched && !assignment
   const isEmptyAssignable = !assignment && !isHatched && !isActive
-  const status = assignment?.status
+  const status = normalizeStatus(assignment?.status)
   const nameColor = cellColor?.text || (isExec ? '#e2e8f0' : (STAFF_NAME_COLORS[status] || '#FFD60A'))
   const nameWeight = isExec ? 500 : (STAFF_NAME_WEIGHTS[status] || 500)
 
@@ -522,23 +559,32 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '0 8px', cursor: isActive ? 'default' : 'pointer',
-          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
+          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isDragTarget ? 'rgba(51,255,153,0.10)' : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
           textAlign: 'center', verticalAlign: 'middle',
-          boxSizing: 'border-box', borderRight, borderBottom: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
+          boxSizing: 'border-box', borderRight,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          border: isLocked ? '1px solid rgba(255,255,255,0.08)' : undefined,
+          borderRight: isLocked ? undefined : borderRight,
+          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : isDragTarget ? 'inset 0 0 0 1.5px #33FF99' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={handleCellClick}
-        onContextMenu={staffName ? (e) => { e.preventDefault(); onRightClick(e.clientX, e.clientY, eventId, positionRow.key) } : undefined}>
+        onContextMenu={staffName ? (e) => { e.preventDefault(); onRightClick(e.clientX, e.clientY, eventId, positionRow.key) } : undefined}
+        onDragOver={e => { if (!isHatched && !isActive) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } }}
+        onDrop={e => { e.preventDefault(); onCellDrop && onCellDrop(eventId, positionRow.key) }}>
         {isActive && activeType === 'edit' ? (
-          <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} />
+          <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} allBookings={allBookings} />
         ) : staffName ? (
           <React.Fragment>
-            <span style={{ display: 'block', width: '100%', fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease' }}>{staffName}</span>
+            <span
+              draggable={!isActive}
+              onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart(eventId, positionRow.key, assignment) }}
+              onDragEnd={() => onCellDragEnd && onCellDragEnd()}
+              style={{ display: 'block', width: '100%', fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>{staffName}</span>
             <div
               onClick={e => { e.stopPropagation(); onToggleSelect(assignment.id) }}
               style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.15s ease', cursor: 'pointer', zIndex: 2 }}
@@ -551,8 +597,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
             </div>
           </React.Fragment>
         ) : isLocked ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.4, transition: 'opacity 0.15s' }}>
-            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#334155'} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.5, transition: 'opacity 0.15s' }}>
+            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#64748b'} />
           </div>
         ) : isEmptyAssignable ? (
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
@@ -584,7 +630,8 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         <ConfirmOverride
           staffMember={confirmOverride.staffMember}
           avail={confirmOverride.avail}
-          onConfirm={() => doAssign(confirmOverride.staffMember)}
+          travelInfo={confirmOverride.travelInfo}
+          onConfirm={() => doAssign(confirmOverride.staffMember, confirmOverride.avail?.status === 'conflict' ? confirmOverride.avail.event_id : null)}
           onCancel={() => setConfirmOverride(null)}
         />
       )}
@@ -764,6 +811,9 @@ export default function StaffingGrid() {
   const [draggedPosKey, setDraggedPosKey] = useState(null)
   const [dropPosKey, setDropPosKey] = useState(null)
   const [positionOrder, setPositionOrder] = useState({})
+  const [staffBookingsMap, setStaffBookingsMap] = useState({})
+  const [draggedCell, setDraggedCell] = useState(null)
+  const [dragConflict, setDragConflict] = useState(null)
   const activeCellElRef = useRef(null)
 
   const showToast = (msg) => {
@@ -801,7 +851,7 @@ export default function StaffingGrid() {
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
       supabase.from('events').select('id, city, state, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
-      supabase.from('event_staff').select('*'),
+      supabase.from('event_staff').select('*, events(id, city, load_in_date, load_out_date)'),
     ])
     setTours(toursRes.data || [])
     setEvents(eventsRes.data || [])
@@ -812,13 +862,26 @@ export default function StaffingGrid() {
     setEventMetas(metas)
 
     const assignmentRows = assignmentsRes.data || []
-    // No FK constraint on staff_id, so join staff manually
     const staffIds = [...new Set(assignmentRows.map(a => a.staff_id).filter(Boolean))]
     let staffMap = {}
     if (staffIds.length > 0) {
       const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name').in('id', staffIds)
       for (const s of (staffData || [])) staffMap[s.id] = s
     }
+
+    // Build staff bookings map for availability checking (Fix 6)
+    const bookingsMap = {}
+    for (const a of assignmentRows) {
+      if (!a.staff_id) continue
+      if (!bookingsMap[a.staff_id]) bookingsMap[a.staff_id] = []
+      bookingsMap[a.staff_id].push({
+        event_id: a.event_id,
+        city: a.events?.city,
+        load_in_date: a.events?.load_in_date,
+        load_out_date: a.events?.load_out_date,
+      })
+    }
+    setStaffBookingsMap(bookingsMap)
 
     const aMap = {}
     const customMap = {}
@@ -860,12 +923,12 @@ export default function StaffingGrid() {
     const supabase = getSupabase()
     const meta = eventMetas[eventId] || {}
     const hidden = meta.hidden_positions || []
-    if (hidden.includes(positionKey)) return
-    const nextHidden = [...hidden, positionKey]
-    await supabase.from('events').update({ hidden_positions: nextHidden }).eq('id', eventId)
-    // Also delete any unassigned event_staff row for this position
+    const unlocked = meta.unlocked_positions || []
+    const nextHidden = hidden.includes(positionKey) ? hidden : [...hidden, positionKey]
+    const nextUnlocked = unlocked.filter(k => k !== positionKey)
+    await supabase.from('events').update({ hidden_positions: nextHidden, unlocked_positions: nextUnlocked }).eq('id', eventId)
     await supabase.from('event_staff').delete().eq('event_id', eventId).eq('position_key', positionKey)
-    setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden } }))
+    setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden, unlocked_positions: nextUnlocked } }))
   }
 
   // Unlock a position: handle two cases
@@ -884,7 +947,7 @@ export default function StaffingGrid() {
       // Re-insert blank event_staff row so it shows on event tab
       const { data: existingRowsA } = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).limit(1)
       if (!existingRowsA || existingRowsA.length === 0) {
-        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
+        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'pending' }])
       }
       setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], hidden_positions: nextHidden } }))
     } else {
@@ -893,7 +956,7 @@ export default function StaffingGrid() {
       await supabase.from('events').update({ unlocked_positions: nextUnlocked }).eq('id', eventId)
       const { data: existingRowsB } = await supabase.from('event_staff').select('id').eq('event_id', eventId).eq('position_key', positionKey).limit(1)
       if (!existingRowsB || existingRowsB.length === 0) {
-        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'scheduled' }])
+        await supabase.from('event_staff').insert([{ event_id: eventId, position: positionRow.displayLabel, position_key: positionKey, confirmed: false, status: 'pending' }])
       }
       setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], unlocked_positions: nextUnlocked } }))
     }
@@ -904,6 +967,39 @@ export default function StaffingGrid() {
   const handleToggleLock = (eventId, positionKey, isHatched, positionRow, event) => {
     if (isHatched) handleUnlockPosition(eventId, positionKey, positionRow, event)
     else handleLockPosition(eventId, positionKey)
+  }
+
+  // ── STAFF DRAG (Fix 8) ──────────────────────────────────────────────────────
+  const handleCellDragStart = (eventId, positionKey, assignment) => {
+    setDraggedCell({ eventId, positionKey, assignment })
+  }
+  const handleCellDragEnd = () => {
+    setDraggedCell(null)
+  }
+  const doMoveStaff = async (fromEventId, fromPosKey, fromAssignment, toPosKey) => {
+    const supabase = getSupabase()
+    await supabase.from('event_staff').update({ staff_id: null, status: 'pending', confirmed: false }).eq('id', fromAssignment.id)
+    const existingTarget = (assignments[fromEventId] || []).find(a => a.position_key === toPosKey)
+    if (existingTarget) {
+      await supabase.from('event_staff').update({ staff_id: fromAssignment.staff_id, status: fromAssignment.status || 'pending', confirmed: fromAssignment.confirmed || false }).eq('id', existingTarget.id)
+    } else {
+      const posRow = MASTER_POSITIONS.find(p => p.key === toPosKey)
+      await supabase.from('event_staff').insert([{ event_id: fromEventId, staff_id: fromAssignment.staff_id, position: posRow?.displayLabel || fromAssignment.position, position_key: toPosKey, status: fromAssignment.status || 'pending', confirmed: fromAssignment.confirmed || false }])
+    }
+    fetchAll()
+  }
+  const handleCellDrop = async (toEventId, toPosKey) => {
+    if (!draggedCell) return
+    if (draggedCell.eventId !== toEventId) { setDraggedCell(null); return }
+    if (draggedCell.positionKey === toPosKey) { setDraggedCell(null); return }
+    const toAssignment = getAssignment(toEventId, toPosKey)
+    if (toAssignment && toAssignment.staff_id) {
+      setDragConflict({ source: draggedCell, target: { eventId: toEventId, positionKey: toPosKey, assignment: toAssignment } })
+      setDraggedCell(null)
+      return
+    }
+    await doMoveStaff(draggedCell.eventId, draggedCell.positionKey, draggedCell.assignment, toPosKey)
+    setDraggedCell(null)
   }
 
   const handleCellActivate = (eventId, positionKey, type) => {
@@ -1289,24 +1385,10 @@ export default function StaffingGrid() {
                     </tr>
                     {!collapsed && deptRows.map((posRow, posIdx) => {
                       const rowBg = 'rgba(255,255,255,0.03)'
-                      const isDragTarget = dropPosKey === posRow.key
-                      const isDraggingThis = draggedPosKey === posRow.key
                       return (
-                      <tr key={posRow.key}
-                        draggable
-                        onDragStart={() => handlePosDragStart(dept, posRow.key)}
-                        onDragOver={e => { e.preventDefault(); handlePosDragOver(dept, posRow.key) }}
-                        onDrop={() => handlePosDrop(dept, posRow.key)}
-                        onDragEnd={() => { setDraggedPosKey(null); setDropPosKey(null) }}
-                        style={{ background: rowBg, opacity: isDraggingThis ? 0.4 : 1, borderTop: isDragTarget ? '2px solid #33FF99' : 'none' }}>
+                      <tr key={posRow.key} style={{ background: rowBg }}>
                         <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 10px 0 6px', background: '#111827', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap', willChange: 'transform' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#64748b' }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                <circle cx="9" cy="5" r="1.5" fill="#64748b"/><circle cx="9" cy="12" r="1.5" fill="#64748b"/><circle cx="9" cy="19" r="1.5" fill="#64748b"/>
-                                <circle cx="15" cy="5" r="1.5" fill="#64748b"/><circle cx="15" cy="12" r="1.5" fill="#64748b"/><circle cx="15" cy="19" r="1.5" fill="#64748b"/>
-                              </svg>
-                            </div>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{posRow.displayLabel}</span>
                           </div>
                         </td>
@@ -1317,6 +1399,7 @@ export default function StaffingGrid() {
                           const isActiveCell = !!activeCell && activeCell.eventId === ev.id && activeCell.positionKey === posRow.key
                           const isFocusedCell = !!focusedCell && focusedCell.eventId === ev.id && focusedCell.positionKey === posRow.key
                           const ck = ev.id + '__' + posRow.key
+                          const isCellDragTarget = !!(draggedCell && draggedCell.eventId === ev.id && draggedCell.positionKey !== posRow.key && !hatched)
                           return (
                             <GridCell
                               key={ev.id}
@@ -1339,6 +1422,11 @@ export default function StaffingGrid() {
                               onToggleSelect={toggleSelectId}
                               onRightClick={(x, y, eid, pk) => setRightClickMenu({ x, y, eventId: eid, positionKey: pk })}
                               cellColor={cellColors[ck] || null}
+                              allBookings={staffBookingsMap}
+                              onCellDragStart={handleCellDragStart}
+                              onCellDragEnd={handleCellDragEnd}
+                              onCellDrop={handleCellDrop}
+                              isDragTarget={isCellDragTarget}
                               COL_WIDTH={COL_WIDTH}
                               ROW_HEIGHT={ROW_HEIGHT}
                               borderRight={cellBorderRight(ev, i)}
@@ -1379,6 +1467,25 @@ export default function StaffingGrid() {
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 4000, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           ✓ {toast}
         </div>
+      )}
+      {dragConflict && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>Position Already Filled</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
+              {dragConflict.target.assignment.staff?.first_name} {dragConflict.target.assignment.staff?.last_name} is already in this position. Move {dragConflict.source.assignment.staff?.first_name} {dragConflict.source.assignment.staff?.last_name} here anyway?
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button onClick={() => setDragConflict(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Cancel</button>
+              <button onClick={async () => { await doMoveStaff(dragConflict.source.eventId, dragConflict.source.positionKey, dragConflict.source.assignment, dragConflict.target.positionKey); setDragConflict(null) }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Move Anyway</button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
     </>
