@@ -92,6 +92,14 @@ function getWeekendGroup(dateStr) {
   return toYMD(friday)
 }
 
+function getWeekendDates(dateStr) {
+  const fri = getWeekendGroup(dateStr)
+  if (!fri) return { saturday_date: null, sunday_date: null }
+  const sat = new Date(fri + 'T00:00:00'); sat.setDate(sat.getDate() + 1)
+  const sun = new Date(fri + 'T00:00:00'); sun.setDate(sun.getDate() + 2)
+  return { saturday_date: toYMD(sat), sunday_date: toYMD(sun) }
+}
+
 function fmtWeekend(fridayStr) {
   if (!fridayStr) return ''
   const fri = new Date(fridayStr + 'T00:00:00')
@@ -136,15 +144,15 @@ function formatStatusLabel(status) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending', color: '#FFD60A', pill: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.5)' },
   { value: 'confirmed', label: 'Confirmed', color: '#33FF99', pill: 'rgba(51,255,153,0.12)', border: 'rgba(51,255,153,0.3)' },
+  { value: 'pending', label: 'Pending', color: '#FFD60A', pill: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.5)' },
   { value: 'needs_attention', label: 'Needs Attention', color: '#f87171', pill: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.5)' },
 ]
 
 function getStatusStyle(status) { return STATUS_OPTIONS.find(s => s.value === normalizeStatus(status)) || STATUS_OPTIONS[0] }
 
-const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 7px)'
-const LOCKED_BG_COLOR = '#0a1628'
+const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.09) 0px, rgba(255,255,255,0.09) 1px, transparent 1px, transparent 7px)'
+const LOCKED_BG_COLOR = 'rgba(255,255,255,0.02)'
 
 const STAFF_NAME_COLORS = { confirmed: '#e2e8f0', pending: '#FFD60A', needs_attention: '#f87171' }
 const STAFF_NAME_WEIGHTS = { confirmed: 400, scheduled: 400, attention: 400 }
@@ -216,22 +224,20 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
         .order('last_name', { ascending: true }).limit(8)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
       setResults(staffData)
-      const loadIn = event && event.load_in_date
-      const loadOut = (event && event.load_out_date) || loadIn
+      const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event?.load_in_date)
       const avail = {}
       for (const s of staffData) {
         const records = (allBookings && allBookings[s.id]) || []
         if (records.length === 0) { avail[s.id] = { status: 'free' }; continue }
-        const sameEvent = records.find(r => r.event_id === eventId)
-        if (sameEvent) { avail[s.id] = { status: 'same_event' }; continue }
-        if (loadIn) {
-          const conflict = records.find(r => {
-            const s2 = r.load_in_date
-            const e2 = r.load_out_date || s2
-            if (!s2) return false
-            return loadIn <= e2 && loadOut >= s2
-          })
-          if (conflict) { avail[s.id] = { status: 'conflict', city: conflict.city, event_id: conflict.event_id }; continue }
+        const sameEventRec = records.find(r => r.event_id === eventId)
+        if (sameEventRec) { avail[s.id] = { status: 'same_event', position: sameEventRec.position }; continue }
+        if (evSat || evSun) {
+          const conflict = records.find(r =>
+            r.event_id !== eventId &&
+            ((evSat && r.saturday_date && r.saturday_date === evSat) ||
+             (evSun && r.sunday_date && r.sunday_date === evSun))
+          )
+          if (conflict) { avail[s.id] = { status: 'conflict', city: conflict.city, event_id: conflict.event_id, tour_name: conflict.tour_name }; continue }
         }
         avail[s.id] = { status: 'free' }
       }
@@ -245,8 +251,8 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   const tipText = (id) => {
     const a = availability[id]
     if (!a || a.status === 'free') return ''
-    if (a.status === 'same_event') return 'Already on this event'
-    if (a.status === 'conflict') return 'Already assigned to ' + (a.city || 'another event')
+    if (a.status === 'same_event') return 'Already on this event' + (a.position ? ' as ' + a.position : '')
+    if (a.status === 'conflict') return 'Already assigned — ' + (a.city || 'another city') + (a.tour_name ? ', ' + a.tour_name : '')
     return ''
   }
 
@@ -315,14 +321,8 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
                 onMouseEnter={() => setActiveIndex(i)}
                 title={t}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
-                {status === 'conflict' ? (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="2" strokeLinecap="round"/>
-                    <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
-                  </svg>
-                ) : status === 'same_event' ? (
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                {(status === 'conflict' || status === 'same_event') ? (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FFD60A', flexShrink: 0 }} />
                 ) : status === 'free' ? (
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#33FF99', flexShrink: 0 }} />
                 ) : null}
@@ -413,15 +413,43 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
 
 // ── GRID CELL ─────────────────────────────────────────────────────────────────
 
-function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, isDragTarget, COL_WIDTH, ROW_HEIGHT, borderRight }) {
+function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplicitlyUnlocked, onRefresh, onAssignSuccess, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleLock, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, COL_WIDTH, ROW_HEIGHT, borderRight }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
   const isExec = positionRow.isExec
-  const staffName = assignment && assignment.staff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
+  const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
+  const staffName = hasStaff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
 
   const doAssign = async (staffMember, removeFromEventId = null) => {
     setConfirmOverride(null)
+
+    // Secondary conflict check — catches cases where avail wasn't pre-checked (Fix 3)
+    if (!removeFromEventId && allBookings && event?.load_in_date) {
+      const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event.load_in_date)
+      const bookings = allBookings[staffMember.id] || []
+      const conflict = bookings.find(b =>
+        b.event_id !== eventId &&
+        ((evSat && b.saturday_date && b.saturday_date === evSat) ||
+         (evSun && b.sunday_date && b.sunday_date === evSun))
+      )
+      if (conflict) {
+        const supabase2 = getSupabase()
+        const [arrRes, depRes] = await Promise.all([
+          supabase2.from('event_travel_arrivals').select('travel_date, flight_number').eq('event_id', conflict.event_id).eq('staff_id', staffMember.id).maybeSingle(),
+          supabase2.from('event_travel_departures').select('travel_date, flight_number').eq('event_id', conflict.event_id).eq('staff_id', staffMember.id).maybeSingle(),
+        ])
+        const travelInfo = (arrRes.data?.travel_date || depRes.data?.travel_date) ? { arrival: arrRes.data, departure: depRes.data } : null
+        setConfirmOverride({ staffMember, avail: { status: 'conflict', city: conflict.city, event_id: conflict.event_id, tour_name: conflict.tour_name }, travelInfo })
+        return
+      }
+      const sameEv = bookings.find(b => b.event_id === eventId)
+      if (sameEv) {
+        setConfirmOverride({ staffMember, avail: { status: 'same_event', position: sameEv.position }, travelInfo: null })
+        return
+      }
+    }
+
     const supabase = getSupabase()
     if (removeFromEventId) {
       await supabase.from('event_staff')
@@ -532,25 +560,37 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
     onRefresh()
   }
 
-  const isLocked = isHatched && !assignment
-  const isEmptyAssignable = !assignment && !isHatched && !isActive
+  const isLocked = isHatched && !hasStaff
+  const isEmptyAssignable = !hasStaff && !isHatched && !isActive
   const status = normalizeStatus(assignment?.status)
   const nameColor = cellColor?.text || (isExec ? '#e2e8f0' : (STAFF_NAME_COLORS[status] || '#FFD60A'))
   const nameWeight = isExec ? 500 : (STAFF_NAME_WEIGHTS[status] || 500)
 
+  // Detect if this staff member has a weekend conflict with another event (Fix 2)
+  const existingConflict = (() => {
+    if (!hasStaff || !allBookings || !event?.load_in_date) return null
+    const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event.load_in_date)
+    return (allBookings[assignment.staff_id] || []).find(b =>
+      b.event_id !== eventId &&
+      ((evSat && b.saturday_date && b.saturday_date === evSat) ||
+       (evSun && b.sunday_date && b.sunday_date === evSun))
+    )
+  })()
+
   const handleCellClick = (e) => {
     if (isActive) return
-    if (assignment && (e.ctrlKey || e.metaKey)) {
+    if (hasStaff && (e.ctrlKey || e.metaKey)) {
       e.stopPropagation()
       onToggleSelect(assignment.id)
       return
     }
-    if (assignment) { onActivate('menu'); return }
-    if (isHatched) { if (!assignment) onToggleLock(); return }
+    if (hasStaff) { onActivate('menu'); return }
+    if (isHatched) { if (!hasStaff) onToggleLock(); return }
     onActivate('edit')
   }
 
-  const showLockIcon = !isExec && hovered && !isActive && !isLocked && !assignment
+  const isDragOverLocked = isDragTarget && isHatched
+  const showLockIcon = !isExec && hovered && !isActive && !isLocked && !hasStaff && !isExplicitlyUnlocked
 
   return (
     <React.Fragment>
@@ -559,23 +599,40 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '0 8px', cursor: isActive ? 'default' : 'pointer',
-          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isDragTarget ? 'rgba(51,255,153,0.10)' : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
+          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isDragOverLocked ? 'rgba(248,113,113,0.08)' : (isDragTarget && !isHatched) ? 'rgba(51,255,153,0.10)' : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
           backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
           textAlign: 'center', verticalAlign: 'middle',
-          boxSizing: 'border-box', borderRight,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          border: isLocked ? '1px solid rgba(255,255,255,0.08)' : undefined,
-          borderRight: isLocked ? undefined : borderRight,
-          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : isDragTarget ? 'inset 0 0 0 1.5px #33FF99' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
+          boxSizing: 'border-box',
+          borderBottom: isLocked ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.06)',
+          borderRight: isLocked ? '1px solid rgba(255,255,255,0.08)' : borderRight,
+          borderTop: isLocked ? '1px solid rgba(255,255,255,0.08)' : undefined,
+          borderLeft: isLocked ? '1px solid rgba(255,255,255,0.08)' : undefined,
+          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : isDragOverLocked ? 'inset 0 0 0 1.5px #f87171' : (isDragTarget && !isHatched) ? 'inset 0 0 0 1.5px #33FF99' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseLeave={() => { setHovered(false); onDragLeaveCell && onDragLeaveCell() }}
         onClick={handleCellClick}
         onContextMenu={staffName ? (e) => { e.preventDefault(); onRightClick(e.clientX, e.clientY, eventId, positionRow.key) } : undefined}
-        onDragOver={e => { if (!isHatched && !isActive) { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } }}
-        onDrop={e => { e.preventDefault(); onCellDrop && onCellDrop(eventId, positionRow.key) }}>
+        onDragOver={e => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = isHatched ? 'none' : 'move'
+          onDragEnterCell && onDragEnterCell(eventId, positionRow.key)
+        }}
+        onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) { onDragLeaveCell && onDragLeaveCell() } }}
+        onDrop={e => {
+          e.preventDefault()
+          if (isHatched) { onDropOnLocked && onDropOnLocked(eventId, positionRow.key) }
+          else { onCellDrop && onCellDrop(eventId, positionRow.key) }
+        }}>
+
+        {/* Conflict dot for existing filled cells (Fix 2) */}
+        {existingConflict && !isActive && (
+          <div title={'Weekend conflict: ' + (existingConflict.city || 'another event') + (existingConflict.tour_name ? ', ' + existingConflict.tour_name : '')}
+            style={{ position: 'absolute', top: 4, right: hasStaff ? 20 : 4, width: 5, height: 5, borderRadius: '50%', background: '#FFD60A', zIndex: 5, flexShrink: 0 }} />
+        )}
+
         {isActive && activeType === 'edit' ? (
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} allBookings={allBookings} />
         ) : staffName ? (
@@ -583,7 +640,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
             <span
               draggable={!isActive}
               onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart(eventId, positionRow.key, assignment) }}
-              onDragEnd={() => onCellDragEnd && onCellDragEnd()}
+              onDragEnd={() => { onCellDragEnd && onCellDragEnd() }}
               style={{ display: 'block', width: '100%', fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>{staffName}</span>
             <div
               onClick={e => { e.stopPropagation(); onToggleSelect(assignment.id) }}
@@ -597,21 +654,34 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, onRefres
             </div>
           </React.Fragment>
         ) : isLocked ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.5, transition: 'opacity 0.15s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.15s' }}>
             <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#64748b'} />
           </div>
         ) : isEmptyAssignable ? (
-          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
-          </svg>
+          <React.Fragment>
+            {/* Warning triangle — always visible for explicitly unlocked, dimmed for natural empty */}
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: isExplicitlyUnlocked ? 0.9 : (hovered ? 0.9 : 0.55), transition: 'opacity 0.1s' }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
+              <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
+            </svg>
+            {/* Red re-lock icon for explicitly unlocked empty cells (Fix 5) */}
+            {isExplicitlyUnlocked && !isExec && (
+              <div
+                onClick={e => { e.stopPropagation(); onToggleLock() }}
+                title="Re-lock this position"
+                style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10 }}>
+                <LockIcon locked={false} size={14} color='#f87171' />
+              </div>
+            )}
+          </React.Fragment>
         ) : null}
 
         {isActive && activeType === 'menu' && assignment && (
           <InlineStatusMenu assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} />
         )}
 
+        {/* Hover lock icon for naturally empty (non-explicitly-unlocked) cells */}
         {!isExec && (
           <div
             onClick={e => { e.stopPropagation(); onToggleLock() }}
@@ -814,6 +884,8 @@ export default function StaffingGrid() {
   const [staffBookingsMap, setStaffBookingsMap] = useState({})
   const [draggedCell, setDraggedCell] = useState(null)
   const [dragConflict, setDragConflict] = useState(null)
+  const [dragOverCell, setDragOverCell] = useState(null)
+  const [dragLockedModal, setDragLockedModal] = useState(null)
   const activeCellElRef = useRef(null)
 
   const showToast = (msg) => {
@@ -851,7 +923,7 @@ export default function StaffingGrid() {
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
       supabase.from('events').select('id, city, state, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
-      supabase.from('event_staff').select('*, events(id, city, load_in_date, load_out_date)'),
+      supabase.from('event_staff').select('*, events(id, city, load_in_date, load_out_date, tour_id, tours(name))'),
     ])
     setTours(toursRes.data || [])
     setEvents(eventsRes.data || [])
@@ -869,16 +941,21 @@ export default function StaffingGrid() {
       for (const s of (staffData || [])) staffMap[s.id] = s
     }
 
-    // Build staff bookings map for availability checking (Fix 6)
+    // Build staff conflict map keyed by staff_id with weekend dates for conflict detection (Fix 2)
     const bookingsMap = {}
     for (const a of assignmentRows) {
       if (!a.staff_id) continue
       if (!bookingsMap[a.staff_id]) bookingsMap[a.staff_id] = []
+      const { saturday_date, sunday_date } = getWeekendDates(a.events?.load_in_date)
       bookingsMap[a.staff_id].push({
         event_id: a.event_id,
         city: a.events?.city,
         load_in_date: a.events?.load_in_date,
         load_out_date: a.events?.load_out_date,
+        saturday_date,
+        sunday_date,
+        tour_name: a.events?.tours?.name,
+        position: a.position,
       })
     }
     setStaffBookingsMap(bookingsMap)
@@ -975,6 +1052,19 @@ export default function StaffingGrid() {
   }
   const handleCellDragEnd = () => {
     setDraggedCell(null)
+    setDragOverCell(null)
+  }
+  const handleCellDragEnter = (eventId, positionKey) => {
+    setDragOverCell({ eventId, positionKey })
+  }
+  const handleCellDragLeave = () => {
+    setDragOverCell(null)
+  }
+  const handleDropOnLocked = (eventId, positionKey) => {
+    if (!draggedCell) return
+    setDragLockedModal({ eventId, positionKey, draggedCell })
+    setDraggedCell(null)
+    setDragOverCell(null)
   }
   const doMoveStaff = async (fromEventId, fromPosKey, fromAssignment, toPosKey) => {
     const supabase = getSupabase()
@@ -1399,7 +1489,8 @@ export default function StaffingGrid() {
                           const isActiveCell = !!activeCell && activeCell.eventId === ev.id && activeCell.positionKey === posRow.key
                           const isFocusedCell = !!focusedCell && focusedCell.eventId === ev.id && focusedCell.positionKey === posRow.key
                           const ck = ev.id + '__' + posRow.key
-                          const isCellDragTarget = !!(draggedCell && draggedCell.eventId === ev.id && draggedCell.positionKey !== posRow.key && !hatched)
+                          const isCellDragTarget = !!(draggedCell && dragOverCell?.eventId === ev.id && dragOverCell?.positionKey === posRow.key)
+                          const isExpUnlocked = !!(meta.unlocked_positions || []).includes(posRow.key)
                           return (
                             <GridCell
                               key={ev.id}
@@ -1408,6 +1499,7 @@ export default function StaffingGrid() {
                               positionRow={posRow}
                               assignment={assignment}
                               isHatched={hatched}
+                              isExplicitlyUnlocked={isExpUnlocked}
                               onRefresh={fetchAll}
                               onAssignSuccess={updateAssignmentLocal}
                               isActive={isActiveCell}
@@ -1418,7 +1510,7 @@ export default function StaffingGrid() {
                               onActivate={(type) => handleCellActivate(ev.id, posRow.key, type)}
                               onCloseActive={() => setActiveCell(null)}
                               onToggleLock={() => handleToggleLock(ev.id, posRow.key, hatched, posRow, ev)}
-                              isSelected={!!assignment && selectedIds.has(assignment.id)}
+                              isSelected={!!(assignment?.staff_id) && selectedIds.has(assignment.id)}
                               onToggleSelect={toggleSelectId}
                               onRightClick={(x, y, eid, pk) => setRightClickMenu({ x, y, eventId: eid, positionKey: pk })}
                               cellColor={cellColors[ck] || null}
@@ -1426,6 +1518,9 @@ export default function StaffingGrid() {
                               onCellDragStart={handleCellDragStart}
                               onCellDragEnd={handleCellDragEnd}
                               onCellDrop={handleCellDrop}
+                              onDragEnterCell={handleCellDragEnter}
+                              onDragLeaveCell={handleCellDragLeave}
+                              onDropOnLocked={handleDropOnLocked}
                               isDragTarget={isCellDragTarget}
                               COL_WIDTH={COL_WIDTH}
                               ROW_HEIGHT={ROW_HEIGHT}
@@ -1467,6 +1562,30 @@ export default function StaffingGrid() {
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 4000, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           ✓ {toast}
         </div>
+      )}
+      {dragLockedModal && typeof document !== 'undefined' && ReactDOM.createPortal(
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(248,113,113,0.4)', borderRadius: 12, padding: 28, width: 400 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#f87171' }}>Position Is Locked</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
+              This position is locked. Unlock it to assign staff here.
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button onClick={() => setDragLockedModal(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >Cancel</button>
+              <button onClick={() => {
+                const { eventId, positionKey } = dragLockedModal
+                const posRow = MASTER_POSITIONS.find(p => p.key === positionKey)
+                const ev = events.find(e => e.id === eventId)
+                if (posRow && ev) handleUnlockPosition(eventId, positionKey, posRow, ev)
+                setDragLockedModal(null)
+              }} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#f87171', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>Unlock</button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
       {dragConflict && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
