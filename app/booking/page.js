@@ -568,10 +568,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   }
 
   const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_time: '' }])
-  const handleShowChange = (idx, patch) => {
-    console.log('[Shows] handleShowChange idx:', idx, 'patch:', patch)
-    setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
-  }
+  const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
 
   const handleDeleteShow = async (idx) => {
     const show = shows[idx]
@@ -586,7 +583,6 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   const handleSaveClose = async () => {
     setSaving(true)
     setSaveError(null)
-    console.log('[DEBUG] handleSaveClose — event.id:', event.id, '| full shows state:', shows)
     const supabase = getSupabase()
     const { data: updatedEvent, error: eventError } = await supabase.from('events').update({
       status, load_in_date: loadInDate || null, booking_note: bookingNote,
@@ -598,27 +594,19 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
       return
     }
 
-    const newShows = shows.filter(s => !s.id && s.show_date)
-    console.log('[Shows] Saving', newShows.length, 'new show(s) for event', event.id, newShows)
-
     const showErrors = []
     for (const show of shows) {
       if (!show.id) {
         if (show.show_date) {
-          console.log('[Shows] Raw show_time before insert:', JSON.stringify(show.show_time), '| type:', typeof show.show_time)
           const payload = { event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }
-          console.log('[Shows] Inserting:', payload)
           const { data: insertedShow, error } = await supabase.from('show_list').insert([payload]).select().single()
-          console.log('[Shows] Insert result — data:', insertedShow, '  error:', error)
           if (error) showErrors.push(error.message)
         }
       } else {
         const orig = initialShows.find(s => s.id === show.id)
         if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
           const updatePayload = { show_date: show.show_date, show_time: show.show_time || null }
-          console.log('[Shows] Updating id', show.id, ':', updatePayload)
           const { data: updatedShow, error } = await supabase.from('show_list').update(updatePayload).eq('id', show.id).select().single()
-          console.log('[Shows] Update result — data:', updatedShow, '  error:', error)
           if (error) showErrors.push(error.message)
         }
       }
@@ -632,11 +620,9 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
     await supabase.from('event_notes').upsert({ event_id: event.id, content: bookingNote, updated_at: new Date().toISOString() }, { onConflict: 'event_id' })
 
-    // Re-fetch shows from DB to confirm persistence before closing
-    const { data: freshShows, error: fetchErr } = await supabase
+    const { data: freshShows } = await supabase
       .from('show_list').select('*').eq('event_id', event.id)
       .order('show_date', { ascending: true }).order('show_time', { ascending: true })
-    console.log('[Shows] Re-fetched from DB after save — data:', freshShows, '  error:', fetchErr)
     setShows(freshShows || [])
     setInitialShows(freshShows || [])
 
@@ -757,7 +743,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                   <div key={s.id || 'new-' + i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <input type="date" style={{ ...inputStyle, flex: 2 }} value={s.show_date || ''} min={loadInDate || ''} onChange={e => handleShowChange(i, { show_date: e.target.value })} />
-                      <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} />
+                      <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} onBlur={e => handleShowChange(i, { show_time: e.target.value })} />
                       <div onClick={() => handleDeleteShow(i)}
                         style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
                         onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
