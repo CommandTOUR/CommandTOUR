@@ -512,6 +512,9 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
     }
     // If the targeted fetch fails, the optimistic row stays — pill remains visible
 
+    // Update bookings map for this staff member so conflict detection reflects the new assignment
+    refreshBookingsForStaff(staffMember.id)
+
     if (!isExec && staffMember.id) {
       const { error: travelErr } = await confirmStaffMember({ supabase, eventId, staffId: staffMember.id, confirm: true })
       if (travelErr) console.error('Travel auto-populate failed:', travelErr)
@@ -623,7 +626,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
         onContextMenu={staffName ? (e) => { e.preventDefault(); onRightClick(e.clientX, e.clientY, eventId, positionRow.key) } : undefined}
         onDragOver={e => {
           e.preventDefault()
-          e.dataTransfer.dropEffect = isHatched ? 'none' : 'move'
+          e.dataTransfer.dropEffect = 'move'
           onDragEnterCell && onDragEnterCell(eventId, positionRow.key)
         }}
         onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) { onDragLeaveCell && onDragLeaveCell() } }}
@@ -671,13 +674,13 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
               <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
               <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
             </svg>
-            {/* Red re-lock icon for explicitly unlocked empty cells — hover-only (Fix 6) */}
+            {/* Red re-lock icon for explicitly unlocked empty cells — hover-only */}
             {isExplicitlyUnlocked && !isExec && (
               <div
                 onClick={e => { e.stopPropagation(); onToggleLock() }}
                 title="Re-lock this position"
-                style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
-                <LockIcon locked={false} size={14} color='#e05252' />
+                style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s ease' }}>
+                <LockIcon locked={false} size={14} color='#f87171' />
               </div>
             )}
           </React.Fragment>
@@ -1048,6 +1051,32 @@ export default function StaffingGrid() {
     fetchAll()
   }
 
+  // Re-fetch bookings for one staff member and patch the map in-place (Fix 2)
+  const refreshBookingsForStaff = async (staffId) => {
+    if (!staffId) return
+    const supabase = getSupabase()
+    const { data } = await supabase
+      .from('event_staff')
+      .select('event_id, position, events(id, city, load_in_date, load_out_date, tour_id, tours(name))')
+      .eq('staff_id', staffId)
+    const bookings = (data || [])
+      .filter(a => a.events)
+      .map(a => {
+        const { saturday_date, sunday_date } = getWeekendDates(a.events.load_in_date)
+        return {
+          event_id: a.event_id,
+          city: a.events.city,
+          load_in_date: a.events.load_in_date,
+          load_out_date: a.events.load_out_date,
+          saturday_date,
+          sunday_date,
+          tour_name: a.events.tours?.name,
+          position: a.position,
+        }
+      })
+    setStaffBookingsMap(prev => ({ ...prev, [staffId]: bookings }))
+  }
+
   const handleToggleLock = (eventId, positionKey, isHatched, positionRow, event) => {
     if (isHatched) handleUnlockPosition(eventId, positionKey, positionRow, event)
     else handleLockPosition(eventId, positionKey)
@@ -1105,7 +1134,7 @@ export default function StaffingGrid() {
     })
   }
 
-  // "Keep Here" — clear the other event, update local state immediately (Fix 3 + Fix 4)
+  // "Keep Here" — clear the other event, update local state immediately
   const handleKeepHere = async (keepEventId, removeEventId) => {
     const staffId = conflictModal.staffId
     const supabase = getSupabase()
@@ -1115,6 +1144,8 @@ export default function StaffingGrid() {
       .eq('staff_id', staffId)
     await confirmStaffMember({ supabase, eventId: removeEventId, staffId, confirm: false })
     handleClearStaffFromEvent(removeEventId, staffId)
+    // Re-fetch ground-truth bookings so conflict detection reflects the cleared state
+    await refreshBookingsForStaff(staffId)
     setConflictModal(null)
   }
 

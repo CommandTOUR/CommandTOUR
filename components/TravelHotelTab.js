@@ -40,7 +40,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.20)', background: 'rgba(255,255,255,0.10)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
         value={val}
         onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
@@ -50,7 +50,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 13, cursor: 'text', color: val ? '#f1f5f9' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+      style={{ fontSize: 13, cursor: 'text', color: val ? '#f1f5f9' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}
       onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.20)'; if (!val) e.currentTarget.style.color = '#64748b' }}
       onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent'; if (!val) e.currentTarget.style.color = 'transparent' }}
     >
@@ -121,7 +121,7 @@ function TravelTypeDropdown({ value, onChange }) {
     <select
       value={value || 'flight'}
       onChange={e => onChange(e.target.value)}
-      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
+      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.20)', background: '#1e3a5f', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
       <option value="flight">Flight</option>
       <option value="train">Train</option>
       <option value="bus">Bus</option>
@@ -131,25 +131,27 @@ function TravelTypeDropdown({ value, onChange }) {
 }
 
 function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
-  const GRID = '180px 100px 90px 130px 110px 80px 120px 110px 1fr 36px'
+  // Name 200 | Travel Type 130 | Date 120 | Airline/Op 160 | Flight# 130 | Time 100 | Airport 160 | Transport 130 | × 36
+  const GRID = '200px 130px 120px 160px 130px 100px 160px 130px 36px'
+  const HDR = { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const CELL = { height: 44, display: 'flex', alignItems: 'center', padding: '0 12px', boxSizing: 'border-box', overflow: 'hidden' }
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 10px', padding: '10px 14px', background: 'rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Travel Type</div>
-        <SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Airline/Operator</div>
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Flight#/Train#</div>
-        <SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} />
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Airport/Station</div>
-        <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notes</div>
+    <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
+        <div style={{ ...CELL, padding: '0 16px' }}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={{ ...CELL }}><div style={HDR}>Travel Type</div></div>
+        <div style={{ ...CELL }}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={{ ...CELL }}><div style={HDR}>Airline / Operator</div></div>
+        <div style={{ ...CELL }}><div style={HDR}>Flight # / Train #</div></div>
+        <div style={{ ...CELL }}><SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={{ ...CELL }}><div style={HDR}>Airport / Station</div></div>
+        <div style={{ ...CELL }}><SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
         <div />
       </div>
 
       {rows.length === 0 && (
-        <div style={{ padding: '20px 14px', fontSize: 13, color: '#64748b' }}>
+        <div style={{ padding: '20px 16px', fontSize: 13, color: '#64748b' }}>
           No {type === 'arrival' ? 'arrivals' : 'departures'} yet. Confirm staff on the Staffing tab to auto-populate.
         </div>
       )}
@@ -160,32 +162,27 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
           ? !row.travel_date
           : (!row.travel_date || !row.airline || !row.flight_number || !row.airport)
         return (
-          <div key={row.id} style={{
-            display: 'grid', gridTemplateColumns: GRID, gap: '0 10px',
-            padding: '10px 14px', alignItems: 'center',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            background: 'transparent',
-            transition: 'background 0.12s',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+          <div key={row.id} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'transparent', transition: 'background 0.12s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ ...CELL, padding: '0 16px', gap: 8, flexShrink: 0 }}>
               {showWarning && <WarningTriangle />}
               <span style={{ fontSize: 13, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
             </div>
-            <TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row.id, 'travel_type', v)} />
-            <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />
-            <EditableCell value={row.airline} onSave={v => onUpdate(row.id, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : 'Airline'} />
-            <EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : 'Flight #'} />
-            <EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} />
-            <EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : 'Airport'} />
-            <EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" />
-            <EditableCell value={row.notes} onSave={v => onUpdate(row.id, 'notes', v)} placeholder="Notes" />
-            <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: '#64748b', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#e05252'; e.currentTarget.style.opacity = '1' }}
-              onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.opacity = '0.4' }}
-            >×</div>
+            <div style={CELL}><TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row.id, 'travel_type', v)} /></div>
+            <div style={CELL}><EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} /></div>
+            <div style={CELL}><EditableCell value={row.airline} onSave={v => onUpdate(row.id, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : 'Airline'} /></div>
+            <div style={CELL}><EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : 'Flight #'} /></div>
+            <div style={CELL}><EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} /></div>
+            <div style={CELL}><EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : 'Airport'} /></div>
+            <div style={CELL}><EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" /></div>
+            <div style={{ ...CELL, justifyContent: 'center', padding: 0 }}>
+              <div onClick={() => onRemove(row.id)} style={{ fontSize: 18, color: '#64748b', cursor: 'pointer', opacity: 0.4, lineHeight: 1 }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#e05252'; e.currentTarget.style.opacity = '1' }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.opacity = '0.4' }}
+              >×</div>
+            </div>
           </div>
         )
       })}
