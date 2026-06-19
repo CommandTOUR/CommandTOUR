@@ -568,7 +568,10 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   }
 
   const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_time: '' }])
-  const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
+  const handleShowChange = (idx, patch) => {
+    console.log('[Shows] handleShowChange idx:', idx, 'patch:', patch)
+    setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
+  }
 
   const handleDeleteShow = async (idx) => {
     const show = shows[idx]
@@ -583,6 +586,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   const handleSaveClose = async () => {
     setSaving(true)
     setSaveError(null)
+    console.log('[DEBUG] handleSaveClose — event.id:', event.id, '| full shows state:', shows)
     const supabase = getSupabase()
     const { data: updatedEvent, error: eventError } = await supabase.from('events').update({
       status, load_in_date: loadInDate || null, booking_note: bookingNote,
@@ -601,6 +605,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     for (const show of shows) {
       if (!show.id) {
         if (show.show_date) {
+          console.log('[Shows] Raw show_time before insert:', JSON.stringify(show.show_time), '| type:', typeof show.show_time)
           const payload = { event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }
           console.log('[Shows] Inserting:', payload)
           const { data: insertedShow, error } = await supabase.from('show_list').insert([payload]).select().single()
@@ -610,7 +615,9 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
       } else {
         const orig = initialShows.find(s => s.id === show.id)
         if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
-          const { data: updatedShow, error } = await supabase.from('show_list').update({ show_date: show.show_date, show_time: show.show_time || null }).eq('id', show.id).select().single()
+          const updatePayload = { show_date: show.show_date, show_time: show.show_time || null }
+          console.log('[Shows] Updating id', show.id, ':', updatePayload)
+          const { data: updatedShow, error } = await supabase.from('show_list').update(updatePayload).eq('id', show.id).select().single()
           console.log('[Shows] Update result — data:', updatedShow, '  error:', error)
           if (error) showErrors.push(error.message)
         }
