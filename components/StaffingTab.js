@@ -36,9 +36,9 @@ function buildPositionKeys(departments) {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending', color: '#FFD60A', dot: '#FFD60A', bg: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
   { value: 'confirmed', label: 'Confirmed', color: '#33FF99', dot: '#33FF99', bg: 'rgba(51,255,153,0.15)', border: 'rgba(51,255,153,0.30)' },
-  { value: 'needs_attention', label: 'Needs Attention', color: '#f87171', dot: '#f87171', bg: 'rgba(248,113,113,0.15)', border: 'rgba(248,113,113,0.30)' },
+  { value: 'pending', label: 'Pending', color: '#FFD60A', dot: '#FFD60A', bg: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
+  { value: 'needs_attention', label: 'Needs Attention', color: '#e05252', dot: '#e05252', bg: 'rgba(224,82,82,0.15)', border: 'rgba(224,82,82,0.30)' },
 ]
 
 function normalizeStatus(s) {
