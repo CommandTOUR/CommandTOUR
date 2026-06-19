@@ -106,8 +106,18 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
   )
 }
 
+function WarningTriangle() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFD60A" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M9 7V10" stroke="#FFD60A" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="9" cy="13" r="0.75" fill="#FFD60A"/>
+    </svg>
+  )
+}
+
 function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
-  const GRID = '200px 100px 110px 90px 110px 150px 1fr 36px'
+  const GRID = '200px 100px 110px 90px 110px 150px 1fr 20px 36px'
 
   const grouped = {}
   rows.forEach(r => {
@@ -115,8 +125,6 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
     if (!grouped[key]) grouped[key] = []
     grouped[key].push(r)
   })
-
-  let rowCounter = 0
 
   return (
     <div className="glass-card" style={{ overflow: 'hidden' }}>
@@ -128,7 +136,7 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
         <SortHeader label="Airport" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
         <SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} />
         <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Notes</div>
-        <div />
+        <div /><div />
       </div>
 
       {rows.length === 0 && (
@@ -145,21 +153,22 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
             </div>
           )}
           {groupRows.map((row) => {
-            const zebra = rowCounter % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.03)'
-            rowCounter++
-            const isPending = !row.flagged && !row.travel_date && !row.flight_number && !row.airport && !row.transport
+            const allEmpty = !row.travel_date && !row.flight_number && !row.airport && !row.transport
+            const isConfirmedDot = !!(row.travel_date && row.flight_number)
+            const showWarning = !row.flagged && !allEmpty && (!row.travel_date || !row.flight_number || !row.airport || !row.transport)
+            const dotColor = isConfirmedDot ? '#33FF99' : '#FFD60A'
             return (
             <div key={row.id} style={{
               display: 'grid', gridTemplateColumns: GRID, gap: '0 10px',
               padding: '10px 14px', alignItems: 'center',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
-              background: row.flagged ? 'rgba(239,68,68,0.12)' : isPending ? 'rgba(255,214,10,0.05)' : zebra,
+              background: 'transparent',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {row.flagged && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f87171', flexShrink: 0 }} title="Staff no longer confirmed" />}
-                {isPending && (
-                  <div style={{ fontSize: 10, color: '#FFD60A', border: '0.5px solid rgba(255,214,10,0.40)', borderRadius: 4, padding: '1px 5px', flexShrink: 0 }}>Pending</div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {row.flagged
+                  ? <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f87171', flexShrink: 0 }} title="Staff no longer confirmed" />
+                  : <div style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                }
                 <span style={{ fontSize: 13, color: row.flagged ? '#f87171' : '#f1f5f9', whiteSpace: 'nowrap' }}>{row.staff_name || '—'}</span>
               </div>
               <EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} />
@@ -168,6 +177,9 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
               <EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder="Airport" />
               <EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" />
               <EditableCell value={row.notes} onSave={v => onUpdate(row.id, 'notes', v)} placeholder="Notes" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {showWarning && <WarningTriangle />}
+              </div>
               <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: '#64748b', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }}
                 onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.opacity = '1' }}
                 onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.opacity = '0.4' }}

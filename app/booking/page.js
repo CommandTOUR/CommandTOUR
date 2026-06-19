@@ -7,31 +7,34 @@ import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 
 const STATUS_STYLES = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
-  tentative:   { color: '#FF69B4', background: 'rgba(255,105,180,0.1)', border: 'rgba(255,105,180,0.35)' },
-  '1-hold':    { color: '#FFCC00', background: 'rgba(255,204,0,0.1)',   border: 'rgba(255,204,0,0.35)' },
-  '2-hold':    { color: '#FF8C00', background: 'rgba(255,140,0,0.1)',   border: 'rgba(255,140,0,0.35)' },
-  '3-hold':    { color: '#FF3333', background: 'rgba(255,51,51,0.1)',   border: 'rgba(255,51,51,0.35)' },
-  cancelled:   { color: '#888',    background: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.35)' },
-  want:        { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
-  'date-hold': { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#63b3ed', background: 'rgba(99,179,237,0.15)',   border: 'rgba(99,179,237,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '3-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  'date-hold': { color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.30)' },
+  want:        { color: '#fb923c', background: 'rgba(251,146,60,0.15)',  border: 'rgba(251,146,60,0.30)' },
 }
 
 // Dark glass pills for the grid (matching STATUS_STYLES)
 const STATUS_PILL_LIGHT = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.1)',  border: 'rgba(51,255,153,0.35)' },
-  tentative:   { color: '#FF69B4', background: 'rgba(255,105,180,0.1)', border: 'rgba(255,105,180,0.35)' },
-  '1-hold':    { color: '#FFCC00', background: 'rgba(255,204,0,0.1)',   border: 'rgba(255,204,0,0.35)' },
-  '2-hold':    { color: '#FF8C00', background: 'rgba(255,140,0,0.1)',   border: 'rgba(255,140,0,0.35)' },
-  '3-hold':    { color: '#FF3333', background: 'rgba(255,51,51,0.1)',   border: 'rgba(255,51,51,0.35)' },
-  cancelled:   { color: '#888',    background: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.35)' },
-  want:        { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
-  'date-hold': { color: '#aaa',    background: 'rgba(170,170,170,0.1)', border: 'rgba(170,170,170,0.35)' },
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#63b3ed', background: 'rgba(99,179,237,0.15)',   border: 'rgba(99,179,237,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '3-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  'date-hold': { color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.30)' },
+  want:        { color: '#fb923c', background: 'rgba(251,146,60,0.15)',  border: 'rgba(251,146,60,0.30)' },
 }
 
-const PANEL_STATUSES = ['confirmed', 'tentative', '1-hold', '2-hold', '3-hold', 'cancelled']
+const PANEL_STATUSES_ROW1 = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative']
+const PANEL_STATUSES_ROW2 = ['date-hold', 'want']
 
-const statusLabel = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+const statusLabel = (s) => {
+  if (s === '3-hold') return '3+ Hold'
+  if (s === 'date-hold') return 'Date Hold'
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
 
 // ── TOUR ORDERING ─────────────────────────────────────────────────────────────
 
@@ -705,22 +708,26 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
         {/* Status */}
         <div>
           <label style={labelStyle}>Status</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {PANEL_STATUSES.map(opt => {
-              const s = STATUS_STYLES[opt]
-              const selected = status === opt
-              return (
-                <div key={opt} onClick={() => setStatus(opt)}
-                  style={{
-                    padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                    color: selected ? '#04140b' : s.color,
-                    background: selected ? s.color : 'transparent',
-                    border: `0.5px solid ${s.color}`,
-                  }}>
-                  {statusLabel(opt)}
-                </div>
-              )
-            })}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[PANEL_STATUSES_ROW1, PANEL_STATUSES_ROW2].map((row, ri) => (
+              <div key={ri} style={{ display: 'flex', gap: 8 }}>
+                {row.map(opt => {
+                  const s = STATUS_STYLES[opt]
+                  const selected = status === opt
+                  return (
+                    <div key={opt} onClick={() => setStatus(opt)}
+                      style={{
+                        padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                        color: selected ? '#04140b' : s.color,
+                        background: selected ? s.color : s.background,
+                        border: `1px solid ${s.border}`,
+                      }}>
+                      {statusLabel(opt)}
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -817,7 +824,6 @@ const SUN_W = 100
 const CITY_W = 130
 const VENUE_W = 160
 const STATUS_W = 110
-const NOTE_W = 60
 const PLACEHOLDER_W = 180
 
 const H1 = 40
@@ -832,7 +838,7 @@ const B_LEFT_COL = '2px solid rgba(255,255,255,0.12)'
 const B_TOUR_GROUP = '5px solid rgba(255,255,255,0.15)'
 const B_TOUR_DIVIDER = '5px solid rgba(255,255,255,0.15)'
 
-const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W, note: NOTE_W }
+const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W }
 
 const leftThStyle = (left, width) => ({
   position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1 + H2,
@@ -970,16 +976,11 @@ function GridCell({
           />
         ) : (event?.venue_name || '')}
       </td>
-      <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: innerBorder }}>
+      <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: groupBorder }}>
         {statusStyle ? (
           <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
             {statusLabel(event.status)}
           </div>
-        ) : null}
-      </td>
-      <td style={{ ...cellBase, width: widths.note, minWidth: widths.note, borderRight: isLast ? innerBorder : groupBorder }}>
-        {event?.booking_note ? (
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#33FF99', display: 'inline-block' }} />
         ) : null}
       </td>
     </>
@@ -1013,7 +1014,7 @@ function YearGrid({
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
                   return (
-                    <th key={tour.id} colSpan={4} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: '#0d1f3c', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: '#0d1f3c', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
@@ -1032,8 +1033,7 @@ function YearGrid({
                     <React.Fragment key={tour.id}>
                       <th style={subHeaderStyle(CITY_W, B_INNER)}>City</th>
                       <th style={subHeaderStyle(VENUE_W, B_INNER)}>Venue</th>
-                      <th style={subHeaderStyle(STATUS_W, B_INNER)}>Status</th>
-                      <th style={subHeaderStyle(NOTE_W, isLastTour ? B_INNER : B_TOUR_GROUP)}>Note</th>
+                      <th style={subHeaderStyle(STATUS_W, isLastTour ? B_INNER : B_TOUR_GROUP)}>Status</th>
                     </React.Fragment>
                   )
                 })}

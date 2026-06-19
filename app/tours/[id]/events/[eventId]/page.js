@@ -12,18 +12,21 @@ import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 
 const STATUS_TEXT_COLORS = {
-  confirmed: '#33FF99',
-  tentative: '#FFD60A',
-  '1-hold': '#FFD60A',
-  '2-hold': '#FFD60A',
-  '3-hold': '#FFD60A',
-  cancelled: '#f87171',
-  want: '#64748b',
-  'date-hold': '#64748b',
+  confirmed:   '#33FF99',
+  tentative:   '#63b3ed',
+  '1-hold':    '#FFD60A',
+  '2-hold':    '#FFD60A',
+  '3-hold':    '#FFD60A',
+  'date-hold': '#a78bfa',
+  want:        '#fb923c',
 }
 
-// Title-case a status value, capitalizing each hyphen segment ("1-hold" → "1-Hold")
-const fmtStatus = (s) => s ? s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : ''
+const fmtStatus = (s) => {
+  if (!s) return ''
+  if (s === '3-hold') return '3+ Hold'
+  if (s === 'date-hold') return 'Date Hold'
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
 
 function ShowTile({ show, index, fmtShort, fmtTime, onToggleComplete, onDelete, onSaveNotes }) {
   const [open, setOpen] = useState(false)
@@ -476,6 +479,14 @@ export default function EventPage() {
                       </div>
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Booking Notes */}
+              {event.booking_note && (
+                <div className="glass-card" style={{ padding: '20px 22px' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 10 }}>Booking Notes</div>
+                  <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{event.booking_note}</div>
                 </div>
               )}
 
