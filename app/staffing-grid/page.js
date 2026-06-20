@@ -662,20 +662,16 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
               )}
             </div>
           </React.Fragment>
-        ) : isLocked ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.15s' }}>
-            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#64748b'} />
-          </div>
-        ) : isEmptyAssignable ? (
+        ) : (isExplicitlyUnlocked && !hasStaff) ? (
+          // Explicitly unlocked empty cell: warning triangle always + red re-lock on hover ONLY
+          // Never shows gray padlock — mutually exclusive with isLocked branch below
           <React.Fragment>
-            {/* Warning triangle — always visible for explicitly unlocked, dimmed for natural empty */}
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: isExplicitlyUnlocked ? 0.9 : (hovered ? 0.9 : 0.55), transition: 'opacity 0.1s' }}>
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9, flexShrink: 0 }}>
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
               <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
             </svg>
-            {/* Red re-lock icon for explicitly unlocked empty cells — hover-only */}
-            {isExplicitlyUnlocked && !isExec && (
+            {!isExec && (
               <div
                 onClick={e => { e.stopPropagation(); onToggleLock() }}
                 title="Re-lock this position"
@@ -684,6 +680,18 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
               </div>
             )}
           </React.Fragment>
+        ) : isLocked ? (
+          // Locked (hatched) cell: gray padlock only — never shows red re-lock
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.15s' }}>
+            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#64748b'} />
+          </div>
+        ) : isEmptyAssignable ? (
+          // Naturally empty (not locked, not explicitly unlocked): warning triangle only
+          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
+          </svg>
         ) : null}
 
         {isActive && activeType === 'menu' && assignment && (
@@ -1048,7 +1056,6 @@ export default function StaffingGrid() {
       setEventMetas(prev => ({ ...prev, [eventId]: { ...prev[eventId], unlocked_positions: nextUnlocked } }))
     }
     setActiveCell({ eventId, positionKey, type: 'edit', initialValue: '' })
-    fetchAll()
   }
 
   // Re-fetch bookings for one staff member and patch the map in-place (Fix 2)
@@ -1149,7 +1156,7 @@ export default function StaffingGrid() {
     setConflictModal(null)
   }
 
-  // Unlock a locked cell and immediately assign dragged staff (Fix 5)
+  // Unlock a locked cell and immediately assign dragged staff
   const handleUnlockAndAssign = async (eventId, positionKey, staffMember) => {
     const supabase = getSupabase()
     const meta = eventMetas[eventId] || {}
@@ -1168,10 +1175,22 @@ export default function StaffingGrid() {
     } else {
       await supabase.from('event_staff').insert([{ event_id: eventId, position: posRow?.displayLabel || positionKey, position_key: positionKey, staff_id: staffMember.id, status, confirmed }])
     }
+    // Update assignments in local state immediately — no fetchAll to avoid column reorder
+    const localRow = {
+      id: crypto.randomUUID(),
+      event_id: eventId,
+      staff_id: staffMember.id,
+      position_key: positionKey,
+      position: posRow?.displayLabel || positionKey,
+      status,
+      confirmed,
+      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name },
+    }
+    updateAssignmentLocal(eventId, localRow)
     if (staffMember.id && !posRow?.isExec) {
       await confirmStaffMember({ supabase, eventId, staffId: staffMember.id, confirm: true })
     }
-    fetchAll()
+    refreshBookingsForStaff(staffMember.id)
   }
 
   // ── STAFF DRAG (Fix 8) ──────────────────────────────────────────────────────
