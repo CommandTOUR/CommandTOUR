@@ -23,7 +23,7 @@ function SortHeader({ label, field, sortField, sortDir, onSort }) {
   const active = sortField === field
   return (
     <div onClick={() => onSort(field)}
-      style={{ fontSize: 11, color: active ? '#f1f5f9' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+      style={{ fontSize: 11, fontWeight: 700, color: active ? '#f1f5f9' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
     >
       {label}{active && <span style={{ fontSize: 9 }}>{sortDir === 'asc' ? '▲' : '▼'}</span>}
     </div>
@@ -40,10 +40,11 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.20)', background: 'rgba(255,255,255,0.10)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
         value={val}
         onChange={e => setVal(e.target.value)}
-        onBlur={handleSave}
+        onFocus={e => { e.currentTarget.style.borderColor = '#33FF99' }}
+        onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; handleSave() }}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setVal(value || '') } }}
       />
     )
@@ -121,7 +122,7 @@ function TravelTypeDropdown({ value, onChange }) {
     <select
       value={value || 'flight'}
       onChange={e => onChange(e.target.value)}
-      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.20)', background: '#1e3a5f', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
+      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: '#0d1f3c', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
       <option value="flight">Flight</option>
       <option value="train">Train</option>
       <option value="bus">Bus</option>
@@ -131,15 +132,15 @@ function TravelTypeDropdown({ value, onChange }) {
 }
 
 function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
-  // Name 200 | Travel Type 130 | Date 120 | Airline/Op 160 | Flight# 130 | Time 100 | Airport 160 | Transport 130 | × 36
-  const GRID = '200px 130px 120px 160px 130px 100px 160px 130px 36px'
+  // Name 180 | Travel Type 140 | Date 130 | Airline/Op 180 | Flight# 140 | Time 110 | Airport 180 | Transport 160 | × 36
+  const GRID = '180px 140px 130px 180px 140px 110px 180px 160px 36px'
   const HDR = { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }
-  const CELL = { height: 44, display: 'flex', alignItems: 'center', padding: '0 12px', boxSizing: 'border-box', overflow: 'hidden' }
+  const CELL = { height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', boxSizing: 'border-box', overflow: 'hidden' }
 
   return (
     <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
-        <div style={{ ...CELL, padding: '0 16px' }}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ ...CELL, padding: '0 20px' }}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
         <div style={{ ...CELL }}><div style={HDR}>Travel Type</div></div>
         <div style={{ ...CELL }}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
         <div style={{ ...CELL }}><div style={HDR}>Airline / Operator</div></div>
@@ -166,7 +167,7 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <div style={{ ...CELL, padding: '0 16px', gap: 8, flexShrink: 0 }}>
+            <div style={{ ...CELL, padding: '0 20px', gap: 8, flexShrink: 0 }}>
               {showWarning && <WarningTriangle />}
               <span style={{ fontSize: 13, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
             </div>
@@ -385,9 +386,9 @@ export default function TravelHotelTab({ eventId, event }) {
   const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, color: '#e5e7eb' }}>{isOpen ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#e5e7eb' }}>{label}</span>
-        {count !== null && <span style={{ fontSize: 11, color: '#9ca3af' }}>({count})</span>}
+        <span style={{ fontSize: 11, color: '#94a3b8' }}>{isOpen ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8' }}>{label}</span>
+        {count !== null && <span style={{ fontSize: 11, color: '#64748b' }}>({count})</span>}
       </div>
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
         {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
@@ -454,16 +455,16 @@ export default function TravelHotelTab({ eventId, event }) {
               <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 16 }}>No hotel added yet.</div>
             )}
 
-            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', background: 'rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
                 {['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
-                  <div key={i} style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</div>
+                  <div key={i} style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                 ))}
               </div>
               {rooms.length === 0 && <div style={{ padding: '16px 14px', fontSize: 13, color: '#64748b' }}>No rooms added yet.</div>}
               {rooms.map((room, i) => (
                 <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? '#f1f5f9' : '#33FF99' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>

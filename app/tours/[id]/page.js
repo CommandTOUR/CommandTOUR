@@ -60,9 +60,9 @@ function AlertIcon({ alerts }) {
       onMouseLeave={() => setVisible(false)}
     >
       <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ cursor: 'pointer' }}>
-        <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="9" cy="13" r="0.75" fill="#d97706"/>
+        <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFD60A" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M9 7V10" stroke="#FFD60A" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="9" cy="13" r="0.75" fill="#FFD60A"/>
       </svg>
       {visible && (
         <div style={{
@@ -71,7 +71,7 @@ function AlertIcon({ alerts }) {
           borderRadius: 8, padding: '10px 14px', zIndex: 100,
           minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ fontSize: 11, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#FFD60A', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
             Needs Attention
           </div>
           {alerts.map((a, i) => (
@@ -214,28 +214,28 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       onClick={() => router.push(`/tours/${tourId}/events/${event.id}`)}
       style={{
         display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
-        gap: '0 24px', padding: '14px 32px',
-        cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        gap: '0 24px', padding: '0 32px', height: 52,
+        cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)',
         transition: 'background 0.15s', alignItems: 'center',
-        background: baseBg,
+        background: 'transparent',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-      onMouseLeave={e => e.currentTarget.style.background = baseBg}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} />
-      <div style={{ fontSize: 14, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country && `, ${event.country}`}
       </div>
-      <div style={{ fontSize: 14, color: event.venue_name ? '#f1f5f9' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 13, fontWeight: 400, color: event.venue_name ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.venue_name || 'TBC'}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: '#f1f5f9' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: '#f1f5f9' }}>
         {numShows}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: firstShow ? '#f1f5f9' : '#64748b' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: firstShow ? '#f1f5f9' : '#64748b' }}>
         {fmt(firstShow)}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 14, color: lastShow ? '#f1f5f9' : '#64748b' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: lastShow ? '#f1f5f9' : '#64748b' }}>
         {fmt(lastShow)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -410,11 +410,11 @@ export default function TourPage() {
 
               {/* Rounded table card */}
               {events.length > 0 && (
-                <div className="glass-card" style={{ borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
                   {/* Column headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 32px', background: 'rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 32px', background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
                     {COLS.map(col => (
-                      <div key={col.key} style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: col.align, fontWeight: 700 }}>
+                      <div key={col.key} style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align, fontWeight: 700 }}>
                         {col.label}
                       </div>
                     ))}
@@ -441,14 +441,14 @@ export default function TourPage() {
                       {/* Past events toggle */}
                       <div
                         onClick={() => setPastExpanded(p => !p)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.04)', color: '#64748b', userSelect: 'none' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#64748b', userSelect: 'none' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0, color: '#64748b' }}>
                           <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        <span style={{ fontSize: 13, color: '#6b6b6b' }}>
+                        <span style={{ fontSize: 12, color: '#64748b' }}>
                           Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
                         </span>
                       </div>
