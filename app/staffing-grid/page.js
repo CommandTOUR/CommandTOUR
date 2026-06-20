@@ -692,24 +692,17 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
           </div>
 
         ) : (
-          // STATE 2 — UNLOCKED + EMPTY: pencil left, red lock right, yellow border (via stateBorder)
-          <React.Fragment>
-            {/* Pencil icon — left side */}
-            <div style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
-                <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            {/* Red lock icon — right side, click re-locks */}
+          // STATE 2 — UNLOCKED + EMPTY: pencil + lock centered as a pair
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ pointerEvents: 'none', flexShrink: 0 }}>
+              <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
             {!isExec && (
-              <div
-                onClick={e => { e.stopPropagation(); onToggleLock() }}
-                title="Re-lock this position"
-                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', cursor: 'pointer', zIndex: 10, opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
+              <div onClick={e => { e.stopPropagation(); onToggleLock() }} title="Re-lock this position" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
                 <LockIcon locked={false} size={14} color='#f87171' />
               </div>
             )}
-          </React.Fragment>
+          </div>
         )}
 
         {isActive && activeType === 'menu' && assignment && (
