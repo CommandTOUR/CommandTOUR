@@ -28,45 +28,66 @@ const fmtStatus = (s) => {
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 }
 
-function ShowTile({ show, index, fmtShort, fmtTime, onToggleComplete, onDelete, onSaveNotes }) {
-  const [open, setOpen] = useState(false)
-  const [notes, setNotes] = useState(show.notes || '')
+function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, onSave, isLast }) {
+  const [hovered, setHovered] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editDate, setEditDate] = useState(show.show_date || '')
+  const [editTime, setEditTime] = useState(show.show_time || '')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!editDate) return
+    setSaving(true)
+    await onSave(show.id, editDate, editTime)
+    setEditing(false)
+    setSaving(false)
+  }
 
   return (
-    <div className="glass-card" style={{ width: 240, padding: '14px 16px', transition: 'all 0.25s ease' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div onClick={() => onToggleComplete(show)} style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid rgba(255,255,255,0.20)', background: show.completed ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-          {show.completed && (
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 16px', height: 52, borderBottom: isLast ? 'none' : '0.5px solid rgba(255,255,255,0.06)', background: 'transparent', transition: 'background 0.12s' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div onClick={() => onToggleComplete(show)} style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid rgba(255,255,255,0.20)', background: show.completed ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+        {show.completed && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </div>
+
+      {editing ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+          <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
+          <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
+          <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
+          <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
+        </div>
+      ) : (
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
+            {fmtLong(show.show_date)}
+            {fmtTime(show.show_time) ? <> · {fmtTime(show.show_time)}</> : <> · <span style={{ color: '#64748b' }}>No time set</span></>}
+          </div>
+        </div>
+      )}
+
+      {!editing && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
+          <div onClick={() => { setEditing(true); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 4 }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          )}
-        </div>
-        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setOpen(o => !o)}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
-            Show #{index + 1}
           </div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-            {fmtShort(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
-          </div>
+          <div onClick={() => onDelete(show.id)} style={{ fontSize: 18, color: '#64748b', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+            onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>×</div>
         </div>
-        <svg onClick={() => setOpen(o => !o)} width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ cursor: 'pointer', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M2 4l4 4 4-4" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <div onClick={() => onDelete(show.id)} style={{ cursor: 'pointer', color: '#64748b', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
-          onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-          onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
-        >×</div>
-      </div>
-      <div style={{ maxHeight: open ? 100 : 0, opacity: open ? 1 : 0, overflow: 'hidden', marginTop: open ? 12 : 0, transition: 'max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease' }}>
-        <textarea
-          placeholder="Notes..."
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          onBlur={() => onSaveNotes(show.id, notes)}
-          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', height: 70, resize: 'none' }}
-        />
-      </div>
+      )}
     </div>
   )
 }
@@ -89,6 +110,7 @@ export default function EventPage() {
   const [addingShow, setAddingShow] = useState(false)
   const [newShow, setNewShow] = useState({ show_date: '', show_time: '', notes: '' })
   const [saving, setSaving] = useState(false)
+  const [incompleteTasks, setIncompleteTasks] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -115,6 +137,18 @@ export default function EventPage() {
     }
     fetchData()
   }, [id, eventId])
+
+  useEffect(() => {
+    if (activeTab !== 'overview') return
+    const supabase = getSupabase()
+    supabase
+      .from('event_tasks')
+      .select('id, task_name')
+      .eq('event_id', eventId)
+      .eq('completed', false)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => setIncompleteTasks(data || []))
+  }, [activeTab, eventId])
 
   const handleAddShow = async () => {
     if (!newShow.show_date) return
@@ -169,6 +203,16 @@ export default function EventPage() {
     }
   }
 
+  const handleSaveShow = async (showId, date, time) => {
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('show_list')
+      .update({ show_date: date, show_time: time || null })
+      .eq('id', showId)
+      .select()
+      .single()
+    if (!error) setShows(prev => prev.map(s => s.id === showId ? { ...s, ...data } : s))
+  }
+
   const handleDeleteEvent = async () => {
     if (!confirm('Delete this event and all its shows? This cannot be undone.')) return
     const supabase = getSupabase()
@@ -199,6 +243,14 @@ export default function EventPage() {
 
   const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short'
+  }) : '—'
+
+  const fmtLong = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  }) : '—'
+
+  const fmtShortDay = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'short', day: 'numeric'
   }) : '—'
 
   const fmtTime = (t) => {
@@ -362,18 +414,12 @@ export default function EventPage() {
                   {shows.length === 0 ? (
                     <div style={{ fontSize: 13, color: '#94a3b8' }}>No shows added yet</div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {shows.map((show, i) => (
-                        <div key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div onClick={() => handleToggleComplete(show)} style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', background: show.completed ? '#33FF99' : 'transparent', border: show.completed ? 'none' : '1.5px solid rgba(255,255,255,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-                            {show.completed && (
-                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 13, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                            Show #{i + 1} — {fmtShort(show.show_date)}{fmtTime(show.show_time) ? <span style={{ color: '#94a3b8' }}> · {fmtTime(show.show_time)}</span> : ''}
+                        <div key={show.id}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Show {i + 1}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
+                            {fmtShortDay(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
                           </div>
                         </div>
                       ))}
@@ -384,28 +430,34 @@ export default function EventPage() {
                 {/* Outstanding items */}
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: '#f1f5f9' }}>Outstanding Items</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {shows.length === 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#d97706"/></svg>
-                        <div style={{ fontSize: 13, color: '#94a3b8' }}>No show dates added</div>
+                  {incompleteTasks === null ? (
+                    <div style={{ fontSize: 13, color: '#64748b' }}>Loading...</div>
+                  ) : incompleteTasks.length === 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#33FF99', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                    )}
-                    {!event.venue_name && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#d97706" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#d97706"/></svg>
-                        <div style={{ fontSize: 13, color: '#94a3b8' }}>Venue not confirmed</div>
+                      <div style={{ fontSize: 13, color: '#94a3b8' }}>All clear — nothing outstanding</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{incompleteTasks.length} task{incompleteTasks.length !== 1 ? 's' : ''} outstanding</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {incompleteTasks.slice(0, 3).map(task => (
+                          <div key={task.id} style={{ fontSize: 12, color: '#94a3b8' }}>· {task.task_name}</div>
+                        ))}
+                        {incompleteTasks.length > 3 && (
+                          <div style={{ fontSize: 12, color: '#64748b' }}>+ {incompleteTasks.length - 3} more</div>
+                        )}
                       </div>
-                    )}
-                    {shows.length > 0 && event.venue_name && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#33FF99', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </div>
-                        <div style={{ fontSize: 13, color: '#94a3b8' }}>All clear — nothing outstanding</div>
-                      </div>
-                    )}
-                  </div>
+                      <div
+                        onClick={() => setActiveTab('tasks')}
+                        style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                      >View all tasks →</div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -496,7 +548,7 @@ export default function EventPage() {
           {/* SHOWS */}
           {activeTab === 'shows' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, maxWidth: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div style={{ fontSize: 15, fontWeight: 600 }}>
                   Show Dates
                   {shows.length > 0 && (
@@ -547,17 +599,18 @@ export default function EventPage() {
               )}
 
               {shows.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
+                <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
                   {shows.map((show, i) => (
-                    <ShowTile
+                    <ShowRow
                       key={show.id}
                       show={show}
                       index={i}
-                      fmtShort={fmtShort}
+                      fmtLong={fmtLong}
                       fmtTime={fmtTime}
                       onToggleComplete={handleToggleComplete}
                       onDelete={handleDeleteShow}
-                      onSaveNotes={handleSaveShowNotes}
+                      onSave={handleSaveShow}
+                      isLast={i === shows.length - 1}
                     />
                   ))}
                 </div>

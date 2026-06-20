@@ -5,6 +5,36 @@ import { getSupabase } from '../lib/supabase'
 
 const BUCKET_ORDER = ['12 Weeks Out', '6 Weeks Out', '5 Weeks Out', '1 Month Out', '2 Weeks Out', 'Week Of', 'Load-In', 'During Shows', 'Post Show']
 
+const BUCKET_OFFSETS = {
+  '12 Weeks Out': -84,
+  '6 Weeks Out': -42,
+  '5 Weeks Out': -35,
+  '1 Month Out': -30,
+  '2 Weeks Out': -14,
+  'Week Of': -7,
+  'Load-In': 0,
+  'During Shows': 0,
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr) return null
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
+function fmtDueLabel(dateStr) {
+  if (!dateStr) return null
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function dueDateColor(dateStr, today) {
+  if (!dateStr || !today) return '#64748b'
+  if (dateStr < today) return '#e05252'
+  if (dateStr <= addDays(today, 1)) return '#FFD60A'
+  return '#64748b'
+}
+
 const addRowBtnStyle = {
   fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
   border: '0.5px dashed rgba(255,255,255,0.20)', background: 'transparent', color: '#64748b',
@@ -73,7 +103,7 @@ function NewTaskRow({ onAdd, onCancel }) {
   )
 }
 
-function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, onSaveNotes, onAddTask }) {
+function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, onSaveNotes, onAddTask, dueDate, today }) {
   const [adding, setAdding] = useState(false)
   const completed = tasks.filter(t => t.completed).length
   const total = tasks.length
@@ -85,6 +115,11 @@ function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, 
           <path d="M2 4l4 4 4-4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>{bucket}</div>
+        {dueDate && (
+          <div style={{ fontSize: 12, fontWeight: 400, color: dueDateColor(dueDate, today) }}>
+            · Due {fmtDueLabel(dueDate)}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
         <div style={{ fontSize: 12, color: '#94a3b8' }}>{completed}/{total} complete</div>
       </div>
@@ -229,6 +264,16 @@ export default function TasksTab({ eventId, event }) {
   const buckets = BUCKET_ORDER.filter(b => tasks.some(t => t.bucket === b))
   tasks.forEach(t => { if (!BUCKET_ORDER.includes(t.bucket) && !buckets.includes(t.bucket)) buckets.push(t.bucket) })
 
+  const today = new Date().toISOString().split('T')[0]
+  const loadIn = event?.load_in_date
+
+  const getBucketDueDate = (bucket) => {
+    if (bucket === 'Post Show') return event?.load_out_date || addDays(loadIn, 1)
+    const offset = BUCKET_OFFSETS[bucket]
+    if (offset === undefined || !loadIn) return null
+    return addDays(loadIn, offset)
+  }
+
   return (
     <div style={{ width: '100%' }}>
       {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 12px' }}>{saveError}</p>}
@@ -246,6 +291,8 @@ export default function TasksTab({ eventId, event }) {
           onToggleTask={handleToggleTask}
           onSaveNotes={handleSaveNotes}
           onAddTask={handleAddTask}
+          dueDate={getBucketDueDate(bucket)}
+          today={today}
         />
       ))}
     </div>
