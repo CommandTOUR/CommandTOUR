@@ -564,13 +564,14 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
     onRefresh()
   }
 
+  // ── 4-STATE CELL MODEL ───────────────────────────────────────────────────────
+  // Priority: hasStaff wins, then isLocked, then empty (STATE 2)
   const isLocked = isHatched && !hasStaff
-  const isEmptyAssignable = !hasStaff && !isHatched && !isActive
   const status = normalizeStatus(assignment?.status)
   const nameColor = cellColor?.text || (isExec ? '#e2e8f0' : (STAFF_NAME_COLORS[status] || '#FFD60A'))
   const nameWeight = isExec ? 500 : (STAFF_NAME_WEIGHTS[status] || 500)
 
-  // Detect if this staff member has a weekend conflict with another event (Fix 2)
+  // STATE 4 condition: filled + weekend conflict
   const existingConflict = (() => {
     if (!hasStaff || !allBookings || !event?.load_in_date) return null
     const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event.load_in_date)
@@ -581,43 +582,67 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
     )
   })()
 
+  // cellState: 1=locked, 2=unlocked+empty, 3=filled, 4=filled+conflict
+  const cellState = hasStaff ? (existingConflict ? 4 : 3) : isLocked ? 1 : 2
+
   const handleCellClick = (e) => {
     if (isActive) return
-    if (hasStaff && existingConflict) {
+    if (cellState === 4) {
       e.stopPropagation()
       onConflictClick && onConflictClick(assignment, existingConflict, event)
       return
     }
-    if (hasStaff && (e.ctrlKey || e.metaKey)) {
+    if (cellState === 3 && (e.ctrlKey || e.metaKey)) {
       e.stopPropagation()
       onToggleSelect(assignment.id)
       return
     }
-    if (hasStaff) { onActivate('menu'); return }
-    if (isHatched) { if (!hasStaff) onToggleLock(); return }
+    if (cellState === 3) { onActivate('menu'); return }
+    if (cellState === 1) { onToggleLock(); return }
+    // STATE 2: open staff search
     onActivate('edit')
   }
 
   const isDragOverLocked = isDragTarget && isHatched
-  const showLockIcon = !isExec && hovered && !isActive && !isLocked && !hasStaff && !isExplicitlyUnlocked
+
+  // Per-state border
+  const stateBorder = cellState === 1 ? '1px solid rgba(255,255,255,0.08)'
+    : cellState === 2 ? '2px solid #FFD60A'
+    : cellState === 4 ? '2px solid #f87171'
+    : null
+
+  // Per-state background
+  const stateBg = assignError ? 'rgba(220,38,38,0.12)'
+    : cellColor?.bg
+    || (cellState === 1 ? LOCKED_BG_COLOR
+       : isDragOverLocked ? 'rgba(224,82,82,0.08)'
+       : (isDragTarget && cellState !== 1) ? 'rgba(51,255,153,0.10)'
+       : (cellState === 2 && hovered) ? 'rgba(255,214,10,0.06)'
+       : (hovered && !isActive) ? 'rgba(255,255,255,0.07)'
+       : 'transparent')
 
   return (
     <React.Fragment>
       <td
         ref={cellRef}
+        title={cellState === 1 ? 'Click to unlock' : undefined}
         style={{
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '0 8px', cursor: isActive ? 'default' : 'pointer',
-          backgroundColor: assignError ? 'rgba(220,38,38,0.12)' : cellColor?.bg || (isLocked ? LOCKED_BG_COLOR : isDragOverLocked ? 'rgba(224,82,82,0.08)' : (isDragTarget && !isHatched) ? 'rgba(51,255,153,0.10)' : isEmptyAssignable && hovered ? 'rgba(217,119,6,0.07)' : (hovered && !isActive ? 'rgba(255,255,255,0.07)' : 'transparent')),
-          backgroundImage: isLocked ? LOCKED_STRIPE : 'none',
+          backgroundColor: stateBg,
+          backgroundImage: cellState === 1 ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
           textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box',
-          borderRight: isLocked ? '1px solid rgba(255,255,255,0.08)' : (existingConflict && hasStaff ? '3px solid #FFD60A' : borderRight),
-          borderTop: isLocked ? '1px solid rgba(255,255,255,0.08)' : (existingConflict && hasStaff ? '3px solid #FFD60A' : undefined),
-          borderLeft: isLocked ? '1px solid rgba(255,255,255,0.08)' : (existingConflict && hasStaff ? '3px solid #FFD60A' : undefined),
-          borderBottom: isLocked ? '1px solid rgba(255,255,255,0.08)' : (existingConflict && hasStaff ? '3px solid #FFD60A' : '1px solid rgba(255,255,255,0.06)'),
-          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626' : isDragOverLocked ? 'inset 0 0 0 1.5px #e05252' : (isDragTarget && !isHatched) ? 'inset 0 0 0 1.5px #33FF99' : (isFocused && !isActive ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)' : 'none'),
+          borderTop: stateBorder || undefined,
+          borderLeft: stateBorder || undefined,
+          borderRight: stateBorder || borderRight,
+          borderBottom: stateBorder || '1px solid rgba(255,255,255,0.06)',
+          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626'
+            : isDragOverLocked ? 'inset 0 0 0 1.5px #e05252'
+            : (isDragTarget && cellState !== 1) ? 'inset 0 0 0 1.5px #33FF99'
+            : (isFocused && !isActive) ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)'
+            : 'none',
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
         onMouseEnter={() => setHovered(true)}
@@ -636,15 +661,12 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
           else { onCellDrop && onCellDrop(eventId, positionRow.key) }
         }}>
 
-        {/* Conflict dot for existing filled cells (Fix 2) */}
-        {existingConflict && !isActive && (
-          <div title={'Weekend conflict: ' + (existingConflict.city || 'another event') + (existingConflict.tour_name ? ', ' + existingConflict.tour_name : '')}
-            style={{ position: 'absolute', top: 4, right: hasStaff ? 20 : 4, width: 5, height: 5, borderRadius: '50%', background: '#FFD60A', zIndex: 5, flexShrink: 0 }} />
-        )}
-
         {isActive && activeType === 'edit' ? (
+          // Edit mode overlay — stays on top of all states
           <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} allBookings={allBookings} />
-        ) : staffName ? (
+
+        ) : cellState === 3 || cellState === 4 ? (
+          // STATE 3 / 4 — FILLED (± conflict border handled via stateBorder above)
           <React.Fragment>
             <span
               draggable={!isActive}
@@ -662,55 +684,36 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
               )}
             </div>
           </React.Fragment>
-        ) : (isExplicitlyUnlocked && !hasStaff) ? (
-          // Explicitly unlocked empty cell: warning triangle always + red re-lock on hover ONLY
-          // Never shows gray padlock — mutually exclusive with isLocked branch below
+
+        ) : cellState === 1 ? (
+          // STATE 1 — LOCKED: single gray padlock, mint on hover
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.15s' }}>
+            <LockIcon locked={true} size={16} color={hovered ? '#33FF99' : '#64748b'} />
+          </div>
+
+        ) : (
+          // STATE 2 — UNLOCKED + EMPTY: pencil left, red lock right, yellow border (via stateBorder)
           <React.Fragment>
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9, flexShrink: 0 }}>
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
-              <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
-            </svg>
+            {/* Pencil icon — left side */}
+            <div style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
+                <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            {/* Red lock icon — right side, click re-locks */}
             {!isExec && (
               <div
                 onClick={e => { e.stopPropagation(); onToggleLock() }}
                 title="Re-lock this position"
-                style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s ease' }}>
+                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', cursor: 'pointer', zIndex: 10, opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
                 <LockIcon locked={false} size={14} color='#f87171' />
               </div>
             )}
           </React.Fragment>
-        ) : isLocked ? (
-          // Locked (hatched) cell: gray padlock only — never shows red re-lock
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.15s' }}>
-            <LockIcon locked={true} size={13} color={hovered ? '#33FF99' : '#64748b'} />
-          </div>
-        ) : isEmptyAssignable ? (
-          // Naturally empty (not locked, not explicitly unlocked): warning triangle only
-          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" style={{ opacity: hovered ? 0.9 : 0.55, transition: 'opacity 0.1s' }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="9" x2="12" y2="13" stroke="#FFD60A" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="12" cy="17" r="0.5" fill="#FFD60A" stroke="#FFD60A" strokeWidth="1.5"/>
-          </svg>
-        ) : null}
+        )}
 
         {isActive && activeType === 'menu' && assignment && (
           <InlineStatusMenu assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} />
-        )}
-
-        {/* Hover lock icon for naturally empty (non-explicitly-unlocked) cells */}
-        {!isExec && (
-          <div
-            onClick={e => { e.stopPropagation(); onToggleLock() }}
-            title={isHatched ? 'Unlock position' : 'Lock position'}
-            style={{
-              position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 18, height: 18, borderRadius: 4, cursor: 'pointer', zIndex: 10,
-              opacity: showLockIcon ? 1 : 0, transition: 'opacity 0.1s',
-            }}>
-            <LockIcon locked={false} size={14} color='#334155' />
-          </div>
         )}
       </td>
       {confirmOverride && (
