@@ -23,7 +23,7 @@ function SortHeader({ label, field, sortField, sortDir, onSort }) {
   const active = sortField === field
   return (
     <div onClick={() => onSort(field)}
-      style={{ fontSize: 11, fontWeight: 700, color: active ? '#f1f5f9' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+      style={{ fontSize: 10.5, color: active ? '#f1f5f9' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
     >
       {label}{active && <span style={{ fontSize: 9 }}>{sortDir === 'asc' ? '▲' : '▼'}</span>}
     </div>
@@ -40,11 +40,10 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
         value={val}
         onChange={e => setVal(e.target.value)}
-        onFocus={e => { e.currentTarget.style.borderColor = '#33FF99' }}
-        onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; handleSave() }}
+        onBlur={handleSave}
         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setEditing(false); setVal(value || '') } }}
       />
     )
@@ -122,7 +121,7 @@ function TravelTypeDropdown({ value, onChange }) {
     <select
       value={value || 'flight'}
       onChange={e => onChange(e.target.value)}
-      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)', background: '#0d1f3c', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
+      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.12)', background: '#0d1f3a', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
       <option value="flight">Flight</option>
       <option value="train">Train</option>
       <option value="bus">Bus</option>
@@ -134,12 +133,12 @@ function TravelTypeDropdown({ value, onChange }) {
 function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
   // Name 180 | Travel Type 140 | Date 130 | Airline/Op 180 | Flight# 140 | Time 110 | Airport 180 | Transport 160 | × 36
   const GRID = '180px 140px 130px 180px 140px 110px 180px 160px 36px'
-  const HDR = { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const HDR = { fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }
   const CELL = { height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', boxSizing: 'border-box', overflow: 'hidden' }
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+    <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ ...CELL, padding: '0 20px' }}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
         <div style={{ ...CELL }}><div style={HDR}>Travel Type</div></div>
         <div style={{ ...CELL }}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
@@ -157,13 +156,13 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
         </div>
       )}
 
-      {rows.map((row) => {
+      {rows.map((row, idx) => {
         const isBusOrDriving = row.travel_type === 'bus' || row.travel_type === 'driving'
         const showWarning = isBusOrDriving
           ? !row.travel_date
           : (!row.travel_date || !row.airline || !row.flight_number || !row.airport)
         return (
-          <div key={row.id} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'transparent', transition: 'background 0.12s' }}
+          <div key={row.id} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: idx < rows.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
@@ -386,8 +385,8 @@ export default function TravelHotelTab({ eventId, event }) {
   const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, color: '#94a3b8' }}>{isOpen ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8' }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{isOpen ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{label}</span>
         {count !== null && <span style={{ fontSize: 11, color: '#64748b' }}>({count})</span>}
       </div>
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
@@ -455,15 +454,15 @@ export default function TravelHotelTab({ eventId, event }) {
               <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 16 }}>No hotel added yet.</div>
             )}
 
-            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+            <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
                 {['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
-                  <div key={i} style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+                  <div key={i} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                 ))}
               </div>
               {rooms.length === 0 && <div style={{ padding: '16px 14px', fontSize: 13, color: '#64748b' }}>No rooms added yet.</div>}
               {rooms.map((room, i) => (
-                <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
+                <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >

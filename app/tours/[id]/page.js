@@ -194,7 +194,7 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
 
   return (
     <div onClick={e => { e.stopPropagation(); setEditing(true) }}
-      style={{ fontSize: 14, fontWeight: 400, color: '#94a3b8', cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.20)', textUnderlineOffset: 3 }}
+      style={{ fontSize: 13, fontWeight: 400, color: currentDate ? '#f1f5f9' : '#64748b', opacity: currentDate ? 1 : 0.3, cursor: 'pointer', textDecoration: 'underline dotted rgba(255,255,255,0.20)', textUnderlineOffset: 3 }}
     >
       {fmt(currentDate)}
     </div>
@@ -215,7 +215,7 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       style={{
         display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
         gap: '0 24px', padding: '0 32px', height: 52,
-        cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)',
+        cursor: 'pointer', borderBottom: '0.5px solid rgba(255,255,255,0.06)',
         transition: 'background 0.15s', alignItems: 'center',
         background: 'transparent',
       }}
@@ -226,16 +226,16 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.city}{event.country && `, ${event.country}`}
       </div>
-      <div style={{ fontSize: 13, fontWeight: 400, color: event.venue_name ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 13, fontWeight: 400, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {event.venue_name || 'TBC'}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 13, color: '#f1f5f9' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: numShows === '—' ? '#64748b' : '#f1f5f9', opacity: numShows === '—' ? 0.3 : 1 }}>
         {numShows}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 13, color: firstShow ? '#f1f5f9' : '#64748b' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: firstShow ? '#f1f5f9' : '#64748b', opacity: firstShow ? 1 : 0.3 }}>
         {fmt(firstShow)}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 13, color: lastShow ? '#f1f5f9' : '#64748b' }}>
+      <div style={{ textAlign: 'center', fontSize: 13, color: lastShow ? '#f1f5f9' : '#64748b', opacity: lastShow ? 1 : 0.3 }}>
         {fmt(lastShow)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -410,11 +410,11 @@ export default function TourPage() {
 
               {/* Rounded table card */}
               {events.length > 0 && (
-                <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
                   {/* Column headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 32px', background: 'rgba(255,255,255,0.10)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 32px', background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
                     {COLS.map(col => (
-                      <div key={col.key} style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align, fontWeight: 700 }}>
+                      <div key={col.key} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align }}>
                         {col.label}
                       </div>
                     ))}
