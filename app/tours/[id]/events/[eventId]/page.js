@@ -68,7 +68,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
           <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
           <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
             {fmtLong(show.show_date)}
-            {fmtTime(show.show_time) ? <> · {fmtTime(show.show_time)}</> : <> · <span style={{ color: '#64748b' }}>No time set</span></>}
+            {fmtTime(show.show_time) && <> · {fmtTime(show.show_time)}</>}
           </div>
         </div>
       )}
@@ -235,6 +235,7 @@ export default function EventPage() {
   )
 
   const color = tour?.color || '#C9A84C'
+  const tourLabelColor = tour?.color || '#94a3b8'
   const tabs = ['Overview', 'Shows', 'Staffing', 'Travel & Hotel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
@@ -288,7 +289,7 @@ export default function EventPage() {
       onMouseEnter={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
       onMouseLeave={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
     >
-      <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 10.5, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: valueColor || '#f1f5f9' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>{sub}</div>}
     </div>
@@ -401,7 +402,7 @@ export default function EventPage() {
                 {/* Show dates */}
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Show Dates</div>
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Show Dates</div>
                     <div
                       onClick={() => setActiveTab('shows')}
                       style={{ fontSize: 12, fontWeight: 600, color: '#33FF99', background: 'rgba(51,255,153,0.12)', border: '1px solid rgba(51,255,153,0.30)', borderRadius: 7, padding: '5px 12px', cursor: 'pointer', transition: 'background 0.15s' }}
@@ -429,7 +430,7 @@ export default function EventPage() {
 
                 {/* Outstanding items */}
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: '#f1f5f9' }}>Outstanding Items</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 600, marginBottom: 14, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Outstanding Items</div>
                   {incompleteTasks === null ? (
                     <div style={{ fontSize: 13, color: '#64748b' }}>Loading...</div>
                   ) : incompleteTasks.length === 0 ? (
@@ -437,11 +438,11 @@ export default function EventPage() {
                       <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#33FF99', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                      <div style={{ fontSize: 13, color: '#94a3b8' }}>All clear — nothing outstanding</div>
+                      <div style={{ fontSize: 13, color: '#94a3b8' }}>All Clear</div>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{incompleteTasks.length} task{incompleteTasks.length !== 1 ? 's' : ''} outstanding</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{incompleteTasks.length} Items</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {incompleteTasks.slice(0, 3).map(task => (
                           <div key={task.id} style={{ fontSize: 12, color: '#94a3b8' }}>· {task.task_name}</div>
@@ -455,7 +456,7 @@ export default function EventPage() {
                         style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
                         onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                         onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
-                      >View all tasks →</div>
+                      >View All Tasks →</div>
                     </div>
                   )}
                 </div>
@@ -465,7 +466,7 @@ export default function EventPage() {
               {venue && (
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Venue Information</div>
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Venue Information</div>
                     <div
                       onClick={() => router.push(`/venues/${venue.id}`)}
                       style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
@@ -537,7 +538,7 @@ export default function EventPage() {
               {/* Booking Notes */}
               {event.booking_note && (
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 10 }}>Booking Notes</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Booking Notes</div>
                   <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{event.booking_note}</div>
                 </div>
               )}
