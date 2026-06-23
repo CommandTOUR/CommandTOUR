@@ -11,7 +11,7 @@ const DEPARTMENTS = [
   { key: 'lighting_audio_video', label: 'Lighting, Audio & Video' },
   { key: 'hosts', label: 'Hosts' },
   { key: 'fmx', label: 'FMX' },
-  { key: 'stunt_show_productions', label: 'Stunt Show Productions' },
+  { key: 'stuntmanshow_productions', label: 'Stuntmanshow Productions' },
   { key: 'uncategorized', label: 'Uncategorized' },
 ]
 
@@ -32,7 +32,7 @@ export default function StaffPage() {
   const [staff, setStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState(Object.fromEntries(DEPARTMENTS.map(d => [d.key, true])))
+  const [expanded, setExpanded] = useState(Object.fromEntries(DEPARTMENTS.map(d => [d.key, false])))
 
   useEffect(() => {
     const fetchStaff = async () => {

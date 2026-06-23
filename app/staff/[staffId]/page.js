@@ -260,7 +260,7 @@ export default function StaffProfile() {
             <option value="lighting_audio_video">Lighting, Audio &amp; Video</option>
             <option value="hosts">Hosts</option>
             <option value="fmx">FMX</option>
-            <option value="stunt_show_productions">Stunt Show Productions</option>
+            <option value="stuntmanshow_productions">Stuntmanshow Productions</option>
             <option value="executives">Executives</option>
             <option value="uncategorized">Uncategorized</option>
           </select>
