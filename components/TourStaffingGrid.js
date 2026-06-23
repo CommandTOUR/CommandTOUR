@@ -619,7 +619,7 @@ function RightClickMenu({ x, y, eventId, positionKey, onSetBg, onSetText, onClos
   )
 }
 
-function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, currentEventId, tourId, onClose, onRefreshGrid }) {
+function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, sourceEventId, tourId, onClose, onRefreshGrid }) {
   const [checked, setChecked] = useState([])
   const [copying, setCopying] = useState(false)
   const [done, setDone] = useState(null)
@@ -627,10 +627,10 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, current
   const today = toYMD(new Date())
   const futureEvents = allEvents
     .filter(e =>
-      e.id !== currentEventId &&
       e.load_in_date &&
       e.load_in_date >= today &&
-      (tourId == null || e.tour_id === tourId)
+      e.id !== sourceEventId &&
+      (tourId ? e.tour_id === tourId : true)
     )
     .sort((a, b) => a.load_in_date.localeCompare(b.load_in_date))
 
@@ -1457,7 +1457,7 @@ export default function TourStaffingGrid({ tourId }) {
           assignments={assignments}
           allEvents={allEvents}
           tours={tours}
-          currentEventId={focusedCell?.eventId}
+          sourceEventId={focusedCell?.eventId}
           tourId={tourId}
           onClose={() => { setCopyModalOpen(false); setSelectedIds(new Set()) }}
           onRefreshGrid={() => { fetchAll(); showToast('Staff copied successfully') }}
