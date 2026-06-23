@@ -86,9 +86,9 @@ export default function TopNav() {
       {/* Logo */}
       <div style={{ marginRight: 36, flexShrink: 0 }}>
         <img
-          src="/images/commandtour-logo.png"
+          src="/images/CommandTOUR_Branding-v5.png"
           alt="CommandTOUR"
-          style={{ height: 32, width: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{ height: 61, width: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
 
