@@ -8,12 +8,10 @@ import { getSupabase } from '../../lib/supabase'
 const SECTIONS = [
   { key: 'staff', label: 'Staff' },
   { key: 'contractor', label: 'Contractors' },
-  { key: 'other', label: 'Other' },
 ]
 
 function getEmployeeType(s) {
   if (s.employee_type === 'contractor') return 'contractor'
-  if (s.employee_type === 'other') return 'other'
   return 'staff'
 }
 
@@ -54,7 +52,6 @@ export default function StaffPage() {
 
   const sections = SECTIONS
     .map(sec => ({ ...sec, members: filtered.filter(s => getEmployeeType(s) === sec.key) }))
-    .filter(sec => sec.members.length > 0)
 
   const toggleSection = (key) => {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
@@ -129,19 +126,20 @@ export default function StaffPage() {
               onClick={() => toggleSection(key)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[key] ? 16 : 0, userSelect: 'none' }}
             >
-              <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span style={{ color: '#94a3b8' }}>
                 <ChevronIcon open={!!expanded[key]} />
               </span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {label}
-              </span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-                {members.length} {members.length === 1 ? 'person' : 'people'}
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {label} ({members.length})
               </span>
               <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
             </div>
 
-            {expanded[key] && (
+            {expanded[key] && members.length === 0 && key === 'contractor' && (
+              <div style={{ fontSize: 13, color: '#64748b' }}>No contractors added yet</div>
+            )}
+
+            {expanded[key] && members.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {members.map(s => (
                   <div

@@ -13,6 +13,10 @@ export default function StaffProfile() {
   const [events, setEvents] = useState([])
   const [showPast, setShowPast] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [showMap, setShowMap] = useState({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,20 +25,62 @@ export default function StaffProfile() {
         supabase.from('staff').select('*').eq('id', staffId).single(),
         supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
         supabase.from('event_staff')
-          .select('position, status, confirmed, events(id, city, country, load_in_date, event_type, tour_id, tours(name, color))')
+          .select('position, status, confirmed, events(id, city, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color))')
           .eq('staff_id', staffId)
           .order('created_at', { ascending: false }),
       ])
       if (!personRes.error) setPerson(personRes.data)
       if (!airlinesRes.error) setAirlines(airlinesRes.data || [])
-      if (!eventsRes.error) setEvents(eventsRes.data || [])
+      if (!eventsRes.error) {
+        const eventsData = eventsRes.data || []
+        setEvents(eventsData)
+        const eventIds = eventsData.map(es => es.events?.id).filter(Boolean)
+        if (eventIds.length) {
+          const { data: showRows } = await supabase.from('show_list').select('event_id, show_date').in('event_id', eventIds)
+          const map = {}
+          for (const row of showRows || []) {
+            if (!map[row.event_id] || row.show_date > map[row.event_id]) map[row.event_id] = row.show_date
+          }
+          setShowMap(map)
+        }
+      }
       setLoading(false)
     }
     fetchData()
   }, [staffId])
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
-  const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+
+  const fmtDateRange = (start, end) => {
+    if (!start) return '—'
+    const s = new Date(start + 'T00:00:00')
+    const fmtD = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (!end || end === start) return fmtD(s)
+    const e = new Date(end + 'T00:00:00')
+    if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+      return `${s.toLocaleDateString('en-US', { month: 'short' })} ${s.getDate()} – ${e.getDate()}`
+    }
+    return `${fmtD(s)} – ${fmtD(e)}`
+  }
+
+  const handleRemove = async () => {
+    setRemoving(true)
+    const supabase = getSupabase()
+    const { error } = await supabase.from('staff').delete().eq('id', staffId)
+    if (!error) {
+      setToast(`${fullName} has been removed`)
+      setTimeout(() => router.push('/staff'), 1500)
+    } else {
+      setRemoving(false)
+      setShowRemoveModal(false)
+    }
+  }
+
+  const handleEmployeeTypeChange = async (newType) => {
+    const supabase = getSupabase()
+    const { error } = await supabase.from('staff').update({ employee_type: newType }).eq('id', staffId)
+    if (!error) setPerson(prev => ({ ...prev, employee_type: newType }))
+  }
 
   const eventTypeName = (t) => {
     if (t === 'hwss') return 'Hot Wheels Stunt Show'
@@ -79,7 +125,7 @@ export default function StaffProfile() {
   const STAFF_STATUS = {
     confirmed: { color: '#33FF99', label: 'Confirmed' },
     pending: { color: '#FFD60A', label: 'Pending' },
-    needs_attention: { color: '#f87171', label: 'Needs Attention' },
+    needs_attention: { color: '#e05252', label: 'Needs Attention' },
   }
   function normalizeStaffStatus(s) {
     if (s === 'scheduled') return 'pending'
@@ -104,8 +150,8 @@ export default function StaffProfile() {
         <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>
           {ev.city}{ev.country && `, ${ev.country}`}
         </div>
-        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>
-          {fmtShort(ev.load_in_date)}
+        <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+          {fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null)}
         </div>
         <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>
           {eventTypeName(ev.event_type)}
@@ -163,6 +209,26 @@ export default function StaffProfile() {
           >
             Edit Profile
           </button>
+        </div>
+
+        {/* Employee type toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <span style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Type</span>
+          {['staff', 'contractor'].map(t => {
+            const active = (person.employee_type || 'staff') === t
+            return (
+              <button key={t} onClick={() => handleEmployeeTypeChange(t)} style={{
+                fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, fontWeight: 600,
+                padding: '4px 14px', borderRadius: 999, cursor: 'pointer',
+                background: active ? 'rgba(51,255,153,0.15)' : 'transparent',
+                color: active ? '#33FF99' : '#64748b',
+                border: active ? '1px solid rgba(51,255,153,0.30)' : '1px solid rgba(255,255,255,0.12)',
+                transition: 'all 0.15s',
+              }}>
+                {t === 'staff' ? 'Staff' : 'Contractor'}
+              </button>
+            )
+          })}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -262,7 +328,51 @@ export default function StaffProfile() {
           )}
 
         </div>
+
+        {/* Remove Staff Member */}
+        <div style={{ marginTop: 40, paddingTop: 24, borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+          <button
+            onClick={() => setShowRemoveModal(true)}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(248,113,113,0.30)', background: 'transparent', color: '#f87171', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            Remove Staff Member
+          </button>
+        </div>
+
       </div>
+
+      {/* Confirmation modal */}
+      {showRemoveModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="glass-card" style={{ padding: 28, maxWidth: 400, width: '90%' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 12 }}>Remove Staff Member</div>
+            <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24, lineHeight: 1.6 }}>
+              This will permanently remove <strong style={{ color: '#f1f5f9' }}>{fullName}</strong> from CommandTOUR. This cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowRemoveModal(false)}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+              >Cancel</button>
+              <button
+                onClick={handleRemove}
+                disabled={removing}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', opacity: removing ? 0.6 : 1 }}
+              >{removing ? 'Removing...' : 'Remove'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 20px', fontSize: 14, color: '#f1f5f9', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
+          {toast}
+        </div>
+      )}
+
     </div>
   )
 }
