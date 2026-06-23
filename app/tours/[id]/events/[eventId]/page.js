@@ -27,17 +27,75 @@ const fmtStatus = (s) => {
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 }
 
+const timeSelectStyle = {
+  background: '#0d1f3a',
+  border: '0.5px solid rgba(255,255,255,0.15)',
+  borderRadius: 6,
+  color: '#f1f5f9',
+  fontSize: 13,
+  padding: '4px 8px',
+  cursor: 'pointer'
+}
+
+const ampmActiveStyle = {
+  background: 'rgba(51,255,153,0.15)',
+  color: '#33FF99',
+  border: '1px solid rgba(51,255,153,0.3)',
+  borderRadius: 6,
+  padding: '4px 10px',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer'
+}
+
+const ampmInactiveStyle = {
+  background: 'rgba(255,255,255,0.06)',
+  color: '#64748b',
+  border: '0.5px solid rgba(255,255,255,0.12)',
+  borderRadius: 6,
+  padding: '4px 10px',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer'
+}
+
 function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, onSave, isLast }) {
   const [hovered, setHovered] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editDate, setEditDate] = useState(show.show_date || '')
-  const [editTime, setEditTime] = useState(show.show_time || '')
+  const [editHour, setEditHour] = useState(() => {
+    if (!show.show_time) return '7'
+    const fmt = fmtTime(show.show_time)
+    if (!fmt) return '7'
+    const [h] = fmt.split(':')
+    const hour = parseInt(h) % 12 || 12
+    return String(hour)
+  })
+  const [editMinute, setEditMinute] = useState(() => {
+    if (!show.show_time) return '30'
+    const fmt = fmtTime(show.show_time)
+    if (!fmt) return '30'
+    return fmt.split(':')[1]?.split(' ')[0] || '30'
+  })
+  const [editAmPm, setEditAmPm] = useState(() => {
+    if (!show.show_time) return 'PM'
+    const fmt = fmtTime(show.show_time)
+    return fmt?.includes('AM') ? 'AM' : 'PM'
+  })
   const [saving, setSaving] = useState(false)
+
+  const initTimeFromShow = () => {
+    const fmt = fmtTime(show.show_time)
+    setEditHour(!fmt ? '7' : String(parseInt(fmt.split(':')[0]) % 12 || 12))
+    setEditMinute(!fmt ? '30' : fmt.split(':')[1]?.split(' ')[0] || '30')
+    setEditAmPm(!fmt ? 'PM' : fmt.includes('AM') ? 'AM' : 'PM')
+  }
 
   const handleSave = async () => {
     if (!editDate) return
     setSaving(true)
-    await onSave(show.id, editDate, editTime)
+    const finalTime = `${editHour}:${editMinute} ${editAmPm}`
+    await onSave(show.id, editDate, finalTime)
     setEditing(false)
     setSaving(false)
   }
@@ -56,11 +114,16 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
-          <input type="text" placeholder="7:30 PM" value={editTime}
-            onChange={e => setEditTime(e.target.value)}
-            style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f1f5f9', fontSize: 13, padding: '4px 8px', width: 90, fontFamily: 'Plus Jakarta Sans, sans-serif', outline: 'none' }} />
+          <select value={editHour} onChange={e => setEditHour(e.target.value)} style={timeSelectStyle}>
+            {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
+          </select>
+          <select value={editMinute} onChange={e => setEditMinute(e.target.value)} style={timeSelectStyle}>
+            {['00','15','30','45'].map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <button onClick={() => setEditAmPm('AM')} style={editAmPm === 'AM' ? ampmActiveStyle : ampmInactiveStyle}>AM</button>
+          <button onClick={() => setEditAmPm('PM')} style={editAmPm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
-          <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
+          <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); initTimeFromShow() }}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
         </div>
       ) : (
@@ -71,7 +134,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
             {fmtTime(show.show_time)
               ? <> · {fmtTime(show.show_time)}</>
               : <span
-                  onClick={() => { setEditing(true); setEditDate(show.show_date || ''); setEditTime('') }}
+                  onClick={() => { setEditing(true); setEditDate(show.show_date || '') }}
                   style={{ fontSize: 13, color: '#64748b', marginLeft: 6, cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
                   onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
@@ -83,7 +146,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
 
       {!editing && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
-          <div onClick={() => { setEditing(true); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
+          <div onClick={() => { setEditing(true); setEditDate(show.show_date || ''); initTimeFromShow() }}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 4 }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -116,7 +179,10 @@ export default function EventPage() {
     return tab || 'overview'
   })
   const [addingShow, setAddingShow] = useState(false)
-  const [newShow, setNewShow] = useState({ show_date: '', show_time: '', notes: '' })
+  const [newShow, setNewShow] = useState({ show_date: '', notes: '' })
+  const [newHour, setNewHour] = useState('7')
+  const [newMinute, setNewMinute] = useState('30')
+  const [newAmPm, setNewAmPm] = useState('PM')
   const [saving, setSaving] = useState(false)
   const [incompleteTasks, setIncompleteTasks] = useState(null)
 
@@ -165,7 +231,7 @@ export default function EventPage() {
     const { data, error } = await supabase.from('show_list').insert([{
       event_id: eventId,
       show_date: newShow.show_date,
-      show_time: newShow.show_time || null,
+      show_time: `${newHour}:${newMinute} ${newAmPm}`,
       notes: newShow.notes || null,
       completed: false,
     }]).select().single()
@@ -177,7 +243,10 @@ export default function EventPage() {
         num_shows: updated.length,
         load_out_date: event.load_out_date || lastShowDate,
       }).eq('id', eventId)
-      setNewShow({ show_date: '', show_time: '', notes: '' })
+      setNewShow({ show_date: '', notes: '' })
+      setNewHour('7')
+      setNewMinute('30')
+      setNewAmPm('PM')
       setAddingShow(false)
     }
     setSaving(false)
@@ -584,7 +653,16 @@ export default function EventPage() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Time</label>
-                      <input type="text" placeholder="7:30 PM" style={{ ...inputStyle, width: '100%' }} value={newShow.show_time} onChange={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <select value={newHour} onChange={e => setNewHour(e.target.value)} style={timeSelectStyle}>
+                          {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
+                        </select>
+                        <select value={newMinute} onChange={e => setNewMinute(e.target.value)} style={timeSelectStyle}>
+                          {['00','15','30','45'].map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <button onClick={() => setNewAmPm('AM')} style={newAmPm === 'AM' ? ampmActiveStyle : ampmInactiveStyle}>AM</button>
+                        <button onClick={() => setNewAmPm('PM')} style={newAmPm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -593,7 +671,7 @@ export default function EventPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                     <button
-                      onClick={() => { setAddingShow(false); setNewShow({ show_date: '', show_time: '', notes: '' }) }}
+                      onClick={() => { setAddingShow(false); setNewShow({ show_date: '', notes: '' }); setNewHour('7'); setNewMinute('30'); setNewAmPm('PM') }}
                       style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
