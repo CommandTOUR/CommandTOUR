@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "@tabler/icons-react": "^3.44.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "mapbox-gl": "^3.24.0",
