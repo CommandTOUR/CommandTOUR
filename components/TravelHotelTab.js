@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 import ExportModal from './ExportModal'
+import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -440,12 +441,10 @@ export default function TravelHotelTab({ eventId, event }) {
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
         {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
         {onExport && (
-          <button
-            onClick={onExport}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >Export PDF</button>
+          <button onClick={onExport} style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <IconFileTypePdf size={16} color="#f1f5f9" />
+            <IconPrinter size={16} color="#f1f5f9" />
+          </button>
         )}
       </div>
     </div>

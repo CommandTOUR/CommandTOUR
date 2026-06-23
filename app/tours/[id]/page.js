@@ -7,6 +7,7 @@ import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 import TourStaffingGrid from '../../../components/TourStaffingGrid'
 import ExportModal from '../../../components/ExportModal'
+import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
 
 // Determine the date that decides whether an event is "past": latest show date,
 // falling back to sunday_date, then saturday_date, then load_in_date.
@@ -430,12 +431,10 @@ export default function TourPage() {
                   Events <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
                 </div>
                 {events.length > 0 && (
-                  <button
-                    onClick={handleExportSchedule}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: `0.5px solid ${color}`, background: 'transparent', color: color, cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >Export PDF</button>
+                  <button onClick={handleExportSchedule} style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IconFileTypePdf size={16} color="#f1f5f9" />
+                    <IconPrinter size={16} color="#f1f5f9" />
+                  </button>
                 )}
               </div>
 
