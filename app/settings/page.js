@@ -98,7 +98,11 @@ export default function SettingsPage() {
   const [removeModal, setRemoveModal]     = useState(null)
   const [linkCopied, setLinkCopied]       = useState(false)
 
-  useEffect(() => { init() }, [])
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') || 'dark'
+    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light')
+    init()
+  }, [])
 
   const init = async () => {
     const supabase = getSupabase()
@@ -166,15 +170,15 @@ export default function SettingsPage() {
 
   // ── Preferences handlers ──────────────────────────────────────────────────
 
-  const handleTheme = (t) => {
-    setTheme(t)
-    if (t === 'light') {
+  const applyTheme = (newTheme) => {
+    if (newTheme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light')
-      localStorage.setItem('theme', 'light')
     } else {
       document.documentElement.removeAttribute('data-theme')
-      localStorage.removeItem('theme')
     }
+    localStorage.setItem('theme', newTheme)
+    window.dispatchEvent(new Event('themeChanged'))
+    setTheme(newTheme)
   }
 
   // ── Defaults handlers ─────────────────────────────────────────────────────
@@ -334,7 +338,7 @@ export default function SettingsPage() {
           {[['dark', 'Dark'], ['light', 'Light']].map(([val, lbl]) => (
             <button
               key={val}
-              onClick={() => handleTheme(val)}
+              onClick={() => applyTheme(val)}
               style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 24px', borderRadius: 999, cursor: 'pointer', border: theme === val ? '1px solid rgba(51,255,153,0.30)' : '1px solid rgba(255,255,255,0.10)', background: theme === val ? 'rgba(51,255,153,0.15)' : 'rgba(255,255,255,0.06)', color: theme === val ? '#33FF99' : '#64748b', fontWeight: theme === val ? 600 : 400, transition: 'all 0.15s' }}
             >
               {lbl}

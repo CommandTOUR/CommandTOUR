@@ -20,6 +20,7 @@ export default function TopNav() {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [avatarColor, setAvatarColor] = useState('#C9A84C')
+  const [theme, setTheme] = useState('dark')
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -32,6 +33,18 @@ export default function TopNav() {
     }
     window.addEventListener('avatarColorChanged', handleColorChange)
     return () => window.removeEventListener('avatarColorChanged', handleColorChange)
+  }, [])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') || 'dark'
+    setTheme(saved)
+
+    const handleThemeChange = () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
+      setTheme(current)
+    }
+    window.addEventListener('themeChanged', handleThemeChange)
+    return () => window.removeEventListener('themeChanged', handleThemeChange)
   }, [])
 
   useEffect(() => {
@@ -54,7 +67,7 @@ export default function TopNav() {
     <nav style={{
       minHeight: 64,
       fontFamily: 'Plus Jakarta Sans, sans-serif',
-      background: '#0d1f38',
+      background: 'var(--nav-bg)',
       display: 'flex',
       alignItems: 'center',
       padding: '0 24px',
@@ -69,9 +82,12 @@ export default function TopNav() {
       {/* Logo */}
       <div style={{ marginRight: 8, flexShrink: 0 }}>
         <img
-          src="/images/CommandTOUR_Branding-1-DarkMode.png"
+          src={theme === 'light'
+            ? '/images/CommandTOUR_Branding-2-LightMode.png'
+            : '/images/CommandTOUR_Branding-1-DarkMode.png'
+          }
           alt="CommandTOUR"
-          style={{ height: 55, width: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
 
@@ -89,14 +105,14 @@ export default function TopNav() {
               padding: '7px 14px',
               borderRadius: 7,
               textDecoration: 'none',
-              color: active ? '#33FF99' : '#94a3b8',
+              color: active ? 'var(--color-mint)' : 'var(--text-secondary)',
               background: 'transparent',
               fontWeight: active ? 700 : 400,
               transition: 'color 0.15s',
               whiteSpace: 'nowrap',
             }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#f1f5f9' }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.color = '#94a3b8' }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)' }}
             >
               {link.label}
             </Link>
