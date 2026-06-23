@@ -8,27 +8,25 @@ import { getSupabase } from '../../lib/supabase'
 
 const STATUS_STYLES = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#63b3ed', background: 'rgba(99,179,237,0.15)',   border: 'rgba(99,179,237,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
   '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '3-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  'date-hold': { color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.30)' },
-  want:        { color: '#fb923c', background: 'rgba(251,146,60,0.15)',  border: 'rgba(251,146,60,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
 
 // Dark glass pills for the grid (matching STATUS_STYLES)
 const STATUS_PILL_LIGHT = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#63b3ed', background: 'rgba(99,179,237,0.15)',   border: 'rgba(99,179,237,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
   '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '3-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  'date-hold': { color: '#a78bfa', background: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.30)' },
-  want:        { color: '#fb923c', background: 'rgba(251,146,60,0.15)',  border: 'rgba(251,146,60,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
 
 const PANEL_STATUSES_ROW1 = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative']
-const PANEL_STATUSES_ROW2 = ['date-hold', 'want']
+const PANEL_STATUSES_ROW2 = ['date-hold']
 
 const statusLabel = (s) => {
   if (s === '3-hold') return '3+ Hold'
@@ -978,7 +976,7 @@ function GridCell({
       </td>
       <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: groupBorder }}>
         {statusStyle ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: statusStyle.color, background: statusStyle.background, border: `0.5px solid ${statusStyle.border}` }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}` }}>
             {statusLabel(event.status)}
           </div>
         ) : null}

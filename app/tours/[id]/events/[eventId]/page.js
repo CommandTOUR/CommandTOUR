@@ -11,14 +11,13 @@ import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 
-const STATUS_TEXT_COLORS = {
-  confirmed:   '#33FF99',
-  tentative:   '#63b3ed',
-  '1-hold':    '#FFD60A',
-  '2-hold':    '#FFD60A',
-  '3-hold':    '#FFD60A',
-  'date-hold': '#a78bfa',
-  want:        '#fb923c',
+const STATUS_PILL = {
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
 
 const fmtStatus = (s) => {
@@ -319,10 +318,10 @@ export default function EventPage() {
                     {event.city}{event.country && `, ${event.country}`}
                   </div>
                   <span style={{
-                    fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                    color: STATUS_TEXT_COLORS[event.status] || '#FFD60A',
-                    background: event.status === 'confirmed' ? 'rgba(51,255,153,0.15)' : event.status === 'cancelled' ? 'rgba(239,68,68,0.15)' : 'rgba(255,214,10,0.15)',
-                    border: `1px solid ${event.status === 'confirmed' ? 'rgba(51,255,153,0.30)' : event.status === 'cancelled' ? 'rgba(239,68,68,0.30)' : 'rgba(255,214,10,0.30)'}`,
+                    fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+                    color: (STATUS_PILL[event.status] || STATUS_PILL.tentative).color,
+                    background: (STATUS_PILL[event.status] || STATUS_PILL.tentative).background,
+                    border: `1px solid ${(STATUS_PILL[event.status] || STATUS_PILL.tentative).border}`,
                   }}>
                     {event.status ? fmtStatus(event.status) : 'Tentative'}
                   </span>
@@ -385,7 +384,7 @@ export default function EventPage() {
                 {statCard(
                   event.status ? fmtStatus(event.status) : 'Tentative',
                   'Booking Status', null,
-                  STATUS_TEXT_COLORS[event.status] || STATUS_TEXT_COLORS.tentative
+                  (STATUS_PILL[event.status] || STATUS_PILL.tentative).color
                 )}
                 {statCard(
                   event.venue_name || 'TBC',

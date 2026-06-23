@@ -276,11 +276,9 @@ export default function EditEvent() {
                 <option value="tentative">Tentative</option>
                 <option value="1-hold">1-Hold</option>
                 <option value="2-hold">2-Hold</option>
-                <option value="3-hold">3-Hold</option>
+                <option value="3-hold">3+ Hold</option>
                 <option value="confirmed">Confirmed</option>
-                <option value="want">Want</option>
                 <option value="date-hold">Date Hold</option>
-                <option value="cancelled">Cancelled</option>
               </select>
             </div>
           </div>

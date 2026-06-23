@@ -6,19 +6,20 @@ import { getSupabase } from '../lib/supabase'
 
 // Neon status pills for dark glass backgrounds
 const STATUS_PILL = {
-  confirmed:   { color: '#33FF99',  background: 'rgba(51,255,153,0.15)',  border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#FFD60A',  background: 'rgba(255,214,10,0.15)',  border: 'rgba(255,214,10,0.30)' },
-  '1-hold':    { color: '#FFD60A',  background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  '2-hold':    { color: '#FFD60A',  background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  '3-hold':    { color: '#FFD60A',  background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  cancelled:   { color: '#f87171',  background: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.30)' },
-  active:      { color: '#33FF99',  background: 'rgba(51,255,153,0.15)',  border: 'rgba(51,255,153,0.30)' },
-  upcoming:    { color: '#63b3ed',  background: 'rgba(99,179,237,0.15)',  border: 'rgba(99,179,237,0.30)' },
-  want:        { color: '#64748b',  background: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' },
-  'date-hold': { color: '#64748b',  background: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' },
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
 
-const fmtStatus = (s) => s ? s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : 'Tentative'
+const fmtStatus = (s) => {
+  if (!s) return 'Tentative'
+  if (s === '3-hold') return '3+ Hold'
+  if (s === 'date-hold') return 'Date Hold'
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
 
 const pad = (n) => String(n).padStart(2, '0')
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`

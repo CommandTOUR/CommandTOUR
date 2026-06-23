@@ -5,6 +5,22 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 
+const STATUS_PILL = {
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
+}
+
+const fmtStatus = (s) => {
+  if (!s) return '—'
+  if (s === '3-hold') return '3+ Hold'
+  if (s === 'date-hold') return 'Date Hold'
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
+
 export default function VenuePage() {
   const router = useRouter()
   const { venueId } = useParams()
@@ -402,8 +418,8 @@ export default function VenuePage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ fontSize: 13, color: '#94a3b8' }}>{fmt(ev.load_in_date)}</div>
-                    <span style={{ fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20, color: ev.status === 'confirmed' ? '#33FF99' : '#94a3b8', background: ev.status === 'confirmed' ? 'rgba(51,255,153,0.12)' : 'rgba(255,255,255,0.08)', border: `0.5px solid ${ev.status === 'confirmed' ? 'rgba(51,255,153,0.4)' : 'rgba(255,255,255,0.15)'}` }}>
-                      {ev.status ? ev.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : '—'}
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', color: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).color, background: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).background, border: `1px solid ${(STATUS_PILL[ev.status] || STATUS_PILL.tentative).border}` }}>
+                      {fmtStatus(ev.status)}
                     </span>
                   </div>
                 </div>

@@ -15,21 +15,23 @@ function getEventPastDate(event, shows) {
   return event.load_in_date
 }
 
-const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'cancelled', 'want', 'date-hold']
+const STATUS_OPTIONS = ['tentative', '1-hold', '2-hold', '3-hold', 'confirmed', 'date-hold']
 
 const STATUS_STYLES = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',  border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#FFD60A', background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  '2-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  '3-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.10)',  border: 'rgba(255,214,10,0.25)' },
-  cancelled:   { color: '#f87171', background: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.30)' },
-  want:        { color: '#64748b', background: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' },
-  'date-hold': { color: '#64748b', background: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' },
+  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
+  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
+  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
+  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
+  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
+  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
 
-// Title-case a status value, capitalizing each hyphen segment ("1-hold" → "1-Hold")
-const fmtStatus = (s) => s ? s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-') : ''
+const fmtStatus = (s) => {
+  if (!s) return ''
+  if (s === '3-hold') return '3+ Hold'
+  if (s === 'date-hold') return 'Date Hold'
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
 
 const COLS = [
   { key: 'loadIn',    label: 'Load-In Date', width: '1fr',   align: 'left' },
@@ -113,8 +115,8 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
       <div
         onClick={() => setOpen(!open)}
         style={{
-          fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20,
-          color: s.color, background: s.background, border: `0.5px solid ${s.border}`,
+          fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+          color: s.color, background: s.background, border: `1px solid ${s.border}`,
           whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
           opacity: saving ? 0.5 : 1,
         }}
@@ -155,8 +157,8 @@ function StatusBadge({ status }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.tentative
   return (
     <span style={{
-      fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 20,
-      color: s.color, background: s.background, border: `0.5px solid ${s.border}`,
+      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+      color: s.color, background: s.background, border: `1px solid ${s.border}`,
       whiteSpace: 'nowrap',
     }}>
       {status ? fmtStatus(status) : 'Tentative'}
