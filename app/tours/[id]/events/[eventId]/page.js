@@ -224,6 +224,17 @@ export default function EventPage() {
       .then(({ data }) => setIncompleteTasks(data || []))
   }, [activeTab, eventId])
 
+  useEffect(() => {
+    const fetchShows = async () => {
+      const supabase = getSupabase()
+      const { data } = await supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }).order('show_time', { ascending: true })
+      if (data) setShows(data)
+    }
+    const handleFocus = () => fetchShows()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [eventId])
+
   const handleAddShow = async () => {
     if (!newShow.show_date) return
     setSaving(true)

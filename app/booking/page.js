@@ -253,6 +253,60 @@ const mintOutlineBtn = {
   border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer',
 }
 
+// ── TIME HELPERS ──────────────────────────────────────────────────────────────
+
+function fmtTime(t) {
+  if (!t) return null
+  if (t.toLowerCase().includes('am') || t.toLowerCase().includes('pm')) return t.trim()
+  const [h, m] = t.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return t
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+function transformShow(show) {
+  const fmt = fmtTime(show.show_time)
+  return {
+    ...show,
+    show_hour: !fmt ? '7' : String(parseInt(fmt.split(':')[0]) % 12 || 12),
+    show_minute: !fmt ? '30' : fmt.split(':')[1]?.split(' ')[0] || '30',
+    show_ampm: !fmt ? 'PM' : fmt.includes('AM') ? 'AM' : 'PM',
+  }
+}
+
+const timeSelectStyle = {
+  background: '#0d1f3a',
+  border: '0.5px solid rgba(255,255,255,0.15)',
+  borderRadius: 6,
+  color: '#f1f5f9',
+  fontSize: 13,
+  padding: '4px 8px',
+  cursor: 'pointer',
+}
+
+const ampmActiveStyle = {
+  background: 'rgba(51,255,153,0.15)',
+  color: '#33FF99',
+  border: '1px solid rgba(51,255,153,0.3)',
+  borderRadius: 6,
+  padding: '4px 10px',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+}
+
+const ampmInactiveStyle = {
+  background: 'rgba(255,255,255,0.06)',
+  color: '#64748b',
+  border: '0.5px solid rgba(255,255,255,0.12)',
+  borderRadius: 6,
+  padding: '4px 10px',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+}
+
 // ── INLINE VENUE SEARCH (DB-only — clicking an empty venue cell) ───────────────
 
 function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
@@ -552,8 +606,8 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     const fetchShows = async () => {
       const supabase = getSupabase()
       const { data } = await supabase.from('show_list').select('*').eq('event_id', event.id).order('show_date', { ascending: true }).order('show_time', { ascending: true })
-      setShows(data || [])
-      setInitialShows(data || [])
+      setShows((data || []).map(transformShow))
+      setInitialShows((data || []).map(transformShow))
       setLoadingShows(false)
     }
     fetchShows()
@@ -569,7 +623,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     setTimeout(onClose, 200)
   }
 
-  const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_time: '' }])
+  const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_hour: '7', show_minute: '30', show_ampm: 'PM' }])
   const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
 
   const handleDeleteShow = async (idx) => {
@@ -600,15 +654,17 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     for (const show of shows) {
       if (!show.id) {
         if (show.show_date) {
-          const payload = { event_id: event.id, show_date: show.show_date, show_time: show.show_time || null }
-          const { data: insertedShow, error } = await supabase.from('show_list').insert([payload]).select().single()
+          const composedTime = `${show.show_hour}:${show.show_minute} ${show.show_ampm}`
+          const payload = { event_id: event.id, show_date: show.show_date, show_time: composedTime }
+          const { error } = await supabase.from('show_list').insert([payload]).select().single()
           if (error) showErrors.push(error.message)
         }
       } else {
+        const composedTime = `${show.show_hour}:${show.show_minute} ${show.show_ampm}`
         const orig = initialShows.find(s => s.id === show.id)
-        if (orig && (orig.show_date !== show.show_date || orig.show_time !== show.show_time)) {
-          const updatePayload = { show_date: show.show_date, show_time: show.show_time || null }
-          const { data: updatedShow, error } = await supabase.from('show_list').update(updatePayload).eq('id', show.id).select().single()
+        const origComposed = orig ? `${orig.show_hour}:${orig.show_minute} ${orig.show_ampm}` : null
+        if (orig && (orig.show_date !== show.show_date || origComposed !== composedTime)) {
+          const { error } = await supabase.from('show_list').update({ show_date: show.show_date, show_time: composedTime }).eq('id', show.id).select().single()
           if (error) showErrors.push(error.message)
         }
       }
@@ -625,8 +681,8 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     const { data: freshShows } = await supabase
       .from('show_list').select('*').eq('event_id', event.id)
       .order('show_date', { ascending: true }).order('show_time', { ascending: true })
-    setShows(freshShows || [])
-    setInitialShows(freshShows || [])
+    setShows((freshShows || []).map(transformShow))
+    setInitialShows((freshShows || []).map(transformShow))
 
     setSaving(false)
     setSaveSuccess(true)
@@ -749,7 +805,14 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                   <div key={s.id || 'new-' + i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <input type="date" style={{ ...inputStyle, flex: 2 }} value={s.show_date || ''} min={loadInDate || ''} onChange={e => handleShowChange(i, { show_date: e.target.value })} />
-                      <input type="time" style={{ ...inputStyle, flex: 1 }} value={s.show_time || ''} onChange={e => handleShowChange(i, { show_time: e.target.value })} onBlur={e => handleShowChange(i, { show_time: e.target.value })} />
+                      <select value={s.show_hour} onChange={e => handleShowChange(i, { show_hour: e.target.value })} style={timeSelectStyle}>
+                        {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                      <select value={s.show_minute} onChange={e => handleShowChange(i, { show_minute: e.target.value })} style={timeSelectStyle}>
+                        {['00','15','30','45'].map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <button onClick={() => handleShowChange(i, { show_ampm: 'AM' })} style={s.show_ampm === 'AM' ? ampmActiveStyle : ampmInactiveStyle}>AM</button>
+                      <button onClick={() => handleShowChange(i, { show_ampm: 'PM' })} style={s.show_ampm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
                       <div onClick={() => handleDeleteShow(i)}
                         style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
                         onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
