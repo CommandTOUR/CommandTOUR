@@ -44,7 +44,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 16px', height: 52, borderBottom: isLast ? 'none' : '0.5px solid rgba(255,255,255,0.06)', background: 'transparent', transition: 'background 0.12s' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(255,255,255,0.10)', background: 'transparent', transition: 'background 0.12s', marginBottom: 8 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -56,7 +56,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
-          <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
+          <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} onBlur={e => setEditTime(e.target.value)}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
           <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
@@ -67,7 +67,15 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
           <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
           <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
             {fmtLong(show.show_date)}
-            {fmtTime(show.show_time) && <> · {fmtTime(show.show_time)}</>}
+            {fmtTime(show.show_time)
+              ? <> · {fmtTime(show.show_time)}</>
+              : <span
+                  onClick={() => { setEditing(true); setEditDate(show.show_date || ''); setEditTime('') }}
+                  style={{ fontSize: 13, color: '#64748b', marginLeft: 6, cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
+                >· Set time</span>
+            }
           </div>
         </div>
       )}
@@ -602,7 +610,7 @@ export default function EventPage() {
               )}
 
               {shows.length > 0 && (
-                <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ maxWidth: 600 }}>
                   {shows.map((show, i) => (
                     <ShowRow
                       key={show.id}
