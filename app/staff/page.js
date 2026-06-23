@@ -12,6 +12,8 @@ const DEPARTMENTS = [
   { key: 'hosts', label: 'Hosts' },
   { key: 'fmx', label: 'FMX' },
   { key: 'stuntmanshow_productions', label: 'Stuntmanshow Productions' },
+  { key: 'robot_operators', label: 'Robot Operators' },
+  { key: 'monster_truck_drivers_crew', label: 'Monster Truck Drivers & Crew' },
   { key: 'uncategorized', label: 'Uncategorized' },
 ]
 

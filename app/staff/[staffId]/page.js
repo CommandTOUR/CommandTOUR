@@ -261,6 +261,8 @@ export default function StaffProfile() {
             <option value="hosts">Hosts</option>
             <option value="fmx">FMX</option>
             <option value="stuntmanshow_productions">Stuntmanshow Productions</option>
+            <option value="robot_operators">Robot Operators</option>
+            <option value="monster_truck_drivers_crew">Monster Truck Drivers &amp; Crew</option>
             <option value="executives">Executives</option>
             <option value="uncategorized">Uncategorized</option>
           </select>
