@@ -27,6 +27,7 @@ const STATUS_PILL_LIGHT = {
 
 const PANEL_STATUSES_ROW1 = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative']
 const PANEL_STATUSES_ROW2 = ['date-hold']
+const ALL_STATUSES = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative', 'date-hold']
 
 const statusLabel = (s) => {
   if (s === '3-hold') return '3+ Hold'
@@ -857,9 +858,13 @@ function GridCell({
   venues, setVenues, onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
   onStartCityText, onSubmitCityText, onCancelCityText,
   onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
-  onDragStartEvent, onDragEndEvent, draggedEventId,
+  onDragStartEvent, onDragEndEvent, draggedEventId, onUpdateStatus,
 }) {
   const [cityHovered, setCityHovered] = useState(false)
+  const [dropOpen, setDropOpen] = useState(false)
+  const [dropPos, setDropPos] = useState(null)
+  const pillRef = useRef(null)
+  const dropRef = useRef(null)
   const statusStyle = event?.status ? (STATUS_PILL_LIGHT[event.status] || STATUS_PILL_LIGHT.tentative) : null
   const isDragOver = dragOverKey === cellKey
   const cellBase = {
@@ -871,6 +876,35 @@ function GridCell({
   }
   const innerBorder = '0.5px solid rgba(255,255,255,0.08)'
   const groupBorder = isLast ? innerBorder : B_TOUR_DIVIDER
+
+  useEffect(() => {
+    if (!dropOpen) return
+    const handleDown = (e) => {
+      if (pillRef.current?.contains(e.target)) return
+      if (dropRef.current?.contains(e.target)) return
+      setDropOpen(false)
+    }
+    const handleKey = (e) => { if (e.key === 'Escape') setDropOpen(false) }
+    document.addEventListener('mousedown', handleDown)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleDown)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [dropOpen])
+
+  const handlePillClick = (e) => {
+    e.stopPropagation()
+    if (!event || !pillRef.current) return
+    const rect = pillRef.current.getBoundingClientRect()
+    setDropPos({ top: rect.bottom + 4, left: rect.left })
+    setDropOpen(v => !v)
+  }
+
+  const handleSelectStatus = async (newStatus) => {
+    setDropOpen(false)
+    await onUpdateStatus(event.id, newStatus)
+  }
 
   const handleCityClick = () => {
     if (event) onOpenPanel(event, row, tour)
@@ -976,10 +1010,34 @@ function GridCell({
       </td>
       <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: groupBorder }}>
         {statusStyle ? (
-          <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}` }}>
+          <div
+            ref={pillRef}
+            onClick={handlePillClick}
+            style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
             {statusLabel(event.status)}
           </div>
         ) : null}
+        {dropOpen && dropPos && createPortal(
+          <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0d1f3c', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
+            {ALL_STATUSES.map(opt => {
+              const s = STATUS_STYLES[opt] || STATUS_STYLES.tentative
+              const isActive = event.status === opt
+              return (
+                <div key={opt} onClick={() => handleSelectStatus(opt)}
+                  style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+                    {statusLabel(opt)}
+                  </span>
+                  {isActive && <span style={{ color: s.color, fontSize: 12, fontWeight: 700, marginLeft: 8 }}>✓</span>}
+                </div>
+              )
+            })}
+          </div>,
+          document.body
+        )}
       </td>
     </>
   )
@@ -995,7 +1053,7 @@ function YearGrid({
   onStartCityText, onSubmitCityText, onCancelCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
-  draggedTour, onPlaceholderDrop, draggedEventId,
+  draggedTour, onPlaceholderDrop, draggedEventId, onUpdateStatus,
 }) {
   const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
 
@@ -1084,6 +1142,7 @@ function YearGrid({
                           onDragStartEvent={onDragStartEvent}
                           onDragEndEvent={onDragEndEvent}
                           draggedEventId={draggedEventId}
+                          onUpdateStatus={onUpdateStatus}
                         />
                       )
                     })}
@@ -1378,6 +1437,12 @@ export default function BookingPage() {
     }
   }
 
+  const handleUpdateStatus = async (eventId, newStatus) => {
+    const supabase = getSupabase()
+    const { error } = await supabase.from('events').update({ status: newStatus }).eq('id', eventId)
+    if (!error) setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: newStatus } : e))
+  }
+
   if (loading) return (
     <div style={{ height: '100vh', background: 'var(--bg)' }}>
       <TopNav />
@@ -1430,6 +1495,7 @@ export default function BookingPage() {
           onDragStartEvent={handleDragStartEvent} onDragEndEvent={resetDragState}
           draggedTour={draggedTour} onPlaceholderDrop={handlePlaceholderDrop}
           draggedEventId={draggedEvent?.id}
+          onUpdateStatus={handleUpdateStatus}
         />
       </div>
 
