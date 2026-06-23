@@ -211,12 +211,16 @@ export default function EventPage() {
   }
 
   const handleSaveShow = async (showId, date, time) => {
+    console.log('[Show Save] editTime value:', time)
+    console.log('[Show Save] editDate value:', date)
+    console.log('[Show Save] payload:', { show_date: date, show_time: time || null })
     const supabase = getSupabase()
     const { data, error } = await supabase.from('show_list')
       .update({ show_date: date, show_time: time || null })
       .eq('id', showId)
       .select()
       .single()
+    console.log('[Show Save] result:', { data, error })
     if (!error) setShows(prev => prev.map(s => s.id === showId ? { ...s, ...data } : s))
   }
 
