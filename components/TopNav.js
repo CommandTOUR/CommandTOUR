@@ -68,13 +68,12 @@ export default function TopNav() {
 
   return (
     <nav style={{
-      height: 62,
+      minHeight: 64,
       fontFamily: 'Plus Jakarta Sans, sans-serif',
       background: '#0d1f38',
-      borderBottom: '0.5px solid rgba(255,255,255,0.12)',
       display: 'flex',
       alignItems: 'center',
-      padding: '0 28px',
+      padding: '0 24px',
       gap: 0,
       position: 'fixed',
       top: 0,
@@ -84,7 +83,7 @@ export default function TopNav() {
     }}>
 
       {/* Logo */}
-      <div style={{ marginRight: 36, flexShrink: 0 }}>
+      <div style={{ marginRight: 8, flexShrink: 0 }}>
         <img
           src="/images/CommandTOUR_Branding-1-DarkMode.png"
           alt="CommandTOUR"
