@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
@@ -17,6 +17,8 @@ export default function StaffProfile() {
   const [removing, setRemoving] = useState(false)
   const [toast, setToast] = useState(null)
   const [showMap, setShowMap] = useState({})
+  const [stickyVisible, setStickyVisible] = useState(false)
+  const nameRef = useRef(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,11 +78,21 @@ export default function StaffProfile() {
     }
   }
 
-  const handleEmployeeTypeChange = async (newType) => {
+  const handleDepartmentChange = async (newDept) => {
     const supabase = getSupabase()
-    const { error } = await supabase.from('staff').update({ employee_type: newType }).eq('id', staffId)
-    if (!error) setPerson(prev => ({ ...prev, employee_type: newType }))
+    const { error } = await supabase.from('staff').update({ department: newDept }).eq('id', staffId)
+    if (!error) setPerson(prev => ({ ...prev, department: newDept }))
   }
+
+  useEffect(() => {
+    if (!nameRef.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-62px 0px 0px 0px' }
+    )
+    observer.observe(nameRef.current)
+    return () => observer.disconnect()
+  }, [person])
 
   const eventTypeName = (t) => {
     if (t === 'hwss') return 'Hot Wheels Stunt Show'
@@ -170,6 +182,20 @@ export default function StaffProfile() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
+
+      {/* Sticky name header — appears when the main name scrolls out of view */}
+      {stickyVisible && (
+        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: '#0a1628', borderBottom: '0.5px solid rgba(255,255,255,0.12)', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{fullName}</div>
+          {person.email && (
+            <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>{person.email}</a>
+          )}
+          {person.phone && (
+            <a href={`tel:${person.phone}`} style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>{person.phone}</a>
+          )}
+        </div>
+      )}
+
       <div style={{ marginTop: 62, padding: 28 }}>
 
         {/* Header */}
@@ -189,7 +215,7 @@ export default function StaffProfile() {
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{fullName}</div>
+                  <div ref={nameRef} style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{fullName}</div>
                   {person.attention_flag && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: '#fef9c3', border: '1px solid #fde68a' }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706' }} />
@@ -211,24 +237,33 @@ export default function StaffProfile() {
           </button>
         </div>
 
-        {/* Employee type toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <span style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>Type</span>
-          {['staff', 'contractor'].map(t => {
-            const active = (person.employee_type || 'staff') === t
-            return (
-              <button key={t} onClick={() => handleEmployeeTypeChange(t)} style={{
-                fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, fontWeight: 600,
-                padding: '4px 14px', borderRadius: 999, cursor: 'pointer',
-                background: active ? 'rgba(51,255,153,0.15)' : 'transparent',
-                color: active ? '#33FF99' : '#64748b',
-                border: active ? '1px solid rgba(51,255,153,0.30)' : '1px solid rgba(255,255,255,0.12)',
-                transition: 'all 0.15s',
-              }}>
-                {t === 'staff' ? 'Staff' : 'Contractor'}
-              </button>
-            )
-          })}
+        {/* Department dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <span style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, flexShrink: 0 }}>Department</span>
+          <select
+            value={person.department || 'uncategorized'}
+            onChange={e => handleDepartmentChange(e.target.value)}
+            style={{
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+              background: '#0d1f3a',
+              border: '0.5px solid rgba(255,255,255,0.12)',
+              borderRadius: 8,
+              color: '#f1f5f9',
+              fontSize: 13,
+              padding: '8px 12px',
+              width: 240,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            <option value="operations">Operations</option>
+            <option value="lighting_audio_video">Lighting, Audio &amp; Video</option>
+            <option value="hosts">Hosts</option>
+            <option value="fmx">FMX</option>
+            <option value="stunt_show_productions">Stunt Show Productions</option>
+            <option value="executives">Executives</option>
+            <option value="uncategorized">Uncategorized</option>
+          </select>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

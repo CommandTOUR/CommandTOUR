@@ -5,14 +5,18 @@ import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 
-const SECTIONS = [
-  { key: 'staff', label: 'Staff' },
-  { key: 'contractor', label: 'Contractors' },
+const DEPARTMENTS = [
+  { key: 'executives', label: 'Executives' },
+  { key: 'operations', label: 'Operations' },
+  { key: 'lighting_audio_video', label: 'Lighting, Audio & Video' },
+  { key: 'hosts', label: 'Hosts' },
+  { key: 'fmx', label: 'FMX' },
+  { key: 'stunt_show_productions', label: 'Stunt Show Productions' },
+  { key: 'uncategorized', label: 'Uncategorized' },
 ]
 
-function getEmployeeType(s) {
-  if (s.employee_type === 'contractor') return 'contractor'
-  return 'staff'
+function getDepartment(s) {
+  return s.department || 'uncategorized'
 }
 
 function ChevronIcon({ open }) {
@@ -28,7 +32,7 @@ export default function StaffPage() {
   const [staff, setStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState({ staff: true, contractor: true, other: true })
+  const [expanded, setExpanded] = useState(Object.fromEntries(DEPARTMENTS.map(d => [d.key, true])))
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -50,8 +54,9 @@ export default function StaffPage() {
 
   const initials = (s) => `${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase()
 
-  const sections = SECTIONS
-    .map(sec => ({ ...sec, members: filtered.filter(s => getEmployeeType(s) === sec.key) }))
+  const sections = DEPARTMENTS
+    .map(dep => ({ ...dep, members: filtered.filter(s => getDepartment(s) === dep.key) }))
+    .filter(sec => sec.members.length > 0)
 
   const toggleSection = (key) => {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
@@ -135,11 +140,7 @@ export default function StaffPage() {
               <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
             </div>
 
-            {expanded[key] && members.length === 0 && key === 'contractor' && (
-              <div style={{ fontSize: 13, color: '#64748b' }}>No contractors added yet</div>
-            )}
-
-            {expanded[key] && members.length > 0 && (
+            {expanded[key] && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {members.map(s => (
                   <div
