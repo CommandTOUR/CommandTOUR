@@ -87,7 +87,7 @@ export default function TopNav() {
         <img
           src="/images/CommandTOUR_Branding-1-DarkMode.png"
           alt="CommandTOUR"
-          style={{ height: 61, width: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{ height: 55, width: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
 
