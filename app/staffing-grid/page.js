@@ -762,19 +762,41 @@ function RightClickMenu({ x, y, eventId, positionKey, onSetBg, onSetText, onClos
 
 // ── COPY TO EVENTS MODAL ──────────────────────────────────────────────────────
 
-function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, currentEventId, onClose, onRefreshGrid }) {
+function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, currentEventId, tourId, onClose, onRefreshGrid }) {
   const [checked, setChecked] = useState([])
   const [copying, setCopying] = useState(false)
   const [done, setDone] = useState(null)
 
   const today = toYMD(new Date())
   const futureEvents = allEvents
-    .filter(e => e.id !== currentEventId && e.load_in_date && e.load_in_date >= today)
+    .filter(e =>
+      e.id !== currentEventId &&
+      e.load_in_date &&
+      e.load_in_date >= today &&
+      (tourId == null || e.tour_id === tourId)
+    )
     .sort((a, b) => a.load_in_date.localeCompare(b.load_in_date))
 
+  const allChecked = futureEvents.length > 0 && futureEvents.every(e => checked.includes(e.id))
   const toggle = (id) => setChecked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const toggleAll = () => setChecked(allChecked ? [] : futureEvents.map(e => e.id))
 
-  const fmtLoadIn = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
+  const fmtDateRange = (loadIn, loadOut) => {
+    const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+    const a = fmt(loadIn)
+    if (!loadOut || loadOut === loadIn) return a
+    return a + ' – ' + fmt(loadOut)
+  }
+
+  const CheckboxIcon = ({ isChecked }) => (
+    <div style={{ width: 16, height: 16, flexShrink: 0, border: '1.5px solid ' + (isChecked ? '#33FF99' : 'rgba(255,255,255,0.3)'), borderRadius: 4, background: isChecked ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {isChecked && (
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M1.5 5l2.5 2.5 4.5-5" stroke="#0a1628" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </div>
+  )
 
   const handleCopy = async () => {
     if (checked.length === 0) return
@@ -815,56 +837,60 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, current
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 28, width: 460, maxHeight: '70vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.7)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Copy selected staff to events</div>
+      <div style={{ background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.7)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        {/* Modal header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginBottom: 16 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Copy to Events</div>
           <div onClick={onClose} style={{ fontSize: 22, color: '#64748b', cursor: 'pointer', lineHeight: 1 }}>×</div>
         </div>
         {done != null ? (
-          <div style={{ textAlign: 'center', padding: '28px 0', color: '#33FF99', fontSize: 15 }}>
+          <div style={{ textAlign: 'center', padding: '28px 24px', color: '#33FF99', fontSize: 15 }}>
             ✓ {done.staffCount} staff copied to {done.evCount} event{done.evCount === 1 ? '' : 's'}
           </div>
         ) : (
           <>
-            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
+            {/* Column header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', height: 36, borderTop: '0.5px solid rgba(255,255,255,0.08)', borderBottom: '0.5px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
+              <div onClick={toggleAll} style={{ cursor: 'pointer' }}>
+                <CheckboxIcon isChecked={allChecked} />
+              </div>
+              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Dates</span>
+              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}>City</span>
+              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 140, textAlign: 'right' }}>Tour</span>
+            </div>
+            {/* Event list */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
               {futureEvents.length === 0 && (
-                <div style={{ color: '#64748b', fontSize: 14, textAlign: 'center', padding: '24px 0' }}>No upcoming events to copy to</div>
+                <div style={{ color: '#64748b', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>No upcoming events to copy to</div>
               )}
               {futureEvents.map(ev => {
                 const tour = tours.find(t => t.id === ev.tour_id)
                 const tourColor = tour?.color || '#33FF99'
                 const isChecked = checked.includes(ev.id)
+                const geo = ev.country ? ', ' + ev.country : (ev.state ? ', ' + ev.state : '')
                 return (
-                  <div
-                    key={ev.id}
-                    onClick={() => toggle(ev.id)}
-                    style={{
-                      padding: '12px 16px', borderRadius: 8, marginBottom: 8, cursor: 'pointer',
-                      border: '0.5px solid ' + (isChecked ? tourColor : 'rgba(255,255,255,0.08)'),
-                      background: isChecked ? colorWithAlpha(tourColor, 0.10) : 'rgba(255,255,255,0.04)',
-                    }}
-                    onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-                    onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                  >
-                    {tour && (
-                      <div style={{ fontSize: 11, fontWeight: 600, color: tourColor, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-                        {tour.name}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#f1f5f9' }}>
-                      {ev.city}{ev.country ? ', ' + ev.country : (ev.state ? ', ' + ev.state : '')}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{fmtLoadIn(ev.load_in_date)}</div>
+                  <div key={ev.id} onClick={() => toggle(ev.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, height: 44, padding: '0 24px', cursor: 'pointer', borderBottom: '0.5px solid rgba(255,255,255,0.06)', borderLeft: isChecked ? '3px solid #33FF99' : '3px solid transparent', background: isChecked ? 'rgba(51,255,153,0.06)' : 'transparent', transition: 'background 0.1s' }}
+                    onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                    onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = 'transparent' }}>
+                    <CheckboxIcon isChecked={isChecked} />
+                    <span style={{ fontSize: 13, color: '#f1f5f9', minWidth: 130, whiteSpace: 'nowrap' }}>{fmtDateRange(ev.load_in_date, ev.load_out_date)}</span>
+                    <span style={{ fontSize: 13, color: '#f1f5f9', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.city}{geo}</span>
+                    {tour && <span style={{ fontSize: 12, fontWeight: 600, color: tourColor, minWidth: 140, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</span>}
                   </div>
                 )
               })}
             </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={onClose} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleCopy} disabled={copying || checked.length === 0}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
-                {copying ? 'Copying…' : 'Copy to ' + (checked.length || 0) + ' event' + (checked.length === 1 ? '' : 's')}
-              </button>
+            {/* Footer */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', borderTop: '0.5px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>{checked.length} event{checked.length === 1 ? '' : 's'} selected</span>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={onClose} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={handleCopy} disabled={copying || checked.length === 0}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
+                  {copying ? 'Copying…' : 'Copy'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -963,7 +989,7 @@ export default function StaffingGrid() {
     const supabase = getSupabase()
     const [toursRes, eventsRes, assignmentsRes] = await Promise.all([
       supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
-      supabase.from('events').select('id, city, state, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
+      supabase.from('events').select('id, city, state, country, venue_name, venue_id, num_shows, load_in_date, load_out_date, tour_id, event_type, status, hidden_positions, unlocked_positions').order('load_in_date', { ascending: true }),
       supabase.from('event_staff').select('*, events(id, city, load_in_date, load_out_date, tour_id, tours(name))'),
     ])
     setTours(toursRes.data || [])
