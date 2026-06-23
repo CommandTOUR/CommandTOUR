@@ -56,10 +56,9 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
-          <input id={`show-time-input-${show.id}`} type="time" value={editTime}
-            onChange={e => { console.log('[Time Input] onChange fired:', e.target.value); setEditTime(e.target.value) }}
-            onBlur={e => { console.log('[Time Input] onBlur fired:', e.target.value); setEditTime(e.target.value) }}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
+          <input type="text" placeholder="7:30 PM" value={editTime}
+            onChange={e => setEditTime(e.target.value)}
+            style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#f1f5f9', fontSize: 13, padding: '4px 8px', width: 90, fontFamily: 'Plus Jakarta Sans, sans-serif', outline: 'none' }} />
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
           <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); setEditTime(show.show_time || '') }}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
@@ -213,18 +212,12 @@ export default function EventPage() {
   }
 
   const handleSaveShow = async (showId, date, time) => {
-    const timeEl = document.getElementById(`show-time-input-${showId}`)
-    const finalTime = timeEl?.value || time || null
-    console.log('[Show Save] DOM time value:', timeEl?.value)
-    console.log('[Show Save] editTime state:', time)
-    console.log('[Show Save] finalTime:', finalTime)
     const supabase = getSupabase()
     const { data, error } = await supabase.from('show_list')
-      .update({ show_date: date, show_time: finalTime })
+      .update({ show_date: date, show_time: time || null })
       .eq('id', showId)
       .select()
       .single()
-    console.log('[Show Save] result:', { data, error })
     if (!error) setShows(prev => prev.map(s => s.id === showId ? { ...s, ...data } : s))
   }
 
@@ -271,11 +264,12 @@ export default function EventPage() {
 
   const fmtTime = (t) => {
     if (!t) return null
-    const [h, m] = t.split(':')
-    const hour = parseInt(h)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const h12 = hour % 12 || 12
-    return `${h12}:${m} ${ampm}`
+    if (t.toLowerCase().includes('am') || t.toLowerCase().includes('pm')) return t.trim()
+    const [h, m] = t.split(':').map(Number)
+    if (isNaN(h) || isNaN(m)) return t
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const hour = h % 12 || 12
+    return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`
   }
 
   const daysUntil = event.load_in_date
@@ -590,7 +584,7 @@ export default function EventPage() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Time</label>
-                      <input type="time" style={{ ...inputStyle, width: '100%' }} value={newShow.show_time} onChange={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} onBlur={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} />
+                      <input type="text" placeholder="7:30 PM" style={{ ...inputStyle, width: '100%' }} value={newShow.show_time} onChange={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} />
                     </div>
                   </div>
                   <div>
