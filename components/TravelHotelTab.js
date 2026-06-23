@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
+import { createPDF } from '../lib/generatePDF'
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -195,6 +196,7 @@ export default function TravelHotelTab({ eventId, event }) {
   const [departures, setDepartures] = useState([])
   const [hotel, setHotel] = useState(null)
   const [rooms, setRooms] = useState([])
+  const [tour, setTour] = useState(null)
   const [confirmedStaff, setConfirmedStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const [arrivalSort, setArrivalSort] = useState({ field: 'travel_date', dir: 'asc' })
@@ -214,12 +216,13 @@ export default function TravelHotelTab({ eventId, event }) {
 
   const fetchAll = async () => {
     const supabase = getSupabase()
-    const [arrRes, depRes, hotelRes, roomsRes, staffRes] = await Promise.all([
+    const [arrRes, depRes, hotelRes, roomsRes, staffRes, tourRes] = await Promise.all([
       supabase.from('event_travel_arrivals').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_travel_departures').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_hotel').select('*').eq('event_id', eventId).maybeSingle(),
       supabase.from('event_hotel_rooms').select('*, s1:staff_id_1(id, first_name, last_name), s2:staff_id_2(id, first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_staff').select('staff_id, staff(id, first_name, last_name)').eq('event_id', eventId).eq('confirmed', true),
+      event.tour_id ? supabase.from('tours').select('id, name, color').eq('id', event.tour_id).single() : Promise.resolve({ data: null }),
     ])
     const confirmedStaffIds = new Set((staffRes.data || []).map(s => s.staff_id).filter(Boolean))
     setArrivals((arrRes.data || [])
@@ -234,6 +237,7 @@ export default function TravelHotelTab({ eventId, event }) {
     }
     setRooms(roomsRes.data || [])
     setConfirmedStaff((staffRes.data || []).map(s => s.staff).filter(Boolean))
+    if (tourRes.data) setTour(tourRes.data)
     setLoading(false)
   }
 
@@ -349,24 +353,70 @@ export default function TravelHotelTab({ eventId, event }) {
   }
 
   const handleExportArrivalsPDF = () => {
-    const win = window.open('', '_blank')
-    const tableRows = arrivals.map(r => `<tr><td>${r.staff_name || '—'}</td><td>${fmtDate(r.travel_date)}</td><td>${r.flight_number || '—'}</td><td>${fmtTime(r.arrival_time)}</td><td>${r.airport || '—'}</td><td>${r.transport || '—'}</td><td>${r.notes || '—'}</td></tr>`).join('')
-    win.document.write(`<html><head><title>Arrivals</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body><h2>Arrivals</h2><table><thead><tr><th>Name</th><th>Date</th><th>Flight #</th><th>Time</th><th>Airport</th><th>Transport</th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`)
-    win.document.close(); win.print()
+    const columns = ['Name', 'Travel Type', 'Date',
+      'Airline/Operator', 'Flight #', 'Time',
+      'Airport/Station', 'Transport']
+    const rows = arrivals.map(a => [
+      a.staff_name || '—',
+      a.travel_type || 'Flight',
+      a.travel_date || '—',
+      a.airline || '—',
+      a.flight_number || '—',
+      a.arrival_time || '—',
+      a.airport || '—',
+      a.transport || '—',
+    ])
+    const doc = createPDF({
+      title: `${event.city}, ${event.country} — Arrivals`,
+      subtitle: `${tour?.name || ''} · Load-In ${event.load_in_date || ''}`,
+      tourColor: tour?.color,
+      columns,
+      rows,
+    })
+    doc.save(`${event.city}-Arrivals.pdf`)
   }
 
   const handleExportDeparturesPDF = () => {
-    const win = window.open('', '_blank')
-    const tableRows = departures.map(r => `<tr><td>${r.staff_name || '—'}</td><td>${fmtDate(r.travel_date)}</td><td>${r.flight_number || '—'}</td><td>${fmtTime(r.departure_time)}</td><td>${r.airport || '—'}</td><td>${r.transport || '—'}</td><td>${r.notes || '—'}</td></tr>`).join('')
-    win.document.write(`<html><head><title>Departures</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body><h2>Departures</h2><table><thead><tr><th>Name</th><th>Date</th><th>Flight #</th><th>Time</th><th>Airport</th><th>Transport</th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`)
-    win.document.close(); win.print()
+    const columns = ['Name', 'Travel Type', 'Date',
+      'Airline/Operator', 'Flight #', 'Time',
+      'Airport/Station', 'Transport']
+    const rows = departures.map(d => [
+      d.staff_name || '—',
+      d.travel_type || 'Flight',
+      d.travel_date || '—',
+      d.airline || '—',
+      d.flight_number || '—',
+      d.departure_time || '—',
+      d.airport || '—',
+      d.transport || '—',
+    ])
+    const doc = createPDF({
+      title: `${event.city}, ${event.country} — Departures`,
+      subtitle: `${tour?.name || ''} · Load-In ${event.load_in_date || ''}`,
+      tourColor: tour?.color,
+      columns,
+      rows,
+    })
+    doc.save(`${event.city}-Departures.pdf`)
   }
 
   const handleExportRoomingPDF = () => {
-    const win = window.open('', '_blank')
-    const tableRows = rooms.map(r => `<tr><td>${r.s1 ? `${r.s1.first_name} ${r.s1.last_name}` : '—'}</td><td>${r.s2 ? `${r.s2.first_name} ${r.s2.last_name}` : '—'}</td><td>${r.room_type || '—'}</td><td>${fmtDate(r.check_in_date)}</td><td>${fmtDate(r.check_out_date)}</td><td>${r.notes || '—'}</td></tr>`).join('')
-    win.document.write(`<html><head><title>Rooming List</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body><h1>Rooming List</h1>${hotel ? `<h3>${hotel.hotel_name || ''} · ${hotel.address || ''}</h3>` : ''}<table><thead><tr><th>Name 1</th><th>Name 2</th><th>Room Type</th><th>Check In</th><th>Check Out</th><th>Notes</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`)
-    win.document.close(); win.print()
+    const columns = ['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out']
+    const rows = rooms.map(r => [
+      r.s1 ? `${r.s1.first_name} ${r.s1.last_name}` : '—',
+      r.s2 ? `${r.s2.first_name} ${r.s2.last_name}` : '—',
+      r.room_type || '—',
+      r.check_in_date || '—',
+      r.check_out_date || '—',
+    ])
+    const doc = createPDF({
+      title: `${event.city}, ${event.country} — Hotel Rooming`,
+      subtitle: `${hotel?.hotel_name || ''} · ${tour?.name || ''}`,
+      tourColor: tour?.color,
+      columns,
+      rows,
+    })
+    doc.save(`${event.city}-Hotel-Rooming.pdf`)
   }
 
   const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)

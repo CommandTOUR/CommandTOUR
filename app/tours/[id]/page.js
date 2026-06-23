@@ -6,6 +6,7 @@ import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 import TourStaffingGrid from '../../../components/TourStaffingGrid'
+import { createPDF } from '../../../lib/generatePDF'
 
 // Determine the date that decides whether an event is "past": latest show date,
 // falling back to sunday_date, then saturday_date, then load_in_date.
@@ -301,6 +302,31 @@ export default function TourPage() {
     setEvents(prev => prev.map(e => e.id === eventId ? { ...e, load_in_date: newDate } : e))
   }
 
+  const handleExportSchedule = () => {
+    const columns = ['Load-In', 'City', 'Venue',
+      '# Shows', 'First Show', 'Last Show', 'Status']
+    const rows = events.map(e => {
+      const shows = eventShows[e.id] || []
+      return [
+        e.load_in_date || '—',
+        `${e.city || ''}${e.country ? ', ' + e.country : ''}`,
+        e.venue_name || '—',
+        shows.length || '—',
+        shows[0]?.show_date || '—',
+        shows[shows.length - 1]?.show_date || '—',
+        e.status || '—',
+      ]
+    })
+    const doc = createPDF({
+      title: `${tour.name} — Schedule`,
+      subtitle: `${tour.region || ''} · ${tour.year || ''}`,
+      tourColor: tour.color,
+      columns,
+      rows,
+    })
+    doc.save(`${tour.name}-Schedule.pdf`)
+  }
+
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
 
   // Split events into upcoming and past, using the latest known date for each event
@@ -398,8 +424,18 @@ export default function TourPage() {
           {activeTab === 'schedule' && (
             <div style={{ padding: '20px 32px 32px' }}>
               {/* Section title on the navy shell */}
-              <div style={{ marginBottom: 14, fontSize: 14, fontWeight: 600, color: '#ffffff' }}>
-                Events <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
+              <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff' }}>
+                  Events <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 400 }}>({upcomingEvents.length} upcoming{pastEvents.length > 0 ? `, ${pastEvents.length} past` : ''})</span>
+                </div>
+                {events.length > 0 && (
+                  <button
+                    onClick={handleExportSchedule}
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, border: `0.5px solid ${color}`, background: 'transparent', color: color, cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >Export PDF</button>
+                )}
               </div>
 
               {/* Empty state */}
