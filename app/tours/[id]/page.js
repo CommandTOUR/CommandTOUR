@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
+import TourStaffingGrid from '../../../components/TourStaffingGrid'
 
 // Determine the date that decides whether an event is "past": latest show date,
 // falling back to sunday_date, then saturday_date, then load_in_date.
@@ -393,7 +394,7 @@ export default function TourPage() {
         </div>
 
         {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: activeTab === 'staffing' ? 'hidden' : 'auto' }}>
           {activeTab === 'schedule' && (
             <div style={{ padding: '20px 32px 32px' }}>
               {/* Section title on the navy shell */}
@@ -561,7 +562,11 @@ export default function TourPage() {
             </div>
           )}
 
-          {activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && (
+          {activeTab === 'staffing' && (
+            <TourStaffingGrid tourId={id} />
+          )}
+
+          {activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && activeTab !== 'staffing' && (
             <div style={{ padding: '28px 32px', fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
             </div>
