@@ -567,11 +567,14 @@ export default function EventPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
                       <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Date *</label>
-                      <input type="date" style={{ ...inputStyle, width: '100%' }} value={newShow.show_date} onChange={e => setNewShow(p => ({ ...p, show_date: e.target.value }))} />
+                      <input type="date" style={{ ...inputStyle, width: '100%' }} value={newShow.show_date} min={event.load_in_date || ''} onChange={e => setNewShow(p => ({ ...p, show_date: e.target.value }))} />
+                      {newShow.show_date && event.load_in_date && newShow.show_date < event.load_in_date && (
+                        <div style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>Show date cannot be before load-in date</div>
+                      )}
                     </div>
                     <div>
                       <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Time</label>
-                      <input type="time" style={{ ...inputStyle, width: '100%' }} value={newShow.show_time} onChange={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} />
+                      <input type="time" style={{ ...inputStyle, width: '100%' }} value={newShow.show_time} onChange={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} onBlur={e => setNewShow(p => ({ ...p, show_time: e.target.value }))} />
                     </div>
                   </div>
                   <div>
