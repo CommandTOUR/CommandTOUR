@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 
 const navLinks = [
@@ -15,50 +15,34 @@ const navLinks = [
   { label: 'Reports', href: '/reports' },
 ]
 
-function SunIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <line x1="12" y1="1" x2="12" y2="3"/>
-      <line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/>
-      <line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  )
-}
-
-function MoonIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </svg>
-  )
-}
-
 export default function TopNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const [isLight, setIsLight] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [avatarColor, setAvatarColor] = useState('#C9A84C')
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
-    setIsLight(document.documentElement.getAttribute('data-theme') === 'light')
+    const saved = localStorage.getItem('avatarColor')
+    if (saved) setAvatarColor(saved)
+
+    const handleColorChange = () => {
+      const updated = localStorage.getItem('avatarColor')
+      if (updated) setAvatarColor(updated)
+    }
+    window.addEventListener('avatarColorChanged', handleColorChange)
+    return () => window.removeEventListener('avatarColorChanged', handleColorChange)
   }, [])
 
-  const toggleTheme = () => {
-    const next = !isLight
-    if (next) {
-      document.documentElement.setAttribute('data-theme', 'light')
-      localStorage.setItem('theme', 'light')
-    } else {
-      document.documentElement.removeAttribute('data-theme')
-      localStorage.removeItem('theme')
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
     }
-    setIsLight(next)
-  }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const handleSignOut = async () => {
     const supabase = getSupabase()
@@ -111,8 +95,8 @@ export default function TopNav() {
               transition: 'color 0.15s',
               whiteSpace: 'nowrap',
             }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#f1f5f9' }}}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#94a3b8' }}}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#f1f5f9' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.color = '#94a3b8' }}
             >
               {link.label}
             </Link>
@@ -121,52 +105,70 @@ export default function TopNav() {
       </div>
 
       {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
 
-        {/* Theme toggle */}
-        <button
-          onClick={toggleTheme}
-          title={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 32, height: 32, borderRadius: '50%',
-            border: '0.5px solid rgba(255,255,255,0.15)',
-            background: 'rgba(255,255,255,0.06)',
-            color: 'rgba(255,255,255,0.6)',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-        >
-          {isLight ? <MoonIcon /> : <SunIcon />}
-        </button>
-
-        {/* User avatar + sign out */}
-        <div
-          onClick={handleSignOut}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '4px 12px 4px 4px',
-            borderRadius: 20,
-            background: 'rgba(255,255,255,0.04)',
-            border: '0.5px solid rgba(255,255,255,0.14)',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-        >
-          <div style={{
-            width: 30, height: 30, borderRadius: '50%',
-            background: 'rgba(201,168,76,0.2)',
-            border: '1px solid var(--gold)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 600, color: 'var(--gold)',
-          }}>
-            MA
+        {/* User dropdown */}
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
+          <div
+            onClick={() => setDropdownOpen(o => !o)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '4px 12px 4px 4px',
+              borderRadius: 20,
+              background: dropdownOpen ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+              border: '0.5px solid rgba(255,255,255,0.14)',
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseLeave={e => { if (!dropdownOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+          >
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%',
+              background: `${avatarColor}33`,
+              border: `1px solid ${avatarColor}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 600, color: avatarColor,
+              transition: 'background 0.2s, border-color 0.2s',
+            }}>
+              MA
+            </div>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>Mark A.</span>
           </div>
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>Mark A.</span>
+
+          {dropdownOpen && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              background: '#0d1f3a',
+              border: '0.5px solid rgba(255,255,255,0.12)',
+              borderRadius: 8,
+              padding: 8,
+              minWidth: 160,
+              zIndex: 100,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            }}>
+              <div
+                onClick={() => { setDropdownOpen(false); router.push('/settings') }}
+                style={{ padding: '10px 14px', borderRadius: 6, color: '#f1f5f9', fontSize: 13, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                Settings
+              </div>
+              <div
+                onClick={handleSignOut}
+                style={{ padding: '10px 14px', borderRadius: 6, color: '#f87171', fontSize: 13, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                Sign Out
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
