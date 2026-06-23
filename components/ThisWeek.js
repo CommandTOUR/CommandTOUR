@@ -7,10 +7,6 @@ import { getSupabase } from '../lib/supabase'
 const pad = (n) => String(n).padStart(2, '0')
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
-function fmtLoadIn(d) {
-  if (!d) return '—'
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
 
 export default function ThisWeek({ showAll = false }) {
   const [events, setEvents] = useState([])
@@ -140,7 +136,6 @@ export default function ThisWeek({ showAll = false }) {
               <div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff' }}>{cityCountry || ev.city}</div>
               <div style={{ fontSize: 13, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
               {ev.venue_name && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{ev.venue_name}</div>}
-              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Load-In {fmtLoadIn(ev.load_in_date)}</div>
             </div>
           </div>
         )
