@@ -6,7 +6,7 @@ import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 import TourStaffingGrid from '../../../components/TourStaffingGrid'
-import { createPDF } from '../../../lib/generatePDF'
+import ExportModal from '../../../components/ExportModal'
 
 // Determine the date that decides whether an event is "past": latest show date,
 // falling back to sunday_date, then saturday_date, then load_in_date.
@@ -262,6 +262,7 @@ export default function TourPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
   const [pastExpanded, setPastExpanded] = useState(false)
+  const [scheduleExportOpen, setScheduleExportOpen] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -302,30 +303,30 @@ export default function TourPage() {
     setEvents(prev => prev.map(e => e.id === eventId ? { ...e, load_in_date: newDate } : e))
   }
 
-  const handleExportSchedule = () => {
-    const columns = ['Load-In', 'City', 'Venue',
-      '# Shows', 'First Show', 'Last Show', 'Status']
-    const rows = events.map(e => {
-      const shows = eventShows[e.id] || []
-      return [
-        e.load_in_date || '—',
-        `${e.city || ''}${e.country ? ', ' + e.country : ''}`,
-        e.venue_name || '—',
-        shows.length || '—',
-        shows[0]?.show_date || '—',
-        shows[shows.length - 1]?.show_date || '—',
-        e.status || '—',
-      ]
-    })
-    const doc = createPDF({
-      title: `${tour.name} — Schedule`,
-      subtitle: `${tour.region || ''} · ${tour.year || ''}`,
-      tourColor: tour.color,
-      columns,
-      rows,
-    })
-    doc.save(`${tour.name}-Schedule.pdf`)
-  }
+  const SCHEDULE_COLUMNS = [
+    { key: 'load_in', label: 'Load-In', defaultOn: true },
+    { key: 'city', label: 'City', defaultOn: true },
+    { key: 'venue', label: 'Venue', defaultOn: true },
+    { key: 'shows', label: '# Shows', defaultOn: true },
+    { key: 'first_show', label: 'First Show', defaultOn: true },
+    { key: 'last_show', label: 'Last Show', defaultOn: true },
+    { key: 'status', label: 'Status', defaultOn: true },
+  ]
+
+  const scheduleRows = events.map(e => {
+    const shows = eventShows[e.id] || []
+    return [
+      e.load_in_date || '—',
+      `${e.city || ''}${e.country ? ', ' + e.country : ''}`,
+      e.venue_name || '—',
+      shows.length || '—',
+      shows[0]?.show_date || '—',
+      shows[shows.length - 1]?.show_date || '—',
+      e.status || '—',
+    ]
+  })
+
+  const handleExportSchedule = () => setScheduleExportOpen(true)
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
 
@@ -609,6 +610,17 @@ export default function TourPage() {
           )}
         </div>
       </div>
+
+      <ExportModal
+        isOpen={scheduleExportOpen}
+        onClose={() => setScheduleExportOpen(false)}
+        title={`${tour.name} — Schedule`}
+        subtitle={`${tour.region || ''} · ${tour.year || ''}`}
+        tourColor={tour.color}
+        allColumns={SCHEDULE_COLUMNS}
+        rows={scheduleRows}
+        filename={`${tour.name}-Schedule`}
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
-import { createPDF } from '../lib/generatePDF'
+import ExportModal from './ExportModal'
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -211,6 +211,7 @@ export default function TravelHotelTab({ eventId, event }) {
   const [hotelOpen, setHotelOpen] = useState(true)
   const [selectedUnroomed, setSelectedUnroomed] = useState([])
   const [saveError, setSaveError] = useState(null)
+  const [exportModal, setExportModal] = useState(null)
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -352,72 +353,69 @@ export default function TravelHotelTab({ eventId, event }) {
     fetchAll()
   }
 
-  const handleExportArrivalsPDF = () => {
-    const columns = ['Name', 'Travel Type', 'Date',
-      'Airline/Operator', 'Flight #', 'Time',
-      'Airport/Station', 'Transport']
-    const rows = arrivals.map(a => [
-      a.staff_name || '—',
-      a.travel_type || 'Flight',
-      a.travel_date || '—',
-      a.airline || '—',
-      a.flight_number || '—',
-      a.arrival_time || '—',
-      a.airport || '—',
-      a.transport || '—',
-    ])
-    const doc = createPDF({
-      title: `${event.city}, ${event.country} — Arrivals`,
-      subtitle: `${tour?.name || ''} · Load-In ${event.load_in_date || ''}`,
-      tourColor: tour?.color,
-      columns,
-      rows,
-    })
-    doc.save(`${event.city}-Arrivals.pdf`)
-  }
+  const ARRIVALS_COLUMNS = [
+    { key: 'name', label: 'Name', defaultOn: true },
+    { key: 'travel_type', label: 'Travel Type', defaultOn: true },
+    { key: 'date', label: 'Date', defaultOn: true },
+    { key: 'airline', label: 'Airline/Operator', defaultOn: true },
+    { key: 'flight', label: 'Flight #', defaultOn: true },
+    { key: 'time', label: 'Time', defaultOn: true },
+    { key: 'airport', label: 'Airport/Station', defaultOn: true },
+    { key: 'transport', label: 'Transport', defaultOn: true },
+  ]
 
-  const handleExportDeparturesPDF = () => {
-    const columns = ['Name', 'Travel Type', 'Date',
-      'Airline/Operator', 'Flight #', 'Time',
-      'Airport/Station', 'Transport']
-    const rows = departures.map(d => [
-      d.staff_name || '—',
-      d.travel_type || 'Flight',
-      d.travel_date || '—',
-      d.airline || '—',
-      d.flight_number || '—',
-      d.departure_time || '—',
-      d.airport || '—',
-      d.transport || '—',
-    ])
-    const doc = createPDF({
-      title: `${event.city}, ${event.country} — Departures`,
-      subtitle: `${tour?.name || ''} · Load-In ${event.load_in_date || ''}`,
-      tourColor: tour?.color,
-      columns,
-      rows,
-    })
-    doc.save(`${event.city}-Departures.pdf`)
-  }
+  const DEPARTURES_COLUMNS = [
+    { key: 'name', label: 'Name', defaultOn: true },
+    { key: 'travel_type', label: 'Travel Type', defaultOn: true },
+    { key: 'date', label: 'Date', defaultOn: true },
+    { key: 'airline', label: 'Airline/Operator', defaultOn: true },
+    { key: 'flight', label: 'Flight #', defaultOn: true },
+    { key: 'time', label: 'Time', defaultOn: true },
+    { key: 'airport', label: 'Airport/Station', defaultOn: true },
+    { key: 'transport', label: 'Transport', defaultOn: true },
+  ]
 
-  const handleExportRoomingPDF = () => {
-    const columns = ['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out']
-    const rows = rooms.map(r => [
-      r.s1 ? `${r.s1.first_name} ${r.s1.last_name}` : '—',
-      r.s2 ? `${r.s2.first_name} ${r.s2.last_name}` : '—',
-      r.room_type || '—',
-      r.check_in_date || '—',
-      r.check_out_date || '—',
-    ])
-    const doc = createPDF({
-      title: `${event.city}, ${event.country} — Hotel Rooming`,
-      subtitle: `${hotel?.hotel_name || ''} · ${tour?.name || ''}`,
-      tourColor: tour?.color,
-      columns,
-      rows,
-    })
-    doc.save(`${event.city}-Hotel-Rooming.pdf`)
-  }
+  const HOTEL_COLUMNS = [
+    { key: 'name1', label: 'Name 1', defaultOn: true },
+    { key: 'name2', label: 'Name 2', defaultOn: true },
+    { key: 'room_type', label: 'Room Type', defaultOn: true },
+    { key: 'check_in', label: 'Check In', defaultOn: true },
+    { key: 'check_out', label: 'Check Out', defaultOn: true },
+  ]
+
+  const arrivalsRows = arrivals.map(a => [
+    a.staff_name || '—',
+    a.travel_type || 'Flight',
+    a.travel_date || '—',
+    a.airline || '—',
+    a.flight_number || '—',
+    a.arrival_time || '—',
+    a.airport || '—',
+    a.transport || '—',
+  ])
+
+  const departuresRows = departures.map(d => [
+    d.staff_name || '—',
+    d.travel_type || 'Flight',
+    d.travel_date || '—',
+    d.airline || '—',
+    d.flight_number || '—',
+    d.departure_time || '—',
+    d.airport || '—',
+    d.transport || '—',
+  ])
+
+  const hotelRows = rooms.map(r => [
+    r.s1 ? `${r.s1.first_name} ${r.s1.last_name}` : '—',
+    r.s2 ? `${r.s2.first_name} ${r.s2.last_name}` : '—',
+    r.room_type || '—',
+    r.check_in_date || '—',
+    r.check_out_date || '—',
+  ])
+
+  const handleExportArrivalsPDF = () => setExportModal({ type: 'arrivals' })
+  const handleExportDeparturesPDF = () => setExportModal({ type: 'departures' })
+  const handleExportRoomingPDF = () => setExportModal({ type: 'hotel' })
 
   const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
   const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
@@ -618,6 +616,43 @@ export default function TravelHotelTab({ eventId, event }) {
       {addingArrival && <StaffPicker onSelect={handleAddArrival} onClose={() => setAddingArrival(false)} />}
       {addingDeparture && <StaffPicker onSelect={handleAddDeparture} onClose={() => setAddingDeparture(false)} />}
       {roomStaffPicker && <StaffPicker onSelect={handleAssignRoomStaff} onClose={() => setRoomStaffPicker(null)} excludeIds={roomedStaffIds} />}
+
+      {exportModal?.type === 'arrivals' && (
+        <ExportModal
+          isOpen
+          onClose={() => setExportModal(null)}
+          title={`${event.city}, ${event.country} — Arrivals`}
+          subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
+          tourColor={tour?.color}
+          allColumns={ARRIVALS_COLUMNS}
+          rows={arrivalsRows}
+          filename={`${event.city}-Arrivals`}
+        />
+      )}
+      {exportModal?.type === 'departures' && (
+        <ExportModal
+          isOpen
+          onClose={() => setExportModal(null)}
+          title={`${event.city}, ${event.country} — Departures`}
+          subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
+          tourColor={tour?.color}
+          allColumns={DEPARTURES_COLUMNS}
+          rows={departuresRows}
+          filename={`${event.city}-Departures`}
+        />
+      )}
+      {exportModal?.type === 'hotel' && (
+        <ExportModal
+          isOpen
+          onClose={() => setExportModal(null)}
+          title={`${event.city}, ${event.country} — Hotel Rooming`}
+          subtitle={`${hotel?.hotel_name || ''} · ${tour?.name || ''}`}
+          tourColor={tour?.color}
+          allColumns={HOTEL_COLUMNS}
+          rows={hotelRows}
+          filename={`${event.city}-Hotel-Rooming`}
+        />
+      )}
     </div>
   )
 }
