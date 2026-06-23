@@ -4,23 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 
-// Neon status pills for dark glass backgrounds
-const STATUS_PILL = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
-  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
-  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
-  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
-}
-
-const fmtStatus = (s) => {
-  if (!s) return 'Tentative'
-  if (s === '3-hold') return '3+ Hold'
-  if (s === 'date-hold') return 'Date Hold'
-  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
-}
-
 const pad = (n) => String(n).padStart(2, '0')
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
@@ -138,7 +121,6 @@ export default function ThisWeek({ showAll = false }) {
       )}
 
       {events.map(ev => {
-        const pill = STATUS_PILL[ev.status] || STATUS_PILL.tentative
         const cityCountry = [ev.city, ev.country].filter(Boolean).join(' · ')
         return (
           <div
@@ -159,11 +141,6 @@ export default function ThisWeek({ showAll = false }) {
               <div style={{ fontSize: 13, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
               {ev.venue_name && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{ev.venue_name}</div>}
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Load-In {fmtLoadIn(ev.load_in_date)}</div>
-            </div>
-            <div style={{ flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999, color: pill.color, background: pill.background, border: `1px solid ${pill.border}` }}>
-                {fmtStatus(ev.status)}
-              </span>
             </div>
           </div>
         )
