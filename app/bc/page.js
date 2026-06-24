@@ -7,7 +7,8 @@ import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
-import { IconClock } from '@tabler/icons-react'
+import { IconClock, IconCalendarOff } from '@tabler/icons-react'
+import ExportModal from '../../components/ExportModal'
 
 const STATUS_STYLES = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -1521,6 +1522,293 @@ function DraftScheduleContent() {
   )
 }
 
+// ── CONFIRMED SCHEDULE TAB ───────────────────────────────────────────────────
+
+const CS_COLS = [
+  { key: 'load_in_date', label: 'Load-In Date' },
+  { key: 'city',         label: 'City' },
+  { key: 'country',      label: 'Country' },
+  { key: 'venue',        label: 'Venue' },
+  { key: 'tour',         label: 'Tour' },
+  { key: 'status',       label: 'Status' },
+  { key: 'num_shows',    label: '# Shows' },
+  { key: 'booker',       label: 'Booker' },
+]
+
+const EXPORT_COLS = CS_COLS.map(c => ({ ...c, defaultOn: true }))
+
+const glassSelect = {
+  background: '#0d1f3a',
+  border: '0.5px solid rgba(255,255,255,0.15)',
+  borderRadius: 8,
+  color: '#f1f5f9',
+  padding: '8px 12px',
+  fontSize: 13,
+  fontFamily: 'Plus Jakarta Sans, sans-serif',
+  outline: 'none',
+  cursor: 'pointer',
+}
+
+function fmtLoadIn(d) {
+  if (!d) return '—'
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRowClick }) {
+  const [hovered, setHovered] = useState(false)
+  const [draft, setDraft] = useState(ev.booker || '')
+  const isEditing = editingBookerId === ev.id
+  const s = STATUS_PILL_LIGHT[ev.status] || STATUS_PILL_LIGHT.tentative
+
+  const cell = {
+    padding: '0 14px',
+    height: 48,
+    verticalAlign: 'middle',
+    fontSize: 13,
+    borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+  }
+
+  return (
+    <tr
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent', cursor: 'pointer' }}
+    >
+      <td style={{ ...cell, color: '#f1f5f9', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={onRowClick}>{fmtLoadIn(ev.load_in_date)}</td>
+      <td style={{ ...cell, color: '#f1f5f9', fontWeight: 500 }} onClick={onRowClick}>{ev.city || '—'}</td>
+      <td style={{ ...cell, color: '#94a3b8' }} onClick={onRowClick}>{ev.country || '—'}</td>
+      <td style={{ ...cell, color: '#94a3b8' }} onClick={onRowClick}>{ev.venue_name || '—'}</td>
+      <td style={{ ...cell, fontWeight: 600, color: ev.tours?.color || '#94a3b8' }} onClick={onRowClick}>{ev.tours?.name || '—'}</td>
+      <td style={{ ...cell }} onClick={onRowClick}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+          {statusLabel(ev.status)}
+        </span>
+      </td>
+      <td style={{ ...cell, textAlign: 'center', color: '#f1f5f9' }} onClick={onRowClick}>{ev.num_shows != null ? ev.num_shows : '—'}</td>
+      <td style={{ ...cell, color: '#94a3b8' }}
+        onClick={e => { e.stopPropagation(); setDraft(ev.booker || ''); setEditingBooker(ev.id) }}
+      >
+        {isEditing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={() => saveBooker(ev.id, draft)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') saveBooker(ev.id, draft)
+              else if (e.key === 'Escape') setEditingBooker(null)
+            }}
+            onClick={e => e.stopPropagation()}
+            style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid #33FF99', borderRadius: 6, color: '#f1f5f9', fontSize: 13, padding: '4px 8px', outline: 'none', width: '100%', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+          />
+        ) : (
+          ev.booker || <span style={{ color: '#475569' }}>—</span>
+        )}
+      </td>
+    </tr>
+  )
+}
+
+function ConfirmedScheduleTab() {
+  const router = useRouter()
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filterTour, setFilterTour] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('confirmed')
+  const [filterFrom, setFilterFrom] = useState('')
+  const [filterTo, setFilterTo] = useState('')
+  const [filterBooker, setFilterBooker] = useState('')
+  const [sortCol, setSortCol] = useState('load_in_date')
+  const [sortDir, setSortDir] = useState('asc')
+  const [editingBookerId, setEditingBookerId] = useState(null)
+  const [exportOpen, setExportOpen] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const supabase = getSupabase()
+      const { data } = await supabase
+        .from('events')
+        .select('id, city, country, load_in_date, venue_name, status, num_shows, booker, tours(id, name, color)')
+        .eq('status', 'confirmed')
+        .order('load_in_date', { ascending: true })
+      setEvents(data || [])
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const saveBooker = async (id, value) => {
+    const supabase = getSupabase()
+    await supabase.from('events').update({ booker: value }).eq('id', id)
+    setEvents(prev => prev.map(ev => ev.id === id ? { ...ev, booker: value } : ev))
+    setEditingBookerId(null)
+  }
+
+  const uniqueTours = [...new Map(
+    events.filter(ev => ev.tours).map(ev => [ev.tours.id, ev.tours])
+  ).values()]
+
+  const filtered = events.filter(ev => {
+    if (filterTour !== 'all' && ev.tours?.id !== filterTour) return false
+    if (filterStatus !== 'all' && ev.status !== filterStatus) return false
+    if (filterFrom && ev.load_in_date && ev.load_in_date < filterFrom) return false
+    if (filterTo && ev.load_in_date && ev.load_in_date > filterTo) return false
+    if (filterBooker && !(ev.booker || '').toLowerCase().includes(filterBooker.toLowerCase())) return false
+    return true
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const vals = {
+      load_in_date: [a.load_in_date || '', b.load_in_date || ''],
+      city:         [a.city || '', b.city || ''],
+      country:      [a.country || '', b.country || ''],
+      venue:        [a.venue_name || '', b.venue_name || ''],
+      tour:         [a.tours?.name || '', b.tours?.name || ''],
+      status:       [a.status || '', b.status || ''],
+      num_shows:    [a.num_shows ?? 0, b.num_shows ?? 0],
+      booker:       [a.booker || '', b.booker || ''],
+    }
+    const [av, bv] = vals[sortCol] || ['', '']
+    if (av < bv) return sortDir === 'asc' ? -1 : 1
+    if (av > bv) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+
+  const anyFilter = filterTour !== 'all' || filterStatus !== 'confirmed' || filterFrom || filterTo || filterBooker
+  const clearFilters = () => {
+    setFilterTour('all'); setFilterStatus('confirmed')
+    setFilterFrom(''); setFilterTo(''); setFilterBooker('')
+  }
+
+  const currentYear = new Date().getFullYear()
+  const activeTourLabel = filterTour === 'all' ? 'All Tours' : (uniqueTours.find(t => t.id === filterTour)?.name || 'All Tours')
+
+  const exportRows = sorted.map(ev => [
+    fmtLoadIn(ev.load_in_date),
+    ev.city || '',
+    ev.country || '',
+    ev.venue_name || '',
+    ev.tours?.name || '',
+    ev.status || '',
+    ev.num_shows != null ? String(ev.num_shows) : '',
+    ev.booker || '',
+  ])
+
+  if (loading) return (
+    <div style={{ padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      Loading confirmed events...
+    </div>
+  )
+
+  return (
+    <div style={{ flex: 1, padding: '20px 28px', overflowY: 'auto', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+
+      {/* Top bar: count + export */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ color: '#94a3b8', fontSize: 12 }}>
+          {sorted.length} confirmed event{sorted.length !== 1 ? 's' : ''}
+        </span>
+        <button
+          onClick={() => setExportOpen(true)}
+          style={{ background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#f1f5f9', padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          🖨 Export / Print
+        </button>
+      </div>
+
+      {/* Filter bar */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select value={filterTour} onChange={e => setFilterTour(e.target.value)} style={glassSelect}>
+          <option value="all">All Tours</option>
+          {uniqueTours.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={glassSelect}>
+          <option value="all">All Statuses</option>
+          <option value="confirmed">Confirmed</option>
+        </select>
+        <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)} title="From" style={glassSelect} />
+        <input type="date" value={filterTo}   onChange={e => setFilterTo(e.target.value)}   title="To"   style={glassSelect} />
+        <input
+          type="text"
+          value={filterBooker}
+          onChange={e => setFilterBooker(e.target.value)}
+          placeholder="Filter by booker..."
+          style={{ ...glassSelect, cursor: 'text', minWidth: 180 }}
+        />
+        {anyFilter && (
+          <button onClick={clearFilters} style={{ background: 'transparent', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#94a3b8', padding: '7px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Table / empty state */}
+      {sorted.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12 }}>
+          <IconCalendarOff size={32} color="#64748b" />
+          <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600, margin: 0 }}>No confirmed events match your filters</p>
+        </div>
+      ) : (
+        <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#0d1f3a' }}>
+                {CS_COLS.map(col => (
+                  <th
+                    key={col.key}
+                    onClick={() => toggleSort(col.key)}
+                    style={{
+                      padding: '10px 14px',
+                      textAlign: col.key === 'num_shows' ? 'center' : 'left',
+                      fontSize: 10.5, fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase', letterSpacing: '0.08em',
+                      borderBottom: '0.5px solid var(--glass-border)',
+                      cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none',
+                    }}
+                  >
+                    {col.label}
+                    {sortCol === col.key && <span style={{ marginLeft: 4 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map(ev => (
+                <ConfirmedRow
+                  key={ev.id}
+                  ev={ev}
+                  editingBookerId={editingBookerId}
+                  setEditingBooker={setEditingBookerId}
+                  saveBooker={saveBooker}
+                  onRowClick={() => router.push(`/tours/${ev.tours?.id}/events/${ev.id}`)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <ExportModal
+        isOpen={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title={`Confirmed Schedule ${currentYear}`}
+        subtitle={activeTourLabel}
+        tourColor="#33FF99"
+        allColumns={EXPORT_COLS}
+        rows={exportRows}
+        filename={`Confirmed-Schedule-${currentYear}`}
+      />
+    </div>
+  )
+}
+
 // ── PLACEHOLDER TAB ───────────────────────────────────────────────────────────
 
 function PlaceholderTab({ label }) {
@@ -1602,6 +1890,8 @@ function BCContent() {
 
       {activeTab === 'draft-schedule' ? (
         <DraftScheduleContent />
+      ) : activeTab === 'confirmed-schedule' ? (
+        <ConfirmedScheduleTab />
       ) : (
         <PlaceholderTab label={TABS.find(t => t.slug === activeTab)?.label || ''} />
       )}
