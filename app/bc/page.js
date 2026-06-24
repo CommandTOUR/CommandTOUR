@@ -1625,4 +1625,3 @@ export default function BCPage() {
     </Suspense>
   )
 }
-}
