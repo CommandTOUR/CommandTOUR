@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { getSupabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -58,20 +59,24 @@ export default function Login() {
 
   return (
     <div style={{
+      position: 'relative',
       width: '100vw',
       height: '100vh',
       overflow: 'hidden',
-      backgroundImage: "url('/images/CommandTOUR_Splash.png')",
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      position: 'relative',
     }}>
+      <Image
+        src="/images/CommandTOUR_Splash.png"
+        alt="CommandTOUR Background"
+        fill
+        style={{ objectFit: 'cover', objectPosition: 'center' }}
+        priority
+      />
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
+        zIndex: 1,
         width: 420,
         background: 'rgba(10, 22, 40, 0.85)',
         backdropFilter: 'blur(16px)',
