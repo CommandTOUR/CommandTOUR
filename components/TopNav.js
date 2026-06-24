@@ -11,7 +11,7 @@ const navLinks = [
   { label: 'Staff', href: '/staff' },
   { label: 'Calendar', href: '/calendar' },
   { label: 'Venues', href: '/venues' },
-  { label: 'All Events', href: '/booking' },
+  { label: 'Booking & Contracts', href: '/bc' },
   { label: 'Reports', href: '/reports' },
 ]
 
