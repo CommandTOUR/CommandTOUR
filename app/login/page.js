@@ -43,9 +43,9 @@ export default function Login() {
         gap: 24,
       }}>
         <img
-          src="/CommandTOURLogo-LightMode.png"
+          src="/images/CommandTOUR_Branding-2-LightMode.png"
           alt="CommandTOUR"
-          style={{ height: 28, width: 'auto', marginBottom: 8 }}
+          style={{ height: 48, width: 'auto', marginBottom: 8 }}
         />
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
