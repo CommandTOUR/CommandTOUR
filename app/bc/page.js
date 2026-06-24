@@ -1851,10 +1851,6 @@ function BCContent() {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'draft-schedule'
 
-  const setActiveTab = (slug) => {
-    router.push('/bc?tab=' + slug)
-  }
-
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
       <TopNav />
@@ -1867,7 +1863,7 @@ function BCContent() {
           {TABS.map(tab => (
             <div
               key={tab.slug}
-              onClick={() => setActiveTab(tab.slug)}
+              onClick={() => router.push(`/bc?tab=${tab.slug}`)}
               style={{
                 padding: '12px 16px',
                 fontSize: 13,
