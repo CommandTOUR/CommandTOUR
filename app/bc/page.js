@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '../../components/TopNav'
@@ -1558,7 +1558,7 @@ const TABS = [
 
 // ── BC PAGE ───────────────────────────────────────────────────────────────────
 
-export default function BCPage() {
+function BCContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'draft-schedule'
@@ -1607,4 +1607,22 @@ export default function BCPage() {
       )}
     </div>
   )
+}
+
+export default function BCPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        justifyContent: 'center', height: '100vh',
+        color: '#94a3b8', fontSize: 14,
+        fontFamily: 'Plus Jakarta Sans, sans-serif',
+      }}>
+        Loading...
+      </div>
+    }>
+      <BCContent />
+    </Suspense>
+  )
+}
 }
