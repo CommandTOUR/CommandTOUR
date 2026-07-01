@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 const REGION_ORDER = ['North America', 'Europe', 'Latin America', 'Asia-Pacific', 'Middle East', 'Africa']
 
@@ -187,7 +188,7 @@ export default function Venues() {
                       >
                         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#f1f5f9' }}>{venue.name}</div>
                         <div style={{ fontSize: 13, color: '#94a3b8' }}>
-                          {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                          {formatLocation(venue.city, venue.state, venue.country, 'full')}
                         </div>
                       </div>
                     ))}

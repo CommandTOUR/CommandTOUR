@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 export default function NewEvent() {
   const router = useRouter()
@@ -293,7 +294,7 @@ export default function NewEvent() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{[selectedVenue.city, selectedVenue.country].filter(Boolean).join(', ')}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
                 </div>
                 <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
@@ -387,7 +388,7 @@ export default function NewEvent() {
                         onMouseLeave={() => setVenueActiveIndex(-1)}
                         style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
                         <div style={{ fontSize: 14, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{[venue.city, venue.country].filter(Boolean).join(', ')}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
                       </div>
                     ))}
                     {/* Create new venue option */}

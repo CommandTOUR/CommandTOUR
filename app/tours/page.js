@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { getEventCompletionDate } from '../../lib/eventDates'
+import { formatLocation } from '@/lib/locationFormat'
 
 const STATUS_ORDER = { active: 0, upcoming: 1, completed: 2, cancelled: 3 }
 
@@ -45,7 +46,7 @@ export default function Tours() {
         const enriched = await Promise.all(data.map(async (tour) => {
           const { data: events } = await supabase
             .from('events')
-            .select('id, city, load_in_date, num_shows, saturday_date, sunday_date')
+            .select('id, city, state, country, load_in_date, num_shows, saturday_date, sunday_date')
             .eq('tour_id', tour.id)
             .order('load_in_date', { ascending: true })
 
@@ -62,21 +63,12 @@ export default function Tours() {
 
           const completedEvents = eventCompletions.filter(e => e.isPast).length
           const nextEvent = eventCompletions.find(e => !e.isPast)
-          const nameParts = (tour.director_name || '').trim().split(' ')
-          const initials = nameParts.length >= 2
-            ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
-            : (nameParts[0]?.[0] ?? '?')
-
-          const nextLabel = nextEvent
-            ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-            : 'No upcoming events'
 
           return {
             ...tour,
             total: totalEvents,
             completed: completedEvents,
-            directorInitials: initials.toUpperCase(),
-            nextEvent: nextLabel,
+            nextEvent: nextEvent || null,
           }
         }))
 
@@ -113,72 +105,88 @@ export default function Tours() {
   const renderTile = (tour) => {
     const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
     const remaining = tour.total - tour.completed
-    const tileColor = tour.color || 'var(--mint)'
+    const tileColor = tour.color || '#33FF99'
     const statusLabel = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }[tour.status] || tour.status
+    const hasDirector = tour.director_name && tour.director_name.trim() && tour.director_name.trim() !== 'N/A'
 
     return (
       <div
         key={tour.id}
         onClick={() => router.push(`/tours/${tour.id}`)}
         style={{
-          padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
-          background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          padding: '14px 16px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
+          background: 'var(--bg-card)',
+          backdropFilter: 'blur(8px) saturate(1.3)',
+          WebkitBackdropFilter: 'blur(8px) saturate(1.3)',
           borderRadius: 12,
-          borderTop: `7px solid ${tileColor}`,
-          borderLeft: `2px solid ${tileColor}`,
-          borderRight: `2px solid ${tileColor}`,
-          borderBottom: `2px solid ${tileColor}`,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10)',
+          border: `2.5px solid ${tileColor}`,
+          boxShadow: 'inset 0 1px 0 var(--card-glass-highlight), 0 4px 14px var(--card-glass-shadow)',
           transition: 'background 0.15s, box-shadow 0.15s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
       >
 
+        {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.3, color: '#f1f5f9' }}>{tour.name}</div>
-            <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 3 }}>
-              {tour.region ? `${tour.region} · ` : ''}{tour.year}
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</div>
+            <div style={{ fontSize: 13, color: '#B8C2CC', marginTop: 3 }}>
+              {tour.year}{hasDirector ? ` · ${tour.director_name}` : ''}
+            </div>
+            <div style={{ fontSize: 12, color: '#8B96A8', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {tour.region}
             </div>
           </div>
-          <span className={statusBadgeClass(tour.status)} style={{ marginLeft: 8, flexShrink: 0 }}>{statusLabel}</span>
+          {tour.logo_url && (
+            <img src={tour.logo_url} alt={tour.name} style={{ height: 52, width: 'auto', maxWidth: 70, objectFit: 'contain', flexShrink: 0 }} />
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: 16, marginTop: 14, marginBottom: 14 }}>
           {[
-            { val: tour.total, lbl: 'Total', color: '#f1f5f9' },
-            { val: tour.completed, lbl: 'Done', color: '#33FF99' },
-            { val: remaining, lbl: 'Left', color: '#f1f5f9' },
+            { val: tour.total, lbl: 'Total', color: 'var(--text-primary)' },
+            { val: tour.completed, lbl: 'Done', color: 'var(--color-mint)' },
+            { val: remaining, lbl: 'Left', color: 'var(--text-primary)' },
           ].map(item => (
             <div key={item.lbl}>
               <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: item.color }}>{item.val}</div>
-              <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
-          <span style={{ fontSize: 13, color: '#94a3b8' }}>Progress</span>
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{pct}%</span>
-        </div>
-        <div style={{ height: 4, background: 'rgba(255,255,255,0.10)', borderRadius: 2, overflow: 'hidden' }}>
+        {/* Progress bar */}
+        <div style={{ height: 4, borderRadius: 2, background: 'var(--border-card)', overflow: 'hidden', marginBottom: 14 }}>
           <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: `${tileColor}22`, border: `1px solid ${tileColor}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: tileColor, flexShrink: 0 }}>
-              {tour.directorInitials}
-            </div>
-            <span style={{ fontSize: 13, color: '#94a3b8' }}>{tour.director_name || '—'}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#94a3b8' }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: tileColor, flexShrink: 0 }} />
-            {tour.nextEvent}
-          </div>
+        {/* Status pill */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <span className={statusBadgeClass(tour.status)}>{statusLabel}</span>
+        </div>
+
+        {/* Next event mini-tile */}
+        <div
+          onClick={(e) => {
+            e.stopPropagation()
+            if (tour.nextEvent) router.push(`/tours/${tour.id}/events/${tour.nextEvent.id}`)
+          }}
+          style={{ background: 'var(--bg-card-hover)', border: `1px solid ${tileColor}`, borderRadius: 7, padding: '7px 10px', textAlign: 'center', cursor: tour.nextEvent ? 'pointer' : 'default' }}
+          onMouseEnter={e => { if (tour.nextEvent) e.currentTarget.style.background = 'var(--bg-card)' }}
+          onMouseLeave={e => { if (tour.nextEvent) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+        >
+          {tour.nextEvent ? (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8B96A8', marginBottom: 2 }}>Next Event</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#B8C2CC' }}>
+                {formatLocation(tour.nextEvent.city, tour.nextEvent.state, tour.nextEvent.country, 'compact')} · {new Date(tour.nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>No upcoming events</div>
+          )}
         </div>
       </div>
     )
@@ -187,13 +195,13 @@ export default function Tours() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62 }}>
+      <div style={{ marginTop: 88 }}>
 
-        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
+        <div style={{ position: 'sticky', top: 88, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>Tours</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Tours</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
                 {tours.length} {tours.length === 1 ? 'tour' : 'tours'}
               </div>
             </div>
@@ -202,12 +210,12 @@ export default function Tours() {
         </div>
 
         <div style={{ padding: 28 }}>
-          {loading && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>Loading tours...</div>}
+          {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading tours...</div>}
 
           {!loading && tours.length === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
-              <div style={{ fontSize: 20, fontWeight: 600, color: '#ffffff' }}>No tours yet</div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>Create your first tour to get started</div>
+              <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)' }}>No tours yet</div>
+              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Create your first tour to get started</div>
               <button className="btn-primary" onClick={() => router.push('/tours/new')}>+ New Tour</button>
             </div>
           )}
@@ -218,16 +226,16 @@ export default function Tours() {
                 onClick={() => toggleSection(key)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[key] ? 16 : 0, userSelect: 'none' }}
               >
-                <span style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>
                   <ChevronIcon open={!!expanded[key]} />
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {label}
                 </span>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                   {sectionTours.length} {sectionTours.length === 1 ? 'tour' : 'tours'}
                 </span>
-                <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
+                <div style={{ flex: 1, height: '0.5px', background: 'var(--border-card)', marginLeft: 4 }} />
               </div>
 
               {expanded[key] && (

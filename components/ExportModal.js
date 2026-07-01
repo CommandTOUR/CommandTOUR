@@ -9,6 +9,7 @@ export default function ExportModal({
   title,
   subtitle,
   tourColor,
+  logo_url,
   allColumns,
   rows,
   filename,
@@ -71,7 +72,7 @@ export default function ExportModal({
       </head>
       <body>
         <div class="header">
-          <img src="${window.location.origin}/images/CommandTOUR_Branding-2-LightMode.png" />
+          <img src="${logo_url || (window.location.origin + '/images/CommandTOUR_Branding-2-LightMode.png')}" />
           <div class="header-center">
             <h1>${title}</h1>
             <p>${subtitle}</p>
@@ -147,7 +148,7 @@ export default function ExportModal({
 
               {/* Preview header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${tourColor || '#33FF99'}` }}>
-                <img src="/images/CommandTOUR_Branding-2-LightMode.png" style={{ height: 32 }} alt="CommandTOUR" />
+                <img src={logo_url || '/images/CommandTOUR_Branding-2-LightMode.png'} style={{ height: 32 }} alt="CommandTOUR" />
                 <div style={{ textAlign: 'center', flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>{title}</div>
                   <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{subtitle}</div>

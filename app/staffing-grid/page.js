@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { confirmStaffMember } from '../../lib/confirmStaffMember'
+import { formatLocation } from '@/lib/locationFormat'
 
 function normalizeStatus(s) {
   if (s === 'scheduled') return 'pending'
@@ -867,7 +868,6 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, sourceE
                 const tour = tours.find(t => t.id === ev.tour_id)
                 const tourColor = tour?.color || '#33FF99'
                 const isChecked = checked.includes(ev.id)
-                const geo = ev.country ? ', ' + ev.country : (ev.state ? ', ' + ev.state : '')
                 return (
                   <div key={ev.id} onClick={() => toggle(ev.id)}
                     style={{ display: 'flex', alignItems: 'center', gap: 12, height: 44, padding: '0 24px', cursor: 'pointer', borderBottom: '0.5px solid rgba(255,255,255,0.06)', borderLeft: isChecked ? '3px solid #33FF99' : '3px solid transparent', background: isChecked ? 'rgba(51,255,153,0.06)' : 'transparent', transition: 'background 0.1s' }}
@@ -875,7 +875,7 @@ function CopyToEventsModal({ selectedIds, assignments, allEvents, tours, sourceE
                     onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = 'transparent' }}>
                     <CheckboxIcon isChecked={isChecked} />
                     <span style={{ fontSize: 13, color: '#f1f5f9', minWidth: 130, whiteSpace: 'nowrap' }}>{fmtDateRange(ev.load_in_date, ev.load_out_date)}</span>
-                    <span style={{ fontSize: 13, color: '#f1f5f9', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.city}{geo}</span>
+                    <span style={{ fontSize: 13, color: '#f1f5f9', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</span>
                     {tour && <span style={{ fontSize: 12, fontWeight: 600, color: tourColor, minWidth: 140, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</span>}
                   </div>
                 )
@@ -1604,7 +1604,7 @@ export default function StaffingGrid() {
                       style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.01em', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
                       onMouseEnter={e => { e.currentTarget.style.opacity = '0.55' }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}>
-                      {ev.city}{ev.state ? ', ' + ev.state : ''}
+                      {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                     </span>
                   </th>
                 ))}

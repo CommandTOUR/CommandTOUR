@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../components/TopNav'
 import { getSupabase } from '../../../../lib/supabase'
@@ -34,6 +34,8 @@ export default function EditTour() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [customColor, setCustomColor] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoInputRef = useRef(null)
   const [form, setForm] = useState({
     name: '',
     tour_type: '',
@@ -44,6 +46,7 @@ export default function EditTour() {
     color: '#C9A84C',
     director_name: '',
     notes: '',
+    logo_url: null,
   })
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
@@ -63,6 +66,7 @@ export default function EditTour() {
           color: data.color || '#C9A84C',
           director_name: data.director_name || '',
           notes: data.notes || '',
+          logo_url: data.logo_url || null,
         })
         // Check if color is a custom one not in the presets
         const isPreset = COLORS.some(c => c.value === (data.color || '#C9A84C'))
@@ -85,6 +89,40 @@ export default function EditTour() {
     } else {
       router.push(`/tours/${id}`)
     }
+  }
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    setError('')
+    const supabase = getSupabase()
+    const filename = `${id}-${Date.now()}.${file.name.split('.').pop()}`
+    const { error: uploadError } = await supabase.storage.from('tour-logos').upload(filename, file, { upsert: true })
+    if (uploadError) {
+      setError(uploadError.message)
+      setUploadingLogo(false)
+      return
+    }
+    const { data: urlData } = supabase.storage.from('tour-logos').getPublicUrl(filename)
+    const publicUrl = urlData.publicUrl
+    const { error: updateError } = await supabase.from('tours').update({ logo_url: publicUrl }).eq('id', id)
+    if (updateError) {
+      setError(updateError.message)
+      setUploadingLogo(false)
+      return
+    }
+    set('logo_url', publicUrl)
+    setUploadingLogo(false)
+    if (logoInputRef.current) logoInputRef.current.value = ''
+  }
+
+  const handleRemoveLogo = async () => {
+    setError('')
+    const supabase = getSupabase()
+    const { error: updateError } = await supabase.from('tours').update({ logo_url: null }).eq('id', id)
+    if (updateError) { setError(updateError.message); return }
+    set('logo_url', null)
   }
 
   const inputStyle = {
@@ -216,6 +254,41 @@ export default function EditTour() {
               )}
             </div>
             <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: form.color, width: '100%', transition: 'background 0.2s' }} />
+          </div>
+
+          {/* Tour Logo */}
+          <div>
+            <label style={labelStyle}>Tour Logo</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="Tour logo" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+              ) : (
+                <div style={{ fontSize: 13, color: '#94a3b8' }}>No logo uploaded</div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                ref={logoInputRef}
+                onChange={handleLogoUpload}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                disabled={uploadingLogo}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: uploadingLogo ? 'default' : 'pointer', opacity: uploadingLogo ? 0.6 : 1 }}
+                onMouseEnter={e => { if (!uploadingLogo) e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+              </button>
+              {form.logo_url && (
+                <span
+                  onClick={handleRemoveLogo}
+                  style={{ fontSize: 12, color: 'var(--color-red)', cursor: 'pointer' }}
+                >Remove</span>
+              )}
+            </div>
           </div>
 
           {/* Notes */}

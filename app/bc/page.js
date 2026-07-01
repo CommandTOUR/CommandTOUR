@@ -9,6 +9,7 @@ import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { IconClock, IconCalendarOff } from '@tabler/icons-react'
 import ExportModal from '../../components/ExportModal'
+import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 const STATUS_STYLES = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -131,8 +132,7 @@ function getEventSaturday(ev) {
 
 function formatCityState(ev) {
   if (!ev) return ''
-  if (ev.state) return `${ev.city || ''}, ${ev.state}`
-  return ev.city || ''
+  return formatLocation(ev.city, ev.state, ev.country, 'compact')
 }
 
 async function linkExistingEvents(supabase) {
@@ -383,7 +383,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
           <label style={labelStyle}>Country</label>
           <input style={inputStyle} value={newVenue.country} onChange={e => setNewVenue(p => ({ ...p, country: e.target.value }))} />
         </div>
-        {error && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: 11, color: 'var(--color-red)', marginBottom: 8 }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
@@ -417,7 +417,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
               onMouseLeave={() => setActiveIndex(-1)}
               style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderBottom: '0.5px solid var(--glass-border)', background: i === activeIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
               <div style={{ fontWeight: 500 }}>{v.name}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{[v.city, v.state].filter(Boolean).join(', ')}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{formatLocation(v.city, v.state, v.country, 'compact')}</div>
             </div>
           ))}
           <div
@@ -788,7 +788,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                       <button onClick={() => handleShowChange(i, { show_ampm: 'PM' })} style={s.show_ampm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
                       <div onClick={() => handleDeleteShow(i)}
                         style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--color-red)'}
                         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
                     </div>
                     {showDateErr && <div style={{ fontSize: 11, color: '#f87171' }}>Show date cannot be before load-in date</div>}
@@ -1330,6 +1330,7 @@ function DraftScheduleContent() {
       tour_id: tour.id,
       city: venue.city || '',
       state: venue.state || '',
+      country: venue.country || null,
       venue_name: venue.name,
       venue_id: venue.id,
       status: 'tentative',
@@ -1352,6 +1353,7 @@ function DraftScheduleContent() {
     const { data, error } = await supabase.from('events').insert([{
       tour_id: tour.id,
       city: cityText,
+      country: null,
       status: 'tentative',
       saturday_date: row.saturday,
       sunday_date: row.sunday,

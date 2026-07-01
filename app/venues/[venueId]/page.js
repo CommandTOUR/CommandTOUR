@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 const STATUS_PILL = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -43,7 +44,7 @@ export default function VenuePage() {
       const [venueRes, contactsRes, eventsRes] = await Promise.all([
         supabase.from('venues').select('*').eq('id', venueId).single(),
         supabase.from('venue_contacts').select('*').eq('venue_id', venueId).order('created_at', { ascending: true }),
-        supabase.from('events').select('id, city, country, load_in_date, status, tour_id, tours(name, color)').eq('venue_id', venueId).order('load_in_date', { ascending: false }),
+        supabase.from('events').select('id, city, state, country, load_in_date, status, tour_id, tours(name, color)').eq('venue_id', venueId).order('load_in_date', { ascending: false }),
       ])
       if (!venueRes.error) setVenue(venueRes.data)
       if (!contactsRes.error) setContacts(contactsRes.data)
@@ -208,7 +209,7 @@ export default function VenuePage() {
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{venue.name}</div>
               <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
-                {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                {formatLocation(venue.city, venue.state, venue.country, 'full')}
                 {venue.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{venue.region}</span>}
               </div>
             </div>
@@ -235,7 +236,7 @@ export default function VenuePage() {
               <div>
                 <div style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.8, marginBottom: 12 }}>
                   {venue.address && <div>{venue.address}</div>}
-                  <div>{[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}</div>
+                  <div>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
                 </div>
                 {venue.full_address && (
                   <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12, lineHeight: 1.5 }}>
@@ -340,7 +341,7 @@ export default function VenuePage() {
                 <div
                   onClick={() => handleDeleteContact(contact.id)}
                   style={{ cursor: 'pointer', color: '#94a3b8', fontSize: 20, lineHeight: 1, padding: '0 4px', opacity: deletingId === contact.id ? 0.3 : 1 }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--color-red)'}
                   onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                 >×</div>
               </div>
@@ -413,7 +414,7 @@ export default function VenuePage() {
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tours?.color || 'var(--mint)', flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 500, color: '#f1f5f9' }}>{ev.tours?.name || '—'}</div>
-                      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>{ev.city}{ev.country && `, ${ev.country}`}</div>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

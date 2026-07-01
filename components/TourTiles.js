@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { getEventCompletionDate } from '../lib/eventDates'
+import { formatLocation } from '@/lib/locationFormat'
 
-export default function TourTiles({ glassMorphism = false }) {
+export default function TourTiles() {
   const [tours, setTours] = useState([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function TourTiles({ glassMorphism = false }) {
     const supabase = getSupabase()
     const { data: toursData, error } = await supabase
       .from('tours')
-      .select('id, name, region, year, color, status, director_name')
+      .select('id, name, region, year, color, status, director_name, logo_url')
       .eq('status', 'active')
       .order('year', { ascending: true })
 
@@ -27,7 +28,7 @@ export default function TourTiles({ glassMorphism = false }) {
     const enriched = await Promise.all(toursData.map(async (tour) => {
       const { data: events } = await supabase
         .from('events')
-        .select('id, city, load_in_date, load_out_date, status, num_shows, saturday_date, sunday_date')
+        .select('id, city, state, country, load_in_date, load_out_date, status, num_shows, saturday_date, sunday_date')
         .eq('tour_id', tour.id)
         .order('load_in_date', { ascending: true })
 
@@ -45,21 +46,11 @@ export default function TourTiles({ glassMorphism = false }) {
       const completedEvents = eventCompletions.filter(e => e.isPast).length
       const nextEvent = eventCompletions.find(e => !e.isPast)
 
-      const nameParts = (tour.director_name || '').trim().split(' ')
-      const initials = nameParts.length >= 2
-        ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
-        : (nameParts[0]?.[0] ?? '?')
-
-      const nextLabel = nextEvent
-        ? `${nextEvent.city} · ${new Date(nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-        : 'No upcoming events'
-
       return {
         ...tour,
         total: totalEvents,
         completed: completedEvents,
-        directorInitials: initials.toUpperCase(),
-        nextEvent: nextLabel,
+        nextEvent: nextEvent || null,
       }
     }))
 
@@ -69,16 +60,16 @@ export default function TourTiles({ glassMorphism = false }) {
 
   if (loading) return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 16 }}>Active Tours</div>
-      <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14 }}>Loading...</div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
+      <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   if (!tours.length) return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 16 }}>Active Tours</div>
-      <div className="glass-card" style={{ padding: '20px 22px', color: '#6b6b6b', fontSize: 14 }}>
-        No active tours. <span style={{ color: '#0a1628', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/tours/new')}>Create one</span>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
+      <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 14 }}>
+        No active tours. <span style={{ color: 'var(--color-mint)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/tours/new')}>Create one</span>
       </div>
     </div>
   )
@@ -87,96 +78,89 @@ export default function TourTiles({ glassMorphism = false }) {
     const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
     const remaining = tour.total - tour.completed
     const tileColor = tour.color || '#33FF99'
-    const glass = glassMorphism
-
-    // Full tour-color perimeter border — thicker at the top for emphasis.
-    // Glass tiles get a heavier frame than the solid fallback.
-    const borderStyle = glass ? {
-      borderTop: `7px solid ${tileColor}`,
-      borderLeft: `2px solid ${tileColor}`,
-      borderRight: `2px solid ${tileColor}`,
-      borderBottom: `2px solid ${tileColor}`,
-    } : {
-      borderTop: `3px solid ${tileColor}`,
-      borderLeft: `1px solid ${tileColor}`,
-      borderRight: `1px solid ${tileColor}`,
-      borderBottom: `1px solid ${tileColor}`,
-    }
-
-    const glassShadow = '0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.18)'
-    const glassShadowHover = '0 6px 28px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)'
-    const solidShadow = '0 1px 4px rgba(0,0,0,0.06)'
-    const solidShadowHover = '0 2px 8px rgba(0,0,0,0.1)'
-
-    const surfaceStyle = glass
-      ? { background: 'rgba(255,255,255,0.13)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: glassShadow }
-      : { background: '#faf8f4', boxShadow: solidShadow }
-
-    // Text / element colors per surface
-    const nameColor = glass ? '#ffffff' : '#1a1a1a'
-    const subColor = glass ? '#94a3b8' : '#6b6b6b'
-    const labelColor = glass ? '#94a3b8' : '#6b6b6b'
-    const totalColor = glass ? '#ffffff' : '#1a1a1a'
-    const doneColor = glass ? '#33FF99' : '#15803d'
-    const leftColor = glass ? '#ffffff' : '#1a1a1a'
-    const dividerColor = glass ? 'rgba(255,255,255,0.15)' : '#e8e2d9'
-    const progressLabelColor = glass ? '#94a3b8' : '#6b6b6b'
-    const progressPctColor = glass ? '#ffffff' : '#1a1a1a'
-    const trackColor = glass ? 'rgba(255,255,255,0.15)' : '#e8e2d9'
-    const directorColor = glass ? '#e2e8f0' : '#6b6b6b'
+    const hasDirector = tour.director_name && tour.director_name.trim() && tour.director_name.trim() !== 'N/A'
 
     return (
       <div
         key={tour.id}
         onClick={() => router.push(`/tours/${tour.id}`)}
-        style={{ padding: '20px 22px', cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: 12, transition: 'background 0.15s, box-shadow 0.15s', ...borderStyle, ...surfaceStyle }}
-        onMouseEnter={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.18)' : '#f0ece4'; e.currentTarget.style.boxShadow = glass ? glassShadowHover : solidShadowHover }}
-        onMouseLeave={e => { e.currentTarget.style.background = glass ? 'rgba(255,255,255,0.13)' : '#faf8f4'; e.currentTarget.style.boxShadow = glass ? glassShadow : solidShadow }}
+        style={{
+          padding: '14px 16px',
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'var(--bg-card)',
+          backdropFilter: 'blur(8px) saturate(1.3)',
+          WebkitBackdropFilter: 'blur(8px) saturate(1.3)',
+          border: `2.5px solid ${tileColor}`,
+          borderRadius: 10,
+          boxShadow: 'inset 0 1px 0 var(--card-glass-highlight), 0 4px 14px var(--card-glass-shadow)',
+          transition: 'background 0.15s, box-shadow 0.15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
       >
+
+        {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: nameColor }}>{tour.name}</div>
-            <div style={{ fontSize: 13, color: subColor, marginTop: 3 }}>
-              {tour.region ? `${tour.region} · ` : ''}{tour.year}
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</div>
+            <div style={{ fontSize: 13, color: '#B8C2CC', marginTop: 3 }}>
+              {tour.year}{hasDirector ? ` · ${tour.director_name}` : ''}
+            </div>
+            <div style={{ fontSize: 12, color: '#8B96A8', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {tour.region}
             </div>
           </div>
-          {glass ? (
-            <span style={{ marginLeft: 8, flexShrink: 0, fontSize: 10, fontWeight: 600, padding: '2px 9px', borderRadius: 20, textTransform: 'capitalize', background: 'rgba(51,255,153,0.15)', color: '#33FF99', border: '1px solid rgba(51,255,153,0.3)' }}>Active</span>
-          ) : (
-            <span className="badge badge-active" style={{ marginLeft: 8, flexShrink: 0 }}>Active</span>
+          {tour.logo_url && (
+            <img src={tour.logo_url} alt={tour.name} style={{ height: 52, width: 'auto', maxWidth: 70, objectFit: 'contain', flexShrink: 0 }} />
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: 16, marginTop: 14, marginBottom: 14 }}>
           {[
-            { val: tour.total, lbl: 'Total', color: totalColor },
-            { val: tour.completed, lbl: 'Done', color: doneColor },
-            { val: remaining, lbl: 'Left', color: leftColor },
+            { val: tour.total, lbl: 'Total', color: 'var(--text-primary)' },
+            { val: tour.completed, lbl: 'Done', color: 'var(--color-mint)' },
+            { val: remaining, lbl: 'Left', color: 'var(--text-primary)' },
           ].map(item => (
             <div key={item.lbl}>
               <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: item.color }}>{item.val}</div>
-              <div style={{ fontSize: 10, color: labelColor, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ height: 1, background: dividerColor, marginBottom: 16 }} />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
-          <span style={{ fontSize: 13, color: progressLabelColor }}>Progress</span>
-          <span style={{ fontSize: 13, fontWeight: 500, color: progressPctColor }}>{pct}%</span>
-        </div>
-        <div style={{ height: 4, background: trackColor, borderRadius: 2, overflow: 'hidden' }}>
+        {/* Progress bar */}
+        <div style={{ height: 4, borderRadius: 2, background: 'var(--border-card)', overflow: 'hidden', marginBottom: 14 }}>
           <div style={{ height: '100%', width: `${pct}%`, background: tileColor, borderRadius: 2 }} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: glass ? 'rgba(255,255,255,0.12)' : `${tileColor}22`, border: glass ? 'none' : `1px solid ${tileColor}66`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: glass ? '#ffffff' : tileColor, flexShrink: 0 }}>
-              {tour.directorInitials}
-            </div>
-            <span style={{ fontSize: 13, color: directorColor }}>{tour.director_name || '—'}</span>
-          </div>
+        {/* Status pill */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 9px', borderRadius: 6, textTransform: 'capitalize', background: 'var(--color-mint-bg)', color: 'var(--color-mint)', border: '1px solid var(--color-mint-border)' }}>Active</span>
+        </div>
+
+        {/* Next event mini-tile */}
+        <div
+          onClick={(e) => {
+            e.stopPropagation()
+            if (tour.nextEvent) router.push(`/tours/${tour.id}/events/${tour.nextEvent.id}`)
+          }}
+          style={{ background: 'var(--bg-card-hover)', border: `1px solid ${tileColor}`, borderRadius: 7, padding: '7px 10px', textAlign: 'center', cursor: tour.nextEvent ? 'pointer' : 'default' }}
+          onMouseEnter={e => { if (tour.nextEvent) e.currentTarget.style.background = 'var(--bg-card)' }}
+          onMouseLeave={e => { if (tour.nextEvent) e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+        >
+          {tour.nextEvent ? (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8B96A8', marginBottom: 2 }}>Next Event</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#B8C2CC' }}>
+                {formatLocation(tour.nextEvent.city, tour.nextEvent.state, tour.nextEvent.country, 'compact')} · {new Date(tour.nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>No upcoming events</div>
+          )}
         </div>
       </div>
     )
@@ -185,8 +169,8 @@ export default function TourTiles({ glassMorphism = false }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>Active Tours</div>
-        <div style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/tours')}>All Tours →</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active Tours</div>
+        <div style={{ fontSize: 13, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/tours')}>All Tours →</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
         {tours.map(renderTile)}

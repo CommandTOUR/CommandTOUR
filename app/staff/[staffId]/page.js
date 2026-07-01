@@ -4,6 +4,21 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
+import ExportModal from '../../../components/ExportModal'
+import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
+
+function EventListHeader() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card-hover)', padding: '8px 16px', borderRadius: '8px 8px 0 0', borderBottom: '1px solid var(--border-card)' }}>
+      <div style={{ flex: '0 0 220px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Location</div>
+      <div style={{ flex: '0 0 130px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Date</div>
+      <div style={{ flex: '0 0 200px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Tour</div>
+      <div style={{ flex: '0 0 160px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Position</div>
+      <div style={{ marginLeft: 'auto', flexShrink: 0, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Status</div>
+    </div>
+  )
+}
 
 export default function StaffProfile() {
   const router = useRouter()
@@ -18,6 +33,7 @@ export default function StaffProfile() {
   const [toast, setToast] = useState(null)
   const [showMap, setShowMap] = useState({})
   const [stickyVisible, setStickyVisible] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const nameRef = useRef(null)
 
   useEffect(() => {
@@ -27,14 +43,13 @@ export default function StaffProfile() {
         supabase.from('staff').select('*').eq('id', staffId).single(),
         supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
         supabase.from('event_staff')
-          .select('position, status, confirmed, events(id, city, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color))')
-          .eq('staff_id', staffId)
-          .order('created_at', { ascending: false }),
+          .select('position, status, confirmed, events(id, city, state, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color))')
+          .eq('staff_id', staffId),
       ])
       if (!personRes.error) setPerson(personRes.data)
       if (!airlinesRes.error) setAirlines(airlinesRes.data || [])
       if (!eventsRes.error) {
-        const eventsData = eventsRes.data || []
+        const eventsData = (eventsRes.data || []).sort((a, b) => new Date(a.events?.load_in_date || a.load_in_date) - new Date(b.events?.load_in_date || b.load_in_date))
         setEvents(eventsData)
         const eventIds = eventsData.map(es => es.events?.id).filter(Boolean)
         if (eventIds.length) {
@@ -94,12 +109,6 @@ export default function StaffProfile() {
     return () => observer.disconnect()
   }, [person])
 
-  const eventTypeName = (t) => {
-    if (t === 'hwss') return 'Hot Wheels Stunt Show'
-    if (t === 'hwmt') return 'Hot Wheels Monster Trucks Live'
-    return '—'
-  }
-
   const sectionLabel = (title) => (
     <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
       {title}
@@ -152,32 +161,52 @@ export default function StaffProfile() {
     const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
     return (
       <div
-        className="glass-card"
         onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
-        style={{ padding: '14px 16px', cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '10px 16px', borderBottom: '1px solid var(--border-card)', background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: tourColor }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>
-          {ev.city}{ev.country && `, ${ev.country}`}
+        <div style={{ flex: '0 0 220px', color: 'var(--text-primary)', fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {formatLocation(ev.city, ev.state, ev.country, 'full')}
         </div>
-        <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+        <div style={{ flex: '0 0 130px', color: 'var(--text-secondary)', fontSize: 13, whiteSpace: 'nowrap' }}>
           {fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null)}
         </div>
-        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>
-          {eventTypeName(ev.event_type)}
+        <div style={{ flex: '0 0 200px', color: tourColor, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {ev.tours?.name || '—'}
         </div>
-        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>
+        <div style={{ flex: '0 0 160px', color: 'var(--text-secondary)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {es.position}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto', flexShrink: 0 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
           <span style={{ fontSize: 11, color: st.color }}>{st.label}</span>
         </div>
       </div>
     )
   }
+
+  const EVENT_EXPORT_COLUMNS = [
+    { key: 'location', label: 'Location', defaultOn: true },
+    { key: 'date', label: 'Date', defaultOn: true },
+    { key: 'tour', label: 'Tour', defaultOn: true },
+    { key: 'position', label: 'Position', defaultOn: true },
+    { key: 'status', label: 'Status', defaultOn: true },
+  ]
+
+  const upcomingEventRows = upcomingEvents.map(es => {
+    const ev = es.events
+    const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
+    return [
+      formatLocation(ev.city, ev.state, ev.country, 'full'),
+      fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null),
+      ev.tours?.name || '—',
+      es.position || '—',
+      st.label,
+    ]
+  })
+
+  const handlePrint = () => window.print()
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -338,8 +367,31 @@ export default function StaffProfile() {
           {/* Upcoming Events */}
           {upcomingEvents.length > 0 && (
             <div className="glass-card" style={{ padding: '20px 24px' }}>
-              {sectionLabel(`Upcoming Events (${upcomingEvents.length})`)}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                  Upcoming Events ({upcomingEvents.length})
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setExportOpen(true)}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                  >
+                    <IconFileTypePdf size={16} stroke={1.5} color="var(--text-secondary)" />
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                  >
+                    <IconPrinter size={16} stroke={1.5} color="var(--text-secondary)" />
+                  </button>
+                </div>
+              </div>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 8, overflow: 'hidden' }}>
+                <EventListHeader />
                 {upcomingEvents.map((es, i) => <EventTile key={i} es={es} />)}
               </div>
             </div>
@@ -357,7 +409,8 @@ export default function StaffProfile() {
                 </div>
               </div>
               {showPast && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 8, overflow: 'hidden' }}>
+                  <EventListHeader />
                   {pastEvents.map((es, i) => <EventTile key={i} es={es} />)}
                 </div>
               )}
@@ -409,6 +462,16 @@ export default function StaffProfile() {
           {toast}
         </div>
       )}
+
+      <ExportModal
+        isOpen={exportOpen}
+        onClose={() => setExportOpen(false)}
+        title={`${fullName} — Upcoming Events`}
+        subtitle={person.department || ''}
+        allColumns={EVENT_EXPORT_COLUMNS}
+        rows={upcomingEventRows}
+        filename={`${fullName}-Upcoming-Events`}
+      />
 
     </div>
   )

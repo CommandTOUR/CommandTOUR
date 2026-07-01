@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -36,7 +37,7 @@ function EventBar({ event, faded, onClick }) {
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
       <span style={{ fontSize: 11, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {event.city}{event.country ? `, ${event.country_short}` : ''}
+        {formatLocation(event.city, event.state, event.country, 'compact')}
       </span>
     </div>
   )
@@ -61,7 +62,7 @@ export default function TourCalendar({ tourId, tourColor }) {
     const supabase = getSupabase()
     const { data, error } = await supabase
       .from('events')
-      .select('id, city, country, load_in_date, load_out_date, tour_id')
+      .select('id, city, state, country, load_in_date, load_out_date, tour_id')
       .eq('tour_id', tourId)
       .order('load_in_date', { ascending: true })
 
@@ -70,9 +71,6 @@ export default function TourCalendar({ tourId, tourColor }) {
     setEvents((data || []).map(e => ({
       ...e,
       tour_color: tourColor || '#33FF99',
-      country_short: e.country?.length > 10
-        ? e.country.split(' ').map(w => w[0]).join('').toUpperCase()
-        : e.country,
     })))
     setLoading(false)
   }
@@ -264,7 +262,7 @@ export default function TourCalendar({ tourId, tourColor }) {
                 onMouseLeave={e => e.currentTarget.style.background = `${ev.tour_color}18`}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tour_color, flexShrink: 0 }} />
                 <div style={{ fontSize: 13, fontWeight: 500 }}>
-                  {ev.city}{ev.country ? `, ${ev.country_short}` : ''}
+                  {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                 </div>
               </div>
             ))}

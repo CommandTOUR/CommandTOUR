@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 const ROW_GRID = '28px 100px 100px 1.2fr 1.2fr 1.6fr 28px'
 
@@ -279,7 +280,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
 
   const openCopyModal = async () => {
     const supabase = getSupabase()
-    const { data } = await supabase.from('events').select('id, city, country, load_in_date').eq('tour_id', tourId).neq('id', eventId).order('load_in_date', { ascending: true })
+    const { data } = await supabase.from('events').select('id, city, state, country, load_in_date').eq('tour_id', tourId).neq('id', eventId).order('load_in_date', { ascending: true })
     setOtherEvents(data || [])
     setCopyTarget('')
     setCopyDone(false)
@@ -393,7 +394,7 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
                     <option value="">Select an event...</option>
                     {otherEvents.map(ev => (
                       <option key={ev.id} value={ev.id}>
-                        {ev.city}{ev.country ? `, ${ev.country}` : ''}{ev.load_in_date ? ` — ${new Date(ev.load_in_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                        {formatLocation(ev.city, ev.state, ev.country, 'compact')}{ev.load_in_date ? ` — ${new Date(ev.load_in_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
                       </option>
                     ))}
                   </select>

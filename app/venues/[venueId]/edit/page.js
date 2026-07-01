@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../components/TopNav'
 import { getSupabase } from '../../../../lib/supabase'
 import { MAPS_API_KEY } from '../../../../lib/maps'
+import { formatLocation } from '@/lib/locationFormat'
 
 const AUTOCOMPLETE_FIELDS = [
   'city', 'state', 'country', 'floor_size', 'surface_coating',
@@ -397,7 +398,7 @@ export default function EditVenue() {
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>{form.name || 'Venue'}</div>
               <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 4, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                {[form.city, form.state, form.country].filter(Boolean).join(', ')}
+                {formatLocation(form.city, form.state, form.country, 'full')}
                 {form.region && <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(201,168,76,0.1)', border: '0.5px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>{form.region}</span>}
                 <span style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px', borderRadius: 20, background: 'rgba(220,38,38,0.15)', border: '0.5px solid #dc2626', color: '#f87171' }}>Editing</span>
               </div>

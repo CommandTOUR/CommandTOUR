@@ -15,73 +15,78 @@
 
 :root {
   /* ── Shell & surface ─────────────────────────────── */
-  --bg: #0a1628;
-  --bg-shell: #0a1628;
-  --bg-card: rgba(255,255,255,0.06);
-  --bg-card-hover: rgba(255,255,255,0.09);
+  --bg: #0B1220;
+  --bg-shell: #0B1220;
+  --bg-card: rgba(255,255,255,0.035);
+  --bg-card-hover: rgba(255,255,255,0.06);
   --bg-header: #0d1f3a;
   --bg-input: rgba(255,255,255,0.08);
 
   /* ── Borders ─────────────────────────────────────── */
-  --border-card: rgba(255,255,255,0.10);
+  --border-card: rgba(255,255,255,0.08);
   --border-input: rgba(255,255,255,0.15);
-  --border-subtle: rgba(255,255,255,0.06);
-  --glass-border: rgba(255,255,255,0.10);
+  --border-subtle: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.08);
 
   /* ── Text ────────────────────────────────────────── */
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
+  --table-row-text-dark: #A8B2C2;
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
 
   /* ── Brand / accent ──────────────────────────────── */
-  --mint: #33FF99;
+  --mint: #10E687;
   --gold: #C9A84C;
-  --color-mint: #33FF99;
-  --color-mint-bg: rgba(51,255,153,0.15);
-  --color-mint-border: rgba(51,255,153,0.30);
-  --color-yellow: #FFD60A;
-  --color-yellow-bg: rgba(255,214,10,0.15);
-  --color-yellow-border: rgba(255,214,10,0.30);
+  --color-mint: #10E687;
+  --color-mint-bg: rgba(16,230,135,0.12);
+  --color-mint-border: rgba(16,230,135,0.40);
+  --color-yellow: #F59E0B;
+  --color-yellow-bg: rgba(245,158,11,0.12);
+  --color-yellow-border: rgba(245,158,11,0.40);
+  --color-alert: #FCB132;
   --color-orange: #FF9500;
   --color-orange-bg: rgba(255,149,0,0.15);
   --color-orange-border: rgba(255,149,0,0.30);
-  --color-red: #FF3B30;
-  --color-red-bg: rgba(255,59,48,0.15);
-  --color-red-border: rgba(255,59,48,0.30);
-  --color-purple: #BF5AF2;
-  --color-purple-bg: rgba(191,90,242,0.15);
-  --color-purple-border: rgba(191,90,242,0.30);
+  --color-red: #E24B4A;
+  --color-red-bg: rgba(226,75,74,0.12);
+  --color-red-border: rgba(226,75,74,0.40);
+  --color-purple: #A78BFA;
+  --color-purple-bg: rgba(167,139,250,0.15);
+  --color-purple-border: rgba(167,139,250,0.40);
   --color-gray: #8E8E93;
   --color-gray-bg: rgba(142,142,147,0.15);
   --color-gray-border: rgba(142,142,147,0.30);
 
   /* ── Logo / nav ──────────────────────────────────── */
   --logo: url('/images/CommandTOUR_Branding-1-DarkMode.png');
-  --nav-bg: #0a1628;
+  --nav-bg: #0B1220;
 
-  /* ── Legacy aliases ──────────────────────────────── */
-  --color-shell: #0a1628;
-  --red: #dc2626;
-  --yellow: #FFD60A;
-  --orange: #FF8C00;
-  --pink: #FF69B4;
-  --gray: #888888;
-  --color-card: rgba(255,255,255,0.10);
-  --color-card-hover: rgba(255,255,255,0.14);
-  --color-card-border: rgba(255,255,255,0.14);
-  --color-card-header: rgba(255,255,255,0.06);
-  --color-surface: rgba(255,255,255,0.07);
-  --color-divider: rgba(255,255,255,0.08);
-  --glass-bg: rgba(255,255,255,0.07);
-  --glass-hover: rgba(255,255,255,0.13);
-  --card-bg: rgba(255,255,255,0.10);
-  --card-header: rgba(255,255,255,0.06);
-  --card-border: rgba(255,255,255,0.14);
-  --card-text: #f1f5f9;
-  --card-muted: #94a3b8;
+  /* ── Card glass effects ──────────────────────────── */
+  --card-glass-highlight: rgba(255,255,255,0.12);
+  --card-glass-shadow: rgba(0,0,0,0.18);
+
+  /* ── Event status ────────────────────────────────── */
+  --status-confirmed: #33FF99;
+  --status-confirmed-bg: rgba(51,255,153,0.12);
+  --status-confirmed-border: rgba(51,255,153,0.40);
+  --status-1hold: #FFD60A;
+  --status-1hold-bg: rgba(255,214,10,0.12);
+  --status-1hold-border: rgba(255,214,10,0.40);
+  --status-2hold: #FF9F0A;
+  --status-2hold-bg: rgba(255,159,10,0.12);
+  --status-2hold-border: rgba(255,159,10,0.40);
+  --status-3hold: #FF375F;
+  --status-3hold-bg: rgba(255,55,95,0.12);
+  --status-3hold-border: rgba(255,55,95,0.40);
+  --status-tentative: #BF5AF2;
+  --status-tentative-bg: rgba(191,90,242,0.12);
+  --status-tentative-border: rgba(191,90,242,0.40);
+  --status-dateHold: #AEAEB2;
+  --status-dateHold-bg: rgba(174,174,178,0.12);
+  --status-dateHold-border: rgba(174,174,178,0.40);
 
   --nav-width: 220px;
   --topbar-height: 56px;
@@ -92,60 +97,70 @@
 
 /* ── LIGHT MODE OVERRIDES ──────────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg: #f5f5f0;
-  --bg-shell: #f5f5f0;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --bg-header: #f8fafc;
+  --bg: #EEF0F0;
+  --bg-shell: #EEF0F0;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F4F5F5;
+  --bg-header: #F4F5F5;
   --bg-input: #ffffff;
-  --border-card: #e2e8f0;
+  --border-card: #DDE1E0;
   --border-input: #cbd5e1;
-  --border-subtle: #e2e8f0;
-  --glass-border: #e2e8f0;
+  --border-subtle: #DDE1E0;
+  --glass-border: #DDE1E0;
 
-  --text-primary: #1a1a2e;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --color-text-primary: #1a1a2e;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
+  --text-primary: #1A2422;
+  --text-secondary: #4A5250;
+  --text-muted: #606866;
+  --table-row-text-dark: var(--text-secondary);
+  --color-text-primary: #1A2422;
+  --color-text-secondary: #717977;
+  --color-text-muted: #8A9290;
 
-  --color-mint: #16a34a;
-  --color-mint-bg: #dcfce7;
-  --color-mint-border: #86efac;
-  --color-yellow: #d97706;
-  --color-yellow-bg: #fef3c7;
-  --color-yellow-border: #fcd34d;
+  --color-mint: #0F8F5C;
+  --color-mint-bg: #DCF3E7;
+  --color-mint-border: #86D9B2;
+  --color-yellow: #B5720B;
+  --color-yellow-bg: #FBE9D2;
+  --color-yellow-border: #EFC988;
+  --color-alert: #9A6B0A;
   --color-orange: #ea580c;
   --color-orange-bg: #ffedd5;
   --color-orange-border: #fdba74;
-  --color-red: #dc2626;
-  --color-red-bg: #fee2e2;
-  --color-red-border: #fca5a5;
-  --color-purple: #7c3aed;
-  --color-purple-bg: #ede9fe;
-  --color-purple-border: #c4b5fd;
+  --color-red: #C23B3B;
+  --color-red-bg: #F8DEDE;
+  --color-red-border: #E8A6A6;
+  --color-purple: #8B6FE8;
+  --color-purple-bg: #EAE3FB;
+  --color-purple-border: #C5B5F0;
   --color-gray: #64748b;
   --color-gray-bg: #f1f5f9;
   --color-gray-border: #cbd5e1;
 
   --logo: url('/images/CommandTOUR_Branding-2-LightMode.png');
-  --nav-bg: #ffffff;
+  --nav-bg: #FFFFFF;
 
-  /* Legacy aliases */
-  --color-card: #faf8f4;
-  --color-card-hover: #f0ece4;
-  --color-card-border: #e8e2d9;
-  --color-card-header: #f0ece4;
-  --color-surface: #f7f5f1;
-  --color-divider: #e8e2d9;
-  --glass-bg: #f7f5f1;
-  --glass-hover: #f0ece4;
-  --card-bg: #faf8f4;
-  --card-header: #f0ece4;
-  --card-border: #e8e2d9;
-  --card-text: #1a1a1a;
-  --card-muted: #6b6b6b;
+  --card-glass-highlight: rgba(255,255,255,0.8);
+  --card-glass-shadow: rgba(26,36,34,0.06);
+
+  /* ── Event status ────────────────────────────────── */
+  --status-confirmed: #0F8F5C;
+  --status-confirmed-bg: #DCF3E7;
+  --status-confirmed-border: #86D9B2;
+  --status-1hold: #8A6D00;
+  --status-1hold-bg: #FCF2C9;
+  --status-1hold-border: #F0D060;
+  --status-2hold: #B5560A;
+  --status-2hold-bg: #FCE2C2;
+  --status-2hold-border: #F0A85C;
+  --status-3hold: #C2294A;
+  --status-3hold-bg: #FBDEE5;
+  --status-3hold-border: #F0A8B8;
+  --status-tentative: #8B6FE8;
+  --status-tentative-bg: #EAE3FB;
+  --status-tentative-border: #C5B5F0;
+  --status-dateHold: #717977;
+  --status-dateHold-bg: #EEEEEF;
+  --status-dateHold-border: #D5D5D8;
 }
 
 html, body {
@@ -213,7 +228,7 @@ html, body {
 .pill {
   font-size: 11px;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 3px 10px;
   display: inline-flex;
   align-items: center;
@@ -259,7 +274,7 @@ html, body {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid;
   display: inline-flex;
   align-items: center;

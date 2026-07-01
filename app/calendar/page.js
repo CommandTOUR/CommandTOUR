@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { formatLocation } from '@/lib/locationFormat'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -37,7 +38,7 @@ function EventBar({ event, faded, onClick }) {
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
       <span style={{ fontSize: 11, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {event.city}{event.country ? `, ${event.country_short}` : ''}
+        {formatLocation(event.city, event.state, event.country, 'compact')}
       </span>
     </div>
   )
@@ -73,7 +74,7 @@ export default function Calendar() {
 
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')
-      .select('id, city, country, load_in_date, load_out_date, tour_id')
+      .select('id, city, state, country, load_in_date, load_out_date, tour_id')
       .order('load_in_date', { ascending: true })
 
     if (toursError) console.error('Tours error:', toursError)
@@ -90,9 +91,6 @@ export default function Calendar() {
         ...e,
         tour_name: tour?.name ?? '—',
         tour_color: tour?.color ?? '#33FF99',
-        country_short: e.country?.length > 10
-          ? e.country.split(' ').map(w => w[0]).join('').toUpperCase()
-          : e.country,
       }
     }))
 
@@ -172,7 +170,7 @@ export default function Calendar() {
           <div style={{ fontSize: 22, fontWeight: 600 }}>Calendar</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* View toggle */}
-            <div style={{ display: 'flex', background: 'var(--glass-bg)', border: '0.5px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-card)', border: '0.5px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
               {['month', 'week'].map(v => (
                 <button key={v} onClick={() => setView(v)} style={{
                   fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 16px',
@@ -335,7 +333,7 @@ export default function Calendar() {
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tour_color, flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>
-                    {ev.city}{ev.country ? `, ${ev.country_short}` : ''}
+                    {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{ev.tour_name}</div>
                 </div>

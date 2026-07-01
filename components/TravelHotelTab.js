@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 import ExportModal from './ExportModal'
 import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
+import { formatLocation } from '@/lib/locationFormat'
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -620,7 +621,7 @@ export default function TravelHotelTab({ eventId, event }) {
         <ExportModal
           isOpen
           onClose={() => setExportModal(null)}
-          title={`${event.city}, ${event.country} — Arrivals`}
+          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Arrivals`}
           subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
           tourColor={tour?.color}
           allColumns={ARRIVALS_COLUMNS}
@@ -632,7 +633,7 @@ export default function TravelHotelTab({ eventId, event }) {
         <ExportModal
           isOpen
           onClose={() => setExportModal(null)}
-          title={`${event.city}, ${event.country} — Departures`}
+          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Departures`}
           subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
           tourColor={tour?.color}
           allColumns={DEPARTURES_COLUMNS}
@@ -644,7 +645,7 @@ export default function TravelHotelTab({ eventId, event }) {
         <ExportModal
           isOpen
           onClose={() => setExportModal(null)}
-          title={`${event.city}, ${event.country} — Hotel Rooming`}
+          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Hotel Rooming`}
           subtitle={`${hotel?.hotel_name || ''} · ${tour?.name || ''}`}
           tourColor={tour?.color}
           allColumns={HOTEL_COLUMNS}

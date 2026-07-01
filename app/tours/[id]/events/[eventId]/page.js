@@ -10,6 +10,7 @@ import ScheduleTab from '../../../../../components/ScheduleTab'
 import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
+import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 const STATUS_PILL = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -405,7 +406,7 @@ export default function EventPage() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>
-                    {event.city}{event.country && `, ${event.country}`}
+                    {formatLocation(event.city, event.state, event.country, 'full')}
                   </div>
                   <span style={{
                     fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
@@ -424,7 +425,7 @@ export default function EventPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleDeleteEvent} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid rgba(255,51,51,0.3)', background: 'transparent', color: 'var(--red)', cursor: 'pointer' }}>
+              <button onClick={handleDeleteEvent} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid rgba(255,51,51,0.3)', background: 'transparent', color: 'var(--color-red)', cursor: 'pointer' }}>
                 Delete Event
               </button>
               <button
@@ -468,7 +469,7 @@ export default function EventPage() {
                   daysUntil === null ? '—' : daysUntil <= 0 ? 'Now' : daysUntil,
                   daysUntil !== null && daysUntil <= 0 ? 'Event in progress' : 'Days to Load-In',
                   daysUntil !== null && daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
-                  daysUntil !== null && daysUntil <= 7 ? 'var(--red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--yellow)' : 'var(--mint)'
+                  daysUntil !== null && daysUntil <= 7 ? 'var(--color-red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--color-yellow)' : 'var(--mint)'
                 )}
                 {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', '#f1f5f9')}
                 {statCard(
@@ -479,7 +480,7 @@ export default function EventPage() {
                 {statCard(
                   event.venue_name || 'TBC',
                   'Venue',
-                  venue ? [venue.city, venue.country].filter(Boolean).join(', ') : event.city || null,
+                  venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : (event.city || null),
                   '#f1f5f9',
                   venue ? () => router.push(`/venues/${venue.id}`) : null
                 )}
@@ -570,7 +571,7 @@ export default function EventPage() {
                       <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Address</div>
                       <div style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.6 }}>
                         {venue.address && <>{venue.address}<br /></>}
-                        {[venue.city, venue.state, venue.country].filter(Boolean).join(', ')}
+                        {formatLocation(venue.city, venue.state, venue.country, 'full')}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>

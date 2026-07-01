@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
+import { IconSun, IconMoon } from '@tabler/icons-react'
 import { getSupabase } from '../lib/supabase'
 
 const navLinks = [
@@ -19,21 +20,8 @@ export default function TopNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [avatarColor, setAvatarColor] = useState('#C9A84C')
   const [theme, setTheme] = useState('dark')
   const dropdownRef = useRef(null)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('avatarColor')
-    if (saved) setAvatarColor(saved)
-
-    const handleColorChange = () => {
-      const updated = localStorage.getItem('avatarColor')
-      if (updated) setAvatarColor(updated)
-    }
-    window.addEventListener('avatarColorChanged', handleColorChange)
-    return () => window.removeEventListener('avatarColorChanged', handleColorChange)
-  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('theme') || 'dark'
@@ -57,6 +45,18 @@ export default function TopNav() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // PERSISTENT DEV TOGGLE: intentionally kept for beta testing, do not remove in cleanup passes
+  const handleThemeToggle = () => {
+    if (theme === 'light') {
+      document.documentElement.removeAttribute('data-theme')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light')
+      localStorage.setItem('theme', 'light')
+    }
+    window.dispatchEvent(new Event('themeChanged'))
+  }
+
   const handleSignOut = async () => {
     const supabase = getSupabase()
     await supabase.auth.signOut()
@@ -65,18 +65,22 @@ export default function TopNav() {
 
   return (
     <nav style={{
-      minHeight: 64,
+      position: 'fixed',
+      top: 16,
+      left: 16,
+      right: 16,
+      zIndex: 100,
       fontFamily: 'Plus Jakarta Sans, sans-serif',
-      background: 'var(--nav-bg)',
+      background: 'var(--bg-card)',
+      backdropFilter: 'blur(14px) saturate(1.3)',
+      WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
+      border: '1px solid var(--border-card)',
+      borderRadius: 14,
+      boxShadow: 'inset 0 1px 0 var(--card-glass-highlight), 0 4px 14px var(--card-glass-shadow)',
+      padding: '12px 20px',
       display: 'flex',
       alignItems: 'center',
-      padding: '0 24px',
       gap: 0,
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 100,
     }}>
 
       {/* Logo */}
@@ -87,7 +91,7 @@ export default function TopNav() {
             : '/images/CommandTOUR_Branding-1-DarkMode.png'
           }
           alt="CommandTOUR"
-          style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block', filter: theme === 'light' ? 'drop-shadow(0 1px 2px rgba(26,36,34,0.45))' : 'none' }}
         />
       </div>
 
@@ -123,6 +127,28 @@ export default function TopNav() {
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
 
+        {/* PERSISTENT DEV TOGGLE: intentionally kept for beta testing, do not remove in cleanup passes */}
+        <button
+          onClick={handleThemeToggle}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            marginRight: 8,
+            display: 'flex',
+            alignItems: 'center',
+            color: 'var(--text-secondary)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+        >
+          {theme === 'light'
+            ? <IconMoon size={18} stroke={1.5} />
+            : <IconSun size={18} stroke={1.5} />
+          }
+        </button>
+
         {/* User dropdown */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div
@@ -133,25 +159,26 @@ export default function TopNav() {
               gap: 8,
               padding: '4px 12px 4px 4px',
               borderRadius: 20,
-              background: dropdownOpen ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
-              border: '0.5px solid rgba(255,255,255,0.14)',
+              background: dropdownOpen ? 'var(--bg-card-hover)' : 'var(--bg-card)',
+              border: '0.5px solid var(--border-card)',
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-            onMouseLeave={e => { if (!dropdownOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+            onMouseLeave={e => { if (!dropdownOpen) e.currentTarget.style.background = 'var(--bg-card)' }}
           >
             <div style={{
               width: 30, height: 30, borderRadius: '50%',
-              background: `${avatarColor}33`,
-              border: `1px solid ${avatarColor}`,
+              background: theme === 'light' ? 'var(--text-primary)' : 'rgba(255,255,255,0.08)',
+              border: '1px solid var(--border-card)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 600, color: avatarColor,
-              transition: 'background 0.2s, border-color 0.2s',
+              fontSize: 11, fontWeight: 600,
+              color: theme === 'light' ? '#FFFFFF' : 'var(--text-primary)',
+              transition: 'background 0.2s',
             }}>
               MA
             </div>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>Mark A.</span>
+            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Mark A.</span>
           </div>
 
           {dropdownOpen && (
@@ -159,26 +186,28 @@ export default function TopNav() {
               position: 'absolute',
               top: 'calc(100% + 8px)',
               right: 0,
-              background: '#0d1f3a',
-              border: '0.5px solid rgba(255,255,255,0.12)',
+              background: 'var(--bg-card)',
+              backdropFilter: 'blur(14px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
+              border: '1px solid var(--border-card)',
               borderRadius: 8,
               padding: 8,
               minWidth: 160,
               zIndex: 100,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+              boxShadow: 'inset 0 1px 0 var(--card-glass-highlight), 0 4px 14px var(--card-glass-shadow)',
             }}>
               <div
                 onClick={() => { setDropdownOpen(false); router.push('/settings') }}
-                style={{ padding: '10px 14px', borderRadius: 6, color: '#f1f5f9', fontSize: 13, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 Settings
               </div>
               <div
                 onClick={handleSignOut}
-                style={{ padding: '10px 14px', borderRadius: 6, color: '#f87171', fontSize: 13, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--color-red)', fontSize: 13, cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 Sign Out

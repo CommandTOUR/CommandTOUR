@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
+import { IconMapPin } from '@tabler/icons-react'
+import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 const pad = (n) => String(n).padStart(2, '0')
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -98,26 +100,26 @@ export default function ThisWeek({ showAll = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#64748b' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
           This Week
         </div>
-        <div style={{ fontSize: 13, color: 'var(--mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/calendar')}>
+        <div style={{ fontSize: 13, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/calendar')}>
           Calendar →
         </div>
       </div>
 
       {loading && (
-        <div style={{ color: '#64748b', fontSize: 14, padding: '10px 0' }}>Loading...</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 14, padding: '10px 0' }}>Loading...</div>
       )}
 
       {!loading && !events.length && (
-        <div className="glass-card" style={{ padding: '16px', color: '#64748b', fontSize: 14 }}>
+        <div className="glass-card" style={{ padding: '16px', color: 'var(--text-muted)', fontSize: 14 }}>
           No events this week.
         </div>
       )}
 
       {events.map(ev => {
-        const cityCountry = [ev.city, ev.country].filter(Boolean).join(' · ')
+        const cityCountry = formatLocation(ev.city, ev.state, ev.country, 'compact')
         return (
           <div
             key={ev.id}
@@ -128,14 +130,14 @@ export default function ThisWeek({ showAll = false }) {
               padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
               transition: 'background 0.12s, box-shadow 0.12s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
           >
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: ev.tourColor, flexShrink: 0, marginTop: 4 }} />
+            <IconMapPin size={16} color={ev.tourColor} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff' }}>{cityCountry || ev.city}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{cityCountry || ev.city}</div>
               <div style={{ fontSize: 13, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
-              {ev.venue_name && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{ev.venue_name}</div>}
+              {ev.venue_name && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{ev.venue_name}</div>}
             </div>
           </div>
         )
