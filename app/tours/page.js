@@ -131,10 +131,10 @@ export default function Tours() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</div>
-            <div style={{ fontSize: 13, color: '#B8C2CC', marginTop: 3 }}>
+            <div className="tile-sub1" style={{ fontSize: 13, marginTop: 3 }}>
               {tour.year}{hasDirector ? ` · ${tour.director_name}` : ''}
             </div>
-            <div style={{ fontSize: 12, color: '#8B96A8', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="tile-sub2" style={{ fontSize: 12, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {tour.region}
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function Tours() {
           {tour.nextEvent ? (
             <>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8B96A8', marginBottom: 2 }}>Next Event</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#B8C2CC' }}>
+              <div className="tile-next-event-text" style={{ fontSize: 13, fontWeight: 600 }}>
                 {formatLocation(tour.nextEvent.city, tour.nextEvent.state, tour.nextEvent.country, 'compact')} · {new Date(tour.nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             </>

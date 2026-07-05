@@ -8,7 +8,6 @@
 
 *, *::before, *::after {
   transition: background-color 300ms ease,
-              color 300ms ease,
               border-color 300ms ease,
               box-shadow 300ms ease;
 }
@@ -480,3 +479,11 @@ html, body {
 [data-theme="light"] [style*="rgba(255, 255, 255, 0.12)"] {
   border-color: var(--border-card) !important;
 }
+
+.tile-sub1 { color: #B8C2CC; }
+.tile-sub2 { color: #8B96A8; }
+.tile-next-event-text { color: #B8C2CC; }
+
+[data-theme="light"] .tile-sub1 { color: #4A5250; }
+[data-theme="light"] .tile-sub2 { color: #4A5250; }
+[data-theme="light"] .tile-next-event-text { color: #4A5250; }

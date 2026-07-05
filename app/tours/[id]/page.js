@@ -6,8 +6,6 @@ import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 import TourStaffingGrid from '../../../components/TourStaffingGrid'
-import ExportModal from '../../../components/ExportModal'
-import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 // Determine the date that decides whether an event is "past": latest show date,
@@ -56,6 +54,16 @@ const fmtStatus = (s) => {
   if (s === '3-hold') return '3+ Hold'
   if (s === 'date-hold') return 'Date Hold'
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
+}
+
+// Locked light-mode status colors (Style Guide Section 19)
+const STATUS_COLORS = {
+  'confirmed': { color: '#0F8F5C', bg: '#DCF3E7', border: '#86D9B2' },
+  '1-hold':    { color: '#8A6D00', bg: '#FCF2C9', border: '#F0D060' },
+  '2-hold':    { color: '#B5560A', bg: '#FCE2C2', border: '#F0A85C' },
+  '3-hold':    { color: '#C2294A', bg: '#FBDEE5', border: '#F0A8B8' },
+  'tentative': { color: '#8B6FE8', bg: '#EAE3FB', border: '#C5B5F0' },
+  'date-hold': { color: '#717977', bg: '#EEEEEF', border: '#D5D5D8' },
 }
 
 const COLS = [
@@ -284,7 +292,6 @@ export default function TourPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
   const [pastExpanded, setPastExpanded] = useState(false)
-  const [scheduleExportOpen, setScheduleExportOpen] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -326,31 +333,6 @@ export default function TourPage() {
   }
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
-
-  const SCHEDULE_COLUMNS = [
-    { key: 'load_in', label: 'Load-In', defaultOn: true },
-    { key: 'city', label: 'City', defaultOn: true },
-    { key: 'venue', label: 'Venue', defaultOn: true },
-    { key: 'shows', label: '# Shows', defaultOn: true },
-    { key: 'first_show', label: 'First Show', defaultOn: true },
-    { key: 'last_show', label: 'Last Show', defaultOn: true },
-    { key: 'status', label: 'Status', defaultOn: true },
-  ]
-
-  const scheduleRows = events.map(e => {
-    const shows = eventShows[e.id] || []
-    return [
-      fmt(e.load_in_date),
-      formatLocation(e.city, e.state, e.country, 'full'),
-      e.venue_name || '—',
-      shows.length,
-      fmt(shows[0]?.show_date),
-      fmt(shows[shows.length - 1]?.show_date),
-      e.status ? fmtStatus(e.status) : '—',
-    ]
-  })
-
-  const handleExportSchedule = () => setScheduleExportOpen(true)
 
   // Split events into upcoming and past, using the latest known date for each event
   // (show dates > weekend dates > load-in date) to decide if it's already happened
@@ -509,20 +491,6 @@ export default function TourPage() {
         <div style={{ flex: 1, overflowY: (activeTab === 'staffing' || activeTab === 'schedule') ? 'hidden' : 'auto' }}>
           {activeTab === 'schedule' && (
             <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px 32px 20px' }}>
-              {/* Export buttons */}
-              {events.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, flexShrink: 0 }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={handleExportSchedule} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-primary)' }}>
-                      <IconFileTypePdf size={16} color="currentColor" stroke={1.5} />
-                    </button>
-                    <button onClick={handleExportSchedule} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-primary)' }}>
-                      <IconPrinter size={16} color="currentColor" stroke={1.5} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Empty state */}
               {events.length === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 14 }}>
@@ -693,18 +661,6 @@ export default function TourPage() {
           )}
         </div>
       </div>
-
-      <ExportModal
-        isOpen={scheduleExportOpen}
-        onClose={() => setScheduleExportOpen(false)}
-        title={`${tour.name} — Schedule`}
-        subtitle={`${tour.region || ''} · ${tour.year || ''}`}
-        tourColor={tour.color}
-        logo_url={tour.logo_url}
-        allColumns={SCHEDULE_COLUMNS}
-        rows={scheduleRows}
-        filename={`${tour.name}-Schedule`}
-      />
     </div>
   )
 }

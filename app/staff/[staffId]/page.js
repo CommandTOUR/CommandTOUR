@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
-import ExportModal from '../../../components/ExportModal'
-import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
+import { IconPrinter } from '@tabler/icons-react'
 
 function EventListHeader() {
   return (
@@ -33,7 +32,6 @@ export default function StaffProfile() {
   const [toast, setToast] = useState(null)
   const [showMap, setShowMap] = useState({})
   const [stickyVisible, setStickyVisible] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
   const nameRef = useRef(null)
 
   useEffect(() => {
@@ -185,26 +183,6 @@ export default function StaffProfile() {
       </div>
     )
   }
-
-  const EVENT_EXPORT_COLUMNS = [
-    { key: 'location', label: 'Location', defaultOn: true },
-    { key: 'date', label: 'Date', defaultOn: true },
-    { key: 'tour', label: 'Tour', defaultOn: true },
-    { key: 'position', label: 'Position', defaultOn: true },
-    { key: 'status', label: 'Status', defaultOn: true },
-  ]
-
-  const upcomingEventRows = upcomingEvents.map(es => {
-    const ev = es.events
-    const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
-    return [
-      formatLocation(ev.city, ev.state, ev.country, 'full'),
-      fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null),
-      ev.tours?.name || '—',
-      es.position || '—',
-      st.label,
-    ]
-  })
 
   const handlePrint = () => window.print()
 
@@ -373,14 +351,6 @@ export default function StaffProfile() {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
-                    onClick={() => setExportOpen(true)}
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
-                  >
-                    <IconFileTypePdf size={16} stroke={1.5} color="var(--text-secondary)" />
-                  </button>
-                  <button
                     onClick={handlePrint}
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
@@ -462,17 +432,6 @@ export default function StaffProfile() {
           {toast}
         </div>
       )}
-
-      <ExportModal
-        isOpen={exportOpen}
-        onClose={() => setExportOpen(false)}
-        title={`${fullName} — Upcoming Events`}
-        subtitle={person.department || ''}
-        allColumns={EVENT_EXPORT_COLUMNS}
-        rows={upcomingEventRows}
-        filename={`${fullName}-Upcoming-Events`}
-      />
-
     </div>
   )
 }

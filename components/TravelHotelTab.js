@@ -2,9 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
-import ExportModal from './ExportModal'
-import { IconFileTypePdf, IconPrinter } from '@tabler/icons-react'
-import { formatLocation } from '@/lib/locationFormat'
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -213,7 +210,6 @@ export default function TravelHotelTab({ eventId, event }) {
   const [hotelOpen, setHotelOpen] = useState(true)
   const [selectedUnroomed, setSelectedUnroomed] = useState([])
   const [saveError, setSaveError] = useState(null)
-  const [exportModal, setExportModal] = useState(null)
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -355,70 +351,6 @@ export default function TravelHotelTab({ eventId, event }) {
     fetchAll()
   }
 
-  const ARRIVALS_COLUMNS = [
-    { key: 'name', label: 'Name', defaultOn: true },
-    { key: 'travel_type', label: 'Travel Type', defaultOn: true },
-    { key: 'date', label: 'Date', defaultOn: true },
-    { key: 'airline', label: 'Airline/Operator', defaultOn: true },
-    { key: 'flight', label: 'Flight #', defaultOn: true },
-    { key: 'time', label: 'Time', defaultOn: true },
-    { key: 'airport', label: 'Airport/Station', defaultOn: true },
-    { key: 'transport', label: 'Transport', defaultOn: true },
-  ]
-
-  const DEPARTURES_COLUMNS = [
-    { key: 'name', label: 'Name', defaultOn: true },
-    { key: 'travel_type', label: 'Travel Type', defaultOn: true },
-    { key: 'date', label: 'Date', defaultOn: true },
-    { key: 'airline', label: 'Airline/Operator', defaultOn: true },
-    { key: 'flight', label: 'Flight #', defaultOn: true },
-    { key: 'time', label: 'Time', defaultOn: true },
-    { key: 'airport', label: 'Airport/Station', defaultOn: true },
-    { key: 'transport', label: 'Transport', defaultOn: true },
-  ]
-
-  const HOTEL_COLUMNS = [
-    { key: 'name1', label: 'Name 1', defaultOn: true },
-    { key: 'name2', label: 'Name 2', defaultOn: true },
-    { key: 'room_type', label: 'Room Type', defaultOn: true },
-    { key: 'check_in', label: 'Check In', defaultOn: true },
-    { key: 'check_out', label: 'Check Out', defaultOn: true },
-  ]
-
-  const arrivalsRows = arrivals.map(a => [
-    a.staff_name || '—',
-    a.travel_type || 'Flight',
-    a.travel_date || '—',
-    a.airline || '—',
-    a.flight_number || '—',
-    a.arrival_time || '—',
-    a.airport || '—',
-    a.transport || '—',
-  ])
-
-  const departuresRows = departures.map(d => [
-    d.staff_name || '—',
-    d.travel_type || 'Flight',
-    d.travel_date || '—',
-    d.airline || '—',
-    d.flight_number || '—',
-    d.departure_time || '—',
-    d.airport || '—',
-    d.transport || '—',
-  ])
-
-  const hotelRows = rooms.map(r => [
-    r.s1 ? `${r.s1.first_name} ${r.s1.last_name}` : '—',
-    r.s2 ? `${r.s2.first_name} ${r.s2.last_name}` : '—',
-    r.room_type || '—',
-    r.check_in_date || '—',
-    r.check_out_date || '—',
-  ])
-
-  const handleExportArrivalsPDF = () => setExportModal({ type: 'arrivals' })
-  const handleExportDeparturesPDF = () => setExportModal({ type: 'departures' })
-  const handleExportRoomingPDF = () => setExportModal({ type: 'hotel' })
-
   const roomedStaffIds = rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)
   const unroomedStaff = confirmedStaff.filter(s => !roomedStaffIds.includes(s.id))
   const handleAddSelectedToRooming = async () => {
@@ -432,7 +364,7 @@ export default function TravelHotelTab({ eventId, event }) {
     fetchAll()
   }
 
-  const sectionHeader = (label, count, isOpen, onToggle, onAdd, onExport) => (
+  const sectionHeader = (label, count, isOpen, onToggle, onAdd) => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{isOpen ? '▾' : '▸'}</span>
@@ -441,12 +373,6 @@ export default function TravelHotelTab({ eventId, event }) {
       </div>
       <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
         {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
-        {onExport && (
-          <button onClick={onExport} style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <IconFileTypePdf size={16} color="#f1f5f9" />
-            <IconPrinter size={16} color="#f1f5f9" />
-          </button>
-        )}
       </div>
     </div>
   )
@@ -461,7 +387,7 @@ export default function TravelHotelTab({ eventId, event }) {
 
       {/* ARRIVALS */}
       <div>
-        {sectionHeader('Arrivals', arrivals.length, arrivalsOpen, () => setArrivalsOpen(p => !p), () => setAddingArrival(true), handleExportArrivalsPDF)}
+        {sectionHeader('Arrivals', arrivals.length, arrivalsOpen, () => setArrivalsOpen(p => !p), () => setAddingArrival(true))}
         {arrivalsOpen && (
           <TravelTable rows={sortRows(arrivals, arrivalSort)} onUpdate={handleUpdateArrival} onRemove={handleRemoveArrival} sortField={arrivalSort.field} sortDir={arrivalSort.dir} onSort={(f) => handleSort('arrival', f)} type="arrival" />
         )}
@@ -469,7 +395,7 @@ export default function TravelHotelTab({ eventId, event }) {
 
       {/* DEPARTURES */}
       <div>
-        {sectionHeader('Departures', departures.length, departuresOpen, () => setDeparturesOpen(p => !p), () => setAddingDeparture(true), handleExportDeparturesPDF)}
+        {sectionHeader('Departures', departures.length, departuresOpen, () => setDeparturesOpen(p => !p), () => setAddingDeparture(true))}
         {departuresOpen && (
           <TravelTable rows={sortRows(departures, departureSort)} onUpdate={handleUpdateDeparture} onRemove={handleRemoveDeparture} sortField={departureSort.field} sortDir={departureSort.dir} onSort={(f) => handleSort('departure', f)} type="departure" />
         )}
@@ -477,7 +403,7 @@ export default function TravelHotelTab({ eventId, event }) {
 
       {/* HOTEL */}
       <div>
-        {sectionHeader('Hotel', null, hotelOpen, () => setHotelOpen(p => !p), () => setEditingHotel(true), handleExportRoomingPDF)}
+        {sectionHeader('Hotel', null, hotelOpen, () => setHotelOpen(p => !p), () => setEditingHotel(true))}
         {hotelOpen && (
           <>
             {hotel && (
@@ -616,43 +542,6 @@ export default function TravelHotelTab({ eventId, event }) {
       {addingArrival && <StaffPicker onSelect={handleAddArrival} onClose={() => setAddingArrival(false)} />}
       {addingDeparture && <StaffPicker onSelect={handleAddDeparture} onClose={() => setAddingDeparture(false)} />}
       {roomStaffPicker && <StaffPicker onSelect={handleAssignRoomStaff} onClose={() => setRoomStaffPicker(null)} excludeIds={roomedStaffIds} />}
-
-      {exportModal?.type === 'arrivals' && (
-        <ExportModal
-          isOpen
-          onClose={() => setExportModal(null)}
-          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Arrivals`}
-          subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
-          tourColor={tour?.color}
-          allColumns={ARRIVALS_COLUMNS}
-          rows={arrivalsRows}
-          filename={`${event.city}-Arrivals`}
-        />
-      )}
-      {exportModal?.type === 'departures' && (
-        <ExportModal
-          isOpen
-          onClose={() => setExportModal(null)}
-          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Departures`}
-          subtitle={`${tour?.name || ''} · Load-In ${event.load_in_date || ''}`}
-          tourColor={tour?.color}
-          allColumns={DEPARTURES_COLUMNS}
-          rows={departuresRows}
-          filename={`${event.city}-Departures`}
-        />
-      )}
-      {exportModal?.type === 'hotel' && (
-        <ExportModal
-          isOpen
-          onClose={() => setExportModal(null)}
-          title={`${formatLocation(event.city, event.state, event.country, 'compact')} — Hotel Rooming`}
-          subtitle={`${hotel?.hotel_name || ''} · ${tour?.name || ''}`}
-          tourColor={tour?.color}
-          allColumns={HOTEL_COLUMNS}
-          rows={hotelRows}
-          filename={`${event.city}-Hotel-Rooming`}
-        />
-      )}
     </div>
   )
 }

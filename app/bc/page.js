@@ -8,7 +8,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { IconClock, IconCalendarOff } from '@tabler/icons-react'
-import ExportModal from '../../components/ExportModal'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 const STATUS_STYLES = {
@@ -1537,8 +1536,6 @@ const CS_COLS = [
   { key: 'booker',       label: 'Booker' },
 ]
 
-const EXPORT_COLS = CS_COLS.map(c => ({ ...c, defaultOn: true }))
-
 const glassSelect = {
   background: '#0d1f3a',
   border: '0.5px solid rgba(255,255,255,0.15)',
@@ -1623,7 +1620,6 @@ function ConfirmedScheduleTab() {
   const [sortCol, setSortCol] = useState('load_in_date')
   const [sortDir, setSortDir] = useState('asc')
   const [editingBookerId, setEditingBookerId] = useState(null)
-  const [exportOpen, setExportOpen] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -1688,20 +1684,6 @@ function ConfirmedScheduleTab() {
     setFilterFrom(''); setFilterTo(''); setFilterBooker('')
   }
 
-  const currentYear = new Date().getFullYear()
-  const activeTourLabel = filterTour === 'all' ? 'All Tours' : (uniqueTours.find(t => t.id === filterTour)?.name || 'All Tours')
-
-  const exportRows = sorted.map(ev => [
-    fmtLoadIn(ev.load_in_date),
-    ev.city || '',
-    ev.country || '',
-    ev.venue_name || '',
-    ev.tours?.name || '',
-    ev.status || '',
-    ev.num_shows != null ? String(ev.num_shows) : '',
-    ev.booker || '',
-  ])
-
   if (loading) return (
     <div style={{ padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       Loading confirmed events...
@@ -1711,17 +1693,11 @@ function ConfirmedScheduleTab() {
   return (
     <div style={{ flex: 1, padding: '20px 28px', overflowY: 'auto', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
 
-      {/* Top bar: count + export */}
+      {/* Top bar: count */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ color: '#94a3b8', fontSize: 12 }}>
           {sorted.length} confirmed event{sorted.length !== 1 ? 's' : ''}
         </span>
-        <button
-          onClick={() => setExportOpen(true)}
-          style={{ background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 8, color: '#f1f5f9', padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          🖨 Export / Print
-        </button>
       </div>
 
       {/* Filter bar */}
@@ -1797,16 +1773,6 @@ function ConfirmedScheduleTab() {
         </div>
       )}
 
-      <ExportModal
-        isOpen={exportOpen}
-        onClose={() => setExportOpen(false)}
-        title={`Confirmed Schedule ${currentYear}`}
-        subtitle={activeTourLabel}
-        tourColor="#33FF99"
-        allColumns={EXPORT_COLS}
-        rows={exportRows}
-        filename={`Confirmed-Schedule-${currentYear}`}
-      />
     </div>
   )
 }

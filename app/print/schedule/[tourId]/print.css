@@ -1,0 +1,322 @@
+/* ── FONT ── */
+/* Plus Jakarta Sans is already loaded globally — no import needed */
+
+/* ── LAYOUT ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body, html {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f0f0f0;
+}
+
+.print-app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.print-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #1a1f2e;
+  color: #e0e0e0;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-section:last-of-type { border-bottom: none; }
+
+.sidebar-section h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a9bb5;
+  margin-bottom: 10px;
+}
+
+.sidebar-hint {
+  font-size: 11px;
+  color: #5a6b80;
+  margin-bottom: 10px;
+}
+
+/* Drag items */
+.col-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: default;
+}
+.col-item:hover { background: rgba(255,255,255,0.05); }
+
+.drag-handle {
+  color: #4a5568;
+  cursor: grab;
+  font-size: 14px;
+  user-select: none;
+  padding: 2px 4px;
+}
+.drag-handle:active { cursor: grabbing; }
+
+.col-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #c8d0dc;
+}
+
+.col-item input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #10E687;
+}
+
+/* Toggle group */
+.toggle-group {
+  display: flex;
+  gap: 6px;
+}
+.toggle-group button {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #8a9bb5;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toggle-group button.active {
+  background: #10E687;
+  border-color: #10E687;
+  color: #0B1220;
+}
+
+/* Scale slider */
+.scale-val {
+  font-size: 11px;
+  font-weight: 400;
+  color: #10E687;
+  margin-left: 6px;
+}
+.scale-slider {
+  width: 100%;
+  accent-color: #10E687;
+  margin-top: 8px;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+}
+.print-btn {
+  width: 100%;
+  padding: 12px;
+  background: #10E687;
+  color: #0B1220;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.print-btn:hover { opacity: 0.9; }
+
+/* ── PREVIEW AREA ── */
+.print-preview-area {
+  flex: 1;
+  padding: 32px 40px;
+  overflow: auto;
+  background: #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── THE DOCUMENT ── */
+.print-document {
+  background: white;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  width: 816px;   /* 8.5in at 96dpi — portrait default */
+  min-height: 1056px; /* 11in */
+  padding: 48px 52px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #111;
+  transition: transform 0.1s;
+}
+
+[data-orientation="landscape"] .print-document {
+  width: 1056px;
+  min-height: 816px;
+}
+
+/* DOCUMENT HEADER */
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.doc-tour-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0a0f1a;
+  line-height: 1.2;
+}
+
+.doc-show-type {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  margin-top: 3px;
+}
+
+.doc-region-year {
+  font-size: 12px;
+  font-weight: 400;
+  color: #777;
+  margin-top: 2px;
+}
+
+.doc-header-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.doc-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.doc-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.doc-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0a0f1a;
+}
+
+.doc-generated {
+  font-size: 11px;
+  color: #888;
+}
+
+.doc-branding {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* DELINEATOR */
+.doc-delineator {
+  height: 3px;
+  width: 100%;
+  margin-bottom: 0;
+  border-radius: 1px;
+}
+
+/* TABLE */
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.schedule-table thead tr th {
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.schedule-table tbody .row-even td {
+  background: #ffffff;
+}
+.schedule-table tbody .row-odd td {
+  background: #f4f6f8;
+}
+
+.schedule-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e8eaed;
+  color: #1a1a1a;
+  vertical-align: middle;
+}
+
+/* Density */
+.density-compact .schedule-table td { padding: 5px 10px; }
+.density-compact .schedule-table thead tr th { padding: 6px 10px; }
+
+/* Status cell */
+.status-cell {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── PRINT MEDIA ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  .no-print { display: none !important; }
+
+  body, html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-app {
+    display: block !important;
+  }
+
+  .print-preview-area {
+    padding: 0 !important;
+    background: white !important;
+    display: block !important;
+  }
+
+  .print-document {
+    box-shadow: none !important;
+    width: 100% !important;
+    min-height: unset !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .schedule-table tbody .row-even td { background: #ffffff !important; }
+  .schedule-table tbody .row-odd td { background: #f4f6f8 !important; }
+}
