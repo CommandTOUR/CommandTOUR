@@ -116,6 +116,7 @@ Use an absolutely-positioned child `<div>` for any colored accent bar.
 - `position: fixed; top: 16px; left: 16px; right: 16px;`
 - `border-radius: 14px`
 - Same glass recipe as cards
+- `.topnav-backdrop` (globals.css): solid `position: fixed` strip behind the glass tile — `top/left/right: 0`, `height: 88px`, `background: var(--bg)`, `z-index: 99` (one below the nav's `z-index: 100`) — blocks scrolled content from showing through the glass blur above the nav's own boundary
 - Page content offset: `marginTop: 88` / `top: 88` on sticky headers
 - Theme toggle: IconSun (shown in dark = switch to light) / IconMoon (shown in light = switch to dark)
 - Avatar: dark mode `rgba(255,255,255,0.08)` bg / light mode `var(--text-primary)` bg + white text
@@ -235,6 +236,7 @@ All event queries must select `city, state, country`.
 9. **`#FFD60A` for UI yellow** — never use `#C9A84C` (HWMTL Gold) as a general UI color
 10. **Mock before coding** any layout or design decision
 11. **No transitions on color** — theme switching must be instant, no fade
+12. **Native scrollbars only** — no `::-webkit-scrollbar*` or `scrollbar-width`/`scrollbar-color` rules anywhere; scrollable elements use the OS/browser default appearance
 
 ---
 
