@@ -236,7 +236,8 @@ All event queries must select `city, state, country`.
 9. **`#FFD60A` for UI yellow** — never use `#C9A84C` (HWMTL Gold) as a general UI color
 10. **Mock before coding** any layout or design decision
 11. **No transitions on color** — theme switching must be instant, no fade
-12. **Native scrollbars only** — no `::-webkit-scrollbar*` or `scrollbar-width`/`scrollbar-color` rules anywhere; scrollable elements use the OS/browser default appearance
+12. **Native scrollbars only** — no `::-webkit-scrollbar`, `scrollbar-width`, or `scrollbar-color` rules anywhere. All scrollable elements (pages, modals, tables, sidebars) use the browser/OS default scrollbar. `overflow: auto/scroll` properties are unaffected by this rule — only scrollbar *appearance* styling is prohibited.
+13. **TopNav must fully occlude scrolled content** — the fixed glass nav tile sits on a solid `var(--bg)` backing strip (`z-index` one below the tile) so page content never shows through above the nav on scroll, in either theme. This is handled once in `components/TopNav.js` and applies sitewide — never patch this per-page.
 
 ---
 
