@@ -8,6 +8,11 @@ import { getSupabase } from '../../lib/supabase'
 import { confirmStaffMember } from '../../lib/confirmStaffMember'
 import { formatLocation } from '@/lib/locationFormat'
 
+function staffDisplayName(staff) {
+  if (!staff) return ''
+  return staff.display_name?.trim() || `${staff.first_name} ${staff.last_name}`
+}
+
 function normalizeStatus(s) {
   if (s === 'scheduled') return 'pending'
   if (s === 'attention') return 'needs_attention'
@@ -220,7 +225,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
     const timer = setTimeout(async () => {
       setLoading(true)
       const supabase = getSupabase()
-      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name')
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name')
         .or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%')
         .order('last_name', { ascending: true }).limit(8)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
@@ -327,7 +332,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
                 ) : status === 'free' ? (
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#33FF99', flexShrink: 0 }} />
                 ) : null}
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.first_name} {s.last_name}</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffDisplayName(s)}</span>
               </div>
             )
           })}
@@ -384,8 +389,8 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
         </div>
         <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: travelInfo ? 16 : 20 }}>
           {isSame
-            ? staffMember.first_name + ' ' + staffMember.last_name + ' is already assigned to another position on this event.'
-            : staffMember.first_name + ' ' + staffMember.last_name + ' is already booked' + (avail?.city ? ' in ' + avail.city : ' on another event') + '.'}
+            ? staffDisplayName(staffMember) + ' is already assigned to another position on this event.'
+            : staffDisplayName(staffMember) + ' is already booked' + (avail?.city ? ' in ' + avail.city : ' on another event') + '.'}
         </div>
         {travelInfo && !isSame && (
           <div style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: '#f87171', lineHeight: 1.8 }}>
@@ -420,7 +425,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
   const [assignError, setAssignError] = useState(false)
   const isExec = positionRow.isExec
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
-  const staffName = hasStaff ? assignment.staff.first_name + ' ' + assignment.staff.last_name : null
+  const staffName = hasStaff ? staffDisplayName(assignment.staff) : null
 
   const doAssign = async (staffMember, removeFromEventId = null) => {
     setConfirmOverride(null)
@@ -492,7 +497,7 @@ function GridCell({ eventId, event, positionRow, assignment, isHatched, isExplic
       staff_id: staffMember.id,
       position_key: positionRow.key,
       status,
-      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name },
+      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name, display_name: staffMember.display_name },
     }
     onAssignSuccess(eventId, localRow)
     onCloseActive()
@@ -1004,7 +1009,7 @@ export default function StaffingGrid() {
     const staffIds = [...new Set(assignmentRows.map(a => a.staff_id).filter(Boolean))]
     let staffMap = {}
     if (staffIds.length > 0) {
-      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name').in('id', staffIds)
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name').in('id', staffIds)
       for (const s of (staffData || [])) staffMap[s.id] = s
     }
 
@@ -1166,7 +1171,7 @@ export default function StaffingGrid() {
     ])
     const currentTour = tours.find(t => t.id === event.tour_id)
     setConflictModal({
-      staffName: assignment.staff.first_name + ' ' + assignment.staff.last_name,
+      staffName: staffDisplayName(assignment.staff),
       staffId: assignment.staff_id,
       current: {
         eventId: event.id,
@@ -1233,7 +1238,7 @@ export default function StaffingGrid() {
       position: posRow?.displayLabel || positionKey,
       status,
       confirmed,
-      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name },
+      staff: { id: staffMember.id, first_name: staffMember.first_name, last_name: staffMember.last_name, display_name: staffMember.display_name },
     }
     updateAssignmentLocal(eventId, localRow)
     if (staffMember.id && !posRow?.isExec) {
@@ -1837,7 +1842,7 @@ export default function StaffingGrid() {
           <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>Position Already Filled</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-              {dragConflict.target.assignment.staff?.first_name} {dragConflict.target.assignment.staff?.last_name} is already in this position. Move {dragConflict.source.assignment.staff?.first_name} {dragConflict.source.assignment.staff?.last_name} here anyway?
+              {staffDisplayName(dragConflict.target.assignment.staff)} is already in this position. Move {staffDisplayName(dragConflict.source.assignment.staff)} here anyway?
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button onClick={() => setDragConflict(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}

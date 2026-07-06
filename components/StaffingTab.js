@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 import { confirmStaffMember } from '../lib/confirmStaffMember'
 
+function staffDisplayName(staff) {
+  if (!staff) return ''
+  return staff.display_name?.trim() || `${staff.first_name} ${staff.last_name}`
+}
+
 const HWSS_DEPARTMENTS = [
   { name: 'Operations', positions: ['Tour Director', 'Event Manager', 'Front of House Manager', 'Tour Coordinator', 'Registrar / GLT', 'Paddock Coordinator', 'Tech Official 1', 'Tech Official 2', 'Tech Official 3'] },
   { name: 'Lighting / Audio / Video', positions: ['LAV 1', 'LAV 2', 'Lighting', 'Host (Male)', 'Host (Female)', 'Host Trainer'] },
@@ -154,7 +159,7 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
     const timer = setTimeout(async () => {
       setLoading(true)
       const supabase = getSupabase()
-      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name')
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name')
         .or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
         .order('last_name', { ascending: true }).limit(10)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
@@ -232,7 +237,7 @@ function InlineStaffSearch({ eventId, event, onSelect, onClear, onClose, hasAssi
             title={tip || ''}>
             {color && <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />}
             {!color && <div style={{ width: 7, height: 7, flexShrink: 0 }} />}
-            <span style={{ fontSize: 13 }}>{s.first_name} {s.last_name}</span>
+            <span style={{ fontSize: 13 }}>{staffDisplayName(s)}</span>
             {tip && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>{tip}</span>}
           </div>
         )
@@ -273,7 +278,7 @@ function AssignedCell({ assignment, staff, positionKey, eventId, event, onAssign
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 7 }}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <span style={{ fontSize: 13, color: '#f1f5f9' }}>{staff.first_name} {staff.last_name}</span>
+      <span style={{ fontSize: 13, color: '#f1f5f9' }}>{staffDisplayName(staff)}</span>
       {hovered && (
         <div onClick={() => setOpen(true)}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: 4, background: 'rgba(255,255,255,0.10)', cursor: 'pointer', flexShrink: 0 }}>
@@ -447,7 +452,7 @@ export default function StaffingTab({ eventId, event }) {
     const staffIds = [...new Set(rows.map(r => r.staff_id).filter(Boolean))]
     let staffMap = {}
     if (staffIds.length > 0) {
-      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name').in('id', staffIds)
+      const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name').in('id', staffIds)
       for (const s of (staffData || [])) staffMap[s.id] = s
     }
     setAssignments(rows.map(r => ({ ...r, staff: r.staff_id ? (staffMap[r.staff_id] || null) : null })))
@@ -713,8 +718,8 @@ export default function StaffingTab({ eventId, event }) {
             </div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
               {confirmOverride.avail?.status === 'same_event'
-                ? `${confirmOverride.staffMember.first_name} ${confirmOverride.staffMember.last_name} is already assigned to another position on this event. Assign them here as well?`
-                : `${confirmOverride.staffMember.first_name} ${confirmOverride.staffMember.last_name} is already booked on another event${confirmOverride.avail?.city ? ` (${confirmOverride.avail.city})` : ''}. Assign anyway?`}
+                ? `${staffDisplayName(confirmOverride.staffMember)} is already assigned to another position on this event. Assign them here as well?`
+                : `${staffDisplayName(confirmOverride.staffMember)} is already booked on another event${confirmOverride.avail?.city ? ` (${confirmOverride.avail.city})` : ''}. Assign anyway?`}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button

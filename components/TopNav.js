@@ -64,6 +64,8 @@ export default function TopNav() {
   }
 
   return (
+    <>
+    <div className="topnav-backdrop" aria-hidden="true" />
     <nav style={{
       position: 'fixed',
       top: 16,
@@ -218,5 +220,6 @@ export default function TopNav() {
       </div>
 
     </nav>
+    </>
   )
 }

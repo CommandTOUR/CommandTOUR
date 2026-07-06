@@ -174,11 +174,6 @@ html, body {
   height: 100%;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
-
 /* ── GLASS CARD ────────────────────────────────────────────────────────── */
 .glass-card {
   background: var(--bg-card);
@@ -419,6 +414,15 @@ html, body {
   color: var(--text-primary) !important;
 }
 
+[data-theme="light"] .glass-card.staff-tile {
+  border-color: #000000 !important;
+}
+
+[data-theme="dark"] .glass-card.staff-tile,
+:root .glass-card.staff-tile {
+  border-color: var(--color-mint) !important;
+}
+
 /* Inputs */
 [data-theme="light"] input,
 [data-theme="light"] select,
@@ -487,3 +491,13 @@ html, body {
 [data-theme="light"] .tile-sub1 { color: #4A5250; }
 [data-theme="light"] .tile-sub2 { color: #4A5250; }
 [data-theme="light"] .tile-next-event-text { color: #4A5250; }
+
+.topnav-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 88px;
+  background: var(--bg);
+  z-index: 99;
+}

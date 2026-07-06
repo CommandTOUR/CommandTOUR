@@ -14,7 +14,7 @@ export default function EditStaff() {
   const [airlines, setAirlines] = useState([])
   const [deletedAirlineIds, setDeletedAirlineIds] = useState([])
   const [form, setForm] = useState({
-    first_name: '', middle_name: '', last_name: '', suffix: '',
+    first_name: '', middle_name: '', last_name: '', suffix: '', display_name: '',
     cell_phone: '', email: '', dob: '',
     address: '', city: '', state: '', zip: '', country: '',
     home_airport: '', passport_nationality: '', passport_number: '', passport_expiry: '',
@@ -37,6 +37,7 @@ export default function EditStaff() {
           middle_name: d.middle_name || '',
           last_name: d.last_name || '',
           suffix: d.suffix || '',
+          display_name: d.display_name || '',
           cell_phone: d.phone || '',
           email: d.email || '',
           dob: d.dob || '',
@@ -81,6 +82,7 @@ export default function EditStaff() {
       middle_name: form.middle_name || null,
       last_name: form.last_name,
       suffix: form.suffix || null,
+      display_name: form.display_name || null,
       phone: form.cell_phone || null,
       email: form.email || null,
       dob: form.dob || null,
@@ -181,6 +183,12 @@ export default function EditStaff() {
               <div>
                 <label style={labelStyle}>Suffix</label>
                 <input style={inputStyle} placeholder="Jr." value={form.suffix} onChange={e => set('suffix', e.target.value)} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label style={labelStyle}>Display Name</label>
+                <input style={inputStyle} placeholder="Optional — shown instead of full name in Staffing Grid" value={form.display_name} onChange={e => set('display_name', e.target.value)} />
               </div>
             </div>
           </div>
