@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
+import { IconSettings } from '@tabler/icons-react'
 
 const DEPARTMENTS = [
   { key: 'executives', label: 'Executives' },
@@ -108,6 +109,15 @@ export default function StaffPage() {
                 }}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                <button
+                  onClick={() => router.push('/staff/settings')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 700, letterSpacing: '0.02em', padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                >
+                  <IconSettings size={16} stroke={1.75} />
+                  Staffing Settings
+                </button>
                 <button
                   onClick={() => router.push('/staffing-grid')}
                   style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 700, letterSpacing: '0.02em', padding: '10px 20px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
