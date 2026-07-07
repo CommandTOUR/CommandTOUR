@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
-import TourStaffingGrid from '../../../components/TourStaffingGrid'
+import StaffingGrid from '../../../components/StaffingGrid'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 
 // Determine the date that decides whether an event is "past": latest show date,
@@ -651,7 +651,7 @@ export default function TourPage() {
           )}
 
           {activeTab === 'staffing' && (
-            <TourStaffingGrid tourId={id} />
+            <StaffingGrid tourId={id} />
           )}
 
           {activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && activeTab !== 'staffing' && (

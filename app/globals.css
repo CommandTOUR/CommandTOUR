@@ -398,6 +398,8 @@ html, body {
 }
 [data-theme="light"] td {
   color: var(--text-primary) !important;
+}
+[data-theme="light"] td:not(.sg-cell) {
   border-color: var(--border-subtle) !important;
 }
 [data-theme="light"] tr {
@@ -446,12 +448,12 @@ html, body {
 }
 
 /* Force white-text elements to dark in light mode */
-[data-theme="light"] [style*="color: #f1f5f9"],
-[data-theme="light"] [style*="color:#f1f5f9"],
-[data-theme="light"] [style*="color: white"],
-[data-theme="light"] [style*="color:white"],
-[data-theme="light"] [style*="color: #ffffff"],
-[data-theme="light"] [style*="color:#ffffff"] {
+[data-theme="light"] [style*="color: #f1f5f9"]:not(.sg-dept-header),
+[data-theme="light"] [style*="color:#f1f5f9"]:not(.sg-dept-header),
+[data-theme="light"] [style*="color: white"]:not(.sg-dept-header),
+[data-theme="light"] [style*="color:white"]:not(.sg-dept-header),
+[data-theme="light"] [style*="color: #ffffff"]:not(.sg-dept-header),
+[data-theme="light"] [style*="color:#ffffff"]:not(.sg-dept-header) {
   color: var(--text-primary) !important;
 }
 
