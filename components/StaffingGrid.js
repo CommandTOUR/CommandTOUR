@@ -137,7 +137,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
       setLoading(true)
       const supabase = getSupabase()
       const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name')
-        .or('first_name.ilike.%' + query + '%,last_name.ilike.%' + query + '%')
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,display_name.ilike.%${query}%`)
         .order('last_name', { ascending: true }).limit(8)
       if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
       setResults(staffData)

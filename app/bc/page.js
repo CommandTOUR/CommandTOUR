@@ -1352,7 +1352,10 @@ function DraftScheduleContent() {
     const { data, error } = await supabase.from('events').insert([{
       tour_id: tour.id,
       city: cityText,
+      state: '',
       country: null,
+      venue_name: '',
+      venue_id: null,
       status: 'tentative',
       saturday_date: row.saturday,
       sunday_date: row.sunday,
