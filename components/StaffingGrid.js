@@ -495,7 +495,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               draggable={!isActive}
               onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart() }}
               onDragEnd={() => { onCellDragEnd && onCellDragEnd() }}
-              style={{ display: 'block', width: '100%', fontSize: 13, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>{staffName}</span>
+              style={{ display: 'block', width: '100%', fontSize: 12, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>{staffName}</span>
             <div
               onClick={e => { e.stopPropagation(); onToggleSelect() }}
               style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.15s ease', cursor: 'pointer', zIndex: 2 }}
@@ -754,7 +754,15 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const [dragConflict, setDragConflict] = useState(null)
   const [dragLockedModal, setDragLockedModal] = useState(null)
   const [conflictModal, setConflictModal] = useState(null)
+  const [isLightMode, setIsLightMode] = useState(false)
   const activeCellElRef = useRef(null)
+
+  useEffect(() => {
+    const checkTheme = () => setIsLightMode(document.documentElement.getAttribute('data-theme') === 'light')
+    checkTheme()
+    window.addEventListener('themeChanged', checkTheme)
+    return () => window.removeEventListener('themeChanged', checkTheme)
+  }, [])
 
   const showToast = (msg) => {
     setToast(msg)
@@ -763,7 +771,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
-  const ROW_HEIGHT = 38
+  const ROW_HEIGHT = 28
   const DEPT_H = 32
   const H1 = 46
   const H2 = 32
@@ -793,7 +801,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       if (tourId) tpQuery = tpQuery.eq('tour_id', tourId)
 
       let eventsQuery = supabase.from('events')
-        .select('id, city, state, country, venue_name, load_in_date, load_out_date, tour_id, status')
+        .select('id, city, state, country, venue_name, venue_id, load_in_date, load_out_date, tour_id, status')
         .order('load_in_date', { ascending: true })
       if (tourId) {
         eventsQuery = eventsQuery.eq('tour_id', tourId)
@@ -1346,7 +1354,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   </th>
                   {orderedEvents.map((ev, i) => (
                     <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: 'var(--bg)', borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      <span style={{ color: ev.venue_name ? 'var(--text-primary)' : 'var(--text-muted)' }}>{ev.venue_name || '—'}</span>
+                      <span
+                        onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
+                        style={{ fontWeight: 600, color: ev.venue_name ? 'var(--text-primary)' : 'var(--text-muted)', cursor: ev.venue_id ? 'pointer' : 'default' }}
+                        onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
+                        onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
+                        {ev.venue_name || '—'}
+                      </span>
                     </th>
                   ))}
                 </tr>
@@ -1357,7 +1371,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                     style={{
                       height: 3,
                       padding: 0,
-                      background: deptAccentColor,
+                      background: isLightMode ? '#000000' : deptAccentColor,
                       position: 'sticky',
                       top: TOP_VENUE + H5,
                       zIndex: 51,
@@ -1383,7 +1397,6 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                             <span className="sg-dept-header" style={{ fontSize: 9, color: deptHeaderTextColor }}>{collapsed ? '▸' : '▾'}</span>
                             <span className="sg-dept-header" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: deptHeaderTextColor, whiteSpace: 'nowrap' }}>{dept.name}</span>
                           </div>
-                          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: deptAccentColor }} />
                         </td>
                         {orderedEvents.map((ev, i) => (
                           <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: '1px solid ' + deptHeaderBg, borderBottom: '1px solid ' + deptHeaderBg }} />
@@ -1393,7 +1406,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         const rowStripeBg = rowIndex % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-card-hover)'
                         return (
                         <tr key={position.id + '__' + slotIndex}>
-                          <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 10px 0 6px', background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 6px', background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                           </td>
                           {orderedEvents.map((ev, i) => {
