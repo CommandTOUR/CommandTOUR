@@ -25,6 +25,7 @@ export default function StaffProfile() {
   const [person, setPerson] = useState(null)
   const [airlines, setAirlines] = useState([])
   const [events, setEvents] = useState([])
+  const [staffDepts, setStaffDepts] = useState([])
   const [showPast, setShowPast] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showRemoveModal, setShowRemoveModal] = useState(false)
@@ -37,15 +38,17 @@ export default function StaffProfile() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [personRes, airlinesRes, eventsRes] = await Promise.all([
+      const [personRes, airlinesRes, eventsRes, staffDeptsRes] = await Promise.all([
         supabase.from('staff').select('*').eq('id', staffId).single(),
         supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
         supabase.from('event_staff')
           .select('position, status, confirmed, events(id, city, state, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color))')
           .eq('staff_id', staffId),
+        supabase.from('staff_departments').select('id, name').order('sort_order', { ascending: true }),
       ])
       if (!personRes.error) setPerson(personRes.data)
       if (!airlinesRes.error) setAirlines(airlinesRes.data || [])
+      if (!staffDeptsRes.error) setStaffDepts(staffDeptsRes.data || [])
       if (!eventsRes.error) {
         const eventsData = (eventsRes.data || []).sort((a, b) => new Date(a.events?.load_in_date || a.load_in_date) - new Date(b.events?.load_in_date || b.load_in_date))
         setEvents(eventsData)
@@ -91,10 +94,11 @@ export default function StaffProfile() {
     }
   }
 
-  const handleDepartmentChange = async (newDept) => {
+  const handleDepartmentChange = async (newDeptId) => {
     const supabase = getSupabase()
-    const { error } = await supabase.from('staff').update({ department: newDept }).eq('id', staffId)
-    if (!error) setPerson(prev => ({ ...prev, department: newDept }))
+    const value = newDeptId || null
+    const { error } = await supabase.from('staff').update({ staff_department_id: value }).eq('id', staffId)
+    if (!error) setPerson(prev => ({ ...prev, staff_department_id: value }))
   }
 
   useEffect(() => {
@@ -248,7 +252,7 @@ export default function StaffProfile() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <span style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, flexShrink: 0 }}>Department</span>
           <select
-            value={person.department || 'uncategorized'}
+            value={person.staff_department_id || ''}
             onChange={e => handleDepartmentChange(e.target.value)}
             style={{
               fontFamily: 'Plus Jakarta Sans, sans-serif',
@@ -263,15 +267,10 @@ export default function StaffProfile() {
               outline: 'none',
             }}
           >
-            <option value="operations">Operations</option>
-            <option value="lighting_audio_video">Lighting, Audio &amp; Video</option>
-            <option value="hosts">Hosts</option>
-            <option value="fmx">FMX</option>
-            <option value="stuntmanshow_productions">Stuntmanshow Productions</option>
-            <option value="robot_operators">Robot Operators</option>
-            <option value="monster_truck_drivers_crew">Monster Truck Drivers &amp; Crew</option>
-            <option value="executives">Executives</option>
-            <option value="uncategorized">Uncategorized</option>
+            <option value="">Select department...</option>
+            {staffDepts.map(d => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
           </select>
         </div>
 

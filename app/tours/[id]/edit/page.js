@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../components/TopNav'
 import { getSupabase } from '../../../../lib/supabase'
+import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 
 const COLORS = [
   { label: 'Gold',   value: '#C9A84C' },
@@ -26,6 +27,157 @@ const TOUR_CATEGORIES = [
   { label: 'International', value: 'international' },
   { label: 'Uncategorized', value: 'uncategorized' },
 ]
+
+function StaffingSection({ tourId, onSaved }) {
+  const [departments, setDepartments] = useState([])
+  const [existingPositions, setExistingPositions] = useState([])
+  const [quantities, setQuantities] = useState({})
+  const [expandedDepts, setExpandedDepts] = useState(new Set())
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saveState, setSaveState] = useState('idle')
+
+  useEffect(() => {
+    if (!tourId) return
+    let cancelled = false
+    const fetchData = async () => {
+      const supabase = getSupabase()
+      const [deptsRes, existingRes] = await Promise.all([
+        supabase.from('departments').select('*, positions(*)').order('sort_order', { ascending: true }),
+        supabase.from('tour_positions').select('*').eq('tour_id', tourId),
+      ])
+      if (cancelled) return
+      const depts = (deptsRes.data || []).map(d => ({
+        ...d,
+        positions: [...(d.positions || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      }))
+      const existing = existingRes.data || []
+      const initialQuantities = {}
+      depts.forEach(d => d.positions.forEach(p => { initialQuantities[p.id] = 0 }))
+      existing.forEach(tp => { initialQuantities[tp.position_id] = tp.quantity_needed })
+      setDepartments(depts)
+      setExistingPositions(existing)
+      setQuantities(initialQuantities)
+      setLoading(false)
+    }
+    fetchData()
+    return () => { cancelled = true }
+  }, [tourId])
+
+  const toggleExpand = (deptId) => {
+    setExpandedDepts(prev => {
+      const next = new Set(prev)
+      if (next.has(deptId)) next.delete(deptId)
+      else next.add(deptId)
+      return next
+    })
+  }
+
+  const setQuantity = (positionId, value) => {
+    setQuantities(prev => ({ ...prev, [positionId]: value }))
+  }
+
+  const handleSaveStaffing = async () => {
+    setSaving(true)
+    const supabase = getSupabase()
+    for (const dept of departments) {
+      for (const pos of dept.positions) {
+        const qty = quantities[pos.id] || 0
+        const existing = existingPositions.find(tp => tp.position_id === pos.id)
+        if (qty > 0 && !existing) {
+          await supabase.from('tour_positions').insert({ tour_id: tourId, position_id: pos.id, quantity_needed: qty })
+        } else if (qty > 0 && existing) {
+          await supabase.from('tour_positions').update({ quantity_needed: qty }).eq('id', existing.id)
+        } else if (qty === 0 && existing) {
+          await supabase.from('tour_positions').delete().eq('id', existing.id)
+        }
+      }
+    }
+    setSaving(false)
+    setSaveState('success')
+    setTimeout(() => {
+      setSaveState('idle')
+      onSaved?.()
+    }, 700)
+  }
+
+  const stepperBtnStyle = (disabled) => ({
+    width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-card)',
+    background: 'var(--bg-card-hover)', color: 'var(--text-primary)',
+    cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
+  })
+
+  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading staffing...</div>
+
+  return (
+    <div>
+      {departments.map(dept => {
+        const expanded = expandedDepts.has(dept.id)
+        const staffedCount = dept.positions.filter(p => (quantities[p.id] || 0) > 0).length
+        return (
+          <div key={dept.id} className="glass-card" style={{ marginBottom: 12, overflow: 'hidden' }}>
+            <div
+              onClick={() => toggleExpand(dept.id)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', cursor: 'pointer' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ display: 'flex', color: 'var(--text-muted)' }}>
+                  {expanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{dept.name}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {staffedCount > 0 && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-mint)' }} />}
+                <span style={{ fontSize: 13, color: staffedCount > 0 ? 'var(--color-mint)' : 'var(--text-muted)' }}>
+                  {staffedCount} {staffedCount === 1 ? 'position' : 'positions'}
+                </span>
+              </div>
+            </div>
+            {expanded && (
+              <div style={{ borderTop: '1px solid var(--border-card)' }}>
+                {dept.positions.map(pos => {
+                  const qty = quantities[pos.id] || 0
+                  return (
+                    <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.title}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => setQuantity(pos.id, Math.max(0, qty - 1))} disabled={qty === 0} style={stepperBtnStyle(qty === 0)}>−</button>
+                        <input
+                          type="number"
+                          value={qty}
+                          onChange={e => {
+                            const raw = e.target.value
+                            const n = raw === '' ? 0 : parseInt(raw, 10)
+                            if (!isNaN(n)) setQuantity(pos.id, Math.max(0, Math.min(99, n)))
+                          }}
+                          style={{
+                            width: 40, height: 28, textAlign: 'center', fontSize: 16, fontWeight: 700,
+                            borderRadius: 6, border: '1px solid var(--border-card)', background: 'var(--bg-card)',
+                            color: qty > 0 ? 'var(--color-mint)' : 'var(--text-muted)', outline: 'none',
+                            fontFamily: 'Plus Jakarta Sans, sans-serif',
+                          }}
+                        />
+                        <button onClick={() => setQuantity(pos.id, Math.min(99, qty + 1))} disabled={qty >= 99} style={stepperBtnStyle(qty >= 99)}>+</button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+        <button className="btn-primary" onClick={handleSaveStaffing} disabled={saving}>
+          {saveState === 'success' ? 'Saved!' : saving ? 'Saving...' : 'Save Staffing'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function EditTour() {
   const router = useRouter()
@@ -310,6 +462,14 @@ export default function EditTour() {
           </div>
 
         </div>
+
+        {/* Tour Staffing */}
+        <div style={{ marginTop: 32 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Tour Staffing</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>Set how many of each position this tour requires.</div>
+          <StaffingSection tourId={id} onSaved={() => {}} />
+        </div>
+
       </div>
     </div>
   )
