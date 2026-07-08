@@ -402,10 +402,10 @@ html, body {
 [data-theme="light"] td:not(.sg-cell) {
   border-color: var(--border-subtle) !important;
 }
-[data-theme="light"] tr {
+[data-theme="light"] tr:not(.sg-row) {
   background: var(--bg-card) !important;
 }
-[data-theme="light"] tr:nth-child(even) {
+[data-theme="light"] tr:nth-child(even):not(.sg-row) {
   background: var(--bg-header) !important;
 }
 

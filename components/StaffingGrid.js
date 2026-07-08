@@ -77,9 +77,6 @@ const STATUS_OPTIONS = [
   { value: 'needs_attention', label: 'Needs Attention', color: '#e05252', pill: 'rgba(224,82,82,0.15)', border: 'rgba(224,82,82,0.5)' },
 ]
 
-const LOCKED_STRIPE = 'repeating-linear-gradient(45deg, rgba(255,255,255,0.09) 0px, rgba(255,255,255,0.09) 1px, transparent 1px, transparent 7px)'
-const LOCKED_BG_COLOR = 'rgba(255,255,255,0.02)'
-const STAFF_NAME_COLORS = { confirmed: 'var(--text-primary)', pending: 'var(--color-yellow)', needs_attention: 'var(--color-red)' }
 const STAFF_NAME_WEIGHTS = { confirmed: 400 }
 
 const CELL_COLOR_SWATCHES = [
@@ -329,10 +326,11 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
 
 // ── GRID CELL ──────────────────────────────────────────────────────────────
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg }) {
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
+  const [lockHovered, setLockHovered] = useState(false)
   const eventId = event.id
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
   const staffName = hasStaff ? staffDisplayName(assignment.staff) : null
@@ -419,7 +417,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
       return
     }
     if (isFilled) { onActivate('menu'); return }
-    if (cellState === 'HATCHED') { onUnlockHatched(); return }
+    if (cellState === 'HATCHED') return
     if (cellState === 'FULLY_LOCKED') return
     // EMPTY
     onActivate('edit')
@@ -454,6 +452,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           backgroundColor: stateBg,
           backgroundImage: (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? LOCKED_STRIPE : 'none',
           backgroundPosition: '0 0',
+          backgroundClip: 'padding-box',
           textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box',
           borderTop: stateBorder || undefined,
@@ -509,19 +508,29 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           </React.Fragment>
 
         ) : (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered && cellState === 'HATCHED' ? 1 : 0.55, transition: 'opacity 0.15s' }}>
-            <LockIcon locked={true} size={16} color={hovered && cellState === 'HATCHED' ? '#33FF99' : '#64748b'} />
+          <div
+            onMouseEnter={() => setLockHovered(true)}
+            onMouseLeave={() => setLockHovered(false)}
+            onClick={e => {
+              e.stopPropagation()
+              if (cellState === 'HATCHED') onUnlockHatched && onUnlockHatched()
+              else onUnlockFullyLocked && onUnlockFullyLocked()
+            }}
+            title="Click to unlock"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: lockHovered ? 1 : 0.55, transition: 'opacity 0.15s', filter: lockHovered ? 'drop-shadow(0 0 3px var(--color-mint))' : 'none' }}>
+            <LockIcon locked={true} size={16} color={lockHovered ? 'var(--color-mint)' : '#64748b'} />
           </div>
 
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, opacity: hovered ? 1 : 0.7, transition: 'opacity 0.15s ease' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ pointerEvents: 'none', flexShrink: 0 }}>
-              <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {canRelock && (
-              <div onClick={e => { e.stopPropagation(); onLockEmpty() }} title="Re-lock this position" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                <LockIcon locked={false} size={14} color='#f87171' />
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <span style={{ opacity: 0.3, fontSize: 16, display: 'inline-block', transform: 'scaleX(-1)' }}>✎</span>
+            {onLockEmpty && (
+              <span
+                onClick={e => { e.stopPropagation(); onLockEmpty() }}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <LockIcon locked={false} size={14} color='var(--color-red)' />
+              </span>
             )}
           </div>
         )}
@@ -764,6 +773,18 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     return () => window.removeEventListener('themeChanged', checkTheme)
   }, [])
 
+  const LOCKED_STRIPE = isLightMode
+    ? 'repeating-linear-gradient(45deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 7px)'
+    : 'repeating-linear-gradient(45deg, rgba(255,255,255,0.09) 0px, rgba(255,255,255,0.09) 1px, transparent 1px, transparent 7px)'
+  const LOCKED_BG_COLOR = isLightMode
+    ? 'rgba(0,0,0,0.04)'
+    : 'rgba(255,255,255,0.02)'
+  const STAFF_NAME_COLORS = {
+    confirmed: 'var(--text-primary)',
+    pending: isLightMode ? '#B5720B' : '#FFD60A',
+    needs_attention: 'var(--color-red)'
+  }
+
   const showToast = (msg) => {
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
@@ -780,9 +801,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const H5 = 32
 
   const B_HDR_INNER = '1px solid var(--border-card)'
-  const B_HDR_WEEKEND = '2px solid var(--border-card)'
+  const B_HDR_WEEKEND = isLightMode
+    ? '3px solid rgba(0,0,0,0.15)'
+    : '3px solid rgba(255,255,255,0.25)'
   const B_BODY_INNER = '1px solid var(--border-card)'
-  const B_BODY_WEEKEND = '2px solid var(--border-card)'
+  const B_BODY_WEEKEND = isLightMode
+    ? '3px solid rgba(0,0,0,0.15)'
+    : '3px solid rgba(255,255,255,0.25)'
   const B_LEFT_COL = '1px solid var(--border-card)'
   const B_DEPT_TOP = '1px solid var(--border-card)'
   const HDR_BG = '#0d1f3c'
@@ -804,7 +829,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
         .select('id, city, state, country, venue_name, venue_id, load_in_date, load_out_date, tour_id, status')
         .order('load_in_date', { ascending: true })
       if (tourId) {
-        eventsQuery = eventsQuery.eq('tour_id', tourId)
+        eventsQuery = eventsQuery.eq('tour_id', tourId).gte('load_in_date', today)
       } else {
         eventsQuery = eventsQuery
           .gte('load_in_date', `${effectiveYear}-01-01`)
@@ -864,14 +889,20 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const eventsById = useMemo(() => Object.fromEntries(events.map(e => [e.id, e])), [events])
   const tourPositionsById = useMemo(() => Object.fromEntries(tourPositions.map(tp => [tp.id, tp])), [tourPositions])
 
+  const filteredTourPositions = useMemo(() => {
+    if (tourId) return tourPositions
+    const toursWithEventsThisYear = new Set(events.map(ev => ev.tour_id))
+    return tourPositions.filter(tp => toursWithEventsThisYear.has(tp.tour_id))
+  }, [tourPositions, events, tourId])
+
   const tpByPosTour = useMemo(() => {
     const m = {}
-    for (const tp of tourPositions) {
+    for (const tp of filteredTourPositions) {
       if (!m[tp.position_id]) m[tp.position_id] = {}
       m[tp.position_id][tp.tour_id] = tp
     }
     return m
-  }, [tourPositions])
+  }, [filteredTourPositions])
 
   const assignmentIndex = useMemo(() => {
     const m = {}
@@ -890,7 +921,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       return tp ? tp.quantity_needed : 0
     }
     let max = 0
-    for (const tp of tourPositions) { if (tp.position_id === position.id) max = Math.max(max, tp.quantity_needed) }
+    for (const tp of filteredTourPositions) { if (tp.position_id === position.id) max = Math.max(max, tp.quantity_needed) }
     return max
   }
 
@@ -905,7 +936,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       return { ...dept, rows }
     }).filter(d => d.rows.length > 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departmentsSorted, positions, tourPositions, tourId])
+  }, [departmentsSorted, positions, filteredTourPositions, tourId])
 
   const getCellInfo = (position, slotIndex, event) => {
     const tp = tpByPosTour[position.id]?.[event.tour_id]
@@ -986,6 +1017,18 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     if (resolvedAssignment.event_id === event.id) {
       await supabase.from('staff_assignments').delete().eq('id', resolvedAssignment.id)
       setAssignments(prev => prev.filter(a => a.id !== resolvedAssignment.id))
+      if (tp && tp.quantity_needed === 0) {
+        const { data: remaining } = await supabase
+          .from('staff_assignments')
+          .select('id')
+          .eq('tour_position_id', tp.id)
+          .limit(1)
+        if (!remaining || remaining.length === 0) {
+          await supabase.from('tour_positions')
+            .delete().eq('id', tp.id)
+          setTourPositions(prev => prev.filter(t => t.id !== tp.id))
+        }
+      }
     } else {
       const { data, error } = await supabase.from('staff_assignments')
         .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
@@ -1041,14 +1084,77 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   }
 
   const handleUnlockHatched = async (tp, slotIndex, event) => {
+    console.log('handleUnlockHatched called', { tp, slotIndex, eventId: event.id })
     const supabase = getSupabase()
     const { data, error } = await supabase.from('staff_assignments')
       .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
       .select().single()
-    if (!error && data) {
+    if (error) {
+      console.error('handleUnlockHatched failed:', error)
+      return
+    }
+    if (data) {
       setAssignments(prev => [...prev, data])
       setActiveCell({ positionId: tp.position_id, slotIndex, eventId: event.id, type: 'edit', initialValue: '' })
     }
+  }
+
+  const handleUnlockFullyLocked = async (position, slotIndex, event) => {
+    const supabase = getSupabase()
+
+    console.log('handleUnlockFullyLocked called', { position, slotIndex, eventId: event.id, tourId: event.tour_id })
+
+    // Step 1: Create tour_positions row with quantity_needed=0
+    // (marks position as known to tour but not baseline)
+    const { data: tp, error: tpError } = await supabase
+      .from('tour_positions')
+      .insert([{
+        tour_id: event.tour_id,
+        position_id: position.id,
+        quantity_needed: 0
+      }])
+      .select()
+      .single()
+
+    if (tpError) {
+      console.error('tour_positions insert failed:', tpError)
+      return
+    }
+
+    // Step 2: Create event-level staff_assignments exception
+    const { data: sa, error: saError } = await supabase
+      .from('staff_assignments')
+      .insert([{
+        tour_position_id: tp.id,
+        slot_index: slotIndex,
+        staff_id: null,
+        event_id: event.id,
+        status: 'pending',
+        confirmed: false
+      }])
+      .select()
+      .single()
+
+    if (saError) {
+      console.error('staff_assignments insert failed:', saError)
+      // Rollback tour_positions row
+      await supabase.from('tour_positions').delete()
+        .eq('id', tp.id)
+      return
+    }
+
+    // Step 3: Update local state
+    setTourPositions(prev => [...prev, tp])
+    setAssignments(prev => [...prev, sa])
+    setActiveCell({
+      positionId: position.id,
+      slotIndex,
+      eventId: event.id,
+      type: 'edit',
+      initialValue: ''
+    })
+    reload()
+    router.refresh()
   }
 
   const doMoveStaff = async (source, target) => {
@@ -1273,6 +1379,8 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     return { positionId: tp?.position_id, slotIndex, staffId: resolved?.staff_id || null }
   }).filter(c => c.staffId && c.positionId)
 
+  let globalRowIndex = 0
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       {selectedKeys.size > 0 && (
@@ -1308,8 +1416,14 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                     {orderedEvents.map((ev, i) => {
                       const color = toursById[ev.tour_id]?.color || '#33FF99'
                       return (
-                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: 'var(--bg-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.01em', color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{toursById[ev.tour_id]?.name || '—'}</span>
+                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: 'var(--bg)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                          <span
+                            onClick={() => router.push(`/tours/${ev.tour_id}`)}
+                            style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.01em', color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
+                            onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
+                            onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
+                            {toursById[ev.tour_id]?.name || '—'}
+                          </span>
                         </th>
                       )
                     })}
@@ -1402,10 +1516,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                           <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: '1px solid ' + deptHeaderBg, borderBottom: '1px solid ' + deptHeaderBg }} />
                         ))}
                       </tr>
-                      {!collapsed && dept.rows.map(({ position, slotIndex }, rowIndex) => {
-                        const rowStripeBg = rowIndex % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-card-hover)'
+                      {!collapsed && dept.rows.map(({ position, slotIndex }) => {
+                        const rowStripeBg = globalRowIndex % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-card-hover)'
+                        globalRowIndex++
                         return (
-                        <tr key={position.id + '__' + slotIndex}>
+                        <tr key={position.id + '__' + slotIndex} className="sg-row">
                           <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 6px', background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                           </td>
@@ -1432,6 +1547,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                                 onRemove={() => clearAssignment(tp, slotIndex, ev, info.assignment)}
                                 onSetStatus={(status) => applyStatusChange(tp, slotIndex, ev, info.assignment, status)}
                                 onUnlockHatched={() => handleUnlockHatched(tp, slotIndex, ev)}
+                                onUnlockFullyLocked={() => handleUnlockFullyLocked(position, slotIndex, ev)}
                                 onLockEmpty={() => clearAssignment(tp, slotIndex, ev, info.assignment)}
                                 isActive={isActiveCell}
                                 activeType={isActiveCell ? activeCell.type : null}
@@ -1461,6 +1577,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                                 ROW_HEIGHT={ROW_HEIGHT}
                                 borderRight={cellBorderRight(ev, i)}
                                 rowBg={rowStripeBg}
+                                LOCKED_STRIPE={LOCKED_STRIPE}
+                                LOCKED_BG_COLOR={LOCKED_BG_COLOR}
+                                STAFF_NAME_COLORS={STAFF_NAME_COLORS}
                               />
                             )
                           })}
