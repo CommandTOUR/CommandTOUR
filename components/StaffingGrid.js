@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { checkStaffConflict } from '@/lib/checkStaffConflict'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   const [query, setQuery] = useState(initialValue || '')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
+  const [conflictMap, setConflictMap] = useState({})
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef(null)
@@ -136,7 +138,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
       const { data: staffData } = await supabase.from('staff').select('id, first_name, last_name, display_name')
         .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,display_name.ilike.%${query}%`)
         .order('last_name', { ascending: true }).limit(8)
-      if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setLoading(false); return }
+      if (!staffData || staffData.length === 0) { setResults([]); setAvailability({}); setConflictMap({}); setLoading(false); return }
       setResults(staffData)
       const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event?.load_in_date)
       const avail = {}
@@ -157,11 +159,28 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
       }
       setAvailability(avail)
       setLoading(false)
+
+      const conflictResults = await Promise.all(
+        staffData.map(s => checkStaffConflict(s.id, eventId, supabase).then(r => [s.id, r]))
+      )
+      setConflictMap(Object.fromEntries(conflictResults))
     }, 200)
     return () => clearTimeout(timer)
   }, [query, event, eventId, allBookings])
 
   const availStatus = (id) => availability[id]?.status || null
+  const dotColor = (id) => {
+    if (availStatus(id) === 'same_event') return '#FFD60A'
+    const result = conflictMap[id]
+    if (result) {
+      if (!result.hasConflict) return '#33FF99'
+      return result.isHardBlock ? '#e05252' : '#FFD60A'
+    }
+    // authoritative check still in flight — fall back to the in-memory hint
+    if (availStatus(id) === 'conflict') return '#FFD60A'
+    if (availStatus(id) === 'free') return '#33FF99'
+    return null
+  }
   const tipText = (id) => {
     const a = availability[id]
     if (!a || a.status === 'free') return ''
@@ -215,7 +234,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
           const val = e.target.value
           setQuery(val)
           setActiveIndex(-1)
-          if (val.trim().length < 1) { setResults([]); setAvailability({}) }
+          if (val.trim().length < 1) { setResults([]); setAvailability({}); setConflictMap({}) }
         }}
         onKeyDown={handleKeyDown}
         autoComplete="off"
@@ -227,19 +246,17 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
           {loading && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results.length === 0 && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>No results</div>}
           {results.map((s, i) => {
-            const status = availStatus(s.id)
             const t = tipText(s.id)
+            const dot = dotColor(s.id)
             return (
               <div key={s.id}
                 onMouseDown={e => { e.preventDefault(); selectIndex(i) }}
                 onMouseEnter={() => setActiveIndex(i)}
                 title={t}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
-                {(status === 'conflict' || status === 'same_event') ? (
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#FFD60A', flexShrink: 0 }} />
-                ) : status === 'free' ? (
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#33FF99', flexShrink: 0 }} />
-                ) : null}
+                {dot && (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+                )}
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{staffDisplayName(s)}</span>
               </div>
             )
@@ -297,7 +314,7 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
         <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: travelInfo ? 16 : 20 }}>
           {isSame
             ? staffDisplayName(staffMember) + ' is already assigned to another position on this event.'
-            : staffDisplayName(staffMember) + ' is already booked' + (avail?.city ? ' in ' + avail.city : ' on another event') + '.'}
+            : `${staffDisplayName(staffMember)} is pending at ${avail?.city || 'another event'}${avail?.tour_name ? ' (' + avail.tour_name + ')' : ''}. Assigning here will create a scheduling conflict — both will show as pending.`}
         </div>
         {travelInfo && !isSame && (
           <div style={{ background: 'rgba(248,113,113,0.08)', border: '0.5px solid rgba(248,113,113,0.3)', borderRadius: 8, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: '#f87171', lineHeight: 1.8 }}>
@@ -315,7 +332,7 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
           <button onClick={onConfirm} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>
-            {isSame ? 'Assign Dual Roles' : 'Reassign'}
+            {isSame ? 'Assign Dual Roles' : 'Assign Anyway'}
           </button>
         </div>
       </div>
@@ -330,21 +347,15 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
+  const [hardBlockMessage, setHardBlockMessage] = useState(null)
   const [lockHovered, setLockHovered] = useState(false)
   const eventId = event.id
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
   const staffName = hasStaff ? staffDisplayName(assignment.staff) : null
 
-  const secondaryCheck = (staffMember) => {
-    if (!allBookings || !event?.load_in_date) return null
-    const { saturday_date: evSat, sunday_date: evSun } = getWeekendDates(event.load_in_date)
+  const checkSameEvent = (staffMember) => {
+    if (!allBookings) return null
     const bookings = allBookings[staffMember.id] || []
-    const conflict = bookings.find(b =>
-      b.event_id !== eventId &&
-      ((evSat && b.saturday_date && b.saturday_date === evSat) ||
-       (evSun && b.sunday_date && b.sunday_date === evSun))
-    )
-    if (conflict) return { status: 'conflict', city: conflict.city, event_id: conflict.event_id, tour_name: conflict.tour_name, travel_in_date: conflict.travel_in_date, travel_out_date: conflict.travel_out_date }
     const sameEv = bookings.find(b => b.event_id === eventId)
     if (sameEv) return { status: 'same_event', position: sameEv.position }
     return null
@@ -353,8 +364,27 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
   const commitAssign = async (staffMember, removeFromEventId) => {
     setConfirmOverride(null)
     if (!removeFromEventId) {
-      const avail = secondaryCheck(staffMember)
-      if (avail) { setConfirmOverride({ staffMember, avail, travelInfo: travelInfoFrom(avail) }); return }
+      const sameEvent = checkSameEvent(staffMember)
+      if (sameEvent) { setConfirmOverride({ staffMember, tp, slotIndex, event, avail: sameEvent, travelInfo: null, skipConflictCheck: true }); return }
+
+      const supabase = getSupabase()
+      const { hasConflict, isHardBlock, conflictingEvent } = await checkStaffConflict(staffMember.id, eventId, supabase)
+      if (hasConflict) {
+        if (isHardBlock) {
+          setHardBlockMessage(`${staffDisplayName(staffMember)} is already confirmed at ${conflictingEvent.city} that weekend. Cannot assign.`)
+          setAssignError(true)
+          setTimeout(() => { setAssignError(false); setHardBlockMessage(null) }, 2500)
+          onCloseActive()
+          return
+        }
+        setConfirmOverride({
+          staffMember, tp, slotIndex, event,
+          avail: { status: 'conflict', city: conflictingEvent.city, tour_name: conflictingEvent.tours?.name, event_id: conflictingEvent.id },
+          travelInfo: null,
+          skipConflictCheck: true
+        })
+        return
+      }
     }
     const { error } = await onAssign(staffMember, removeFromEventId)
     if (error) {
@@ -367,11 +397,22 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
     onCloseActive()
   }
 
-  const handleAssign = (staffMember, avail) => {
-    if (avail && (avail.status === 'conflict' || avail.status === 'same_event')) {
-      setConfirmOverride({ staffMember, avail, travelInfo: travelInfoFrom(avail) })
+  const handleConfirmOverride = async () => {
+    if (!confirmOverride) return
+    const { staffMember } = confirmOverride
+    setConfirmOverride(null)
+    const { error } = await onAssign(staffMember)
+    if (error) {
+      setAssignError(true)
+      setTimeout(() => setAssignError(false), 1200)
+      onCloseActive()
       return
     }
+    setHovered(false)
+    onCloseActive()
+  }
+
+  const handleAssign = (staffMember) => {
     commitAssign(staffMember)
   }
 
@@ -436,7 +477,9 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
        : (hovered && !isActive) ? 'rgba(255,255,255,0.07)'
        : (rowBg || 'transparent'))
 
-  const tooltip = cellState === 'FULLY_LOCKED'
+  const tooltip = hardBlockMessage
+    ? hardBlockMessage
+    : cellState === 'FULLY_LOCKED'
     ? `This position isn't configured for ${tourName || 'this tour'}. Add it in Edit Tour.`
     : cellState === 'HATCHED' ? 'Click to unlock' : undefined
 
@@ -495,7 +538,10 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               draggable={!isActive}
               onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart() }}
               onDragEnd={() => { onCellDragEnd && onCellDragEnd() }}
-              style={{ display: 'block', width: '100%', fontSize: 12, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>{staffName}</span>
+              style={{ display: 'block', width: '100%', fontSize: 12, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>
+              {isConflicted && <span style={{ color: '#FF9500', fontSize: 10, marginRight: 3 }}>⚠</span>}
+              {staffName}
+            </span>
             <div
               onClick={e => { e.stopPropagation(); onToggleSelect() }}
               style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.15s ease', cursor: 'pointer', zIndex: 2 }}
@@ -545,7 +591,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           staffMember={confirmOverride.staffMember}
           avail={confirmOverride.avail}
           travelInfo={confirmOverride.travelInfo}
-          onConfirm={() => commitAssign(confirmOverride.staffMember, confirmOverride.avail?.status === 'conflict' ? confirmOverride.avail.event_id : null)}
+          onConfirm={handleConfirmOverride}
           onCancel={() => setConfirmOverride(null)}
         />
       )}

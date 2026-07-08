@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
+import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { IconX, IconChevronDown, IconChevronRight, IconFlag } from '@tabler/icons-react'
 
 function staffDisplayName(staff) {
@@ -145,7 +146,7 @@ function InlineTextCell({ value, disabled, onSave }) {
   )
 }
 
-function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssign, onRemove, onSaveField, isLast }) {
+function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssign, onRemove, onSaveField, isLast, hasConflict }) {
   const [picking, setPicking] = useState(false)
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
 
@@ -164,6 +165,7 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
           />
         ) : hasStaff ? (
           <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
+            {hasConflict && <span style={{ color: '#FF9500', fontSize: 10, marginRight: 3 }}>⚠</span>}
             {staffDisplayName(assignment.staff)}
           </span>
         ) : (
@@ -333,6 +335,9 @@ export default function StaffingTab({ tourId, eventId, event }) {
   const [showAddException, setShowAddException] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const reload = () => setReloadKey(k => k + 1)
+  const [assignError, setAssignError] = useState(null)
+  const [conflictMap, setConflictMap] = useState({})
+  const [pendingConflict, setPendingConflict] = useState(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -418,7 +423,35 @@ export default function StaffingTab({ tourId, eventId, event }) {
     return assignments.find(a => a.tour_position_id === tourPositionId && a.slot_index === slotIndex && a.event_id === null) || null
   }
 
-  const handleAssign = async (tourPositionId, slotIndex, staffMember) => {
+  useEffect(() => {
+    let cancelled = false
+    const runConflictCheck = async () => {
+      if (departments.length === 0) { if (!cancelled) setConflictMap({}); return }
+      const supabase = getSupabase()
+      const staffIds = new Set()
+      departments.forEach(dept => {
+        dept.positions.forEach(pos => {
+          Array.from({ length: pos.quantityNeeded }, (_, i) => i + 1).forEach(slotIndex => {
+            const effective = findEffectiveAssignment(pos.tourPositionId, slotIndex)
+            if (effective?.staff_id) staffIds.add(effective.staff_id)
+          })
+        })
+      })
+      if (staffIds.size === 0) { if (!cancelled) setConflictMap({}); return }
+      const entries = await Promise.all(
+        Array.from(staffIds).map(async staffId => {
+          const { hasConflict } = await checkStaffConflict(staffId, eventId, supabase)
+          return [staffId + '_' + eventId, hasConflict]
+        })
+      )
+      if (!cancelled) setConflictMap(Object.fromEntries(entries))
+    }
+    runConflictCheck()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departments, assignments, eventId])
+
+  const doAssign = async (tourPositionId, slotIndex, staffMember) => {
     const supabase = getSupabase()
     const existingEventRow = assignments.find(a => a.tour_position_id === tourPositionId && a.slot_index === slotIndex && a.event_id === eventId)
     if (existingEventRow) {
@@ -436,6 +469,29 @@ export default function StaffingTab({ tourId, eventId, event }) {
         setAssignments(prev => [...prev, { ...data, staff: staffMember }])
       }
     }
+  }
+
+  const handleAssign = async (tourPositionId, slotIndex, staffMember) => {
+    const supabase = getSupabase()
+
+    const { hasConflict, isHardBlock, conflictingEvent, conflictingAssignment } = await checkStaffConflict(staffMember.id, eventId, supabase)
+    if (hasConflict) {
+      if (isHardBlock) {
+        setAssignError(`${staffDisplayName(staffMember)} is already confirmed at ${conflictingEvent.city} that weekend. Cannot assign.`)
+        setTimeout(() => setAssignError(null), 4000)
+        return
+      }
+      setPendingConflict({ tourPositionId, slotIndex, staffMember, conflictingEvent, conflictingAssignment })
+      return
+    }
+
+    await doAssign(tourPositionId, slotIndex, staffMember)
+  }
+
+  const handleConflictConfirm = async () => {
+    const { tourPositionId, slotIndex, staffMember } = pendingConflict
+    setPendingConflict(null)
+    await doAssign(tourPositionId, slotIndex, staffMember)
   }
 
   const handleRemove = async (tourPositionId, slotIndex) => {
@@ -496,6 +552,12 @@ export default function StaffingTab({ tourId, eventId, event }) {
         <button className="btn-primary" onClick={() => setShowAddException(true)} style={{ fontSize: 12, padding: '6px 14px' }}>+ Add Position</button>
       </div>
 
+      {assignError && (
+        <div style={{ fontSize: 13, color: '#e05252', background: 'rgba(224,82,82,0.1)', border: '1px solid rgba(224,82,82,0.3)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          {assignError}
+        </div>
+      )}
+
       {isEmpty ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 14, textAlign: 'center' }}>
           <div style={{ fontSize: 15, color: 'var(--text-primary)' }}>No positions configured for this tour.</div>
@@ -522,6 +584,7 @@ export default function StaffingTab({ tourId, eventId, event }) {
                 totalCount={total}
                 renderSlot={(pos, slotIndex) => {
                   const assignment = findEffectiveAssignment(pos.tourPositionId, slotIndex)
+                  const hasConflict = assignment?.staff_id ? !!conflictMap[assignment.staff_id + '_' + eventId] : false
                   return (
                     <PositionSlotRow
                       key={`${pos.tourPositionId}-${slotIndex}`}
@@ -529,6 +592,7 @@ export default function StaffingTab({ tourId, eventId, event }) {
                       slotIndex={slotIndex}
                       title={pos.title}
                       assignment={assignment}
+                      hasConflict={hasConflict}
                       onAssign={handleAssign}
                       onRemove={handleRemove}
                       onSaveField={handleSaveField}
@@ -549,6 +613,32 @@ export default function StaffingTab({ tourId, eventId, event }) {
           onClose={() => setShowAddException(false)}
           onAdded={() => { setShowAddException(false); reload() }}
         />
+      )}
+
+      {pendingConflict && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-card" style={{ padding: 24, borderRadius: 12, maxWidth: 400, width: '90%' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Scheduling Conflict</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
+              {staffDisplayName(pendingConflict.staffMember)} is already assigned at {pendingConflict.conflictingEvent?.city}
+              {pendingConflict.conflictingEvent?.tours?.name ? ` (${pendingConflict.conflictingEvent.tours.name})` : ''} that weekend. Both assignments are pending.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setPendingConflict(null)}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConflictConfirm}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#000', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Assign Anyway
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
