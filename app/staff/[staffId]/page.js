@@ -112,29 +112,29 @@ export default function StaffProfile() {
   }, [person])
 
   const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid var(--bg-card)' }}>
       {title}
     </div>
   )
 
   const field = (label, value) => value ? (
     <div>
-      <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 14, color: '#f1f5f9' }}>{value}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{value}</div>
     </div>
   ) : null
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   if (!person) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Staff member not found.</div>
+      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Staff member not found.</div>
     </div>
   )
 
@@ -191,23 +191,23 @@ export default function StaffProfile() {
   const handlePrint = () => window.print()
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       <TopNav />
 
       {/* Sticky name header — appears when the main name scrolls out of view */}
       {stickyVisible && (
-        <div style={{ position: 'sticky', top: 62, zIndex: 50, background: '#0a1628', borderBottom: '0.5px solid rgba(255,255,255,0.12)', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{fullName}</div>
+        <div style={{ position: 'sticky', top: 88, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--border-card)', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{fullName}</div>
           {person.email && (
-            <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>{person.email}</a>
+            <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{person.email}</a>
           )}
           {person.phone && (
-            <a href={`tel:${person.phone}`} style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>{person.phone}</a>
+            <a href={`tel:${person.phone}`} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{person.phone}</a>
           )}
         </div>
       )}
 
-      <div style={{ marginTop: 62, padding: 28 }}>
+      <div style={{ marginTop: 88, padding: 28 }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
@@ -234,7 +234,7 @@ export default function StaffProfile() {
                     </div>
                   )}
                 </div>
-                {person.email && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{person.email}</div>}
+                {person.email && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 3 }}>{person.email}</div>}
               </div>
             </div>
           </div>
@@ -250,16 +250,16 @@ export default function StaffProfile() {
 
         {/* Department dropdown */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <span style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, flexShrink: 0 }}>Department</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, flexShrink: 0 }}>Department</span>
           <select
             value={person.staff_department_id || ''}
             onChange={e => handleDepartmentChange(e.target.value)}
             style={{
               fontFamily: 'Plus Jakarta Sans, sans-serif',
-              background: '#0d1f3a',
-              border: '0.5px solid rgba(255,255,255,0.12)',
+              background: 'var(--bg-card)',
+              border: '0.5px solid var(--border-card)',
               borderRadius: 8,
-              color: '#f1f5f9',
+              color: 'var(--text-primary)',
               fontSize: 13,
               padding: '8px 12px',
               width: 240,
@@ -286,8 +286,8 @@ export default function StaffProfile() {
                 {field('Date of Birth', fmt(person.dob))}
                 {(person.address || person.city) && (
                   <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
-                    <div style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.6 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
                       {person.address && <div>{person.address}</div>}
                       <div>{[person.city, person.state, person.zip, person.country].filter(Boolean).join(', ')}</div>
                     </div>
@@ -306,14 +306,14 @@ export default function StaffProfile() {
               </div>
               {airlines.length > 0 && (
                 <>
-                  <div style={{ height: 0.5, background: 'rgba(255,255,255,0.08)', marginBottom: 14 }} />
-                  <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Airlines</div>
+                  <div style={{ height: 0.5, background: 'var(--bg-card)', marginBottom: 14 }} />
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Airlines</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {airlines.map(a => (
                       <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         {a.preferred && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />}
-                        <div style={{ fontSize: 14, fontWeight: a.preferred ? 500 : 400, color: '#f1f5f9' }}>{a.airline}</div>
-                        {a.frequent_flyer_number && <div style={{ fontSize: 12, color: '#94a3b8' }}>#{a.frequent_flyer_number}</div>}
+                        <div style={{ fontSize: 14, fontWeight: a.preferred ? 500 : 400, color: 'var(--text-primary)' }}>{a.airline}</div>
+                        {a.frequent_flyer_number && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>#{a.frequent_flyer_number}</div>}
                         {a.preferred && <div style={{ fontSize: 11, color: 'var(--mint)', marginLeft: 'auto' }}>Preferred</div>}
                       </div>
                     ))}
@@ -329,13 +329,13 @@ export default function StaffProfile() {
               {person.allergies && (
                 <div className="glass-card" style={{ padding: '20px 24px' }}>
                   {sectionLabel('Food Allergies')}
-                  <div style={{ fontSize: 14, color: '#f1f5f9' }}>{person.allergies}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.allergies}</div>
                 </div>
               )}
               {person.notes && (
                 <div className="glass-card" style={{ padding: '20px 24px' }}>
                   {sectionLabel('Notes')}
-                  <div style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6 }}>{person.notes}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{person.notes}</div>
                 </div>
               )}
             </div>
@@ -344,8 +344,8 @@ export default function StaffProfile() {
           {/* Upcoming Events */}
           {upcomingEvents.length > 0 && (
             <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid var(--bg-card)' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
                   Upcoming Events ({upcomingEvents.length})
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -373,7 +373,7 @@ export default function StaffProfile() {
                 onClick={() => setShowPast(!showPast)}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: showPast ? 16 : 0 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
                   {showPast ? '▾' : '▸'} Past Events ({pastEvents.length})
                 </div>
               </div>
@@ -389,7 +389,7 @@ export default function StaffProfile() {
         </div>
 
         {/* Remove Staff Member */}
-        <div style={{ marginTop: 40, paddingTop: 24, borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ marginTop: 40, paddingTop: 24, borderTop: '0.5px solid var(--bg-card)' }}>
           <button
             onClick={() => setShowRemoveModal(true)}
             style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(248,113,113,0.30)', background: 'transparent', color: '#f87171', cursor: 'pointer' }}
@@ -406,14 +406,14 @@ export default function StaffProfile() {
       {showRemoveModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-card" style={{ padding: 28, maxWidth: 400, width: '90%' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 12 }}>Remove Staff Member</div>
-            <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24, lineHeight: 1.6 }}>
-              This will permanently remove <strong style={{ color: '#f1f5f9' }}>{fullName}</strong> from CommandTOUR. This cannot be undone.
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Remove Staff Member</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+              This will permanently remove <strong style={{ color: 'var(--text-primary)' }}>{fullName}</strong> from CommandTOUR. This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowRemoveModal(false)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '0.5px solid var(--border-card)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >Cancel</button>
               <button
                 onClick={handleRemove}
@@ -427,7 +427,7 @@ export default function StaffProfile() {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1e293b', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '10px 20px', fontSize: 14, color: '#f1f5f9', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-card)', border: '0.5px solid var(--border-card)', borderRadius: 8, padding: '10px 20px', fontSize: 14, color: 'var(--text-primary)', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
           {toast}
         </div>
       )}

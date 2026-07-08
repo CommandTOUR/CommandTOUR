@@ -29,10 +29,10 @@ const fmtStatus = (s) => {
 }
 
 const timeSelectStyle = {
-  background: '#0d1f3a',
+  background: 'var(--bg-card)',
   border: '0.5px solid rgba(255,255,255,0.15)',
   borderRadius: 6,
-  color: '#f1f5f9',
+  color: 'var(--text-primary)',
   fontSize: 13,
   padding: '4px 8px',
   cursor: 'pointer'
@@ -50,9 +50,9 @@ const ampmActiveStyle = {
 }
 
 const ampmInactiveStyle = {
-  background: 'rgba(255,255,255,0.06)',
-  color: '#64748b',
-  border: '0.5px solid rgba(255,255,255,0.12)',
+  background: 'var(--bg-card)',
+  color: 'var(--text-muted)',
+  border: '0.5px solid var(--border-card)',
   borderRadius: 6,
   padding: '4px 10px',
   fontSize: 12,
@@ -114,7 +114,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
       {editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none' }} />
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'var(--bg-card)', color: 'var(--text-primary)', outline: 'none' }} />
           <select value={editHour} onChange={e => setEditHour(e.target.value)} style={timeSelectStyle}>
             {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
           </select>
@@ -125,20 +125,20 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
           <button onClick={() => setEditAmPm('PM')} style={editAmPm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
           <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); initTimeFromShow() }}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
         </div>
       ) : (
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
-          <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
             {fmtLong(show.show_date)}
             {fmtTime(show.show_time)
               ? <> · {fmtTime(show.show_time)}</>
               : <span
                   onClick={() => { setEditing(true); setEditDate(show.show_date || '') }}
-                  style={{ fontSize: 13, color: '#64748b', marginLeft: 6, cursor: 'pointer' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
+                  style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 6, cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
                 >· Set time</span>
             }
           </div>
@@ -149,15 +149,15 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
           <div onClick={() => { setEditing(true); setEditDate(show.show_date || ''); initTimeFromShow() }}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 4 }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <div onClick={() => onDelete(show.id)} style={{ fontSize: 18, color: '#64748b', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
+          <div onClick={() => onDelete(show.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
             onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-            onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>×</div>
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
         </div>
       )}
     </div>
@@ -312,19 +312,19 @@ export default function EventPage() {
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   if (!event) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Event not found.</div>
+      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Event not found.</div>
     </div>
   )
 
   const color = tour?.color || '#C9A84C'
-  const tourLabelColor = tour?.color || '#94a3b8'
+  const tourLabelColor = tour?.color || 'var(--text-secondary)'
   const tabs = ['Overview', 'Shows', 'Staffing', 'Travel & Hotel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
@@ -365,8 +365,8 @@ export default function EventPage() {
     padding: '8px 12px',
     borderRadius: 7,
     border: '1px solid rgba(255,255,255,0.15)',
-    background: 'rgba(255,255,255,0.08)',
-    color: '#f1f5f9',
+    background: 'var(--bg-card)',
+    color: 'var(--text-primary)',
     caretColor: '#33FF99',
     outline: 'none',
   }
@@ -380,16 +380,16 @@ export default function EventPage() {
       onMouseLeave={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
     >
       <div style={{ fontSize: 10.5, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: valueColor || '#f1f5f9' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>{sub}</div>}
+      <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: valueColor || 'var(--text-primary)' }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>{sub}</div>}
     </div>
   )
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       <TopNav />
 
-      <div style={{ marginTop: 62, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      <div style={{ marginTop: 88, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
         {/* Event header */}
         <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 0', flexShrink: 0 }}>
@@ -417,7 +417,7 @@ export default function EventPage() {
                     {event.status ? fmtStatus(event.status) : 'Tentative'}
                   </span>
                 </div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
                   {event.venue_name && `${event.venue_name} · `}
                   {fmt(event.load_in_date)}
                   {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
@@ -471,7 +471,7 @@ export default function EventPage() {
                   daysUntil !== null && daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
                   daysUntil !== null && daysUntil <= 7 ? 'var(--color-red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--color-yellow)' : 'var(--mint)'
                 )}
-                {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', '#f1f5f9')}
+                {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', 'var(--text-primary)')}
                 {statCard(
                   event.status ? fmtStatus(event.status) : 'Tentative',
                   'Booking Status', null,
@@ -481,7 +481,7 @@ export default function EventPage() {
                   event.venue_name || 'TBC',
                   'Venue',
                   venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : (event.city || null),
-                  '#f1f5f9',
+                  'var(--text-primary)',
                   venue ? () => router.push(`/venues/${venue.id}`) : null
                 )}
               </div>
@@ -503,13 +503,13 @@ export default function EventPage() {
                     </div>
                   </div>
                   {shows.length === 0 ? (
-                    <div style={{ fontSize: 13, color: '#94a3b8' }}>No shows added yet</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No shows added yet</div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {shows.map((show, i) => (
                         <div key={show.id}>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Show {i + 1}</div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? '#64748b' : '#f1f5f9', textDecoration: show.completed ? 'line-through' : 'none' }}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Show {i + 1}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
                             {fmtShortDay(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
                           </div>
                         </div>
@@ -522,23 +522,23 @@ export default function EventPage() {
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ fontSize: 10.5, fontWeight: 600, marginBottom: 14, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Outstanding Items</div>
                   {incompleteTasks === null ? (
-                    <div style={{ fontSize: 13, color: '#64748b' }}>Loading...</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
                   ) : incompleteTasks.length === 0 ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#33FF99', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                      <div style={{ fontSize: 13, color: '#94a3b8' }}>All Clear</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>All Clear</div>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>{incompleteTasks.length} Items</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{incompleteTasks.length} Items</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {incompleteTasks.slice(0, 3).map(task => (
-                          <div key={task.id} style={{ fontSize: 12, color: '#94a3b8' }}>· {task.task_name}</div>
+                          <div key={task.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>· {task.task_name}</div>
                         ))}
                         {incompleteTasks.length > 3 && (
-                          <div style={{ fontSize: 12, color: '#64748b' }}>+ {incompleteTasks.length - 3} more</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>+ {incompleteTasks.length - 3} more</div>
                         )}
                       </div>
                       <div
@@ -568,8 +568,8 @@ export default function EventPage() {
                   {/* Address + specs side by side */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
                     <div>
-                      <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Address</div>
-                      <div style={{ fontSize: 14, color: '#f1f5f9', lineHeight: 1.6 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Address</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
                         {venue.address && <>{venue.address}<br /></>}
                         {formatLocation(venue.city, venue.state, venue.country, 'full')}
                       </div>
@@ -577,20 +577,20 @@ export default function EventPage() {
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                       {venue.floor_size && (
                         <div>
-                          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Floor Size</div>
-                          <div style={{ fontSize: 14, color: '#f1f5f9' }}>{venue.floor_size}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Floor Size</div>
+                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.floor_size}</div>
                         </div>
                       )}
                       {venue.max_height && (
                         <div>
-                          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Max Height</div>
-                          <div style={{ fontSize: 14, color: '#f1f5f9' }}>{venue.max_height}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Max Height</div>
+                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.max_height}</div>
                         </div>
                       )}
                       {venue.union_status && (
                         <div>
-                          <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Union</div>
-                          <div style={{ fontSize: 14, color: '#f1f5f9' }}>{venue.union_status}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Union</div>
+                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.union_status}</div>
                         </div>
                       )}
                     </div>
@@ -599,8 +599,8 @@ export default function EventPage() {
                   {/* Contacts — always shown if they exist */}
                   {venueContacts.length > 0 && (
                     <>
-                      <div style={{ height: 0.5, background: 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
-                      <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
+                      <div style={{ height: 0.5, background: 'var(--bg-card)', marginBottom: 16 }} />
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
                         {venueContacts.map(contact => (
                           <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -608,9 +608,9 @@ export default function EventPage() {
                               {contact.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 500, color: '#f1f5f9' }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
                                 {contact.name}
-                                {contact.title && <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}
+                                {contact.title && <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}
                               </div>
                               <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
                                 {contact.phone && <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>}
@@ -629,7 +629,7 @@ export default function EventPage() {
               {event.booking_note && (
                 <div className="glass-card" style={{ padding: '20px 22px' }}>
                   <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Booking Notes</div>
-                  <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{event.booking_note}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{event.booking_note}</div>
                 </div>
               )}
 
@@ -657,14 +657,14 @@ export default function EventPage() {
                 <div className="glass-card" style={{ padding: '18px 20px', marginBottom: 16, maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Date *</label>
+                      <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Date *</label>
                       <input type="date" style={{ ...inputStyle, width: '100%' }} value={newShow.show_date} min={event.load_in_date || ''} onChange={e => setNewShow(p => ({ ...p, show_date: e.target.value }))} />
                       {newShow.show_date && event.load_in_date && newShow.show_date < event.load_in_date && (
                         <div style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>Show date cannot be before load-in date</div>
                       )}
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Show Time</label>
+                      <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Time</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <select value={newHour} onChange={e => setNewHour(e.target.value)} style={timeSelectStyle}>
                           {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
@@ -678,7 +678,7 @@ export default function EventPage() {
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 5 }}>Notes</label>
+                    <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Notes</label>
                     <input type="text" style={{ ...inputStyle, width: '100%' }} placeholder="Optional notes..." value={newShow.notes} onChange={e => setNewShow(p => ({ ...p, notes: e.target.value }))} />
                   </div>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

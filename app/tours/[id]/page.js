@@ -292,6 +292,8 @@ export default function TourPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('schedule')
   const [pastExpanded, setPastExpanded] = useState(false)
+  const [calView, setCalView] = useState('month')
+  const [calDate, setCalDate] = useState(new Date())
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -472,7 +474,7 @@ export default function TourPage() {
           </div>
 
           {/* Tab bar */}
-          <div style={{ paddingBottom: 14 }}>
+          <div style={{ paddingBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: 4, background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
               {tabs.map(tab => {
                 const active = activeTab === tab.toLowerCase()
@@ -484,6 +486,77 @@ export default function TourPage() {
                 )
               })}
             </div>
+
+            {activeTab === 'calendar' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Month/Week toggle */}
+                <div style={{ display: 'flex', borderRadius: 8,
+                  border: '1px solid var(--border-card)', overflow: 'hidden' }}>
+                  <button
+                    onClick={() => setCalView('month')}
+                    style={{
+                      padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                      background: calView === 'month' ? 'var(--color-mint)' : 'transparent',
+                      color: calView === 'month' ? '#000' : 'var(--text-muted)',
+                      border: 'none', cursor: 'pointer',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif'
+                    }}>Month</button>
+                  <button
+                    onClick={() => setCalView('week')}
+                    style={{
+                      padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                      background: calView === 'week' ? 'var(--color-mint)' : 'transparent',
+                      color: calView === 'week' ? '#000' : 'var(--text-muted)',
+                      border: 'none', cursor: 'pointer',
+                      fontFamily: 'Plus Jakarta Sans, sans-serif'
+                    }}>Week</button>
+                </div>
+
+                {/* Prev button */}
+                <button
+                  onClick={() => {
+                    const d = new Date(calDate)
+                    if (calView === 'month') d.setMonth(d.getMonth() - 1)
+                    else d.setDate(d.getDate() - 7)
+                    setCalDate(new Date(d))
+                  }}
+                  style={{ background: 'transparent', border: '1px solid var(--border-card)',
+                    borderRadius: 6, width: 28, height: 28, cursor: 'pointer',
+                    color: 'var(--text-secondary)', fontSize: 14,
+                    fontFamily: 'Plus Jakarta Sans, sans-serif' }}>‹</button>
+
+                {/* Date label */}
+                <span style={{ fontSize: 13, fontWeight: 600,
+                  color: 'var(--text-primary)', minWidth: 90, textAlign: 'center',
+                  fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                  {calDate.toLocaleDateString('en-US',
+                    calView === 'month'
+                      ? { month: 'long', year: 'numeric' }
+                      : { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+
+                {/* Next button */}
+                <button
+                  onClick={() => {
+                    const d = new Date(calDate)
+                    if (calView === 'month') d.setMonth(d.getMonth() + 1)
+                    else d.setDate(d.getDate() + 7)
+                    setCalDate(new Date(d))
+                  }}
+                  style={{ background: 'transparent', border: '1px solid var(--border-card)',
+                    borderRadius: 6, width: 28, height: 28, cursor: 'pointer',
+                    color: 'var(--text-secondary)', fontSize: 14,
+                    fontFamily: 'Plus Jakarta Sans, sans-serif' }}>›</button>
+
+                {/* Today button */}
+                <button
+                  onClick={() => setCalDate(new Date())}
+                  style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                    background: 'transparent', border: '1px solid var(--color-mint)',
+                    borderRadius: 6, color: 'var(--color-mint)', cursor: 'pointer',
+                    fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Today</button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -567,13 +640,18 @@ export default function TourPage() {
           )}
 
           {activeTab === 'calendar' && (
-            <TourCalendar tourId={id} tourColor={color} />
+            <TourCalendar
+              tourId={id}
+              tourColor={color}
+              view={calView}
+              currentDate={calDate}
+            />
           )}
 
           {activeTab === 'travel' && (
             <div style={{ padding: '28px 32px' }}>
               {events.length === 0 ? (
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>No events on this tour yet.</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No events on this tour yet.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
                   {events.map(event => (
@@ -582,17 +660,17 @@ export default function TourPage() {
                       className="glass-card"
                       onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
                       style={{ padding: '16px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
                     >
-                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: '#f1f5f9' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>
                         {formatLocation(event.city, event.state, event.country, 'compact')}
                       </div>
-                      <div style={{ fontSize: 13, color: event.venue_name ? '#94a3b8' : '#64748b', marginBottom: 10 }}>
+                      <div style={{ fontSize: 13, color: event.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', marginBottom: 10 }}>
                         {event.venue_name || 'Venue TBC'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ fontSize: 12, color: '#94a3b8' }}>Load-In {fmt(event.load_in_date)}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Load-In {fmt(event.load_in_date)}</div>
                         <StatusBadge status={event.status} />
                       </div>
                     </div>
@@ -605,7 +683,7 @@ export default function TourPage() {
           {activeTab === 'venues' && (
             <div style={{ padding: '28px 32px' }}>
               {venues.length === 0 ? (
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>No venues linked to this tour yet.</div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No venues linked to this tour yet.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
                   {venues.map(venue => (
@@ -613,13 +691,13 @@ export default function TourPage() {
                       key={venue.id}
                       className="glass-card"
                       onClick={() => router.push(`/venues/${venue.id}`)}
-                      style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+                      style={{ padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s', border: '2.5px solid var(--border-card)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
                     >
-                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: '#f1f5f9' }}>{venue.name}</div>
-                      <div style={{ fontSize: 13, color: '#94a3b8' }}>
-                        {formatLocation(venue.city, venue.state, venue.country, 'full')}
+                      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: 'var(--text-primary)' }}>{venue.name}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        {formatLocation(venue.city, venue.state, venue.country, 'compact')}
                       </div>
                     </div>
                   ))}

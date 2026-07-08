@@ -225,8 +225,8 @@ function buildHolidayMap(year, saturdays) {
 
 const inputStyle = {
   fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 10px',
-  borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)',
-  background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99',
+  borderRadius: 6, border: '1px solid var(--border-card)',
+  background: 'var(--bg-card)', color: 'var(--text-primary)', caretColor: '#33FF99',
   outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 
@@ -261,10 +261,10 @@ function transformShow(show) {
 }
 
 const timeSelectStyle = {
-  background: '#0d1f3a',
-  border: '0.5px solid rgba(255,255,255,0.15)',
+  background: 'var(--bg-card)',
+  border: '0.5px solid var(--border-card)',
   borderRadius: 6,
-  color: '#f1f5f9',
+  color: 'var(--text-primary)',
   fontSize: 13,
   padding: '4px 8px',
   cursor: 'pointer',
@@ -282,9 +282,9 @@ const ampmActiveStyle = {
 }
 
 const ampmInactiveStyle = {
-  background: 'rgba(255,255,255,0.06)',
-  color: '#64748b',
-  border: '0.5px solid rgba(255,255,255,0.12)',
+  background: 'var(--bg-card)',
+  color: 'var(--text-muted)',
+  border: '0.5px solid var(--border-card)',
   borderRadius: 6,
   padding: '4px 10px',
   fontSize: 12,
@@ -361,7 +361,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
 
   if (mode === 'create') {
     return (
-      <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 280, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+      <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 280, background: 'var(--bg-card)', border: '0.5px solid var(--glass-border)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mint)', marginBottom: 8 }}>New Venue</div>
         <div style={{ marginBottom: 8 }}>
           <label style={labelStyle}>Venue Name *</label>
@@ -408,7 +408,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
         autoComplete="off"
       />
       {query.trim() && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, width: 240, zIndex: 1100, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, width: 240, zIndex: 1100, background: 'var(--bg-card)', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
           {results.map((v, i) => (
             <div key={v.id}
               onMouseDown={() => handleSelect(v)}
@@ -495,7 +495,7 @@ function HolidayCell({ value, onSave }) {
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 600 : 400, color: value ? '#63b3ed' : '#475569', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 600 : 400, color: value ? 'var(--text-secondary)' : 'var(--text-secondary)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -512,15 +512,15 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
         const glow = dragging && hoveredPillYear === y
         const isHovered = hovered === y
 
-        let border = '1px solid rgba(255,255,255,0.20)'
-        let color = '#94a3b8'
+        let border = '1px solid var(--border-card)'
+        let color = 'var(--text-secondary)'
         let background = 'transparent'
         let opacity = 1
         let fontWeight = 500
 
         if (selected || glow) {
           border = 'none'
-          color = '#0a1628'
+          color = 'var(--bg)'
           background = '#33FF99'
           fontWeight = 700
         } else {
@@ -694,8 +694,8 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
   return createPortal(
     <div style={{
-      position: 'fixed', top: 62, right: 0, width: 480, height: 'calc(100vh - 62px)',
-      background: '#0d1f3a', borderLeft: '1px solid var(--glass-border)', zIndex: 200,
+      position: 'fixed', top: 88, right: 0, width: 480, height: 'calc(100vh - 88px)',
+      background: 'var(--bg-card)', borderLeft: '1px solid var(--glass-border)', zIndex: 200,
       transform: visible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.2s ease',
       display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 32px rgba(0,0,0,0.4)',
     }}>
@@ -860,27 +860,27 @@ const H1 = 40
 const H2 = 34
 const ROW_H = 36
 
-const HDR_BG = 'rgba(255,255,255,0.06)'
-const STICKY_BG = '#0d1f3c'
-const B_INNER = '0.5px solid rgba(255,255,255,0.08)'
-const B_HEADER_BOTTOM = '1px solid rgba(255,255,255,0.08)'
-const B_LEFT_COL = '2px solid rgba(255,255,255,0.12)'
-const B_TOUR_GROUP = '5px solid rgba(255,255,255,0.15)'
-const B_TOUR_DIVIDER = '5px solid rgba(255,255,255,0.15)'
+const HDR_BG = 'var(--bg-card)'
+const STICKY_BG = 'var(--bg-card)'
+const B_INNER = '0.5px solid var(--bg-card)'
+const B_HEADER_BOTTOM = '1px solid var(--bg-card)'
+const B_LEFT_COL = '2px solid var(--border-card)'
+const B_TOUR_GROUP = '5px solid var(--border-card)'
+const B_TOUR_DIVIDER = '5px solid var(--border-card)'
 
 const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W }
 
 const leftThStyle = (left, width) => ({
   position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1 + H2,
-  background: '#0d1f3c', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
-  fontSize: 11, fontWeight: 700, color: '#63b3ed', textTransform: 'uppercase', letterSpacing: '0.06em',
-  borderBottom: '4px solid #FFD60A', borderRight: '2px solid rgba(255,255,255,0.12)',
+  background: 'var(--bg-card)', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
+  fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em',
+  borderBottom: '4px solid #FFD60A', borderRight: '2px solid var(--border-card)',
 })
 
 const subHeaderStyle = (width, borderRight) => ({
   position: 'sticky', top: H1, zIndex: 30,
-  height: H2, background: '#0d1f3c', borderBottom: '4px solid #FFD60A', borderRight,
-  padding: '0 8px', textAlign: 'center', fontSize: 11, color: '#f1f5f9', fontWeight: 700,
+  height: H2, background: 'var(--bg-card)', borderBottom: '4px solid #FFD60A', borderRight,
+  padding: '0 8px', textAlign: 'center', fontSize: 11, color: 'var(--text-primary)', fontWeight: 700,
   textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
 })
 
@@ -900,12 +900,12 @@ function GridCell({
   const isDragOver = dragOverKey === cellKey
   const cellBase = {
     height: rowHeight, padding: '0 8px',
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-    fontSize: 12, color: '#f1f5f9',
+    borderBottom: '1px solid var(--bg-card)',
+    fontSize: 12, color: 'var(--text-primary)',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     verticalAlign: 'middle', textAlign: 'center', position: 'relative',
   }
-  const innerBorder = '0.5px solid rgba(255,255,255,0.08)'
+  const innerBorder = '0.5px solid var(--bg-card)'
   const groupBorder = isLast ? innerBorder : B_TOUR_DIVIDER
 
   useEffect(() => {
@@ -955,11 +955,11 @@ function GridCell({
     ghost.style.position = 'absolute'
     ghost.style.top = '-1000px'
     ghost.style.padding = '4px 10px'
-    ghost.style.background = '#0d1f3a'
+    ghost.style.background = 'var(--bg-card)'
     ghost.style.color = '#fff'
     ghost.style.fontSize = '12px'
     ghost.style.borderRadius = '6px'
-    ghost.style.border = '0.5px solid rgba(255,255,255,0.2)'
+    ghost.style.border = '0.5px solid var(--border-card)'
     document.body.appendChild(ghost)
     e.dataTransfer.setDragImage(ghost, 0, 0)
     setTimeout(() => { if (ghost.parentNode) document.body.removeChild(ghost) }, 0)
@@ -1010,7 +1010,7 @@ function GridCell({
           <>
             {event && (
               <div style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', opacity: cityHovered ? 1 : 0, transition: 'opacity 0.12s ease', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/>
                   <polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/>
                   <line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
@@ -1028,7 +1028,7 @@ function GridCell({
         style={{
           ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
           cursor: 'pointer', zIndex: isVenueActive ? 300 : 1, overflow: isVenueActive ? 'visible' : 'hidden',
-          color: '#f1f5f9',
+          color: 'var(--text-primary)',
           ...dropHighlight,
         }}>
         {isVenueActive ? (
@@ -1049,14 +1049,14 @@ function GridCell({
           </div>
         ) : null}
         {dropOpen && dropPos && createPortal(
-          <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0d1f3c', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
+          <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: 'var(--bg-card)', border: '0.5px solid var(--border-card)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
             {ALL_STATUSES.map(opt => {
               const s = STATUS_STYLES[opt] || STATUS_STYLES.tentative
               const isActive = event.status === opt
               return (
                 <div key={opt} onClick={() => handleSelectStatus(opt)}
                   style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
@@ -1087,7 +1087,7 @@ function YearGrid({
   const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
 
   return (
-    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.10)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-card-hover)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <div style={{ overflow: 'auto', flex: 1 }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
             <thead>
@@ -1099,7 +1099,7 @@ function YearGrid({
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || '#C9A84C'
                   return (
-                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: '#0d1f3c', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--bg-card)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
@@ -1127,19 +1127,19 @@ function YearGrid({
             <tbody>
               {rows.map(row => {
                 const isCurrentWeek = row.saturday === currentWeekendSaturday
-                const rowBg = isCurrentWeek ? 'rgba(51,255,153,0.06)' : (row.weekNum % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent')
+                const rowBg = isCurrentWeek ? 'rgba(51,255,153,0.06)' : (row.weekNum % 2 === 0 ? 'var(--bg-card)' : 'transparent')
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: isCurrentWeek ? '3px solid #33FF99' : '3px solid transparent', padding: '0 8px', fontSize: 11, color: '#94a3b8', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid var(--bg-card)', borderLeft: isCurrentWeek ? '3px solid #33FF99' : '3px solid transparent', padding: '0 8px', fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
                       {row.weekNum}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: row.holiday ? '3px solid #63b3ed' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid var(--bg-card)', borderLeft: row.holiday ? '3px solid var(--text-secondary)' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
                       <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: '#cbd5e1', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid var(--bg-card)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.saturday, 'Sat')}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: '#cbd5e1', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '1px solid var(--bg-card)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.sunday, 'Sun')}
                     </td>
                     {yearTours.map((tour, ti) => {
@@ -1460,7 +1460,7 @@ function DraftScheduleContent() {
   }
 
   if (loading) return (
-    <div style={{ padding: '28px', color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading booking grid...</div>
+    <div style={{ padding: '28px', color: 'var(--text-secondary)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading booking grid...</div>
   )
 
   const { rows, yearTours, eventMap } = buildYearData(selectedYear)
@@ -1481,7 +1481,7 @@ function DraftScheduleContent() {
           {pastWeekCount > 0 && (
             <button
               onClick={() => setShowPastWeeks(s => !s)}
-              style={{ background: '#FFD60A', color: '#0a1628', fontWeight: 700, borderRadius: 999, fontSize: 12, padding: '4px 14px', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', border: 'none', flexShrink: 0 }}
+              style={{ background: '#FFD60A', color: 'var(--bg)', fontWeight: 700, borderRadius: 999, fontSize: 12, padding: '4px 14px', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', border: 'none', flexShrink: 0 }}
             >
               {showPastWeeks ? 'Hide Past Weeks' : `Show Past Weeks (${pastWeekCount})`}
             </button>
@@ -1540,10 +1540,10 @@ const CS_COLS = [
 ]
 
 const glassSelect = {
-  background: '#0d1f3a',
-  border: '0.5px solid rgba(255,255,255,0.15)',
+  background: 'var(--bg-card)',
+  border: '0.5px solid var(--border-card)',
   borderRadius: 8,
-  color: '#f1f5f9',
+  color: 'var(--text-primary)',
   padding: '8px 12px',
   fontSize: 13,
   fontFamily: 'Plus Jakarta Sans, sans-serif',
@@ -1567,27 +1567,27 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
     height: 48,
     verticalAlign: 'middle',
     fontSize: 13,
-    borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+    borderBottom: '0.5px solid var(--bg-card)',
   }
 
   return (
     <tr
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent', cursor: 'pointer' }}
+      style={{ background: hovered ? 'var(--bg-card)' : 'transparent', cursor: 'pointer' }}
     >
-      <td style={{ ...cell, color: '#f1f5f9', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={onRowClick}>{fmtLoadIn(ev.load_in_date)}</td>
-      <td style={{ ...cell, color: '#f1f5f9', fontWeight: 500 }} onClick={onRowClick}>{ev.city || '—'}</td>
-      <td style={{ ...cell, color: '#94a3b8' }} onClick={onRowClick}>{ev.country || '—'}</td>
-      <td style={{ ...cell, color: '#94a3b8' }} onClick={onRowClick}>{ev.venue_name || '—'}</td>
-      <td style={{ ...cell, fontWeight: 600, color: ev.tours?.color || '#94a3b8' }} onClick={onRowClick}>{ev.tours?.name || '—'}</td>
+      <td style={{ ...cell, color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={onRowClick}>{fmtLoadIn(ev.load_in_date)}</td>
+      <td style={{ ...cell, color: 'var(--text-primary)', fontWeight: 500 }} onClick={onRowClick}>{ev.city || '—'}</td>
+      <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.country || '—'}</td>
+      <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.venue_name || '—'}</td>
+      <td style={{ ...cell, fontWeight: 600, color: ev.tours?.color || 'var(--text-secondary)' }} onClick={onRowClick}>{ev.tours?.name || '—'}</td>
       <td style={{ ...cell }} onClick={onRowClick}>
         <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
           {statusLabel(ev.status)}
         </span>
       </td>
-      <td style={{ ...cell, textAlign: 'center', color: '#f1f5f9' }} onClick={onRowClick}>{ev.num_shows != null ? ev.num_shows : '—'}</td>
-      <td style={{ ...cell, color: '#94a3b8' }}
+      <td style={{ ...cell, textAlign: 'center', color: 'var(--text-primary)' }} onClick={onRowClick}>{ev.num_shows != null ? ev.num_shows : '—'}</td>
+      <td style={{ ...cell, color: 'var(--text-secondary)' }}
         onClick={e => { e.stopPropagation(); setDraft(ev.booker || ''); setEditingBooker(ev.id) }}
       >
         {isEditing ? (
@@ -1601,10 +1601,10 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
               else if (e.key === 'Escape') setEditingBooker(null)
             }}
             onClick={e => e.stopPropagation()}
-            style={{ background: 'rgba(255,255,255,0.08)', border: '0.5px solid #33FF99', borderRadius: 6, color: '#f1f5f9', fontSize: 13, padding: '4px 8px', outline: 'none', width: '100%', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+            style={{ background: 'var(--bg-card)', border: '0.5px solid #33FF99', borderRadius: 6, color: 'var(--text-primary)', fontSize: 13, padding: '4px 8px', outline: 'none', width: '100%', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
           />
         ) : (
-          ev.booker || <span style={{ color: '#475569' }}>—</span>
+          ev.booker || <span style={{ color: 'var(--text-secondary)' }}>—</span>
         )}
       </td>
     </tr>
@@ -1688,7 +1688,7 @@ function ConfirmedScheduleTab() {
   }
 
   if (loading) return (
-    <div style={{ padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+    <div style={{ padding: 28, color: 'var(--text-secondary)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       Loading confirmed events...
     </div>
   )
@@ -1698,7 +1698,7 @@ function ConfirmedScheduleTab() {
 
       {/* Top bar: count */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <span style={{ color: '#94a3b8', fontSize: 12 }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
           {sorted.length} confirmed event{sorted.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -1723,7 +1723,7 @@ function ConfirmedScheduleTab() {
           style={{ ...glassSelect, cursor: 'text', minWidth: 180 }}
         />
         {anyFilter && (
-          <button onClick={clearFilters} style={{ background: 'transparent', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, color: '#94a3b8', padding: '7px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <button onClick={clearFilters} style={{ background: 'transparent', border: '0.5px solid var(--border-card)', borderRadius: 6, color: 'var(--text-secondary)', padding: '7px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Clear filters
           </button>
         )}
@@ -1732,14 +1732,14 @@ function ConfirmedScheduleTab() {
       {/* Table / empty state */}
       {sorted.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12 }}>
-          <IconCalendarOff size={32} color="#64748b" />
-          <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600, margin: 0 }}>No confirmed events match your filters</p>
+          <IconCalendarOff size={32} color="var(--text-muted)" />
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600, margin: 0 }}>No confirmed events match your filters</p>
         </div>
       ) : (
-        <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ border: '0.5px solid var(--border-card)', borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#0d1f3a' }}>
+              <tr style={{ background: 'var(--bg-card)' }}>
                 {CS_COLS.map(col => (
                   <th
                     key={col.key}
@@ -1792,11 +1792,11 @@ function PlaceholderTab({ label }) {
       height: 400,
       gap: 12,
     }}>
-      <IconClock size={32} color="#64748b" />
-      <p style={{ color: '#64748b', fontSize: 14, fontWeight: 600, margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <IconClock size={32} color="var(--text-muted)" />
+      <p style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600, margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
         {label}
       </p>
-      <p style={{ color: '#94a3b8', fontSize: 13, margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
         Coming soon
       </p>
     </div>
@@ -1823,14 +1823,14 @@ function BCContent() {
   const activeTab = searchParams.get('tab') || 'draft-schedule'
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       <TopNav />
 
-      <div style={{ marginTop: 62, flexShrink: 0, padding: '18px 28px 0', background: 'var(--bg)' }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#f1f5f9', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Booking & Contracts</div>
-        <div style={{ fontSize: 13, color: '#94a3b8', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: 2 }}>2026</div>
+      <div style={{ marginTop: 88, flexShrink: 0, padding: '18px 28px 0', background: 'var(--bg)' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Booking & Contracts</div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: 2 }}>2026</div>
 
-        <div style={{ display: 'flex', gap: 0, borderBottom: '0.5px solid rgba(255,255,255,0.08)', marginTop: 16, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: '0.5px solid var(--bg-card)', marginTop: 16, overflowX: 'auto' }}>
           {TABS.map(tab => (
             <div
               key={tab.slug}
@@ -1840,7 +1840,7 @@ function BCContent() {
                 fontSize: 13,
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
                 fontWeight: activeTab === tab.slug ? 600 : 400,
-                color: activeTab === tab.slug ? '#f1f5f9' : '#64748b',
+                color: activeTab === tab.slug ? 'var(--text-primary)' : 'var(--text-muted)',
                 borderBottom: activeTab === tab.slug ? '2px solid #33FF99' : '2px solid transparent',
                 marginBottom: -1,
                 cursor: 'pointer',
@@ -1872,7 +1872,7 @@ export default function BCPage() {
       <div style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'center', height: '100vh',
-        color: '#94a3b8', fontSize: 14,
+        color: 'var(--text-secondary)', fontSize: 14,
         fontFamily: 'Plus Jakarta Sans, sans-serif',
       }}>
         Loading...
