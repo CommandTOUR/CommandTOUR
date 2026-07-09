@@ -162,7 +162,7 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
           ? !row.travel_date
           : (!row.travel_date || !row.airline || !row.flight_number || !row.airport)
         return (
-          <div key={row.id} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: idx < rows.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
+          <div key={row.id ?? `synthetic-${row.staff_id}`} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: idx < rows.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
@@ -170,13 +170,13 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
               {showWarning && <WarningTriangle />}
               <span style={{ fontSize: 13, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
             </div>
-            <div style={CELL}><TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row.id, 'travel_type', v)} /></div>
-            <div style={CELL}><EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row.id, 'travel_date', v)} /></div>
-            <div style={CELL}><EditableCell value={row.airline} onSave={v => onUpdate(row.id, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : 'Airline'} /></div>
-            <div style={CELL}><EditableCell value={row.flight_number} onSave={v => onUpdate(row.id, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : 'Flight #'} /></div>
-            <div style={CELL}><EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row.id, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} /></div>
-            <div style={CELL}><EditableCell value={row.airport} onSave={v => onUpdate(row.id, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : 'Airport'} /></div>
-            <div style={CELL}><EditableCell value={row.transport} onSave={v => onUpdate(row.id, 'transport', v)} placeholder="Transport" /></div>
+            <div style={CELL}><TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row, 'travel_type', v)} /></div>
+            <div style={CELL}><EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row, 'travel_date', v)} /></div>
+            <div style={CELL}><EditableCell value={row.airline} onSave={v => onUpdate(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : 'Airline'} /></div>
+            <div style={CELL}><EditableCell value={row.flight_number} onSave={v => onUpdate(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : 'Flight #'} /></div>
+            <div style={CELL}><EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} /></div>
+            <div style={CELL}><EditableCell value={row.airport} onSave={v => onUpdate(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : 'Airport'} /></div>
+            <div style={CELL}><EditableCell value={row.transport} onSave={v => onUpdate(row, 'transport', v)} placeholder="Transport" /></div>
             <div style={{ ...CELL, justifyContent: 'center', padding: 0 }}>
               <div onClick={() => onRemove(row.id)} style={{ fontSize: 18, color: '#64748b', cursor: 'pointer', opacity: 0.4, lineHeight: 1 }}
                 onMouseEnter={e => { e.currentTarget.style.color = '#e05252'; e.currentTarget.style.opacity = '1' }}
@@ -220,22 +220,77 @@ export default function TravelHotelTab({ eventId, event }) {
       supabase.from('event_travel_departures').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_hotel').select('*').eq('event_id', eventId).maybeSingle(),
       supabase.from('event_hotel_rooms').select('*, s1:staff_id_1(id, first_name, last_name), s2:staff_id_2(id, first_name, last_name)').eq('event_id', eventId),
-      supabase.from('event_staff').select('staff_id, staff(id, first_name, last_name)').eq('event_id', eventId).eq('confirmed', true),
+      supabase.from('staff_assignments')
+        .select(`
+          staff_id,
+          status,
+          confirmed,
+          staff:staff_id(id, first_name, last_name, display_name)
+        `)
+        .eq('event_id', eventId)
+        .not('staff_id', 'is', null),
       event.tour_id ? supabase.from('tours').select('id, name, color').eq('id', event.tour_id).single() : Promise.resolve({ data: null }),
     ])
-    const confirmedStaffIds = new Set((staffRes.data || []).map(s => s.staff_id).filter(Boolean))
-    setArrivals((arrRes.data || [])
-      .filter(r => confirmedStaffIds.has(r.staff_id))
-      .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })))
-    setDepartures((depRes.data || [])
-      .filter(r => confirmedStaffIds.has(r.staff_id))
-      .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })))
+    const confirmedRows = (staffRes.data || []).filter(r => r.confirmed === true || r.status === 'confirmed')
+    const confirmedStaffIds = new Set(confirmedRows.map(r => r.staff_id).filter(Boolean))
+
+    const existingArrivalStaffIds = new Set((arrRes.data || []).map(r => r.staff_id))
+    const missingArrivals = confirmedRows
+      .filter(r => !existingArrivalStaffIds.has(r.staff_id))
+      .map(r => ({
+        id: null,
+        event_id: eventId,
+        staff_id: r.staff_id,
+        staff: r.staff,
+        travel_type: 'flight',
+        travel_date: null,
+        airline: null,
+        flight_number: null,
+        arrival_time: null,
+        airport: null,
+        transport: null,
+        flagged: true,
+        _synthetic: true
+      }))
+    setArrivals([
+      ...(arrRes.data || [])
+        .filter(r => confirmedStaffIds.has(r.staff_id))
+        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
+      ...missingArrivals
+        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
+    ])
+
+    const existingDepartureStaffIds = new Set((depRes.data || []).map(r => r.staff_id))
+    const missingDepartures = confirmedRows
+      .filter(r => !existingDepartureStaffIds.has(r.staff_id))
+      .map(r => ({
+        id: null,
+        event_id: eventId,
+        staff_id: r.staff_id,
+        staff: r.staff,
+        travel_type: 'flight',
+        travel_date: null,
+        airline: null,
+        flight_number: null,
+        departure_time: null,
+        airport: null,
+        transport: null,
+        flagged: true,
+        _synthetic: true
+      }))
+    setDepartures([
+      ...(depRes.data || [])
+        .filter(r => confirmedStaffIds.has(r.staff_id))
+        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
+      ...missingDepartures
+        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
+    ])
     if (!hotelRes.error && hotelRes.data) {
       setHotel(hotelRes.data)
       setHotelForm({ hotel_name: hotelRes.data.hotel_name || '', address: hotelRes.data.address || '', check_in_date: hotelRes.data.check_in_date || '', check_out_date: hotelRes.data.check_out_date || '', notes: hotelRes.data.notes || '' })
     }
     setRooms(roomsRes.data || [])
-    setConfirmedStaff((staffRes.data || []).map(s => s.staff).filter(Boolean))
+    setConfirmedStaff(confirmedRows.map(r => r.staff).filter(Boolean))
     if (tourRes.data) setTour(tourRes.data)
     setLoading(false)
   }
@@ -250,16 +305,34 @@ export default function TravelHotelTab({ eventId, event }) {
     else setDepartureSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }))
   }
 
-  const handleUpdateArrival = async (id, field, value) => {
+  const handleUpdateArrival = async (row, field, value) => {
     const s = getSupabase()
-    const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', id)
-    if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
+    if (row.id == null) {
+      const { data, error: insertError } = await s.from('event_travel_arrivals')
+        .insert([{ event_id: eventId, staff_id: row.staff_id }])
+        .select().single()
+      if (insertError || !data) { console.error('Failed to create arrival:', insertError); setSaveError('Failed to save. Please try again.'); return }
+      const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', data.id)
+      if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
+    } else {
+      const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', row.id)
+      if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
+    }
     fetchAll()
   }
-  const handleUpdateDeparture = async (id, field, value) => {
+  const handleUpdateDeparture = async (row, field, value) => {
     const s = getSupabase()
-    const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', id)
-    if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
+    if (row.id == null) {
+      const { data, error: insertError } = await s.from('event_travel_departures')
+        .insert([{ event_id: eventId, staff_id: row.staff_id }])
+        .select().single()
+      if (insertError || !data) { console.error('Failed to create departure:', insertError); setSaveError('Failed to save. Please try again.'); return }
+      const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', data.id)
+      if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
+    } else {
+      const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', row.id)
+      if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
+    }
     fetchAll()
   }
   const handleRemoveArrival = async (id) => {

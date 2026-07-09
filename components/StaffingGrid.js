@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
+import { confirmStaffMember } from '@/lib/confirmStaffMember'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -641,7 +642,7 @@ function CheckboxIcon({ isChecked }) {
   )
 }
 
-function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourceEventId, tourId, onClose, onRefreshGrid }) {
+function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourceEventId, tourId, assignments, onClose, onRefreshGrid }) {
   const [checked, setChecked] = useState([])
   const [copying, setCopying] = useState(false)
   const [done, setDone] = useState(null)
@@ -671,7 +672,19 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
     if (checked.length === 0) return
     setCopying(true)
     const supabase = getSupabase()
-    const rows = selectedCells.filter(c => c.staffId)
+    const rows = selectedCells.filter(c => c.staffId).map(c => {
+      const sourceAssignment = assignments.find(a =>
+        a.staff_id === c.staffId &&
+        a.tour_position_id === c.tourPositionId &&
+        a.slot_index === c.slotIndex &&
+        a.event_id === sourceEventId
+      )
+      return {
+        ...c,
+        status: sourceAssignment?.status || 'pending',
+        confirmed: sourceAssignment?.confirmed || false,
+      }
+    })
     for (const evId of checked) {
       const targetEvent = allEvents.find(e => e.id === evId)
       if (!targetEvent) continue
@@ -683,11 +696,11 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
             .select('id').eq('tour_position_id', targetTp.id).eq('slot_index', c.slotIndex).eq('event_id', evId).limit(1)
           if (existing && existing.length > 0) {
             const { error } = await supabase.from('staff_assignments')
-              .update({ staff_id: c.staffId, status: 'confirmed', confirmed: true }).eq('id', existing[0].id)
+              .update({ staff_id: c.staffId, status: c.status, confirmed: c.confirmed }).eq('id', existing[0].id)
             if (error) console.error('[copy] update error:', error)
           } else {
             const { error } = await supabase.from('staff_assignments')
-              .insert([{ tour_position_id: targetTp.id, slot_index: c.slotIndex, event_id: evId, staff_id: c.staffId, status: 'confirmed', confirmed: true }])
+              .insert([{ tour_position_id: targetTp.id, slot_index: c.slotIndex, event_id: evId, staff_id: c.staffId, status: c.status, confirmed: c.confirmed }])
             if (error) console.error('[copy] insert error:', error)
           }
         } catch (err) {
@@ -1122,6 +1135,14 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       .single()
     if (error) return { error }
     setAssignments(prev => [...prev, { ...data, staff: staffMember }])
+    if (data?.confirmed && data?.staff_id) {
+      await confirmStaffMember({
+        supabase,
+        eventId: event.id,
+        staffId: data.staff_id,
+        confirm: true
+      })
+    }
     return { error: null }
   }
 
@@ -1137,6 +1158,15 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
         .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: resolvedAssignment.staff_id, event_id: event.id, status, confirmed }])
         .select().single()
       if (!error && data) setAssignments(prev => [...prev, { ...data, staff: resolvedAssignment.staff }])
+    }
+    const staffId = resolvedAssignment.staff_id
+    if (staffId) {
+      await confirmStaffMember({
+        supabase,
+        eventId: event.id,
+        staffId,
+        confirm: status === 'confirmed'
+      })
     }
   }
 
@@ -1433,7 +1463,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     const slotIndex = Number(slotIndexStr)
     const tp = tourPositionsById[tpId]
     const resolved = resolveAssignment(tpId, slotIndex, eventId)
-    return { positionId: tp?.position_id, slotIndex, staffId: resolved?.staff_id || null }
+    return { positionId: tp?.position_id, tourPositionId: tpId, slotIndex, staffId: resolved?.staff_id || null }
   }).filter(c => c.staffId && c.positionId)
 
   let globalRowIndex = 0
@@ -1673,6 +1703,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
           tours={tours}
           sourceEventId={focusedCell?.eventId}
           tourId={tourId}
+          assignments={assignments}
           onClose={() => { setCopyModalOpen(false); setSelectedKeys(new Set()) }}
           onRefreshGrid={() => { reload(); showToast('Staff copied successfully') }}
         />

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
+import { confirmStaffMember } from '@/lib/confirmStaffMember'
 import { IconX, IconChevronDown, IconChevronRight, IconFlag } from '@tabler/icons-react'
 
 function staffDisplayName(staff) {
@@ -146,14 +147,14 @@ function InlineTextCell({ value, disabled, onSave }) {
   )
 }
 
-function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssign, onRemove, onSaveField, isLast, hasConflict }) {
+function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssign, onRemove, onSaveField, onSetStatus, isLast, hasConflict }) {
   const [picking, setPicking] = useState(false)
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '10px 16px', borderBottom: isLast ? 'none' : '1px solid var(--border-card)', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        {!hasStaff && <IconFlag size={12} color="var(--color-mint)" style={{ flexShrink: 0 }} />}
+        {!hasStaff && <IconFlag size={12} color="var(--color-yellow)" style={{ flexShrink: 0 }} />}
         <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
       </div>
 
@@ -169,13 +170,18 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
             {staffDisplayName(assignment.staff)}
           </span>
         ) : (
-          <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--color-mint)', cursor: 'pointer' }}>+ Assign</span>
+          <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--color-yellow)', cursor: 'pointer' }}>+ Assign</span>
         )}
       </div>
 
       <div>
         {assignment?.status ? (
-          <span style={{ fontSize: 12, fontWeight: 600, color: STATUS_COLORS[assignment.status] || 'var(--text-muted)' }}>{formatStatusLabel(assignment.status)}</span>
+          <span
+            onClick={() => onSetStatus(assignment, assignment.status === 'confirmed' ? 'pending' : 'confirmed')}
+            style={{ fontSize: 12, fontWeight: 600, color: STATUS_COLORS[assignment.status] || 'var(--text-muted)', cursor: 'pointer' }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.8' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          >{formatStatusLabel(assignment.status)}</span>
         ) : (
           <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
         )}
@@ -467,6 +473,14 @@ export default function StaffingTab({ tourId, eventId, event }) {
         .single()
       if (!error && data) {
         setAssignments(prev => [...prev, { ...data, staff: staffMember }])
+        if (data?.confirmed && data?.staff_id) {
+          await confirmStaffMember({
+            supabase,
+            eventId,
+            staffId: data.staff_id,
+            confirm: true
+          })
+        }
       }
     }
   }
@@ -517,6 +531,28 @@ export default function StaffingTab({ tourId, eventId, event }) {
     const supabase = getSupabase()
     const { error } = await supabase.from('staff_assignments').update({ [field]: value }).eq('id', assignment.id)
     if (!error) setAssignments(prev => prev.map(a => a.id === assignment.id ? { ...a, [field]: value } : a))
+  }
+
+  const handleSetStatus = async (assignment, newStatus) => {
+    const supabase = getSupabase()
+    const confirmed = newStatus === 'confirmed'
+    const { error } = await supabase
+      .from('staff_assignments')
+      .update({ status: newStatus, confirmed })
+      .eq('id', assignment.id)
+    if (!error) {
+      setAssignments(prev => prev.map(a =>
+        a.id === assignment.id
+          ? { ...a, status: newStatus, confirmed }
+          : a
+      ))
+      await confirmStaffMember({
+        supabase,
+        eventId,
+        staffId: assignment.staff_id,
+        confirm: confirmed
+      })
+    }
   }
 
   if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
@@ -596,6 +632,7 @@ export default function StaffingTab({ tourId, eventId, event }) {
                       onAssign={handleAssign}
                       onRemove={handleRemove}
                       onSaveField={handleSaveField}
+                      onSetStatus={handleSetStatus}
                     />
                   )
                 }}

@@ -41,9 +41,19 @@ export default function StaffProfile() {
       const [personRes, airlinesRes, eventsRes, staffDeptsRes] = await Promise.all([
         supabase.from('staff').select('*').eq('id', staffId).single(),
         supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
-        supabase.from('event_staff')
-          .select('position, status, confirmed, events(id, city, state, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color))')
-          .eq('staff_id', staffId),
+        supabase.from('staff_assignments')
+          .select(`
+            id,
+            status,
+            confirmed,
+            slot_index,
+            event_id,
+            tour_position_id,
+            events:event_id(id, city, state, country, load_in_date, load_out_date, event_type, tour_id, tours(name, color)),
+            tour_positions:tour_position_id(position_id, positions:position_id(title))
+          `)
+          .eq('staff_id', staffId)
+          .not('event_id', 'is', null),
         supabase.from('staff_departments').select('id, name').order('sort_order', { ascending: true }),
       ])
       if (!personRes.error) setPerson(personRes.data)
@@ -178,7 +188,7 @@ export default function StaffProfile() {
           {ev.tours?.name || '—'}
         </div>
         <div style={{ flex: '0 0 160px', color: 'var(--text-secondary)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {es.position}
+          {es.tour_positions?.positions?.title}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto', flexShrink: 0 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
