@@ -62,11 +62,7 @@ export default function Login() {
       height: '100vh',
       overflow: 'hidden',
       position: 'relative',
-      backgroundImage: 'url("/images/CommandTOUR_Splash-1.png")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      backgroundColor: '#0a1628',
+      background: 'var(--bg)',
     }}>
       <div style={{
         position: 'absolute',
