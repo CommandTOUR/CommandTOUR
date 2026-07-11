@@ -20,7 +20,7 @@ export default function NewStaff() {
     employee_type: 'staff',
     first_name: '', middle_name: '', last_name: '', suffix: '',
     cell_phone: '', email: '', dob: '',
-    address: '', city: '', state: '', zip: '', country: '',
+    mailing_address: '',
     home_airport: '', passport_nationality: '', passport_number: '', passport_expiry: '',
     allergies: '', notes: '',
   })
@@ -49,11 +49,7 @@ export default function NewStaff() {
         phone: form.cell_phone || null,
         email: form.email || null,
         dob: form.dob || null,
-        address: form.address || null,
-        city: form.city || null,
-        state: form.state || null,
-        zip: form.zip || null,
-        country: form.country || null,
+        mailing_address: form.mailing_address || null,
         home_airport: form.home_airport || null,
         passport_nationality: form.passport_nationality || null,
         passport_number: form.passport_number || null,
@@ -175,27 +171,9 @@ export default function NewStaff() {
                 <input style={inputStyle} type="date" value={form.dob} onChange={e => set('dob', e.target.value)} />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.6fr 0.8fr 1fr', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Mailing Address</label>
-                <input style={inputStyle} placeholder="Street address" value={form.address} onChange={e => set('address', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>City</label>
-                <input style={inputStyle} placeholder="City" value={form.city} onChange={e => set('city', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>State</label>
-                <input style={inputStyle} placeholder="State" value={form.state} onChange={e => set('state', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>ZIP</label>
-                <input style={inputStyle} placeholder="ZIP" value={form.zip} onChange={e => set('zip', e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>Country</label>
-                <input style={inputStyle} placeholder="Country" value={form.country} onChange={e => set('country', e.target.value)} />
-              </div>
+            <div>
+              <label style={labelStyle}>Mailing Address</label>
+              <textarea style={{ ...inputStyle, height: 72, resize: 'vertical' }} rows={3} placeholder="Street, city, state, ZIP, country" value={form.mailing_address} onChange={e => set('mailing_address', e.target.value)} />
             </div>
           </div>
 

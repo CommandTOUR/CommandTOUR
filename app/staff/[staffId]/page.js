@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
-import { IconPrinter } from '@tabler/icons-react'
+import { IconPrinter, IconFileText, IconCamera } from '@tabler/icons-react'
 
 function EventListHeader() {
   return (
@@ -19,18 +19,55 @@ function EventListHeader() {
   )
 }
 
+const labelStyle = {
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--text-muted)',
+  marginBottom: 2,
+}
+
+const valueStyle = {
+  fontSize: 14,
+  color: 'var(--text-primary)',
+}
+
+function Field({ label, value }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={labelStyle}>{label}</div>
+      <div style={valueStyle}>{value || '—'}</div>
+    </div>
+  )
+}
+
+function UploadSlot({ label, url, icon: Icon }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          <img src={url} alt={label} style={{ width: 80, height: 100, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border-card)', display: 'block' }} />
+        </a>
+      ) : (
+        <div style={{ width: 80, height: 100, borderRadius: 4, border: '1px dashed var(--border-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={22} stroke={1.5} color="var(--text-muted)" />
+        </div>
+      )}
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>{label}</div>
+      {!url && <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>Upload in Edit Profile</div>}
+    </div>
+  )
+}
+
 export default function StaffProfile() {
   const router = useRouter()
   const { staffId } = useParams()
   const [person, setPerson] = useState(null)
-  const [airlines, setAirlines] = useState([])
+  const [staffAirports, setStaffAirports] = useState([])
   const [events, setEvents] = useState([])
-  const [staffDepts, setStaffDepts] = useState([])
   const [showPast, setShowPast] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [showRemoveModal, setShowRemoveModal] = useState(false)
-  const [removing, setRemoving] = useState(false)
-  const [toast, setToast] = useState(null)
   const [showMap, setShowMap] = useState({})
   const [stickyVisible, setStickyVisible] = useState(false)
   const nameRef = useRef(null)
@@ -38,9 +75,19 @@ export default function StaffProfile() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [personRes, airlinesRes, eventsRes, staffDeptsRes] = await Promise.all([
-        supabase.from('staff').select('*').eq('id', staffId).single(),
-        supabase.from('staff_airlines').select('*').eq('staff_id', staffId).order('preferred', { ascending: false }),
+      const [personRes, airlinesRes, staffAirportsRes, eventsRes] = await Promise.all([
+        supabase.from('staff')
+          .select('*')
+          .eq('id', staffId)
+          .single(),
+        supabase.from('staff_airlines')
+          .select('*')
+          .eq('staff_id', staffId)
+          .order('preferred', { ascending: false }),
+        supabase.from('staff_airports')
+          .select('*')
+          .eq('staff_id', staffId)
+          .order('sort_order', { ascending: true }),
         supabase.from('staff_assignments')
           .select(`
             id,
@@ -54,11 +101,17 @@ export default function StaffProfile() {
           `)
           .eq('staff_id', staffId)
           .not('event_id', 'is', null),
-        supabase.from('staff_departments').select('id, name').order('sort_order', { ascending: true }),
       ])
-      if (!personRes.error) setPerson(personRes.data)
-      if (!airlinesRes.error) setAirlines(airlinesRes.data || [])
-      if (!staffDeptsRes.error) setStaffDepts(staffDeptsRes.data || [])
+      if (personRes.error) console.error('Staff fetch error:', personRes.error)
+      if (!personRes.error && personRes.data) {
+        const person = { ...personRes.data, staff_airlines: airlinesRes.data || [] }
+        if (person.staff_department_id) {
+          const { data: dept } = await supabase.from('staff_departments').select('name').eq('id', person.staff_department_id).single()
+          person.staff_departments = dept ? { name: dept.name } : null
+        }
+        setPerson(person)
+      }
+      if (!staffAirportsRes.error) setStaffAirports(staffAirportsRes.data || [])
       if (!eventsRes.error) {
         const eventsData = (eventsRes.data || []).sort((a, b) => new Date(a.events?.load_in_date || a.load_in_date) - new Date(b.events?.load_in_date || b.load_in_date))
         setEvents(eventsData)
@@ -91,24 +144,18 @@ export default function StaffProfile() {
     return `${fmtD(s)} – ${fmtD(e)}`
   }
 
-  const handleRemove = async () => {
-    setRemoving(true)
-    const supabase = getSupabase()
-    const { error } = await supabase.from('staff').delete().eq('id', staffId)
-    if (!error) {
-      setToast(`${fullName} has been removed`)
-      setTimeout(() => router.push('/staff'), 1500)
-    } else {
-      setRemoving(false)
-      setShowRemoveModal(false)
-    }
+  const isExpiringSoon = (dateStr) => {
+    if (!dateStr) return false
+    const expiry = new Date(dateStr + 'T12:00:00')
+    const sixMonthsOut = new Date()
+    sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6)
+    return expiry <= sixMonthsOut
   }
 
-  const handleDepartmentChange = async (newDeptId) => {
-    const supabase = getSupabase()
-    const value = newDeptId || null
-    const { error } = await supabase.from('staff').update({ staff_department_id: value }).eq('id', staffId)
-    if (!error) setPerson(prev => ({ ...prev, staff_department_id: value }))
+  const formatPassportDate = (dateStr) => {
+    if (!dateStr) return '—'
+    const d = new Date(dateStr + 'T12:00:00')
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()
   }
 
   useEffect(() => {
@@ -126,13 +173,6 @@ export default function StaffProfile() {
       {title}
     </div>
   )
-
-  const field = (label, value) => value ? (
-    <div>
-      <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{value}</div>
-    </div>
-  ) : null
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -155,6 +195,8 @@ export default function StaffProfile() {
   const upcomingEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') >= now)
   const pastEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') < now)
 
+  const addressLines = (person.mailing_address || '').split('\n').map(l => l.trim()).filter(Boolean)
+
   const STAFF_STATUS = {
     confirmed: { color: '#33FF99', label: 'Confirmed' },
     pending: { color: '#FFD60A', label: 'Pending' },
@@ -169,7 +211,7 @@ export default function StaffProfile() {
   const EventTile = ({ es }) => {
     const ev = es.events
     if (!ev) return null
-    const tourColor = ev.tours?.color || 'var(--mint)'
+    const tourColor = ev.tours?.color || 'var(--color-mint)'
     const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
     return (
       <div
@@ -224,132 +266,153 @@ export default function StaffProfile() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => router.push('/staff')}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-mint)', background: 'transparent', color: 'var(--color-mint)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-mint-bg)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               ← Staff
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--color-mint-bg)', border: '0.5px solid var(--color-mint-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: 'var(--color-mint)', flexShrink: 0 }}>
                 {initials}
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div ref={nameRef} style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{fullName}</div>
+                  <div ref={nameRef} style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{fullName}</div>
                   {person.attention_flag && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: '#fef9c3', border: '1px solid #fde68a' }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706' }} />
-                      <span style={{ fontSize: 11, color: '#854d0e', fontWeight: 500 }}>{person.attention_note || 'Needs Attention'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: 'var(--color-yellow-bg)', border: '1px solid var(--color-yellow-border)' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-yellow)' }} />
+                      <span style={{ fontSize: 11, color: 'var(--color-yellow)', fontWeight: 500 }}>{person.attention_note || 'Needs Attention'}</span>
                     </div>
                   )}
                 </div>
-                {person.email && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 3 }}>{person.email}</div>}
+                {person.display_name && <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>{person.display_name}</div>}
               </div>
             </div>
           </div>
           <button
             onClick={() => router.push(`/staff/${staffId}/edit`)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-mint)', background: 'transparent', color: 'var(--color-mint)', cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-mint-bg)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             Edit Profile
           </button>
         </div>
 
-        {/* Department dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, flexShrink: 0 }}>Department</span>
-          <select
-            value={person.staff_department_id || ''}
-            onChange={e => handleDepartmentChange(e.target.value)}
-            style={{
-              fontFamily: 'Plus Jakarta Sans, sans-serif',
-              background: 'var(--bg-card)',
-              border: '0.5px solid var(--border-card)',
-              borderRadius: 8,
-              color: 'var(--text-primary)',
-              fontSize: 13,
-              padding: '8px 12px',
-              width: 240,
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="">Select department...</option>
-            {staffDepts.map(d => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
-        </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Contact + Travel */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              {sectionLabel('Contact')}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {field('Cell Phone', person.phone)}
-                {field('Email', person.email)}
-                {field('Date of Birth', fmt(person.dob))}
-                {(person.address || person.city) && (
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Mailing Address</div>
-                    <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
-                      {person.address && <div>{person.address}</div>}
-                      <div>{[person.city, person.state, person.zip, person.country].filter(Boolean).join(', ')}</div>
-                    </div>
-                  </div>
+          {/* Basic Info / Travel / Passport */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: 16 }}>
+
+            {/* Card 1 — Basic Info */}
+            <div className="glass-card" style={{ padding: 24 }}>
+              {sectionLabel('Basic Info')}
+              <Field label="Display Name" value={person.display_name} />
+              <Field label="Name" value={[person.first_name, person.middle_name, person.last_name, person.suffix].filter(Boolean).join(' ')} />
+              <Field label="Department" value={person.staff_departments?.name} />
+              <Field label="Cell Phone" value={person.phone} />
+              <div style={{ marginBottom: 16 }}>
+                <div style={labelStyle}>Email</div>
+                {person.email ? (
+                  <a href={`mailto:${person.email}`} style={{ fontSize: 14, color: 'var(--color-mint)', textDecoration: 'none' }}>{person.email}</a>
+                ) : (
+                  <div style={valueStyle}>—</div>
                 )}
               </div>
+              <Field label="Date of Birth" value={fmt(person.dob)} />
+              <div style={{ marginBottom: 0 }}>
+                <div style={labelStyle}>Mailing Address</div>
+                <div style={{ ...valueStyle, lineHeight: 1.6 }}>
+                  {addressLines.length > 0 ? addressLines.map((line, i) => <div key={i}>{line}</div>) : '—'}
+                </div>
+              </div>
             </div>
 
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              {sectionLabel('Travel')}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: airlines.length > 0 ? 16 : 0 }}>
-                {field('Home Airport', person.home_airport)}
-                {field('Passport Nationality', person.passport_nationality)}
-                {field('Passport Number', person.passport_number)}
-                {field('Passport Expiry', fmt(person.passport_expiry))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Card 2 — Travel */}
+              <div className="glass-card" style={{ padding: 24 }}>
+                {sectionLabel('Travel')}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={labelStyle}>Home Airport(s)</div>
+                  {staffAirports.length > 0 ? (
+                    <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
+                      {[...staffAirports].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)).map(airport => (
+                        <div key={airport.id} style={{ display: 'table-row' }}>
+                          <div style={{ display: 'table-cell', width: 20, paddingRight: 4, paddingBottom: 8, verticalAlign: 'middle' }}>
+                            <span style={{ color: airport.is_primary ? 'var(--color-yellow)' : 'transparent', fontSize: 13 }}>★</span>
+                          </div>
+                          <div style={{ display: 'table-cell', paddingRight: 16, paddingBottom: 8, fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap', width: 50 }}>
+                            {airport.iata_code}
+                          </div>
+                          <div style={{ display: 'table-cell', paddingRight: 16, paddingBottom: 8, fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                            {[airport.city, airport.state].filter(Boolean).join(', ')}
+                          </div>
+                          <div style={{ display: 'table-cell', paddingBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                            {airport.airport_name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : person.home_airport ? (
+                    <div style={valueStyle}>
+                      {person.home_airport}
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>(legacy — update in Edit Profile)</span>
+                    </div>
+                  ) : <div style={valueStyle}>—</div>}
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={labelStyle}>Airlines</div>
+                  {person.staff_airlines?.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+                      {[...person.staff_airlines].sort((a, b) => (b.preferred ? 1 : 0) - (a.preferred ? 1 : 0)).map(a => (
+                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span style={{ color: a.preferred ? 'var(--color-yellow)' : 'transparent', fontSize: 13, width: 16, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.airline}</span>
+                          {a.frequent_flyer_number && <span style={{ fontSize: 14, color: 'var(--text-primary)', marginLeft: 8 }}>#{a.frequent_flyer_number}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : <div style={valueStyle}>—</div>}
+                </div>
+                <Field label="TSA PreCheck" value={person.tsa_precheck} />
+                <Field label="Global Entry" value={person.global_entry} />
+                <div style={{ marginBottom: 0 }}>
+                  <div style={labelStyle}>Known Traveler #</div>
+                  <div style={valueStyle}>{person.known_traveler_number || '—'}</div>
+                </div>
               </div>
-              {airlines.length > 0 && (
-                <>
-                  <div style={{ height: 0.5, background: 'var(--bg-card)', marginBottom: 14 }} />
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Airlines</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {airlines.map(a => (
-                      <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        {a.preferred && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--mint)', flexShrink: 0 }} />}
-                        <div style={{ fontSize: 14, fontWeight: a.preferred ? 500 : 400, color: 'var(--text-primary)' }}>{a.airline}</div>
-                        {a.frequent_flyer_number && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>#{a.frequent_flyer_number}</div>}
-                        {a.preferred && <div style={{ fontSize: 11, color: 'var(--mint)', marginLeft: 'auto' }}>Preferred</div>}
-                      </div>
-                    ))}
+
+              {/* Card 3 — Passport */}
+              <div className="glass-card" style={{ padding: 24 }}>
+                {sectionLabel('Passport')}
+                <div style={{ display: 'flex', gap: 24 }}>
+                  <div style={{ flex: '0 0 60%' }}>
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={labelStyle}>Passport Number</div>
+                      <div style={valueStyle}>{person.passport_number || '—'}</div>
+                    </div>
+                    <Field label="Nationality" value={person.passport_nationality} />
+                    <Field label="Surname" value={person.passport_surname} />
+                    <Field label="Given Names" value={person.passport_given_names} />
+                    <Field label="Date of Birth" value={formatPassportDate(person.dob)} />
+                    <Field label="Place of Birth" value={person.place_of_birth} />
+                    <Field label="Date of Issue" value={formatPassportDate(person.date_of_issue)} />
+                    <div style={{ marginBottom: 0 }}>
+                      <div style={labelStyle}>Date of Expiration</div>
+                      <div style={{ fontSize: 14, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-red)' : 'var(--text-primary)' }}>{formatPassportDate(person.passport_expiry)}</div>
+                    </div>
                   </div>
-                </>
-              )}
+                  <div style={{ flex: '0 0 40%', display: 'flex', gap: 12 }}>
+                    <UploadSlot label="Passport Page" url={person.passport_image_url} icon={IconFileText} />
+                    <UploadSlot label="Headshot" url={person.passport_headshot_url} icon={IconCamera} />
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-
-          {/* Allergies + Notes */}
-          {(person.allergies || person.notes) && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              {person.allergies && (
-                <div className="glass-card" style={{ padding: '20px 24px' }}>
-                  {sectionLabel('Food Allergies')}
-                  <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.allergies}</div>
-                </div>
-              )}
-              {person.notes && (
-                <div className="glass-card" style={{ padding: '20px 24px' }}>
-                  {sectionLabel('Notes')}
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{person.notes}</div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Upcoming Events */}
           {upcomingEvents.length > 0 && (
@@ -398,49 +461,7 @@ export default function StaffProfile() {
 
         </div>
 
-        {/* Remove Staff Member */}
-        <div style={{ marginTop: 40, paddingTop: 24, borderTop: '0.5px solid var(--bg-card)' }}>
-          <button
-            onClick={() => setShowRemoveModal(true)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(248,113,113,0.30)', background: 'transparent', color: '#f87171', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            Remove Staff Member
-          </button>
-        </div>
-
       </div>
-
-      {/* Confirmation modal */}
-      {showRemoveModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-card" style={{ padding: 28, maxWidth: 400, width: '90%' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Remove Staff Member</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
-              This will permanently remove <strong style={{ color: 'var(--text-primary)' }}>{fullName}</strong> from CommandTOUR. This cannot be undone.
-            </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowRemoveModal(false)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '0.5px solid var(--border-card)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
-              >Cancel</button>
-              <button
-                onClick={handleRemove}
-                disabled={removing}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', opacity: removing ? 0.6 : 1 }}
-              >{removing ? 'Removing...' : 'Remove'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-card)', border: '0.5px solid var(--border-card)', borderRadius: 8, padding: '10px 20px', fontSize: 14, color: 'var(--text-primary)', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
-          {toast}
-        </div>
-      )}
     </div>
   )
 }
