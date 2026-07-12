@@ -1,81 +1,102 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { IconSettings } from '@tabler/icons-react'
 
-const DEPARTMENTS = [
-  { key: 'executives', label: 'Executives' },
-  { key: 'operations', label: 'Operations' },
-  { key: 'lighting_audio_video', label: 'Lighting, Audio & Video' },
-  { key: 'hosts', label: 'Hosts' },
-  { key: 'fmx', label: 'FMX' },
-  { key: 'stuntmanshow_productions', label: 'Stuntmanshow Productions' },
-  { key: 'robot_operators', label: 'Robot Operators' },
-  { key: 'monster_truck_drivers_crew', label: 'Monster Truck Drivers & Crew' },
-  { key: 'uncategorized', label: 'Uncategorized' },
-]
-
-function getDepartment(s) {
-  return s.department || 'uncategorized'
-}
-
-function ChevronIcon({ open }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0, color: 'var(--text-muted)' }}>
-      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+const thStyle = {
+  padding: '10px 16px',
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--text-muted)',
+  textAlign: 'left',
+  whiteSpace: 'nowrap',
 }
 
 export default function StaffPage() {
   const router = useRouter()
-  const [staff, setStaff] = useState([])
+  const [allStaff, setAllStaff] = useState([])
+  const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [expanded, setExpanded] = useState(Object.fromEntries(DEPARTMENTS.map(d => [d.key, false])))
-  const [theme, setTheme] = useState('dark')
+  const [expandedSections, setExpandedSections] = useState(() => new Set())
+  const [expandedInitKey, setExpandedInitKey] = useState(null)
+  const [isLight, setIsLight] = useState(false)
+  const [sortField, setSortField] = useState('last_name')
+  const [sortDir, setSortDir] = useState('asc')
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'dark'
-    setTheme(saved)
-
-    const handleThemeChange = () => {
-      const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'
-      setTheme(current)
-    }
-    window.addEventListener('themeChanged', handleThemeChange)
-    return () => window.removeEventListener('themeChanged', handleThemeChange)
+    const check = () => setIsLight(document.documentElement.getAttribute('data-theme') === 'light')
+    check()
+    window.addEventListener('themeChanged', check)
+    return () => window.removeEventListener('themeChanged', check)
   }, [])
 
   useEffect(() => {
-    const fetchStaff = async () => {
+    const fetchData = async () => {
       const supabase = getSupabase()
-      const { data, error } = await supabase
-        .from('staff')
-        .select('*')
-        .order('last_name', { ascending: true })
-      if (!error) setStaff(data || [])
+      const [staffRes, deptsRes] = await Promise.all([
+        supabase.from('staff')
+          .select('id, first_name, last_name, suffix, display_name, email, phone, department, staff_department_id, attention_flag, attention_note')
+          .order('last_name', { ascending: true }),
+        supabase.from('staff_departments')
+          .select('id, name, sort_order')
+          .order('sort_order', { ascending: true }),
+      ])
+      setAllStaff(staffRes.data || [])
+      setDepartments(deptsRes.data || [])
       setLoading(false)
     }
-    fetchStaff()
+    fetchData()
   }, [])
 
-  const filtered = staff.filter(s => {
-    const full = `${s.first_name} ${s.last_name} ${s.email} ${s.home_airport}`.toLowerCase()
+  const filteredStaff = allStaff.filter(s => {
+    const full = `${s.first_name || ''} ${s.last_name || ''} ${s.email || ''} ${s.phone || ''}`.toLowerCase()
     return full.includes(search.toLowerCase())
   })
 
-  const initials = (s) => `${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase()
+  const sections = departments.map(dept => ({
+    ...dept,
+    staff: filteredStaff.filter(s => s.staff_department_id === dept.id),
+  })).filter(sec => sec.staff.length > 0)
 
-  const sections = DEPARTMENTS
-    .map(dep => ({ ...dep, members: filtered.filter(s => getDepartment(s) === dep.key) }))
-    .filter(sec => sec.members.length > 0)
+  const uncategorized = filteredStaff.filter(s => !s.staff_department_id)
+  if (uncategorized.length > 0) {
+    sections.push({ id: 'uncategorized', name: 'Uncategorized', staff: uncategorized })
+  }
 
-  const toggleSection = (key) => {
-    setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
+  const sectionsKey = sections.map(s => s.id).join(',')
+  if (sectionsKey && sectionsKey !== expandedInitKey) {
+    setExpandedInitKey(sectionsKey)
+    setExpandedSections(new Set(sections.map(s => s.id)))
+  }
+
+  const toggleSection = (id) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSort = () => {
+    if (sortField === 'last_name' && sortDir === 'asc') {
+      setSortField('last_name'); setSortDir('desc')
+    } else if (sortField === 'last_name' && sortDir === 'desc') {
+      setSortField('first_name'); setSortDir('asc')
+    } else if (sortField === 'first_name' && sortDir === 'asc') {
+      setSortField('first_name'); setSortDir('desc')
+    } else {
+      setSortField('last_name'); setSortDir('asc')
+    }
   }
 
   return (
@@ -89,7 +110,7 @@ export default function StaffPage() {
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Staff</div>
               <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
-                {staff.length} {staff.length === 1 ? 'person' : 'people'}
+                {allStaff.length} {allStaff.length === 1 ? 'person' : 'people'}
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -134,11 +155,11 @@ export default function StaffPage() {
           </div>
         </div>
 
-        <div style={{ padding: 28 }}>
+        <div style={{ padding: 24 }}>
 
         {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>}
 
-        {!loading && staff.length === 0 && (
+        {!loading && allStaff.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
             <div style={{ fontSize: 20, fontWeight: 600 }}>No staff yet</div>
             <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Add your first staff member to get started</div>
@@ -146,76 +167,150 @@ export default function StaffPage() {
           </div>
         )}
 
-        {!loading && filtered.length === 0 && staff.length > 0 && (
-          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No staff match "{search}"</div>
+        {!loading && filteredStaff.length === 0 && allStaff.length > 0 && (
+          <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No staff match &quot;{search}&quot;</div>
         )}
 
-        {/* Sections */}
-        {!loading && sections.map(({ key, label, members }) => (
-          <div key={key} style={{ marginBottom: 32 }}>
-            <div
-              onClick={() => toggleSection(key)}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: expanded[key] ? 16 : 0, userSelect: 'none' }}
-            >
-              <span style={{ color: 'var(--text-muted)' }}>
-                <ChevronIcon open={!!expanded[key]} />
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {label} ({members.length})
-              </span>
-              <div style={{ flex: 1, height: '0.5px', background: 'rgba(255,255,255,0.1)', marginLeft: 4 }} />
-            </div>
+        {/* Table */}
+        {!loading && sections.length > 0 && (
+          <div style={{
+            border: '1px solid var(--border-card)',
+            borderRadius: 10,
+            overflow: 'hidden',
+            marginTop: 16,
+          }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+            }}>
+              <thead>
+                <tr style={{
+                  background: 'var(--bg-card)',
+                  borderBottom: '1px solid var(--border-card)',
+                }}>
+                  <th style={{ ...thStyle, width: 40 }} />
+                  <th style={{ ...thStyle, cursor: 'pointer' }} onClick={toggleSort}>
+                    NAME {sortField === 'last_name' ? 'LAST' : 'FIRST'} {sortDir === 'asc' ? '↑' : '↓'}
+                  </th>
+                  <th style={thStyle}>DEPARTMENT</th>
+                  <th style={thStyle}>PHONE</th>
+                  <th style={thStyle}>EMAIL</th>
+                </tr>
+              </thead>
 
-            {expanded[key] && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-                {members.map(s => (
-                  <div
-                    key={s.id}
-                    className="glass-card staff-tile"
-                    onClick={() => router.push(`/staff/${s.id}`)}
-                    style={{
-                      padding: '14px 16px',
-                      borderRadius: 10,
-                      cursor: 'pointer',
-                      transition: 'background 0.15s, box-shadow 0.15s',
-                      position: 'relative',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                      backdropFilter: 'blur(8px) saturate(1.3)',
-                      WebkitBackdropFilter: 'blur(8px) saturate(1.3)',
-                      border: '2.5px solid transparent',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      {/* Avatar */}
-                      <div style={{
-                        width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                        background: 'rgba(10,22,40,0.6)', border: '1px solid rgba(51,255,153,0.25)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 14, fontWeight: 700, color: '#33FF99',
+              <tbody>
+                {sections.map(section => (
+                  <Fragment key={section.id}>
+                    <tr
+                      onClick={() => toggleSection(section.id)}
+                      style={{
+                        background: 'var(--bg-card)',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                      }}
+                    >
+                      <td colSpan={5} style={{
+                        padding: '8px 16px',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: 'var(--text-secondary)',
+                        borderTop: '2px solid var(--border-card)',
+                        borderBottom: '1px solid var(--border-card)',
                       }}>
-                        {initials(s)}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {s.first_name} {s.last_name}{s.suffix && ` ${s.suffix}`}
+                        <span style={{ marginRight: 8 }}>
+                          {expandedSections.has(section.id) ? '▾' : '▸'}
+                        </span>
+                        {section.name}
+                        <span style={{
+                          marginLeft: 8,
+                          fontWeight: 400,
+                          color: 'var(--text-muted)',
+                        }}>
+                          ({section.staff.length})
+                        </span>
+                      </td>
+                    </tr>
+
+                    {expandedSections.has(section.id) && [...section.staff].sort((a, b) => {
+                      const aVal = (a[sortField] || '').toLowerCase()
+                      const bVal = (b[sortField] || '').toLowerCase()
+                      return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+                    }).map((person, i) => (
+                      <tr
+                        key={person.id}
+                        onClick={() => router.push(`/staff/${person.id}`)}
+                        style={{
+                          background: i % 2 === 0 ? 'var(--bg)' : 'var(--bg-card)',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid var(--border-card)',
+                          transition: 'background 0.1s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg)' : 'var(--bg-card)' }}
+                      >
+                        {/* Avatar */}
+                        <td style={{ padding: '7px 8px 7px 16px', width: 40 }}>
+                          <div style={{
+                            width: 32, height: 32,
+                            borderRadius: '50%',
+                            background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)',
+                            color: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.6)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}>
+                            {(person.first_name?.[0] || '') + (person.last_name?.[0] || '')}
                           </div>
-                          {s.attention_flag && (
-                            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} title={s.attention_note || 'Needs attention'} />
+                        </td>
+
+                        {/* Name */}
+                        <td style={{
+                          padding: '7px 16px',
+                          fontSize: 14, fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {[person.first_name, person.last_name, person.suffix].filter(Boolean).join(' ')}
+                          {person.attention_flag && (
+                            <span style={{ marginLeft: 6, color: '#d97706', fontSize: 10 }} title={person.attention_note || 'Needs attention'}>⚠</span>
                           )}
-                        </div>
-                        {s.email && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.email}</div>}
-                        {s.phone && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>{s.phone}</div>}
-                      </div>
-                    </div>
-                  </div>
+                        </td>
+
+                        {/* Department */}
+                        <td style={{ padding: '7px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {section.name === 'Uncategorized' ? '—' : section.name}
+                        </td>
+
+                        {/* Phone */}
+                        <td style={{ padding: '7px 16px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          {person.phone || '—'}
+                        </td>
+
+                        {/* Email */}
+                        <td
+                          style={{ padding: '7px 16px', fontSize: 13, color: 'var(--text-secondary)' }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {person.email ? (
+                            <a href={`mailto:${person.email}`} style={{ color: 'var(--color-mint)', textDecoration: 'none' }}>
+                              {person.email}
+                            </a>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
-        ))}
+        )}
         </div>
       </div>
     </div>
