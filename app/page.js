@@ -342,18 +342,18 @@ export default function Dashboard() {
                   style={{
                     ...GLASS_CARD,
                     display: 'grid',
-                    gridTemplateColumns: '40px 4px 1fr 180px 180px 80px',
+                    gridTemplateColumns: '40px 4px 1fr 180px',
                     alignItems: 'center',
-                    gap: 12,
+                    gap: 0,
                     padding: '10px 14px',
                     cursor: 'pointer',
                   }}
                 >
                   {tour.logo_url ? (
-                    <img src={tour.logo_url} alt={tour.name} style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'contain' }} />
+                    <img src={tour.logo_url} alt={tour.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'contain' }} />
                   ) : (
                     <div style={{
-                      width: 36, height: 36, borderRadius: 6,
+                      width: 48, height: 48, borderRadius: 8,
                       background: `color-mix(in srgb, ${tour.color || 'var(--accent)'} 10%, transparent)`,
                       color: tour.color || 'var(--accent)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -363,18 +363,28 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <div style={{ width: 4, height: 36, borderRadius: 2, background: tour.color || 'var(--accent)' }} />
+                  <div style={{ width: 4, borderRadius: 2, alignSelf: 'stretch', marginLeft: 14, background: tour.color || 'var(--accent)' }} />
 
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
                     </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+                      {nextEvent
+                        ? <span
+                            style={{ cursor: 'pointer', color: 'var(--color-info)', fontWeight: 600 }}
+                            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${tour.id}/events/${nextEvent.id}`) }}
+                          >
+                            Next: {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {shortDate(nextEvent.load_in_date)}
+                          </span>
+                        : '—'}
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-around', marginLeft: 16 }}>
                     {[
                       { val: stats.total, lbl: 'Total' },
                       { val: stats.done, lbl: 'Done', color: 'var(--color-success)' },
@@ -385,12 +395,6 @@ export default function Dashboard() {
                         <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
-                  </div>
-
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'right' }}>
-                    {nextEvent
-                      ? `Next: ${formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · ${shortDate(nextEvent.load_in_date)}`
-                      : '—'}
                   </div>
                 </div>
               )

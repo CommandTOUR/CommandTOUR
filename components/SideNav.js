@@ -79,7 +79,7 @@ export default function SideNav() {
       <div style={{ padding: '16px 14px 12px', borderBottom: '0.5px solid var(--border-default)' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <img
-            src={theme === 'dark' ? '/images/V1_CommandTOUR_Dark.png' : '/images/V1_CommandTOUR_Light.png'}
+            src={theme === 'dark' ? '/images/V1_CommandTOUR_Dark1.png' : '/images/V1_CommandTOUR_Light1.png'}
             alt="CommandTOUR"
             style={{ width: '100%', maxWidth: 200, height: 'auto', display: 'block' }}
           />
@@ -92,8 +92,8 @@ export default function SideNav() {
           {gi > 0 && <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '4px 10px' }} />}
           <div style={{ padding: '8px 8px 4px' }}>
             <div style={{
-              fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-              color: 'var(--text-muted)', padding: '0 6px', marginBottom: 3
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: 'var(--text-secondary)', padding: '0 6px', marginBottom: 3
             }}>
               {group.section}
             </div>
@@ -108,7 +108,7 @@ export default function SideNav() {
                     display: 'flex', alignItems: 'center',
                     gap: 8, padding: '6px 8px',
                     borderRadius: 6, marginBottom: 1,
-                    fontSize: 12.5, fontWeight: active ? 600 : 400,
+                    fontSize: 14, fontWeight: active ? 600 : 400,
                     color: active ? 'var(--color-info)' : 'var(--text-secondary)',
                     background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
                     cursor: 'pointer',
