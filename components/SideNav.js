@@ -78,11 +78,11 @@ export default function SideNav() {
       {/* Logo */}
       <div style={{ padding: '16px 14px 12px', borderBottom: '0.5px solid var(--border-default)' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
-            COMM<span style={{ color: 'var(--accent)' }}>▲</span>ND
-            <br />
-            <span style={{ color: 'var(--accent)' }}>TOUR</span>
-          </div>
+          <img
+            src={theme === 'dark' ? '/images/V1_CommandTOUR_Dark.png' : '/images/V1_CommandTOUR_Light.png'}
+            alt="CommandTOUR"
+            style={{ width: '100%', maxWidth: 200, height: 'auto', display: 'block' }}
+          />
         </Link>
       </div>
 

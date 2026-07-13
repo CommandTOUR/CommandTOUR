@@ -115,7 +115,7 @@ export default function Dashboard() {
 
         supabase
           .from('events')
-          .select('id, tour_id, city, state, country, load_in_date, load_out_date, status')
+          .select('id, tour_id, city, state, country, load_in_date, load_out_date, status, num_shows, venue_name')
           .gte('load_in_date', weekStart)
           .lte('load_in_date', weekEnd)
           .order('load_in_date'),
@@ -177,8 +177,8 @@ export default function Dashboard() {
   const tourById = {}
   tours.forEach(t => { tourById[t.id] = t })
 
-  const domesticCount = tours.filter(t => t.tour_category === 'domestic').length
-  const intlCount = tours.filter(t => t.tour_category === 'international').length
+  const domesticCount = tours.filter(t => t.status === 'active' && t.tour_category === 'domestic').length
+  const intlCount = tours.filter(t => t.status === 'active' && t.tour_category === 'international').length
 
   const activeCount = tours.filter(t => t.status === 'active').length
 
@@ -219,8 +219,8 @@ export default function Dashboard() {
 
   const activeTours = tours.filter(t => t.status === 'active')
 
-  const shownWeekEvents = thisWeekEvents.length > 4 ? thisWeekEvents.slice(0, 3) : thisWeekEvents
-  const weekOverflow = thisWeekEvents.length > 4 ? thisWeekEvents.length - 3 : 0
+  const showSeeAll = thisWeekEvents.length > 6
+  const shownWeekEvents = showSeeAll ? thisWeekEvents.slice(0, 5) : thisWeekEvents
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
@@ -253,7 +253,10 @@ export default function Dashboard() {
       </div>
 
       {/* Row 2: this week events */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, flexShrink: 0 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+        This Week
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8, flexShrink: 0 }}>
         {thisWeekEvents.length === 0 && (
           <div style={{
             gridColumn: '1 / -1',
@@ -275,38 +278,51 @@ export default function Dashboard() {
                 ...GLASS_CARD, padding: '10px 12px', cursor: 'pointer',
               }}
             >
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                 {formatLocation(ev.city, ev.state, ev.country, 'compact')}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
                 {ev.load_out_date && ev.load_out_date !== ev.load_in_date
                   ? `${shortDate(ev.load_in_date)} – ${shortDate(ev.load_out_date)}`
                   : shortDate(ev.load_in_date)}
               </div>
-              <div style={{ fontSize: 10, fontWeight: 600, marginTop: 4, color: tour?.color || 'var(--text-secondary)' }}>
+              {ev.venue_name && (
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
+                  {ev.venue_name}
+                </div>
+              )}
+              {ev.num_shows != null && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
+                  {ev.num_shows} {ev.num_shows === 1 ? 'show' : 'shows'}
+                </div>
+              )}
+              <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: tour?.color || 'var(--text-secondary)' }}>
                 {tour?.name ?? '—'}
               </div>
             </div>
           )
         })}
 
-        {weekOverflow > 0 && (
-          <div style={{
-            ...GLASS_CARD, padding: '10px 12px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, color: 'var(--text-muted)',
-          }}>
-            +{weekOverflow} more
+        {showSeeAll && (
+          <div
+            onClick={() => router.push('/calendar')}
+            style={{
+              ...GLASS_CARD, padding: '10px 12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: 'var(--color-info)', cursor: 'pointer', textAlign: 'center',
+            }}
+          >
+            See all →
           </div>
         )}
       </div>
 
       {/* Row 3: main two-column */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 10, flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '5fr 2fr', gap: 10, flex: 1, minHeight: 0 }}>
 
         {/* Left: active tours list */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
             Active Tours
           </div>
 
@@ -350,10 +366,10 @@ export default function Dashboard() {
                   <div style={{ width: 4, height: 36, borderRadius: 2, background: tour.color || 'var(--accent)' }} />
 
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
                     </div>
                   </div>
@@ -365,13 +381,13 @@ export default function Dashboard() {
                       { val: stats.left, lbl: 'Left' },
                     ].map(item => (
                       <div key={item.lbl} style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>{item.lbl}</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
                   </div>
 
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'right' }}>
                     {nextEvent
                       ? `Next: ${formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · ${shortDate(nextEvent.load_in_date)}`
                       : '—'}
@@ -387,7 +403,7 @@ export default function Dashboard() {
 
           {/* Needs attention */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
               <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
                 <IconAlertTriangleFilled size={16} color="#FFD60A" />
                 <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
@@ -422,8 +438,8 @@ export default function Dashboard() {
                       <Icon size={13} color={alert.color} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
                       {alert.action && (
                         <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
                           {alert.action}
@@ -438,7 +454,7 @@ export default function Dashboard() {
 
           {/* Budget placeholder */}
           <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
               Budget Overview
             </div>
 
@@ -446,8 +462,8 @@ export default function Dashboard() {
               {activeTours.slice(0, 3).map(tour => (
                 <div key={tour.id} style={{ ...GLASS_CARD, padding: '10px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{tour.name}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{tour.name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                   </div>
                   <div style={{ height: 2, background: 'var(--border-default)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: '0%', background: tour.color || 'var(--accent)' }} />

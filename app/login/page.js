@@ -81,9 +81,9 @@ export default function Login() {
         boxSizing: 'border-box',
       }}>
         <img
-          src="/images/CommandTOUR_Branding-1-DarkMode.png"
+          src="/images/V1_CommandTOUR_Light.png"
           alt="CommandTOUR"
-          style={{ width: '100%', maxWidth: 260, display: 'block', margin: '0 auto 32px' }}
+          style={{ width: 220, height: 'auto', display: 'block', margin: '0 auto' }}
         />
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
