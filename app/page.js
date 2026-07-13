@@ -16,11 +16,11 @@ import {
 const HOLD_STATUSES = ['1-hold', '2-hold', '3-hold']
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.72)',
+  background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid rgba(255,255,255,0.6)',
+  border: '0.5px solid var(--glass-tile-border)',
   borderRadius: 14,
-  boxShadow: '0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85)',
+  boxShadow: 'var(--glass-tile-shadow)',
 }
 
 const ICON_MAP = {
