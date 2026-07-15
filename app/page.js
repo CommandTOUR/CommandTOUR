@@ -231,7 +231,7 @@ export default function Dashboard() {
         {now && (
           <div>
             <span style={{ color: 'var(--text-secondary)' }}>{formatClockDate(now)} · </span>
-            <span style={{ color: 'var(--accent)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatClockTime(now)}</span>
+            <span style={{ color: 'var(--color-info)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatClockTime(now)}</span>
           </div>
         )}
       </div>
@@ -243,11 +243,11 @@ export default function Dashboard() {
             ...GLASS_CARD,
             padding: '11px 13px',
           }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 3 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
               {stat.label}
             </div>
             <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
           </div>
         ))}
       </div>
@@ -366,7 +366,7 @@ export default function Dashboard() {
                   <div style={{ width: 4, borderRadius: 2, alignSelf: 'stretch', marginLeft: 14, background: tour.color || 'var(--accent)' }} />
 
                   <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -392,7 +392,7 @@ export default function Dashboard() {
                     ].map(item => (
                       <div key={item.lbl} style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: 16, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>{item.lbl}</div>
+                        <div style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
                   </div>
@@ -443,9 +443,9 @@ export default function Dashboard() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
                       {alert.action && (
-                        <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
+                        <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
                           {alert.action}
                         </div>
                       )}
@@ -466,8 +466,8 @@ export default function Dashboard() {
               {activeTours.slice(0, 3).map(tour => (
                 <div key={tour.id} style={{ ...GLASS_CARD, padding: '10px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{tour.name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                   </div>
                   <div style={{ height: 2, background: 'var(--border-default)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: '0%', background: tour.color || 'var(--accent)' }} />

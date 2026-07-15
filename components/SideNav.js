@@ -129,12 +129,12 @@ export default function SideNav() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px' }}>
           <div style={{
             width: 24, height: 24, borderRadius: '50%',
-            background: 'var(--accent-bg)',
-            color: 'var(--accent-text)',
+            background: 'var(--color-info)',
+            color: '#ffffff',
             fontSize: 9, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>MA</div>
-          <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
             Mark A.
           </span>
           <button
@@ -146,12 +146,12 @@ export default function SideNav() {
             aria-label="Toggle theme"
           >
             {theme === 'dark'
-              ? <IconSun size={13} stroke={1.75} />
-              : <IconMoon size={13} stroke={1.75} />
+              ? <IconSun size={16} stroke={1.75} />
+              : <IconMoon size={16} stroke={1.75} />
             }
           </button>
           <Link href="/settings" style={{ marginLeft: 6, display: 'flex', alignItems: 'center' }}>
-            <IconSettings size={13} stroke={1.75} style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
+            <IconSettings size={16} stroke={1.75} style={{ color: 'var(--text-muted)' }} aria-hidden="true" />
           </Link>
         </div>
       </div>
