@@ -210,13 +210,6 @@ export default function Dashboard() {
       action: 'Review', href: `/tours/${ev.tour_id}`,
     })
   })
-  alerts.push({
-    icon: 'plane', color: 'var(--color-info)', bg: 'color-mix(in srgb, var(--color-info) 12%, transparent)',
-    title: 'Travel arriving today',
-    body: 'Check travel tab for arriving crew',
-    action: null, href: null,
-  })
-
   const activeTours = tours.filter(t => t.status === 'active')
 
   const showSeeAll = thisWeekEvents.length > 6
