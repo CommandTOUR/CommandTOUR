@@ -395,9 +395,9 @@ html, body {
 
 /* Cards and panels */
 [data-theme="light"] .glass-card {
-  background: var(--bg-card) !important;
-  border-color: var(--border-card) !important;
-  color: var(--text-primary) !important;
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  color: var(--text-primary);
 }
 
 [data-theme="light"] .glass-card.staff-tile {

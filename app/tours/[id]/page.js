@@ -901,7 +901,7 @@ export default function TourPage() {
         )}
 
         {activeTab === 'calendar' && (
-          <div style={{ padding: '16px 32px 0' }}>
+          <div style={{ padding: '16px 20px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               {/* Month/Week toggle */}
               <div style={{ display: 'flex', borderRadius: 8,
