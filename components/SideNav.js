@@ -129,10 +129,12 @@ export default function SideNav() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px' }}>
           <div style={{
             width: 24, height: 24, borderRadius: '50%',
-            background: 'var(--color-info)',
-            color: '#ffffff',
-            fontSize: 9, fontWeight: 700,
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
+            background: 'transparent',
+            border: theme === 'dark' ? '1.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(0,0,0,0.85)',
+            color: theme === 'dark' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)',
+            fontSize: 8, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            letterSpacing: '0.02em',
           }}>MA</div>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
             Mark A.

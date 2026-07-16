@@ -65,6 +65,7 @@
   --color-warning: #c48a00;
   --color-success: #0a7a46;
   --color-info: #1a56db;
+  --btn-primary-text: #ffffff;
 
   /* Spacing */
   --radius-sm: 5px;
@@ -128,6 +129,7 @@
   --color-warning: #FFD60A;
   --color-success: #10E687;
   --color-info: #0A84FF;
+  --btn-primary-text: #000000;
 }
 
 /* Legacy utility classes below still reference pre-redesign tokens (--bg, --bg-card,

@@ -74,9 +74,9 @@ const EVENT_STATUS_STYLES = {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'confirmed', label: 'Confirmed', color: '#33FF99', pill: 'rgba(51,255,153,0.12)', border: 'rgba(51,255,153,0.3)' },
-  { value: 'pending', label: 'Pending', color: '#FFD60A', pill: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.5)' },
-  { value: 'needs_attention', label: 'Needs Attention', color: '#e05252', pill: 'rgba(224,82,82,0.15)', border: 'rgba(224,82,82,0.5)' },
+  { value: 'confirmed', label: 'Confirmed', color: 'var(--color-success)', pill: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
+  { value: 'pending', label: 'Pending', color: 'var(--color-warning)', pill: 'var(--status-1hold-bg)', border: 'var(--status-1hold-border)' },
+  { value: 'needs_attention', label: 'Needs Attention', color: 'var(--color-danger)', pill: 'var(--status-3hold-bg)', border: 'var(--status-3hold-border)' },
 ]
 
 const STAFF_NAME_WEIGHTS = { confirmed: 400 }
@@ -93,21 +93,18 @@ const CELL_COLOR_SWATCHES = [
 
 // ── LOCK ICON ──────────────────────────────────────────────────────────────
 
-function LockIcon({ locked, size = 13, color = 'rgba(255,255,255,0.5)' }) {
-  if (locked) {
-    return (
-      <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="7" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2"/>
-        <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-        <circle cx="7" cy="11" r="1" fill={color}/>
-      </svg>
-    )
-  }
+function LockIcon({ unlocked = false, size = 13, color = 'var(--color-danger)' }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="7" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2"/>
-      <path d="M4.5 7V5a2.5 2.5 0 0 1 5 0" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
-      <circle cx="7" cy="11" r="1" fill={color}/>
+    <svg width={size} height={size + 2} viewBox="0 0 13 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x=".5" y="6.5" width="12" height="8" rx="2" fill={color} />
+      <path
+        d={unlocked
+          ? 'M2.5 6.5V4A4 4 0 0 1 10.5 4V1.2'
+          : 'M2.5 6.5V4A4 4 0 0 1 10.5 4V6.5'}
+        stroke={color} strokeWidth="2" strokeLinecap="round" fill="none"
+      />
+      <circle cx="6.5" cy="10.5" r="1.4" fill="rgba(255,255,255,0.72)" />
+      <rect x="5.8" y="11.5" width="1.4" height="1.8" rx=".4" fill="rgba(255,255,255,0.72)" />
     </svg>
   )
 }
@@ -240,10 +237,10 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
         onKeyDown={handleKeyDown}
         autoComplete="off"
         placeholder="Type a name..."
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontFamily: 'inherit', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', caretColor: 'var(--color-success)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {showDropdown && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
           {loading && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results.length === 0 && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>No results</div>}
           {results.map((s, i) => {
@@ -254,7 +251,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
                 onMouseDown={e => { e.preventDefault(); selectIndex(i) }}
                 onMouseEnter={() => setActiveIndex(i)}
                 title={t}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 12, cursor: 'pointer', background: i === activeIndex ? 'rgba(51,255,153,0.1)' : 'transparent', color: i === activeIndex ? 'var(--color-success)' : 'var(--text-primary)' }}>
                 {dot && (
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0 }} />
                 )}
@@ -265,7 +262,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
           <div
             onMouseDown={e => { e.preventDefault(); selectIndex(results.length) }}
             onMouseEnter={() => setActiveIndex(results.length)}
-            style={{ padding: '7px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--mint)', background: activeIndex === results.length ? 'rgba(51,255,153,0.1)' : 'transparent', borderTop: results.length > 0 ? '0.5px solid var(--glass-border)' : 'none' }}>
+            style={{ padding: '7px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--color-success)', background: activeIndex === results.length ? 'rgba(51,255,153,0.1)' : 'transparent', borderTop: results.length > 0 ? '1px solid var(--border-default)' : 'none' }}>
             + Create &quot;{query.trim()}&quot;
           </div>
         </div>
@@ -278,7 +275,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
 
 function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
   return (
-    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: 150, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.7)', overflow: 'hidden' }}>
+    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: 150, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
       {STATUS_OPTIONS.map(opt => (
         <div key={opt.value}
           onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value) }}
@@ -289,7 +286,7 @@ function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
           <span style={{ fontSize: 12, color: opt.color }}>{opt.label}</span>
         </div>
       ))}
-      <div style={{ height: '0.5px', background: 'var(--glass-border)' }} />
+      <div style={{ height: '1px', background: 'var(--border-default)' }} />
       <div
         onMouseDown={e => { e.preventDefault(); onRemove() }}
         style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 12, color: '#FF3333' }}
@@ -307,8 +304,8 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
   const isSame = avail && avail.status === 'same_event'
   if (typeof document === 'undefined') return null
   return ReactDOM.createPortal(
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 440 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
+      <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 440 }}>
         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>
           {isSame ? 'Already On This Event' : 'Double Booking Warning'}
         </div>
@@ -328,11 +325,11 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
-          <button onClick={onConfirm} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>
+          <button onClick={onConfirm} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>
             {isSame ? 'Assign Dual Roles' : 'Assign Anyway'}
           </button>
         </div>
@@ -344,7 +341,7 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
 
 // ── GRID CELL ──────────────────────────────────────────────────────────────
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, isLastCol, isLastRow }) {
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
@@ -502,7 +499,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           borderTop: stateBorder || undefined,
           borderLeft: stateBorder || undefined,
           borderRight: isLastCol ? 'none' : (stateBorder || borderRight),
-          borderBottom: stateBorder || '1px solid var(--border-card)',
+          borderBottom: stateBorder || cellBorder || '1px solid rgba(0,0,0,0.14)',
           borderBottomRightRadius: (isLastRow && isLastCol) ? 10 : undefined,
           boxShadow: assignError ? 'inset 0 0 0 1px #dc2626'
             : isDragOverLocked ? 'inset 0 0 0 1.5px #e05252'
@@ -565,21 +562,19 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               else onUnlockFullyLocked && onUnlockFullyLocked()
             }}
             title="Click to unlock"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: lockHovered ? 1 : 0.55, transition: 'opacity 0.15s', filter: lockHovered ? 'drop-shadow(0 0 3px var(--color-mint))' : 'none' }}>
-            <LockIcon locked={true} size={16} color={lockHovered ? 'var(--color-mint)' : '#64748b'} />
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'filter 0.15s', filter: lockHovered ? 'drop-shadow(0 0 5px var(--color-success))' : 'none' }}>
+            <LockIcon unlocked={false} size={14} color={lockHovered ? 'var(--color-success)' : 'var(--color-danger)'} />
           </div>
 
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <span style={{ opacity: 0.3, fontSize: 16, display: 'inline-block', transform: 'scaleX(-1)' }}>✎</span>
-            {onLockEmpty && (
-              <span
-                onClick={e => { e.stopPropagation(); onLockEmpty() }}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              >
-                <LockIcon locked={false} size={14} color='var(--color-red)' />
-              </span>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.28, flexShrink: 0 }}>
+              <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-primary)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
+              <path d="M8.5 3.5L10.5 5.5" stroke="var(--text-primary)" strokeWidth="1.3"/>
+            </svg>
+            <div style={{ transition: 'filter 0.15s', filter: hovered ? 'drop-shadow(0 0 4px var(--color-danger))' : 'none' }}>
+              <LockIcon unlocked={false} size={13} color="var(--color-danger)" />
+            </div>
           </div>
         )}
 
@@ -609,15 +604,15 @@ function RightClickMenu({ x, y, onSetBg, onSetText, onClose }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
   return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', left: x, top: y, zIndex: 3000, background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.6)', overflow: 'hidden', minWidth: 186, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <div style={{ padding: '7px 12px', fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>Cell Background</div>
-      <div style={{ display: 'flex', gap: 7, padding: '9px 12px', borderBottom: '0.5px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', left: x, top: y, zIndex: 3000, background: 'var(--surface-card)', border: '1px solid var(--border-stronger)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.15)', overflow: 'hidden', minWidth: 186, fontFamily: 'inherit' }}>
+      <div style={{ padding: '7px 12px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid var(--border-default)' }}>Cell Background</div>
+      <div style={{ display: 'flex', gap: 7, padding: '9px 12px', borderBottom: '0.5px solid var(--border-default)', flexWrap: 'wrap' }}>
         {CELL_COLOR_SWATCHES.map(c => (
           <div key={c.label} onClick={() => { onSetBg(c.bg); onClose() }} title={c.label}
             style={{ width: 20, height: 20, borderRadius: 5, background: c.bg || 'rgba(255,255,255,0.10)', border: '1.5px solid rgba(255,255,255,0.20)', cursor: 'pointer', flexShrink: 0 }} />
         ))}
       </div>
-      <div style={{ padding: '7px 12px', fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>Text Color</div>
+      <div style={{ padding: '7px 12px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '0.5px solid var(--border-default)' }}>Text Color</div>
       <div style={{ display: 'flex', gap: 7, padding: '9px 12px', flexWrap: 'wrap' }}>
         {CELL_COLOR_SWATCHES.map(c => (
           <div key={c.label} onClick={() => { onSetText(c.text); onClose() }} title={c.label}
@@ -632,7 +627,7 @@ function RightClickMenu({ x, y, onSetBg, onSetText, onClose }) {
 
 function CheckboxIcon({ isChecked }) {
   return (
-    <div style={{ width: 16, height: 16, flexShrink: 0, border: '1.5px solid ' + (isChecked ? '#33FF99' : 'rgba(255,255,255,0.3)'), borderRadius: 4, background: isChecked ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: 16, height: 16, flexShrink: 0, border: '1.5px solid ' + (isChecked ? 'var(--color-success)' : 'var(--border-stronger)'), borderRadius: 4, background: isChecked ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {isChecked && (
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path d="M1.5 5l2.5 2.5 4.5-5" stroke="#0a1628" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -715,10 +710,10 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#0d1f3a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.7)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+      <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-stronger)', borderRadius: 16, padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.2)', fontFamily: 'inherit' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginBottom: 16 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Copy to Events</div>
-          <div onClick={onClose} style={{ fontSize: 22, color: '#64748b', cursor: 'pointer', lineHeight: 1 }}>×</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Copy to Events</div>
+          <div onClick={onClose} style={{ fontSize: 22, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</div>
         </div>
         {done != null ? (
           <div style={{ textAlign: 'center', padding: '28px 24px', color: '#33FF99', fontSize: 15 }}>
@@ -726,17 +721,17 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
           </div>
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', height: 36, borderTop: '0.5px solid rgba(255,255,255,0.08)', borderBottom: '0.5px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', height: 36, borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-strong)', flexShrink: 0 }}>
               <div onClick={toggleAll} style={{ cursor: 'pointer' }}>
                 <CheckboxIcon isChecked={allChecked} />
               </div>
-              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Dates</span>
-              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}>City</span>
-              <span style={{ fontSize: 10.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 140, textAlign: 'right' }}>Tour</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Dates</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}>City</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 140, textAlign: 'right' }}>Tour</span>
             </div>
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {futureEvents.length === 0 && (
-                <div style={{ color: '#64748b', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>No upcoming events to copy to</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>No upcoming events to copy to</div>
               )}
               {futureEvents.map(ev => {
                 const tour = tours.find(t => t.id === ev.tour_id)
@@ -744,23 +739,23 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
                 const isChecked = checked.includes(ev.id)
                 return (
                   <div key={ev.id} onClick={() => toggle(ev.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, height: 44, padding: '0 24px', cursor: 'pointer', borderBottom: '0.5px solid rgba(255,255,255,0.06)', borderLeft: isChecked ? '3px solid #33FF99' : '3px solid transparent', background: isChecked ? 'rgba(51,255,153,0.06)' : 'transparent', transition: 'background 0.1s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, height: 44, padding: '0 24px', cursor: 'pointer', borderBottom: '0.5px solid var(--border-default)', borderLeft: isChecked ? '3px solid #33FF99' : '3px solid transparent', background: isChecked ? 'rgba(51,255,153,0.06)' : 'transparent', transition: 'background 0.1s' }}
                     onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                     onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = 'transparent' }}>
                     <CheckboxIcon isChecked={isChecked} />
-                    <span style={{ fontSize: 13, color: '#f1f5f9', minWidth: 130, whiteSpace: 'nowrap' }}>{fmtDateRange(ev.load_in_date, ev.load_out_date)}</span>
-                    <span style={{ fontSize: 13, color: '#f1f5f9', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-primary)', minWidth: 130, whiteSpace: 'nowrap' }}>{fmtDateRange(ev.load_in_date, ev.load_out_date)}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</span>
                     {tour && <span style={{ fontSize: 12, fontWeight: 600, color: tourColor, minWidth: 140, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</span>}
                   </div>
                 )
               })}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', borderTop: '0.5px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
-              <span style={{ fontSize: 13, color: '#94a3b8' }}>{checked.length} event{checked.length === 1 ? '' : 's'} selected</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', borderTop: '0.5px solid var(--border-default)', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{checked.length} event{checked.length === 1 ? '' : 's'} selected</span>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={onClose} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={onClose} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
                 <button onClick={handleCopy} disabled={copying || checked.length === 0}
-                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
+                  style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
                   {copying ? 'Copying…' : 'Copy'}
                 </button>
               </div>
@@ -776,23 +771,23 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
 
 function BulkActionBar({ count, onSetStatus, onCopyToEvents, onClear }) {
   return (
-    <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: '#1a2a42', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>
-      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{count} selected</span>
+    <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: 'var(--surface-raised)', border: '1px solid var(--border-stronger)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{count} selected</span>
       <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
       {STATUS_OPTIONS.map(opt => (
-        <button key={opt.value} onClick={() => onSetStatus(opt.value)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid ' + opt.border, background: opt.pill, color: opt.color, cursor: 'pointer' }}>
+        <button key={opt.value} onClick={() => onSetStatus(opt.value)} style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid ' + opt.border, background: opt.pill, color: opt.color, cursor: 'pointer' }}>
           {opt.label}
         </button>
       ))}
       <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-      <button onClick={onCopyToEvents} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>
+      <button onClick={onCopyToEvents} style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: 'pointer' }}>
         Copy to Events
       </button>
       <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-      <button onClick={onClear} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.2)', background: 'transparent', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+      <button onClick={onClear} style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--border-stronger)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
         Clear
       </button>
-      <button onClick={onClear} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 2px', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>×</button>
+      <button onClick={onClear} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 2px', fontFamily: 'inherit' }}>×</button>
     </div>
   )
 }
@@ -840,9 +835,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     ? 'rgba(0,0,0,0.04)'
     : 'rgba(255,255,255,0.02)'
   const STAFF_NAME_COLORS = {
-    confirmed: 'var(--text-primary)',
-    pending: isLightMode ? '#B5720B' : '#FFD60A',
-    needs_attention: 'var(--color-red)'
+    confirmed: 'var(--color-success)',
+    pending: 'var(--color-warning)',
+    needs_attention: 'var(--color-danger)'
   }
 
   const showToast = (msg) => {
@@ -852,27 +847,31 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
 
   const COL_WIDTH = 140
   const LEFT_WIDTH = 220
-  const ROW_HEIGHT = 28
-  const DEPT_H = 32
+  const ROW_HEIGHT = 30
+  const DEPT_H = 28
   const H1 = 46
   const H2 = 32
   const H3 = 32
   const H4 = 32
   const H5 = 32
 
-  const B_HDR_INNER = '1px solid var(--border-card)'
-  const B_HDR_WEEKEND = isLightMode
-    ? '3px solid rgba(0,0,0,0.15)'
-    : '3px solid rgba(255,255,255,0.25)'
-  const B_BODY_INNER = '1px solid var(--border-card)'
-  const B_BODY_WEEKEND = isLightMode
-    ? '3px solid rgba(0,0,0,0.15)'
-    : '3px solid rgba(255,255,255,0.25)'
-  const B_LEFT_COL = '1px solid var(--border-card)'
-  const B_DEPT_TOP = '1px solid var(--border-card)'
-  const HDR_BG = '#0d1f3c'
-  const DEPT_BG = '#0d1f3c'
-  const BODY_DEPT_BG = '#0f172a'
+  const CELL_BORDER = isLightMode
+    ? '1px solid rgba(0,0,0,0.14)'
+    : '1px solid rgba(255,255,255,0.11)'
+  const WEEKEND_SEP = isLightMode
+    ? '2px solid rgba(0,0,0,0.22)'
+    : '2px solid rgba(255,255,255,0.18)'
+  const B_HDR_INNER = CELL_BORDER
+  const B_HDR_WEEKEND = WEEKEND_SEP
+  const B_BODY_INNER = CELL_BORDER
+  const B_BODY_WEEKEND = WEEKEND_SEP
+  const B_LEFT_COL = CELL_BORDER
+  const B_DEPT_TOP = CELL_BORDER
+  const HDR_BG = 'var(--surface-card)'
+  const DEPT_BG = 'var(--surface-card)'
+  const BODY_DEPT_BG = 'var(--surface-nav)'
+  const DEPT_HEADER_BG = isLightMode ? '#e8e9ec' : '#202228'
+  const DEPT_HEADER_TEXT = isLightMode ? '#555555' : '#a8a8a8'
 
   const [reloadKey, setReloadKey] = useState(0)
   const reload = () => setReloadKey(k => k + 1)
@@ -1447,9 +1446,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     )
   }
 
-  const deptAccentColor = tourId ? (toursById[tourId]?.color || '#FFD60A') : '#FFD60A'
-  const deptHeaderBg = tourId && toursById[tourId]?.color ? hexToRgba(toursById[tourId].color, 1) : BODY_DEPT_BG
-  const deptHeaderTextColor = tourId && toursById[tourId]?.color ? '#ffffff' : deptAccentColor
+  const deptAccentColor = tourId ? (toursById[tourId]?.color || 'var(--color-info)') : 'var(--color-info)'
+  const deptHeaderBg = DEPT_HEADER_BG
+  const deptHeaderTextColor = DEPT_HEADER_TEXT
 
   const TOP_WEEKEND = 0
   const TOP_TOUR = H1
@@ -1469,7 +1468,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   let globalRowIndex = 0
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'Plus Jakarta Sans, sans-serif', padding: 12, boxSizing: 'border-box', background: 'transparent' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: 'transparent' }}>
       {selectedKeys.size > 0 && (
         <BulkActionBar count={selectedKeys.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedKeys(new Set())} />
       )}
@@ -1479,16 +1478,16 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Add events to see them in the staffing grid</div>
         </div>
       ) : (
-        <div style={{ flex: 1, background: 'transparent', border: '1px solid var(--border-card)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ flex: 1, background: 'transparent', border: '0.5px solid var(--border-stronger)', borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ height: '100%', overflow: 'auto', borderRadius: 10, paddingBottom: 12, background: 'transparent', transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}>
             <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 'max-content', background: 'transparent' }}>
               <thead>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
+                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
                   {weekendGroups.map((wk, wi) => {
                     const wkEvs = weekendMap[wk]
                     return (
-                      <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--bg)', borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, borderTopRightRadius: wi === weekendGroups.length - 1 ? 10 : undefined, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
+                      <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, borderTopRightRadius: wi === weekendGroups.length - 1 ? 10 : undefined, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
                         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
                       </th>
@@ -1497,13 +1496,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                 </tr>
                 {!tourId && (
                   <tr>
-                    <th style={{ position: 'sticky', top: TOP_TOUR, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                    <th style={{ position: 'sticky', top: TOP_TOUR, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
                     </th>
                     {orderedEvents.map((ev, i) => {
                       const color = toursById[ev.tour_id]?.color || '#33FF99'
                       return (
-                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: 'var(--bg)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                           <span
                             onClick={() => router.push(`/tours/${ev.tour_id}`)}
                             style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.01em', color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
@@ -1517,11 +1516,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   </tr>
                 )}
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_CITY, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_CITY, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
                   </th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_CITY, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: 'var(--bg)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                    <th key={ev.id} style={{ position: 'sticky', top: TOP_CITY, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                       <span
                         onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
                         style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.01em', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
@@ -1533,13 +1532,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   ))}
                 </tr>
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_STATUS, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_STATUS, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
                   </th>
                   {orderedEvents.map((ev, i) => {
                     const st = EVENT_STATUS_STYLES[ev.status]
                     return (
-                      <th key={ev.id} style={{ position: 'sticky', top: TOP_STATUS, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: 'var(--bg)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                      <th key={ev.id} style={{ position: 'sticky', top: TOP_STATUS, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                         {st ? (
                           <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid ' + st.border, background: st.bg, color: st.color }}>
                             {st.label}
@@ -1550,11 +1549,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   })}
                 </tr>
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_VENUE, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: 'var(--bg)', borderRight: B_LEFT_COL, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_VENUE, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: 'var(--surface-card)', borderRight: B_LEFT_COL, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
                   </th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: 'var(--bg)', borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: 'var(--surface-card)', borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       <span
                         onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
                         style={{ fontWeight: 600, color: ev.venue_name ? 'var(--text-primary)' : 'var(--text-muted)', cursor: ev.venue_id ? 'pointer' : 'default' }}
@@ -1591,25 +1590,28 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         <td
                           className="sg-dept-header"
                           onClick={() => toggleDept(dept.id)}
-                          style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 14px', cursor: 'pointer', userSelect: 'none', background: deptHeaderBg, color: deptHeaderTextColor, borderTop: '1px solid ' + deptHeaderBg, borderBottom: '1px solid ' + deptHeaderBg }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+                          style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 10px', cursor: 'pointer', userSelect: 'none', background: deptHeaderBg, borderTop: 'none', borderBottom: B_DEPT_TOP }}
+                          onMouseEnter={e => { e.currentTarget.style.background = isLightMode ? '#dfe0e3' : '#262a33' }}
                           onMouseLeave={e => { e.currentTarget.style.background = deptHeaderBg }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span className="sg-dept-header" style={{ fontSize: 9, color: deptHeaderTextColor }}>{collapsed ? '▸' : '▾'}</span>
-                            <span className="sg-dept-header" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: deptHeaderTextColor, whiteSpace: 'nowrap' }}>{dept.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                            <div style={{ width: 3, height: 14, borderRadius: 2, background: deptAccentColor, flexShrink: 0 }} />
+                            <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: deptHeaderTextColor, whiteSpace: 'nowrap' }}>{dept.name}</span>
+                            <span style={{ fontSize: 9, color: deptHeaderTextColor, opacity: 0.45, marginLeft: 2 }}>{collapsed ? '▸' : '▾'}</span>
                           </div>
                         </td>
                         {orderedEvents.map((ev, i) => (
-                          <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: '1px solid ' + deptHeaderBg, borderBottom: '1px solid ' + deptHeaderBg }} />
+                          <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: 'none', borderBottom: B_DEPT_TOP, borderRight: cellBorderRightDark(ev, i) }} />
                         ))}
                       </tr>
                       {!collapsed && dept.rows.map(({ position, slotIndex }, rowIdx) => {
-                        const rowStripeBg = globalRowIndex % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-card-hover)'
+                        const rowStripeBg = globalRowIndex % 2 === 1
+                          ? (isLightMode ? 'rgba(0,0,0,0.028)' : 'rgba(255,255,255,0.03)')
+                          : 'transparent'
                         globalRowIndex++
                         const isLastRow = (deptIdx === departmentsWithRows.length - 1) && (rowIdx === dept.rows.length - 1)
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
-                          <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 6px', background: 'var(--bg)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, borderBottomLeftRadius: isLastRow ? 10 : undefined, fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', background: rowStripeBg || 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, borderBottomLeftRadius: isLastRow ? 10 : undefined, fontSize: 12, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                           </td>
                           {orderedEvents.map((ev, i) => {
@@ -1669,6 +1671,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                                 LOCKED_STRIPE={LOCKED_STRIPE}
                                 LOCKED_BG_COLOR={LOCKED_BG_COLOR}
                                 STAFF_NAME_COLORS={STAFF_NAME_COLORS}
+                                cellBorder={CELL_BORDER}
                                 isLastCol={isLastCol}
                                 isLastRow={isLastRow}
                               />
@@ -1710,20 +1713,20 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       )}
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 4000, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 4000, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
           ✓ {toast}
         </div>
       )}
 
       {dragLockedModal && typeof document !== 'undefined' && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-          <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(224,82,82,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(224,82,82,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#e05252' }}>Position Is Locked</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-              Unlock <strong style={{ color: '#f1f5f9' }}>{positionsById[dragLockedModal.tp.position_id]?.title}</strong> to assign staff here.
+              Unlock <strong style={{ color: 'var(--text-primary)' }}>{positionsById[dragLockedModal.tp.position_id]?.title}</strong> to assign staff here.
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={() => setDragLockedModal(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              <button onClick={() => setDragLockedModal(null)} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >Cancel</button>
@@ -1736,7 +1739,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   await handleUnlockHatched(tp, slotIndex, event)
                 }
                 setDragLockedModal(null)
-              }} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#e05252', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+              }} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#e05252', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
                 {dragLockedModal.draggedCell?.assignment?.staff ? 'Unlock & Assign' : 'Unlock'}
               </button>
             </div>
@@ -1746,30 +1749,30 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       )}
 
       {conflictModal && typeof document !== 'undefined' && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-          <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,214,10,0.35)', borderRadius: 14, padding: 32, width: 560, maxWidth: '95vw' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,214,10,0.35)', borderRadius: 14, padding: 32, width: 560, maxWidth: '95vw' }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#FFD60A', marginBottom: 6 }}>
               Scheduling Conflict — {conflictModal.staffName}
             </div>
-            <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 24 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
               {conflictModal.staffName} is assigned to two events on the same weekend. Choose which event to keep them on.
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
               {[{ side: 'current', ev: conflictModal.current }, { side: 'conflict', ev: conflictModal.conflict }].map(({ side, ev }) => (
                 <div key={side} style={{ background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {ev.tourName && <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#FFD60A' }}>{ev.tourName}</div>}
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>{ev.city || '—'}</div>
-                  {ev.weekendLabel && <div style={{ fontSize: 12, color: '#94a3b8' }}>{ev.weekendLabel}</div>}
-                  {ev.position && <div style={{ fontSize: 12, color: '#64748b' }}>{ev.position}</div>}
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{ev.city || '—'}</div>
+                  {ev.weekendLabel && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{ev.weekendLabel}</div>}
+                  {ev.position && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{ev.position}</div>}
                   {(ev.travel_in_date || ev.travel_out_date) && (
-                    <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.7, paddingTop: 4, borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.7, paddingTop: 4, borderTop: '0.5px solid var(--border-default)' }}>
                       {ev.travel_in_date && <div>✈ In: {fmtDate(ev.travel_in_date)}</div>}
                       {ev.travel_out_date && <div>✈ Out: {fmtDate(ev.travel_out_date)}</div>}
                     </div>
                   )}
                   <button
                     onClick={() => handleKeepHere(side)}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', marginTop: 'auto', fontSize: 13, padding: '8px 14px', borderRadius: 7, border: 'none', background: '#33FF99', color: '#0a1628', cursor: 'pointer', fontWeight: 600 }}
+                    style={{ fontFamily: 'inherit', marginTop: 'auto', fontSize: 13, padding: '8px 14px', borderRadius: 7, border: 'none', background: '#33FF99', color: '#0a1628', cursor: 'pointer', fontWeight: 600 }}
                     onMouseEnter={e => e.currentTarget.style.background = '#2be88a'}
                     onMouseLeave={e => e.currentTarget.style.background = '#33FF99'}
                   >Keep Here</button>
@@ -1777,7 +1780,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
               ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={() => setConflictModal(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setConflictModal(null)} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--border-stronger)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -1787,19 +1790,19 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
       )}
 
       {dragConflict && typeof document !== 'undefined' && ReactDOM.createPortal(
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-          <div style={{ background: '#0d1f3a', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>Position Already Filled</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
               {staffDisplayName(dragConflict.target.assignment.staff)} is already in this position. Move {staffDisplayName(dragConflict.source.assignment.staff)} here anyway?
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button onClick={() => setDragConflict(null)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+              <button onClick={() => setDragConflict(null)} style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: '0.5px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >Cancel</button>
               <button onClick={async () => { await doMoveStaff(dragConflict.source, dragConflict.target); setDragConflict(null) }}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Move Anyway</button>
+                style={{ fontFamily: 'inherit', fontSize: 13, padding: '8px 16px', borderRadius: 7, border: 'none', background: '#FFCC00', color: '#0a1628', cursor: 'pointer', fontWeight: 500 }}>Move Anyway</button>
             </div>
           </div>
         </div>,

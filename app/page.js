@@ -123,7 +123,7 @@ export default function Dashboard() {
         supabase
           .from('events')
           .select('id, tour_id, city, state, country, load_in_date, status')
-          .gte('load_in_date', todayStr)
+          .gt('load_in_date', weekEnd)
           .order('load_in_date'),
 
         supabase
@@ -223,7 +223,7 @@ export default function Dashboard() {
         <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Dashboard</div>
         {now && (
           <div>
-            <span style={{ color: 'var(--text-secondary)' }}>{formatClockDate(now)} · </span>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>{formatClockDate(now)} · </span>
             <span style={{ color: 'var(--color-info)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatClockTime(now)}</span>
           </div>
         )}
@@ -240,7 +240,7 @@ export default function Dashboard() {
               {stat.label}
             </div>
             <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
+            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
           </div>
         ))}
       </div>
@@ -255,7 +255,7 @@ export default function Dashboard() {
             gridColumn: '1 / -1',
             ...GLASS_CARD, padding: '10px 12px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, color: 'var(--text-muted)',
+            fontSize: 11, fontWeight: 450, color: 'var(--text-muted)',
           }}>
             No events this week
           </div>
@@ -274,18 +274,18 @@ export default function Dashboard() {
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
                 {formatLocation(ev.city, ev.state, ev.country, 'compact')}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
                 {ev.load_out_date && ev.load_out_date !== ev.load_in_date
                   ? `${shortDate(ev.load_in_date)} – ${shortDate(ev.load_out_date)}`
                   : shortDate(ev.load_in_date)}
               </div>
               {ev.venue_name && (
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
                   {ev.venue_name}
                 </div>
               )}
               {ev.num_shows != null && (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-muted)', marginTop: 1 }}>
                   {ev.num_shows} {ev.num_shows === 1 ? 'show' : 'shows'}
                 </div>
               )}
@@ -302,7 +302,7 @@ export default function Dashboard() {
             style={{
               ...GLASS_CARD, padding: '10px 12px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, color: 'var(--color-info)', cursor: 'pointer', textAlign: 'center',
+              fontSize: 13, fontWeight: 450, color: 'var(--color-info)', cursor: 'pointer', textAlign: 'center',
             }}
           >
             See all →
@@ -320,9 +320,9 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-            {loading && <div style={{ padding: '14px', fontSize: 12, color: 'var(--text-muted)' }}>Loading…</div>}
+            {loading && <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
             {!loading && !activeTours.length && (
-              <div style={{ padding: '14px', fontSize: 12, color: 'var(--text-muted)' }}>No active or upcoming tours.</div>
+              <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>No active or upcoming tours.</div>
             )}
             {activeTours.map(tour => {
               const stats = tourEventStats[tour.id] || { total: 0, done: 0, left: 0 }
@@ -350,7 +350,7 @@ export default function Dashboard() {
                       background: `color-mix(in srgb, ${tour.color || 'var(--accent)'} 10%, transparent)`,
                       color: tour.color || 'var(--accent)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 8, fontWeight: 700,
+                      fontSize: 11, fontWeight: 700,
                     }}>
                       {initials(tour.name)}
                     </div>
@@ -362,17 +362,20 @@ export default function Dashboard() {
                     <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2 }}>
                       {nextEvent
-                        ? <span
-                            style={{ cursor: 'pointer', color: 'var(--color-info)', fontWeight: 600 }}
-                            onClick={(e) => { e.stopPropagation(); router.push(`/tours/${tour.id}/events/${nextEvent.id}`) }}
-                          >
-                            Next: {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {shortDate(nextEvent.load_in_date)}
-                          </span>
+                        ? <>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>Next: </span>
+                            <span
+                              style={{ color: 'var(--color-info)', fontWeight: 700, cursor: 'pointer' }}
+                              onClick={(e) => { e.stopPropagation(); router.push(`/tours/${tour.id}/events/${nextEvent.id}`) }}
+                            >
+                              {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {shortDate(nextEvent.load_in_date)}
+                            </span>
+                          </>
                         : '—'}
                     </div>
                   </div>
@@ -385,7 +388,7 @@ export default function Dashboard() {
                     ].map(item => (
                       <div key={item.lbl} style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: 16, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
+                        <div style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
                   </div>
@@ -412,7 +415,7 @@ export default function Dashboard() {
               {alerts.length === 0 && (
                 <div style={{ ...GLASS_CARD, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 14px' }}>
                   <IconCheck size={20} color="var(--color-success)" />
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>All clear</div>
+                  <div style={{ fontSize: 11, fontWeight: 450, color: 'var(--text-muted)' }}>All clear</div>
                 </div>
               )}
               {alerts.map((alert, i) => {
@@ -436,7 +439,7 @@ export default function Dashboard() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
+                      <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
                       {alert.action && (
                         <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
                           {alert.action}
@@ -459,7 +462,7 @@ export default function Dashboard() {
               {activeTours.slice(0, 3).map(tour => (
                 <div key={tour.id} style={{ ...GLASS_CARD, padding: '10px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tour.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>{tour.name}</span>
                     <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                   </div>
                   <div style={{ height: 2, background: 'var(--border-default)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
@@ -467,7 +470,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
-              <div style={{ textAlign: 'center', fontSize: 10, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>
+              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 450, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>
                 Finance module coming soon
               </div>
             </div>
