@@ -441,7 +441,10 @@ export default function TourPage() {
   const confirmedCount = events.filter(e => e.status === 'confirmed').length
   const holdsCount = events.filter(e => HOLD_STATUSES.includes(e.status)).length
   const expiringHolds = events.filter(e => HOLD_STATUSES.includes(e.status) && e.load_in_date >= todayStr && e.load_in_date <= twoWeeksStr)
-  const upcomingBeyondWeek = upcomingEvents.filter(e => e.load_in_date > weekEnd).slice(0, 5)
+  const upcomingBeyondWeek = upcomingEvents.filter(e => e.load_in_date > weekEnd)
+  const UPCOMING_LIMIT = 6
+  const visibleUpcoming = upcomingBeyondWeek.slice(0, UPCOMING_LIMIT)
+  const remainingUpcomingCount = upcomingBeyondWeek.length - UPCOMING_LIMIT
 
   const eventAlerts = upcomingEvents.flatMap(ev => {
     const alerts = getAlerts(ev, eventShows[ev.id])
@@ -450,6 +453,15 @@ export default function TourPage() {
       message: msg,
     }))
   })
+
+  const attentionItems = [
+    ...eventAlerts.map(item => ({ kind: 'alert', ...item })),
+    ...expiringHolds.map(ev => ({ kind: 'hold', event: ev })),
+    ...(unconfirmedStaffCount > 0 ? [{ kind: 'staff' }] : []),
+  ]
+  const ATTENTION_LIMIT = 5
+  const visibleItems = attentionItems.slice(0, ATTENTION_LIMIT)
+  const remainingCount = attentionItems.length - ATTENTION_LIMIT
 
   if (loading) return (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 14, fontWeight: 450 }}>
@@ -675,7 +687,7 @@ export default function TourPage() {
                   {upcomingBeyondWeek.length === 0 && (
                     <div style={{ padding: 14, fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>No upcoming events beyond this week.</div>
                   )}
-                  {upcomingBeyondWeek.map(ev => {
+                  {visibleUpcoming.map(ev => {
                     const s = STATUS_STYLES[ev.status] || STATUS_STYLES.tentative
                     return (
                       <div
@@ -710,11 +722,19 @@ export default function TourPage() {
                       </div>
                     )
                   })}
+                  {remainingUpcomingCount > 0 && (
+                    <div
+                      onClick={() => setActiveTab('schedule')}
+                      style={{ fontSize: 13, color: 'var(--color-info)', fontWeight: 600, cursor: 'pointer', textAlign: 'center', padding: '8px 12px' }}
+                    >
+                      Show all {upcomingBeyondWeek.length} events →
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Right column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', minHeight: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', minHeight: 0, position: 'sticky', top: 10, alignSelf: 'flex-start' }}>
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
@@ -726,64 +746,88 @@ export default function TourPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {eventAlerts.length === 0 && expiringHolds.length === 0 && unconfirmedStaffCount === 0 && (
+                    {attentionItems.length === 0 && (
                       <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 }}>
                         <IconCheck size={20} color="var(--color-success)" />
                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
                       </div>
                     )}
-                    {eventAlerts.map((item, i) => (
+                    {visibleItems.map((item, i) => {
+                      if (item.kind === 'alert') {
+                        return (
+                          <div
+                            key={`${item.event.id}-${i}`}
+                            onClick={() => router.push(`/tours/${id}/events/${item.event.id}`)}
+                            style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
+                          >
+                            <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ position: 'relative', display: 'inline-flex', width: 14, height: 14, flexShrink: 0 }}>
+                                <IconAlertTriangleFilled size={14} color="#FFD60A" />
+                                <IconAlertTriangle size={14} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
+                              </div>
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {formatLocation(item.event.city, item.event.state, item.event.country, 'compact')}
+                              </div>
+                              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
+                                {item.message}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (item.kind === 'hold') {
+                        const ev = item.event
+                        return (
+                          <div
+                            key={ev.id}
+                            onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                            style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
+                          >
+                            <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <IconClock size={13} color="var(--color-warning)" />
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Hold expiring</div>
+                              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
+                                {formatLocation(ev.city, ev.state, ev.country, 'compact')} · {shortDate(ev.load_in_date)}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return (
+                        <div
+                          key="staff"
+                          onClick={() => setActiveTab('staffing')}
+                          style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
+                        >
+                          <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IconUserQuestion size={13} color="var(--color-warning)" />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{unconfirmedStaffCount} unconfirmed staff</div>
+                            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>Pending on upcoming events</div>
+                            <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3 }}>View staffing</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {remainingCount > 0 && (
                       <div
-                        key={`${item.event.id}-${i}`}
-                        onClick={() => router.push(`/tours/${id}/events/${item.event.id}`)}
-                        style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
+                        onClick={() => router.push(`/tours/${id}/schedule`)}
+                        style={{
+                          padding: '8px 12px',
+                          fontSize: 13,
+                          color: 'var(--color-info)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          borderTop: '0.5px solid var(--border-default)',
+                          textAlign: 'center'
+                        }}
                       >
-                        <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div style={{ position: 'relative', display: 'inline-flex', width: 14, height: 14, flexShrink: 0 }}>
-                            <IconAlertTriangleFilled size={14} color="#FFD60A" />
-                            <IconAlertTriangle size={14} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
-                          </div>
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {formatLocation(item.event.city, item.event.state, item.event.country, 'compact')}
-                          </div>
-                          <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
-                            {item.message}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {expiringHolds.map(ev => (
-                      <div
-                        key={ev.id}
-                        onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
-                        style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
-                      >
-                        <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <IconClock size={13} color="var(--color-warning)" />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Hold expiring</div>
-                          <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
-                            {formatLocation(ev.city, ev.state, ev.country, 'compact')} · {shortDate(ev.load_in_date)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {unconfirmedStaffCount > 0 && (
-                      <div
-                        onClick={() => setActiveTab('staffing')}
-                        style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
-                      >
-                        <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <IconUserQuestion size={13} color="var(--color-warning)" />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{unconfirmedStaffCount} unconfirmed staff</div>
-                          <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>Pending on upcoming events</div>
-                          <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3 }}>View staffing</div>
-                        </div>
+                        See {remainingCount} more →
                       </div>
                     )}
                   </div>
