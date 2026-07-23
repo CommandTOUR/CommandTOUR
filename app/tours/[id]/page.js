@@ -116,7 +116,6 @@ const COLS = [
   { key: 'shows',     label: '# Shows',      width: '0.6fr', align: 'center' },
   { key: 'firstShow', label: 'First Show',   width: '1fr',   align: 'center' },
   { key: 'lastShow',  label: 'Last Show',    width: '1fr',   align: 'center' },
-  { key: 'budget',    label: 'Budget',       width: '0.8fr', align: 'center' },
   { key: 'status',    label: 'Status',       width: '1.2fr', align: 'center' },
   { key: 'alert',     label: '',             width: '40px',  align: 'center' },
 ]
@@ -314,9 +313,6 @@ function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInU
       </div>
       <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: lastShow ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: lastShow ? 1 : 0.3 }}>
         {fmt(lastShow)}
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: 'var(--text-muted)' }}>
-        $—
       </div>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={onStatusUpdate} />
@@ -642,7 +638,13 @@ export default function TourPage() {
                   {thisWeekEvents.map(ev => {
                     const travel = eventTravelMap[ev.id]
                     return (
-                      <div key={ev.id} style={{ ...GLASS, padding: '14px 20px', display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px 100px 1px 100px', alignItems: 'center', gap: 12 }}>
+                      <div
+                        key={ev.id}
+                        onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-raised)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
+                        style={{ ...GLASS, padding: '14px 20px', display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px 100px 1px 100px', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+                      >
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {formatLocation(ev.city, ev.state, ev.country, 'compact')}

@@ -5,14 +5,26 @@ import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
-import { IconX, IconChevronDown, IconChevronRight, IconFlag } from '@tabler/icons-react'
+import { IconX, IconChevronDown, IconChevronRight, IconAlertTriangleFilled, IconAlertTriangle } from '@tabler/icons-react'
+
+const GLASS = {
+  background: 'var(--glass-tile-bg)',
+  backdropFilter: 'blur(12px) saturate(1.4)',
+  border: '0.5px solid var(--glass-tile-border)',
+  borderRadius: 14,
+  boxShadow: 'var(--glass-tile-shadow)',
+}
 
 function staffDisplayName(staff) {
   if (!staff) return ''
   return staff.display_name?.trim() || `${staff.first_name} ${staff.last_name}`
 }
 
-const STATUS_COLORS = { confirmed: 'var(--color-mint)', pending: 'var(--color-yellow)', needs_attention: 'var(--color-red)' }
+const STATUS_PILL_STYLES = {
+  confirmed: { background: 'var(--status-confirmed-bg)', color: 'var(--status-confirmed-text)', border: 'var(--status-confirmed-border)' },
+  pending: { background: 'var(--status-1hold-bg)', color: 'var(--status-1hold-text)', border: 'var(--status-1hold-border)' },
+  needs_attention: { background: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', color: 'var(--color-danger)', border: 'color-mix(in srgb, var(--color-danger) 30%, transparent)' },
+}
 
 function formatStatusLabel(s) {
   if (!s) return null
@@ -24,7 +36,7 @@ function fmtDate(d) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const GRID = '220px 160px 100px 100px 100px 1fr 30px'
+const GRID = '24px 220px 160px 100px 100px 100px 1fr 30px'
 
 function StaffPicker({ onSelect, onClose }) {
   const [query, setQuery] = useState('')
@@ -67,10 +79,10 @@ function StaffPicker({ onSelect, onClose }) {
         onChange={e => setQuery(e.target.value)}
         onKeyDown={e => { if (e.key === 'Escape') onClose() }}
         placeholder="Search staff..."
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {query.trim() && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, marginTop: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
           {loading && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results.length === 0 && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>No results</div>}
           {results.map(s => (
@@ -78,7 +90,7 @@ function StaffPicker({ onSelect, onClose }) {
               key={s.id}
               onClick={() => onSelect(s)}
               style={{ padding: '8px 12px', fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               {staffDisplayName(s)}
@@ -108,7 +120,7 @@ function InlineDateCell({ value, disabled, onSave }) {
           if (e.key === 'Enter') { setEditing(false); onSave(val || null) }
           if (e.key === 'Escape') { setEditing(false); setVal(value || '') }
         }}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: 108 }}
+        style={{ fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: 108 }}
       />
     )
   }
@@ -136,7 +148,7 @@ function InlineTextCell({ value, disabled, onSave }) {
           if (e.key === 'Enter') { setEditing(false); onSave(val) }
           if (e.key === 'Escape') { setEditing(false); setVal(value || '') }
         }}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '3px 8px', borderRadius: 5, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 13, padding: '3px 8px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
     )
   }
@@ -152,10 +164,22 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '10px 16px', borderBottom: isLast ? 'none' : '1px solid var(--border-card)', alignItems: 'center' }}>
+    <div
+      style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '10px 16px', borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)', alignItems: 'center', background: 'transparent' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <div style={{ width: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {(!hasStaff || !assignment?.travel_in_date) && (
+          <div style={{ position: 'relative', display: 'inline-flex', width: 13, height: 13, flexShrink: 0 }}>
+            <IconAlertTriangleFilled size={13} color="#FFD60A" />
+            <IconAlertTriangle size={13} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
+          </div>
+        )}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        {!hasStaff && <IconFlag size={12} color="var(--color-yellow)" style={{ flexShrink: 0 }} />}
-        <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
       </div>
 
       <div style={{ position: 'relative' }}>
@@ -166,23 +190,29 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
           />
         ) : hasStaff ? (
           <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
-            {hasConflict && <span style={{ color: '#FF9500', fontSize: 10, marginRight: 3 }}>⚠</span>}
+            {hasConflict && <span style={{ color: 'var(--color-warning)', fontSize: 10, marginRight: 3 }}>⚠</span>}
             {staffDisplayName(assignment.staff)}
           </span>
         ) : (
-          <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--color-yellow)', cursor: 'pointer' }}>+ Assign</span>
+          <span onClick={() => setPicking(true)} style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent)', cursor: 'pointer' }}>+ Assign</span>
         )}
       </div>
 
       <div>
-        {assignment?.status ? (
-          <span
-            onClick={() => onSetStatus(assignment, assignment.status === 'confirmed' ? 'pending' : 'confirmed')}
-            style={{ fontSize: 12, fontWeight: 600, color: STATUS_COLORS[assignment.status] || 'var(--text-muted)', cursor: 'pointer' }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '0.8' }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-          >{formatStatusLabel(assignment.status)}</span>
-        ) : (
+        {assignment?.status ? (() => {
+          const pill = STATUS_PILL_STYLES[assignment.status] || { background: 'transparent', color: 'var(--text-muted)', border: 'transparent' }
+          return (
+            <span
+              onClick={() => onSetStatus(assignment, assignment.status === 'confirmed' ? 'pending' : 'confirmed')}
+              style={{
+                display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, cursor: 'pointer',
+                background: pill.background, color: pill.color, border: `0.5px solid ${pill.border}`,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.8' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >{formatStatusLabel(assignment.status)}</span>
+          )
+        })() : (
           <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
         )}
       </div>
@@ -210,11 +240,11 @@ function DepartmentSection({ dept, expanded, onToggle, filledCount, totalCount, 
     <div>
       <div
         onClick={onToggle}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', cursor: 'pointer', background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-card)', userSelect: 'none' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', cursor: 'pointer', background: 'var(--border-default)', borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-default)', userSelect: 'none' }}
       >
         {expanded ? <IconChevronDown size={14} color="var(--text-muted)" /> : <IconChevronRight size={14} color="var(--text-muted)" />}
-        <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-primary)' }}>{dept.name}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({filledCount}/{totalCount})</span>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>{dept.name}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>({filledCount}/{totalCount})</span>
       </div>
       {expanded && dept.positions.map(pos => (
         Array.from({ length: pos.quantityNeeded }, (_, i) => i + 1).map(slotIndex => renderSlot(pos, slotIndex))
@@ -269,8 +299,8 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="glass-card" style={{ padding: 24, width: 420 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ ...GLASS, padding: 24, width: 420 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Add Position for This Event</div>
         <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>This won&rsquo;t affect the tour&rsquo;s baseline staffing.</div>
 
@@ -281,7 +311,7 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
             <select
               value={selectedPositionId}
               onChange={e => setSelectedPositionId(e.target.value)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: '100%', marginBottom: 16, cursor: 'pointer' }}
+              style={{ fontSize: 14, padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', marginBottom: 16, cursor: 'pointer' }}
             >
               <option value="">Select a position...</option>
               {allDepartments.map(dept => (
@@ -300,13 +330,13 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                    style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-card)', background: 'var(--bg-card-hover)', color: 'var(--text-primary)', cursor: quantity <= 1 ? 'default' : 'pointer', opacity: quantity <= 1 ? 0.4 : 1 }}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'var(--surface-raised)', color: 'var(--text-primary)', cursor: quantity <= 1 ? 'default' : 'pointer', opacity: quantity <= 1 ? 0.4 : 1 }}
                   >−</button>
                   <span style={{ width: 30, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{quantity}</span>
                   <button
                     onClick={() => setQuantity(q => Math.min(10, q + 1))}
                     disabled={quantity >= 10}
-                    style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-card)', background: 'var(--bg-card-hover)', color: 'var(--text-primary)', cursor: quantity >= 10 ? 'default' : 'pointer', opacity: quantity >= 10 ? 0.4 : 1 }}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'var(--surface-raised)', color: 'var(--text-primary)', cursor: quantity >= 10 ? 'default' : 'pointer', opacity: quantity >= 10 ? 0.4 : 1 }}
                   >+</button>
                 </div>
               </div>
@@ -317,7 +347,7 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
+            style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
           >
             Cancel
           </button>
@@ -330,8 +360,9 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
   )
 }
 
-export default function StaffingTab({ tourId, eventId, event }) {
+export default function StaffingTab({ tourId, eventId, event, tourColor }) {
   const router = useRouter()
+  const tableColor = tourColor || 'var(--accent)'
   const effectiveTourId = tourId || event?.tour_id
   const [departments, setDepartments] = useState([])
   const [assignments, setAssignments] = useState([])
@@ -580,7 +611,7 @@ export default function StaffingTab({ tourId, eventId, event }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
           Staffing
           <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>({totals.filled}/{totals.total} filled)</span>
@@ -589,7 +620,7 @@ export default function StaffingTab({ tourId, eventId, event }) {
       </div>
 
       {assignError && (
-        <div style={{ fontSize: 13, color: '#e05252', background: 'rgba(224,82,82,0.1)', border: '1px solid rgba(224,82,82,0.3)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: 'var(--color-danger)', background: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
           {assignError}
         </div>
       )}
@@ -601,10 +632,11 @@ export default function StaffingTab({ tourId, eventId, event }) {
           <button className="btn-primary" onClick={() => router.push(`/tours/${effectiveTourId}/edit`)}>Go to Edit Tour</button>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--border-card)', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '8px 16px', background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-card)' }}>
+        <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '10px 16px', background: tableColor, borderBottom: '0.5px solid var(--border-default)' }}>
+            <div />
             {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Notes', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+              <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
             ))}
           </div>
 
@@ -653,8 +685,8 @@ export default function StaffingTab({ tourId, eventId, event }) {
       )}
 
       {pendingConflict && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="glass-card" style={{ padding: 24, borderRadius: 12, maxWidth: 400, width: '90%' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ ...GLASS, padding: 24, borderRadius: 12, maxWidth: 400, width: '90%' }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Scheduling Conflict</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
               {staffDisplayName(pendingConflict.staffMember)} is already assigned at {pendingConflict.conflictingEvent?.city}
@@ -663,13 +695,13 @@ export default function StaffingTab({ tourId, eventId, event }) {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setPendingConflict(null)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
+                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConflictConfirm}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#000', fontWeight: 600, cursor: 'pointer' }}
+                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-warning)', color: 'var(--surface-card)', fontWeight: 600, cursor: 'pointer' }}
               >
                 Assign Anyway
               </button>

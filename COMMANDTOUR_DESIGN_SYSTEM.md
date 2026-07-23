@@ -419,6 +419,21 @@ on every unmigrated page — see Section 12. It is not dead code.
 
 ---
 
+## Shell Padding Rule (non-negotiable)
+
+The root layout (app/layout.js) wraps all pages in a flex container with `padding: 10` and `gap: 10`. The SideNav occupies the left slot; `<main>` is `flex: 1`.
+
+Every page's outermost content div sits flush inside `<main>` with no additional horizontal padding. This means:
+
+- Header tiles, tab bars, and stat strips all have `0px` horizontal margin/padding from the main edge — they stretch edge to edge naturally.
+- The scrollable content area (`flex:1, overflowY:'auto', minHeight:0`) uses `padding: '12px 0'` — vertical padding only, zero horizontal.
+- Never add horizontal padding to the scrollable content wrapper. If inner tiles need breathing room, that padding lives inside the tile itself (e.g. `padding: '16px 20px'` on a GLASS card).
+- The header tile uses `padding: '16px 20px'` internally — its outer edge is flush, its inner content is inset 20px. Content tiles below should match this with their own internal padding.
+
+Violating this rule causes the content area to appear narrower than the header tile.
+
+---
+
 ## 8. Dashboard (`app/page.js`) — Current Structure, In Full
 
 Root container: `display: flex; flex-direction: column; gap: 10; height:

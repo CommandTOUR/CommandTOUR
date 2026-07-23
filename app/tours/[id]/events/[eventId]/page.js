@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import TopNav from '../../../../../components/TopNav'
 import { getSupabase } from '../../../../../lib/supabase'
 import StaffingTab from '../../../../../components/StaffingTab'
 import TravelHotelTab from '../../../../../components/TravelHotelTab'
@@ -11,14 +10,36 @@ import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
+import {
+  IconAlertTriangle,
+  IconAlertTriangleFilled,
+  IconCheck,
+} from '@tabler/icons-react'
+
+const GLASS = {
+  background: 'var(--glass-tile-bg)',
+  backdropFilter: 'blur(12px) saturate(1.4)',
+  border: '0.5px solid var(--glass-tile-border)',
+  borderRadius: 14,
+  boxShadow: 'var(--glass-tile-shadow)',
+}
+
+function initials(name) {
+  return (name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join('')
+}
 
 const STATUS_PILL = {
-  confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
-  '1-hold':    { color: '#FFD60A', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: '#FF9500', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
-  '3-hold':    { color: '#FF3B30', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
-  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
+  confirmed:   { color: 'var(--status-confirmed-text)', background: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
+  tentative:   { color: 'var(--status-tentative-text)', background: 'var(--status-tentative-bg)', border: 'var(--status-tentative-border)' },
+  '1-hold':    { color: 'var(--status-1hold-text)',     background: 'var(--status-1hold-bg)',     border: 'var(--status-1hold-border)' },
+  '2-hold':    { color: 'var(--status-2hold-text)',     background: 'var(--status-2hold-bg)',     border: 'var(--status-2hold-border)' },
+  '3-hold':    { color: 'var(--status-3hold-text)',     background: 'var(--status-3hold-bg)',     border: 'var(--status-3hold-border)' },
+  'date-hold': { color: 'var(--status-datehold-text)',  background: 'var(--status-datehold-bg)',  border: 'var(--status-datehold-border)' },
 }
 
 const fmtStatus = (s) => {
@@ -29,8 +50,8 @@ const fmtStatus = (s) => {
 }
 
 const timeSelectStyle = {
-  background: 'var(--bg-card)',
-  border: '0.5px solid rgba(255,255,255,0.15)',
+  background: 'var(--surface-card)',
+  border: '0.5px solid var(--border-strong)',
   borderRadius: 6,
   color: 'var(--text-primary)',
   fontSize: 13,
@@ -39,9 +60,9 @@ const timeSelectStyle = {
 }
 
 const ampmActiveStyle = {
-  background: 'rgba(51,255,153,0.15)',
-  color: '#33FF99',
-  border: '1px solid rgba(51,255,153,0.3)',
+  background: 'var(--accent-bg)',
+  color: 'var(--accent)',
+  border: '1px solid var(--accent-border)',
   borderRadius: 6,
   padding: '4px 10px',
   fontSize: 12,
@@ -50,9 +71,9 @@ const ampmActiveStyle = {
 }
 
 const ampmInactiveStyle = {
-  background: 'var(--bg-card)',
+  background: 'var(--surface-card)',
   color: 'var(--text-muted)',
-  border: '0.5px solid var(--border-card)',
+  border: '0.5px solid var(--border-default)',
   borderRadius: 6,
   padding: '4px 10px',
   fontSize: 12,
@@ -103,18 +124,18 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderRadius: 8, border: '0.5px solid rgba(255,255,255,0.10)', background: 'transparent', transition: 'background 0.12s', marginBottom: 8 }}
+      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', transition: 'background 0.12s', marginBottom: 8 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div onClick={() => onToggleComplete(show)} style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid rgba(255,255,255,0.20)', background: show.completed ? '#33FF99' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-        {show.completed && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      <div onClick={() => onToggleComplete(show)} style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer', border: show.completed ? 'none' : '1.5px solid var(--border-stronger)', background: show.completed ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+        {show.completed && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="var(--surface-card)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
       </div>
 
       {editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'var(--bg-card)', color: 'var(--text-primary)', outline: 'none' }} />
+            style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--accent)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
           <select value={editHour} onChange={e => setEditHour(e.target.value)} style={timeSelectStyle}>
             {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
           </select>
@@ -125,7 +146,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
           <button onClick={() => setEditAmPm('PM')} style={editAmPm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
           <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); initTimeFromShow() }}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+            style={{ fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid var(--border-strong)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
         </div>
       ) : (
         <div style={{ flex: 1 }}>
@@ -149,14 +170,14 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
           <div onClick={() => { setEditing(true); setEditDate(show.show_date || ''); initTimeFromShow() }}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 4 }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <div onClick={() => onDelete(show.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
         </div>
       )}
@@ -186,6 +207,9 @@ export default function EventPage() {
   const [newAmPm, setNewAmPm] = useState('PM')
   const [saving, setSaving] = useState(false)
   const [incompleteTasks, setIncompleteTasks] = useState(null)
+  const [todayScheduleItems, setTodayScheduleItems] = useState([])
+  const [travelToday, setTravelToday] = useState(0)
+  const [travelDates, setTravelDates] = useState({ earliestArrival: null, latestDeparture: null })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -226,6 +250,51 @@ export default function EventPage() {
   }, [activeTab, eventId])
 
   useEffect(() => {
+    if (activeTab !== 'overview') return
+    const supabase = getSupabase()
+    const pad = n => String(n).padStart(2, '0')
+    const d = new Date()
+    const today = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+    Promise.all([
+      supabase.from('event_travel_arrivals').select('travel_date').eq('event_id', eventId),
+      supabase.from('event_travel_departures').select('travel_date').eq('event_id', eventId),
+    ]).then(([arrRes, depRes]) => {
+      const arrivals = arrRes.data || []
+      const departures = depRes.data || []
+      const travelingToday = new Set([
+        ...arrivals.filter(r => r.travel_date === today).map((_, i) => `a${i}`),
+        ...departures.filter(r => r.travel_date === today).map((_, i) => `d${i}`),
+      ]).size
+      setTravelToday(travelingToday)
+      const allArrivalDates = arrivals.map(r => r.travel_date).filter(Boolean).sort()
+      const allDepDates = departures.map(r => r.travel_date).filter(Boolean).sort()
+      setTravelDates({
+        earliestArrival: allArrivalDates[0] || null,
+        latestDeparture: allDepDates[allDepDates.length - 1] || null,
+      })
+    })
+  }, [activeTab, eventId])
+
+  useEffect(() => {
+    if (activeTab !== 'overview') return
+    const supabase = getSupabase()
+    const today = new Date()
+    const pad = n => String(n).padStart(2, '0')
+    const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`
+    const targetDate = (event?.load_in_date && event.load_in_date <= todayStr && event?.load_out_date && event.load_out_date >= todayStr)
+      ? todayStr
+      : event?.load_in_date || null
+    if (!targetDate) return
+    supabase
+      .from('schedule_items')
+      .select('id, day_date, time_start, time_end, what, sort_order')
+      .eq('event_id', eventId)
+      .eq('day_date', targetDate)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => setTodayScheduleItems(data || []))
+  }, [activeTab, eventId, event])
+
+  useEffect(() => {
     const fetchShows = async () => {
       const supabase = getSupabase()
       const { data } = await supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }).order('show_time', { ascending: true })
@@ -255,6 +324,25 @@ export default function EventPage() {
         num_shows: updated.length,
         load_out_date: event.load_out_date || lastShowDate,
       }).eq('id', eventId)
+      const showNumber = updated.length
+      const showTimeStr = (() => {
+        const h = parseInt(newHour)
+        const m = newMinute
+        const isPM = newAmPm === 'PM'
+        let hour24 = isPM ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h)
+        return `${String(hour24).padStart(2,'0')}:${m}:00`
+      })()
+      await supabase.from('schedule_items').insert([{
+        event_id: eventId,
+        day_date: newShow.show_date,
+        day_type: 'Show Day',
+        what: `Show ${showNumber}`,
+        who: null,
+        notes: null,
+        time_start: showTimeStr,
+        time_end: null,
+        sort_order: 99,
+      }])
       setNewShow({ show_date: '', notes: '' })
       setNewHour('7')
       setNewMinute('30')
@@ -310,29 +398,18 @@ export default function EventPage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <TopNav />
-      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
-    </div>
+    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
   )
 
   if (!event) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <TopNav />
-      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Event not found.</div>
-    </div>
+    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Event not found.</div>
   )
 
-  const color = tour?.color || '#C9A84C'
-  const tourLabelColor = tour?.color || 'var(--text-secondary)'
+  const color = tour?.color || 'var(--accent)'
   const tabs = ['Overview', 'Shows', 'Staffing', 'Travel & Hotel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-  }) : '—'
-
-  const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short'
   }) : '—'
 
   const fmtLong = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
@@ -341,6 +418,10 @@ export default function EventPage() {
 
   const fmtShortDay = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'short', day: 'numeric'
+  }) : '—'
+
+  const fmtShort = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric'
   }) : '—'
 
   const fmtTime = (t) => {
@@ -359,280 +440,396 @@ export default function EventPage() {
 
   const completedShows = shows.filter(s => s.completed).length
 
+  const pad = n => String(n).padStart(2, '0')
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}` })()
+  const glanceDate = (event?.load_in_date && event.load_in_date <= todayStr && event?.load_out_date && event.load_out_date >= todayStr)
+    ? todayStr
+    : event?.load_in_date || null
+  const glanceDateLabel = glanceDate ? new Date(glanceDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : null
+
+  const fmtScheduleTime = (t) => {
+    if (!t) return null
+    const [h, m] = t.split(':').map(Number)
+    if (isNaN(h)) return t
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const hour = h % 12 || 12
+    return `${hour}:${String(m).padStart(2,'0')} ${ampm}`
+  }
+
+  const nowMinutes = (() => { const d = new Date(); return d.getHours()*60 + d.getMinutes() })()
+  const toMinutes = (t) => { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+m }
+
   const inputStyle = {
-    fontFamily: 'Plus Jakarta Sans, sans-serif',
     fontSize: 14,
     padding: '8px 12px',
     borderRadius: 7,
-    border: '1px solid rgba(255,255,255,0.15)',
-    background: 'var(--bg-card)',
+    border: '1px solid var(--border-strong)',
+    background: 'var(--surface-card)',
     color: 'var(--text-primary)',
-    caretColor: '#33FF99',
+    caretColor: 'var(--accent)',
     outline: 'none',
   }
 
-  const statCard = (value, label, sub, valueColor, onClick) => (
-    <div
-      className="glass-card"
-      onClick={onClick}
-      style={{ padding: '18px 20px', flex: 1, cursor: onClick ? 'pointer' : 'default', transition: 'background 0.15s' }}
-      onMouseEnter={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
-      onMouseLeave={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
-    >
-      <div style={{ fontSize: 10.5, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: valueColor || 'var(--text-primary)' }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>{sub}</div>}
-    </div>
-  )
-
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <TopNav />
+    <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-      <div style={{ marginTop: 88, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
 
         {/* Event header */}
-        <div style={{ borderBottom: '0.5px solid var(--glass-border)', padding: '20px 28px 0', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button
-                onClick={() => router.push(`/tours/${id}`)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                ← {tour?.name || 'Tour'}
-              </button>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>
-                    {formatLocation(event.city, event.state, event.country, 'full')}
-                  </div>
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
-                    color: (STATUS_PILL[event.status] || STATUS_PILL.tentative).color,
-                    background: (STATUS_PILL[event.status] || STATUS_PILL.tentative).background,
-                    border: `1px solid ${(STATUS_PILL[event.status] || STATUS_PILL.tentative).border}`,
-                  }}>
-                    {event.status ? fmtStatus(event.status) : 'Tentative'}
-                  </span>
+        <div style={{ ...GLASS, padding: '16px 20px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+
+          {/* Left: identity */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {tour?.logo_url ? (
+              <img src={tour.logo_url} alt={tour.name} style={{ height: 48, width: 'auto', objectFit: 'contain', borderRadius: 8 }} />
+            ) : (
+              <div style={{
+                width: 48, height: 48, borderRadius: 8,
+                background: `color-mix(in srgb, ${color} 15%, transparent)`,
+                color: color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, fontWeight: 700,
+              }}>
+                {initials(tour?.name)}
+              </div>
+            )}
+            <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, background: color }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {formatLocation(event.city, event.state, event.country, 'full')}
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
-                  {event.venue_name && `${event.venue_name} · `}
-                  {fmt(event.load_in_date)}
-                  {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
-                </div>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+                  color: (STATUS_PILL[event.status] || STATUS_PILL.tentative).color,
+                  background: (STATUS_PILL[event.status] || STATUS_PILL.tentative).background,
+                  border: `1px solid ${(STATUS_PILL[event.status] || STATUS_PILL.tentative).border}`,
+                }}>
+                  {event.status ? fmtStatus(event.status) : 'Tentative'}
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                {event.venue_name && `${event.venue_name} · `}
+                {fmt(event.load_in_date)}
+                {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
               </div>
             </div>
+          </div>
+
+          {/* Right: actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleDeleteEvent} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid rgba(255,51,51,0.3)', background: 'transparent', color: 'var(--color-red)', cursor: 'pointer' }}>
+              <button onClick={handleDeleteEvent} style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>
                 Delete Event
               </button>
               <button
                 onClick={() => router.push(`/tours/${id}/events/${eventId}/edit`)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 Edit Event
               </button>
             </div>
           </div>
+        </div>
 
-          <div style={{ height: 3, background: color, borderRadius: 2 }} />
-
-          <div style={{ display: 'flex' }}>
-            {tabs.map(tab => {
-              const active = activeTab === tab.toLowerCase()
-              return (
-                <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, fontWeight: active ? 500 : 400, padding: '12px 18px', border: 'none', background: 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', borderBottom: active ? `2px solid ${color}` : '2px solid transparent', transition: 'all 0.15s' }}>
-                  {tab}
-                  {tab === 'Shows' && shows.length > 0 && (
-                    <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-muted)' }}>({shows.length})</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+        {/* Tab bar */}
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 8, flexShrink: 0 }}>
+          <button
+            onClick={() => router.push(`/tours/${id}`)}
+            style={{ fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', marginRight: 8, whiteSpace: 'nowrap' }}
+          >
+            ← {tour?.name || 'Tour'}
+          </button>
+          {tabs.map(tab => {
+            const active = activeTab === tab.toLowerCase()
+            return (
+              <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())}
+                style={{
+                  fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
+                  background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
+                  color: active ? 'var(--color-info)' : 'var(--text-secondary)',
+                  cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
+                }}>
+                {tab}
+                {tab === 'Shows' && shows.length > 0 && (
+                  <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-muted)' }}>({shows.length})</span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', width: '100%', padding: '28px 32px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '12px 0' }}>
 
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '4px 0 0 0' }}>
 
-              {/* Stat tiles — venue tile clickable if linked */}
-              <div style={{ display: 'flex', gap: 14 }}>
-                {statCard(
-                  daysUntil === null ? '—' : daysUntil <= 0 ? 'Now' : daysUntil,
-                  daysUntil !== null && daysUntil <= 0 ? 'Event in progress' : 'Days to Load-In',
-                  daysUntil !== null && daysUntil > 0 ? `Load-In ${fmtShort(event.load_in_date)}` : null,
-                  daysUntil !== null && daysUntil <= 7 ? 'var(--color-red)' : daysUntil !== null && daysUntil <= 30 ? 'var(--color-yellow)' : 'var(--mint)'
-                )}
-                {statCard(shows.length, 'Shows', shows.length > 0 ? `${completedShows} complete` : 'None added yet', 'var(--text-primary)')}
-                {statCard(
-                  event.status ? fmtStatus(event.status) : 'Tentative',
-                  'Booking Status', null,
-                  (STATUS_PILL[event.status] || STATUS_PILL.tentative).color
-                )}
-                {statCard(
-                  event.venue_name || 'TBC',
-                  'Venue',
-                  venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : (event.city || null),
-                  'var(--text-primary)',
-                  venue ? () => router.push(`/venues/${venue.id}`) : null
-                )}
+              {/* Stat strip */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }}>
+                {[
+                  {
+                    label: 'Days to Load-In',
+                    value: daysUntil === null ? '—' : daysUntil <= 0 ? 'Now' : daysUntil,
+                    sub: null,
+                    color: daysUntil !== null && daysUntil <= 7 ? 'var(--color-danger)' : daysUntil !== null && daysUntil <= 30 ? 'var(--color-warning)' : 'var(--accent)',
+                  },
+                  {
+                    label: 'Staff Travel',
+                    value: (() => {
+                      const pad = n => String(n).padStart(2, '0')
+                      const d = new Date()
+                      const today = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+                      const eventActive = event?.load_in_date <= today && event?.load_out_date >= today
+                      const eventDone = event?.load_out_date && event.load_out_date < today
+                      if (eventDone) return '✓'
+                      if (travelToday > 0) return travelToday
+                      if (!eventActive && travelDates.earliestArrival) return fmtShort(travelDates.earliestArrival)
+                      if (eventActive && travelDates.latestDeparture) return fmtShort(travelDates.latestDeparture)
+                      return '—'
+                    })(),
+                    sub: (() => {
+                      const pad = n => String(n).padStart(2, '0')
+                      const d = new Date()
+                      const today = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+                      const eventActive = event?.load_in_date <= today && event?.load_out_date >= today
+                      const eventDone = event?.load_out_date && event.load_out_date < today
+                      if (eventDone) return 'complete'
+                      if (travelToday > 0) return 'traveling today'
+                      if (!eventActive && travelDates.earliestArrival) return 'first arrival'
+                      if (eventActive && travelDates.latestDeparture) return 'last departure'
+                      return 'no travel data'
+                    })(),
+                    color: travelToday > 0 ? 'var(--color-info)' : 'var(--text-primary)',
+                    onClick: () => setActiveTab('travel & hotel'),
+                  },
+                  {
+                    label: 'Booking Status',
+                    value: event.status ? fmtStatus(event.status) : 'Tentative',
+                    sub: null,
+                    color: (STATUS_PILL[event.status] || STATUS_PILL.tentative).color,
+                  },
+                  {
+                    label: 'Venue',
+                    value: event.venue_name || 'TBC',
+                    sub: venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : null,
+                    color: 'var(--text-primary)',
+                    onClick: venue ? () => router.push(`/venues/${venue.id}`) : null,
+                    small: true,
+                  },
+                  {
+                    label: 'Tasks',
+                    value: incompleteTasks === null ? '—' : incompleteTasks.length === 0 ? '✓' : incompleteTasks.length,
+                    sub: incompleteTasks?.length > 0 ? 'incomplete' : null,
+                    color: incompleteTasks?.length === 0 ? 'var(--color-success)' : incompleteTasks?.length > 0 ? 'var(--color-warning)' : 'var(--text-muted)',
+                    onClick: () => setActiveTab('tasks'),
+                  },
+                  {
+                    label: 'Budget',
+                    value: '$—',
+                    sub: 'coming soon',
+                    color: 'var(--text-muted)',
+                  },
+                ].map((stat, i) => (
+                  <div key={`${stat.label}-${i}`}
+                    onClick={stat.onClick}
+                    style={{ ...GLASS, padding: '11px 13px', cursor: stat.onClick ? 'pointer' : 'default' }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
+                      {stat.label}
+                    </div>
+                    <div style={{ fontSize: stat.small ? 16 : 24, fontWeight: 700, lineHeight: stat.small ? 1.3 : 1, color: stat.color }}>{stat.value}</div>
+                    {stat.sub && (
+                      <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>{stat.sub}</div>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* Two column layout */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              {/* Main columns */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2.2fr 1fr', gap: 10, flex: 1, minHeight: 0, marginTop: 10 }}>
 
-                {/* Show dates */}
-                <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Show Dates</div>
+                {/* Left column — Show Times */}
+                <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                    Show Times
+                  </div>
+                  <div style={{ ...GLASS, padding: '16px 18px' }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                      {fmtShort(event.load_in_date)} – {fmtShort(event.load_out_date)}
+                    </div>
+                    {shows.length === 0 ? (
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No shows added yet</div>
+                    ) : (
+                      shows.map((show, i) => (
+                        <div key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i === shows.length - 1 ? 'none' : '0.5px solid var(--border-default)' }}>
+                          {show.completed ? (
+                            <div onClick={() => handleToggleComplete(show)} style={{ width: 17, height: 17, borderRadius: '50%', background: 'var(--accent)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                              <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="var(--surface-card)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            </div>
+                          ) : (
+                            <div onClick={() => handleToggleComplete(show)} style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid var(--border-stronger)', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} />
+                          )}
+                          <div>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Show {i + 1}</div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
+                              {fmtShortDay(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Middle column — Day at a Glance */}
+                <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                    Day at a Glance
+                  </div>
+                  <div style={{ ...GLASS, padding: '16px 18px' }}>
+                    {glanceDateLabel && (
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                        {glanceDateLabel}
+                      </div>
+                    )}
+                    {todayScheduleItems.length === 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {shows.length > 0 ? (
+                          shows.map((show, i) => {
+                            const showDate = show.show_date
+                            const isGlanceDay = showDate === glanceDate
+                            if (!isGlanceDay) return null
+                            return (
+                              <div key={show.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '0.5px solid var(--border-default)' }}>
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', width: 52, flexShrink: 0, paddingTop: 1 }}>
+                                  {fmtTime(show.show_time) || '—'}
+                                </div>
+                                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                                  Show {i + 1}
+                                </div>
+                              </div>
+                            )
+                          }).filter(Boolean)
+                        ) : null}
+                        {(shows.filter(s => s.show_date === glanceDate).length === 0) && (
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                            {daysUntil !== null && daysUntil > 0
+                              ? `${daysUntil} day${daysUntil === 1 ? '' : 's'} until load-in`
+                              : 'No schedule items for this day.'}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      todayScheduleItems.map((item, i) => {
+                        const startMin = toMinutes(item.time_start)
+                        const endMin = toMinutes(item.time_end)
+                        const isNow = glanceDate === todayStr && startMin !== null && startMin <= nowMinutes && (endMin === null || endMin > nowMinutes)
+                        const isLast = i === todayScheduleItems.length - 1
+                        return (
+                          <div
+                            key={item.id}
+                            style={{
+                              display: 'flex', alignItems: 'flex-start', gap: 10,
+                              padding: isNow ? '7px 18px' : '7px 0',
+                              margin: isNow ? '0 -18px' : 0,
+                              background: isNow ? 'color-mix(in srgb, var(--color-info) 6%, transparent)' : 'transparent',
+                              borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)',
+                            }}
+                          >
+                            <div style={{ fontSize: 11, width: 52, flexShrink: 0, paddingTop: 1, color: isNow ? 'var(--color-info)' : 'var(--text-muted)', fontWeight: isNow ? 600 : 400 }}>
+                              {fmtScheduleTime(item.time_start) || '—'}
+                            </div>
+                            <div style={{ fontSize: 13, color: isNow ? 'var(--color-info)' : 'var(--text-primary)', fontWeight: isNow ? 600 : 400 }}>
+                              {item.what || '—'}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
                     <div
-                      onClick={() => setActiveTab('shows')}
-                      style={{ fontSize: 12, fontWeight: 600, color: '#33FF99', background: 'rgba(51,255,153,0.12)', border: '1px solid rgba(51,255,153,0.30)', borderRadius: 7, padding: '5px 12px', cursor: 'pointer', transition: 'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.20)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(51,255,153,0.12)'}
-                    >
-                      {shows.length > 0 ? 'Manage →' : '+ Add Shows'}
+                      onClick={() => setActiveTab('schedule')}
+                      style={{ fontSize: 12, color: 'var(--color-info)', cursor: 'pointer', marginTop: 10, display: 'block' }}
+                      onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                    >View all days →</div>
+                  </div>
+                </div>
+
+                {/* Right column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', minHeight: 0 }}>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                      <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
+                        <IconAlertTriangleFilled size={16} color="#FFD60A" />
+                        <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
+                      </div>
+                      Needs Attention
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {incompleteTasks === null && (
+                        <div style={{ ...GLASS, padding: '20px 22px', fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
+                      )}
+                      {incompleteTasks !== null && incompleteTasks.length === 0 && (
+                        <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 }}>
+                          <IconCheck size={20} color="var(--color-success)" />
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
+                        </div>
+                      )}
+                      {incompleteTasks !== null && incompleteTasks.length > 0 && (
+                        <div style={{ ...GLASS, padding: '20px 22px' }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>{incompleteTasks.length} Items</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {incompleteTasks.slice(0, 3).map(task => (
+                              <div key={task.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>· {task.task_name}</div>
+                            ))}
+                            {incompleteTasks.length > 3 && (
+                              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>+ {incompleteTasks.length - 3} more</div>
+                            )}
+                          </div>
+                          <div
+                            onClick={() => setActiveTab('tasks')}
+                            style={{ fontSize: 12, color: 'var(--accent)', cursor: 'pointer', marginTop: 10 }}
+                            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                          >View All Tasks →</div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {shows.length === 0 ? (
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No shows added yet</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {shows.map((show, i) => (
-                        <div key={show.id}>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Show {i + 1}</div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
-                            {fmtShortDay(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
-                          </div>
+
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+                      Budget Overview
+                    </div>
+                    <div style={{ ...GLASS, padding: '16px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Event Budget</span>
+                        <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>$—</span>
+                      </div>
+                      <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '10px 0' }} />
+                      {['Total Budget', 'Spent to Date', 'Remaining'].map(lbl => (
+                        <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', padding: '4px 0' }}>
+                          <span>{lbl}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-
-                {/* Outstanding items */}
-                <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 600, marginBottom: 14, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Outstanding Items</div>
-                  {incompleteTasks === null ? (
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
-                  ) : incompleteTasks.length === 0 ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#33FF99', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>All Clear</div>
+                    <div style={{ ...GLASS, padding: '16px 20px', marginTop: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Flagged Items</div>
+                      <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', padding: 16 }}>No flags at this time</div>
                     </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{incompleteTasks.length} Items</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {incompleteTasks.slice(0, 3).map(task => (
-                          <div key={task.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>· {task.task_name}</div>
-                        ))}
-                        {incompleteTasks.length > 3 && (
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>+ {incompleteTasks.length - 3} more</div>
-                        )}
-                      </div>
-                      <div
-                        onClick={() => setActiveTab('tasks')}
-                        style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                        onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
-                      >View All Tasks →</div>
+                    <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 450, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 8 }}>
+                      Finance module coming soon
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
-
-              {/* Venue information card */}
-              {venue && (
-                <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Venue Information</div>
-                    <div
-                      onClick={() => router.push(`/venues/${venue.id}`)}
-                      style={{ fontSize: 12, color: 'var(--mint)', cursor: 'pointer' }}
-                    >
-                      Full Profile →
-                    </div>
-                  </div>
-
-                  {/* Address + specs side by side */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
-                    <div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Address</div>
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }}>
-                        {venue.address && <>{venue.address}<br /></>}
-                        {formatLocation(venue.city, venue.state, venue.country, 'full')}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                      {venue.floor_size && (
-                        <div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Floor Size</div>
-                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.floor_size}</div>
-                        </div>
-                      )}
-                      {venue.max_height && (
-                        <div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Max Height</div>
-                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.max_height}</div>
-                        </div>
-                      )}
-                      {venue.union_status && (
-                        <div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Union</div>
-                          <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{venue.union_status}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Contacts — always shown if they exist */}
-                  {venueContacts.length > 0 && (
-                    <>
-                      <div style={{ height: 0.5, background: 'var(--bg-card)', marginBottom: 16 }} />
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Contacts</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-                        {venueContacts.map(contact => (
-                          <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(51,255,153,0.1)', border: '0.5px solid rgba(51,255,153,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--mint)', flexShrink: 0 }}>
-                              {contact.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                                {contact.name}
-                                {contact.title && <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400, marginLeft: 6 }}>{contact.title}</span>}
-                              </div>
-                              <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
-                                {contact.phone && <a href={`tel:${contact.phone}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.phone}</a>}
-                                {contact.email && <a href={`mailto:${contact.email}`} style={{ fontSize: 12, color: 'var(--mint)', textDecoration: 'none' }}>{contact.email}</a>}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Booking Notes */}
-              {event.booking_note && (
-                <div className="glass-card" style={{ padding: '20px 22px' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 600, color: tourLabelColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Booking Notes</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{event.booking_note}</div>
-                </div>
-              )}
-
             </div>
           )}
 
@@ -660,7 +857,7 @@ export default function EventPage() {
                       <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Date *</label>
                       <input type="date" style={{ ...inputStyle, width: '100%' }} value={newShow.show_date} min={event.load_in_date || ''} onChange={e => setNewShow(p => ({ ...p, show_date: e.target.value }))} />
                       {newShow.show_date && event.load_in_date && newShow.show_date < event.load_in_date && (
-                        <div style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>Show date cannot be before load-in date</div>
+                        <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 4 }}>Show date cannot be before load-in date</div>
                       )}
                     </div>
                     <div>
@@ -684,8 +881,8 @@ export default function EventPage() {
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                     <button
                       onClick={() => { setAddingShow(false); setNewShow({ show_date: '', notes: '' }); setNewHour('7'); setNewMinute('30'); setNewAmPm('PM') }}
-                      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
+                      style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >Cancel</button>
                     <button className="btn-primary" onClick={handleAddShow} disabled={saving}>{saving ? 'Saving...' : 'Save Show'}</button>
@@ -722,7 +919,7 @@ export default function EventPage() {
           )}
 
           {activeTab === 'staffing' && (
-            <StaffingTab eventId={eventId} event={event} />
+            <StaffingTab eventId={eventId} event={event} tourColor={color} />
           )}
 
           {activeTab === 'travel & hotel' && (
