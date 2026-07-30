@@ -172,6 +172,9 @@ export default function EditTour() {
   const [isDirty, setIsDirty] = useState(false)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingTabSwitch, setPendingTabSwitch] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   const [departments, setDepartments] = useState([])
   const [existingPositions, setExistingPositions] = useState([])
@@ -309,6 +312,42 @@ export default function EditTour() {
     else router.push(`/tours/${id}`)
   }
 
+  const handleDeleteTour = async () => {
+    setDeleting(true)
+    const supabase = getSupabase()
+
+    // Get all event IDs for this tour
+    const { data: tourEvents } = await supabase
+      .from('events')
+      .select('id')
+      .eq('tour_id', id)
+
+    // Get all tour_position IDs for this tour
+    const { data: tourPositions } = await supabase
+      .from('tour_positions')
+      .select('id')
+      .eq('tour_id', id)
+
+    const eventIds = (tourEvents || []).map(e => e.id)
+    const tpIds = (tourPositions || []).map(tp => tp.id)
+
+    // Delete staff_assignments via event_id and tour_position_id
+    if (eventIds.length > 0) {
+      await supabase.from('staff_assignments').delete().in('event_id', eventIds)
+    }
+    if (tpIds.length > 0) {
+      await supabase.from('staff_assignments').delete().in('tour_position_id', tpIds)
+    }
+
+    // Delete everything else
+    await supabase.from('events').delete().eq('tour_id', id)
+    await supabase.from('tour_positions').delete().eq('tour_id', id)
+    await supabase.from('tours').delete().eq('id', id)
+
+    setDeleting(false)
+    router.push('/tours')
+  }
+
   const inputStyle = {
     fontSize: 14,
     padding: '10px 14px',
@@ -357,7 +396,7 @@ export default function EditTour() {
           })}
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={handleCancel}
             style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
@@ -507,6 +546,19 @@ export default function EditTour() {
 
             {error && <div style={{ fontSize: 13, color: 'var(--color-danger)' }}>{error}</div>}
 
+            <div style={{ borderTop: '0.5px solid var(--border-default)', marginTop: 8, paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Delete this tour</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Permanently deletes the tour, all events, and all staffing data.</div>
+              </div>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#FF453A', color: '#FFD60A', fontWeight: 700, cursor: 'pointer', flexShrink: 0, marginLeft: 24 }}
+              >
+                Delete Tour
+              </button>
+            </div>
+
           </div>
         )}
 
@@ -551,6 +603,44 @@ export default function EditTour() {
                 }}
                 style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
               >Leave Without Saving</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}>
+          <div style={{ ...GLASS, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>Delete Tour</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              This will permanently delete <strong style={{ color: 'var(--text-primary)' }}>{form.name}</strong> and all of its events and staffing data. This cannot be undone.
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Type <strong>DELETE</strong> to confirm:</div>
+              <input
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+                style={{ width: '100%', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: `0.5px solid ${deleteConfirmText === 'DELETE' ? 'var(--color-danger)' : 'var(--border-default)'}`, background: 'var(--surface-raised)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}
+                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteTour}
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: deleteConfirmText === 'DELETE' ? '#FF453A' : 'var(--surface-raised)', color: deleteConfirmText === 'DELETE' ? '#FFD60A' : 'var(--text-muted)', fontWeight: 700, cursor: deleteConfirmText === 'DELETE' && !deleting ? 'pointer' : 'default', transition: 'all 0.15s' }}
+              >
+                {deleting ? 'Deleting...' : 'Delete Tour'}
+              </button>
             </div>
           </div>
         </div>
