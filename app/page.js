@@ -267,6 +267,8 @@ export default function Dashboard() {
             <div
               key={ev.id}
               onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
               style={{
                 ...GLASS_CARD, padding: '10px 12px', cursor: 'pointer',
               }}
@@ -332,6 +334,8 @@ export default function Dashboard() {
                 <div
                   key={tour.id}
                   onClick={() => router.push(`/tours/${tour.id}`)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                   style={{
                     ...GLASS_CARD,
                     display: 'grid',

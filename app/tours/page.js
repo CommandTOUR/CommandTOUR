@@ -220,6 +220,8 @@ export default function Tours() {
                 <div
                   key={tour.id}
                   onClick={() => router.push(`/tours/${tour.id}`)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                   style={{
                     ...GLASS_CARD,
                     display: 'grid',

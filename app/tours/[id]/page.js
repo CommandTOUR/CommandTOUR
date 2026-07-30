@@ -567,7 +567,7 @@ export default function TourPage() {
                       <div
                         key={ev.id}
                         onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-raised)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
                         style={{ ...GLASS, padding: '14px 20px', display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px 100px 1px 100px', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                       >
@@ -621,6 +621,8 @@ export default function TourPage() {
                       <div
                         key={ev.id}
                         onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                         style={{ ...GLASS, padding: '12px 20px', display: 'grid', gridTemplateColumns: '80px 1fr 140px 100px 140px 100px', alignItems: 'center', gap: 16, cursor: 'pointer' }}
                       >
                         <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>{dateRange(ev)}</div>
@@ -849,7 +851,7 @@ export default function TourPage() {
                         cursor: 'pointer',
                         flexShrink: 0,
                       }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                     >
                       <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
@@ -917,7 +919,7 @@ export default function TourPage() {
                             opacity: 0.6,
                             marginTop: 4,
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-raised)'; e.currentTarget.style.opacity = '1' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)'; e.currentTarget.style.opacity = '1' }}
                           onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)'; e.currentTarget.style.opacity = '0.6' }}
                         >
                           <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
@@ -1050,7 +1052,7 @@ export default function TourPage() {
                         key={event.id}
                         onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
                         style={{ ...GLASS, padding: '12px 14px', cursor: 'pointer', transition: 'background 0.15s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                       >
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
@@ -1091,7 +1093,7 @@ export default function TourPage() {
                     key={venue.id}
                     onClick={() => router.push(`/venues/${venue.id}`)}
                     style={{ ...GLASS, padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-raised)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
                   >
                     <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: 'var(--text-primary)' }}>{venue.name}</div>
