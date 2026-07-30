@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import TopNav from '../../components/TopNav'
 import { getSupabase } from '../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 
@@ -27,17 +26,17 @@ function EventBar({ event, faded, onClick }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 5,
         padding: '2px 7px', borderRadius: 4, marginBottom: 2,
-        background: `${event.tour_color}22`,
-        border: `0.5px solid ${event.tour_color}55`,
+        background: `color-mix(in srgb, ${event.tour_color} 18%, var(--surface-card))`,
+        border: `0.5px solid ${event.tour_color}88`,
         cursor: 'pointer', opacity: faded ? 0.4 : 1,
         transition: 'opacity 0.15s, background 0.15s',
         overflow: 'hidden', whiteSpace: 'nowrap',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = `${event.tour_color}44`}
-      onMouseLeave={e => e.currentTarget.style.background = `${event.tour_color}22`}
+      onMouseEnter={e => e.currentTarget.style.background = `color-mix(in srgb, ${event.tour_color} 30%, var(--surface-card))`}
+      onMouseLeave={e => e.currentTarget.style.background = `color-mix(in srgb, ${event.tour_color} 18%, var(--surface-card))`}
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
-      <span style={{ fontSize: 11, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {formatLocation(event.city, event.state, event.country, 'compact')}
       </span>
     </div>
@@ -161,25 +160,27 @@ export default function Calendar() {
   })()
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
-      <TopNav />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
 
       {/* Sticky controls */}
-      <div style={{ marginTop: 62, flexShrink: 0, padding: '20px 28px 14px', borderBottom: '0.5px solid var(--glass-border)', background: 'var(--bg)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>Calendar</div>
+      <div style={{ flexShrink: 0, paddingBottom: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, padding: '4px 4px 0' }}>
+          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Calendar</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* View toggle */}
-            <div style={{ display: 'flex', background: 'var(--bg-card)', border: '0.5px solid var(--glass-border)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, overflow: 'hidden' }}>
               {['month', 'week'].map(v => (
                 <button key={v} onClick={() => setView(v)} style={{
-                  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 16px',
+                  fontSize: 13, padding: '6px 16px',
                   border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                  background: view === v ? '#33FF99' : 'rgba(255,255,255,0.08)',
-                  color: view === v ? '#0a1628' : '#94a3b8',
+                  background: view === v ? 'var(--color-info)' : 'transparent',
+                  color: view === v ? '#ffffff' : 'var(--text-secondary)',
                   fontWeight: view === v ? 700 : 400,
                   borderRadius: view === v ? 6 : 0,
-                }}>
+                }}
+                  onMouseEnter={e => { if (view !== v) e.currentTarget.style.color = 'var(--color-info)' }}
+                  onMouseLeave={e => { if (view !== v) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                >
                   {v.charAt(0).toUpperCase() + v.slice(1)}
                 </button>
               ))}
@@ -188,25 +189,25 @@ export default function Calendar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
                 onClick={view === 'month' ? prevMonth : prevWeek}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#33FF99'}
-                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                style={{ fontSize: 20, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--color-info)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
               >‹</button>
-              <div style={{ fontSize: 16, fontWeight: 600, minWidth: 180, textAlign: 'center' }}>
+              <div style={{ fontSize: 17, fontWeight: 600, minWidth: 180, textAlign: 'center' }}>
                 {view === 'month' ? `${MONTHS[current.month]} ${current.year}` : weekLabel}
               </div>
               <button
                 onClick={view === 'month' ? nextMonth : nextWeek}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 18, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#33FF99'}
-                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                style={{ fontSize: 20, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--color-info)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
               >›</button>
             </div>
             <button
               onClick={goToday}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.30)', background: 'rgba(51,255,153,0.15)', color: '#33FF99', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.25)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(51,255,153,0.15)'}
+              style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'color-mix(in srgb, var(--color-info) 10%, transparent)', color: 'var(--color-info)', cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--color-info) 18%, transparent)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--color-info) 10%, transparent)'}
             >Today</button>
           </div>
         </div>
@@ -214,19 +215,19 @@ export default function Calendar() {
         {/* Tour filters */}
         {tours.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 4 }}>Tours:</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginRight: 4 }}>Tours:</span>
             {tours.map(t => {
               const on = activeTours.includes(t.id)
               return (
                 <div key={t.id} onClick={() => toggleTour(t.id)} style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '4px 12px', borderRadius: 20, cursor: 'pointer',
-                  border: `0.5px solid ${on ? t.color + '88' : 'var(--glass-border)'}`,
+                  border: `0.5px solid ${on ? t.color + '88' : 'var(--border-default)'}`,
                   background: on ? `${t.color}18` : 'transparent',
                   transition: 'all 0.15s',
                 }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: on ? t.color : 'var(--text-muted)' }} />
-                  <span style={{ fontSize: 12, color: on ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: on ? 500 : 400 }}>{t.name}</span>
+                  <span style={{ fontSize: 13, color: on ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: on ? 500 : 400 }}>{t.name}</span>
                 </div>
               )
             })}
@@ -235,21 +236,21 @@ export default function Calendar() {
       </div>
 
       {/* Scrollable calendar area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px 28px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 12 }}>
         {loading ? (
           <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
         ) : (
-          <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-card)', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Day headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'rgba(0,0,0,0.30)', borderBottom: '1px solid rgba(255,255,255,0.10)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--color-info)', borderBottom: '1px solid var(--border-default)', flexShrink: 0 }}>
               {DAYS.map(d => (
-                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#33FF99', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{d}</div>
+                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{d}</div>
               ))}
             </div>
 
             {/* MONTH VIEW */}
             {view === 'month' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '120px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '1fr', flex: 1, minHeight: 0, overflow: 'hidden' }}>
                 {cells.map((cell, i) => {
                   const dayEvents = getEventsForDate(cell.dateStr)
                   const isToday = cell.dateStr === todayStr
@@ -257,14 +258,14 @@ export default function Calendar() {
                   const overflow = dayEvents.length - MAX_VISIBLE
                   return (
                     <div key={i} style={{
-                      borderRight: (i + 1) % 7 === 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
-                      borderBottom: i < 35 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      borderRight: (i + 1) % 7 === 0 ? 'none' : '1px solid var(--border-default)',
+                      borderBottom: i < 35 ? '1px solid var(--border-default)' : 'none',
                       padding: '6px 5px', position: 'relative',
-                      background: isToday ? 'rgba(51,255,153,0.08)' : (cell.inMonth ? 'transparent' : 'rgba(255,255,255,0.02)'),
+                      background: isToday ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : (cell.inMonth ? 'var(--surface-card)' : 'var(--surface-raised)'),
                     }}>
                       <div style={{
-                        fontSize: 12, fontWeight: isToday ? 700 : 400,
-                        color: isToday ? '#33FF99' : cell.inMonth ? '#94a3b8' : '#9ca3af',
+                        fontSize: 13, fontWeight: isToday ? 700 : 400,
+                        color: isToday ? 'var(--color-info)' : cell.inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
                         marginBottom: 4, textAlign: 'right', paddingRight: 2,
                         opacity: cell.inMonth ? 1 : 0.5,
                       }}>
@@ -273,7 +274,7 @@ export default function Calendar() {
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={!cell.inMonth} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: '#33FF99', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 10, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}
@@ -285,7 +286,7 @@ export default function Calendar() {
 
             {/* WEEK VIEW */}
             {view === 'week' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '200px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '1fr', flex: 1, minHeight: 0, overflow: 'hidden' }}>
                 {weekDays.map((cell, i) => {
                   const dayEvents = getEventsForDate(cell.dateStr)
                   const isToday = cell.dateStr === todayStr
@@ -293,18 +294,18 @@ export default function Calendar() {
                   const overflow = dayEvents.length - 6
                   return (
                     <div key={i} style={{
-                      borderRight: i < 6 ? '0.5px solid rgba(255,255,255,0.08)' : 'none',
+                      borderRight: i < 6 ? '0.5px solid var(--border-default)' : 'none',
                       padding: '8px 6px',
-                      background: isToday ? 'rgba(51,255,153,0.08)' : 'transparent',
+                      background: isToday ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--surface-card)',
                     }}>
                       <div style={{ marginBottom: 6, textAlign: 'right', paddingRight: 2 }}>
-                        <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
-                        <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? '#33FF99' : '#f1f5f9' }}>{cell.date.getDate()}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
+                        <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--text-primary)' }}>{cell.date.getDate()}</div>
                       </div>
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={false} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: '#33FF99', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 10, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}
@@ -319,10 +320,10 @@ export default function Calendar() {
 
       {/* Overflow popup */}
       {overflowDay && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setOverflowDay(null)}>
           <div ref={overflowRef}
-            style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 24, width: 320, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
+            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 24, width: 320, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--text-muted)' }}>{fmt(overflowDay)}</div>
             {overflowEvents.map(ev => (
@@ -341,9 +342,9 @@ export default function Calendar() {
             ))}
             <button
               onClick={() => setOverflowDay(null)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer', marginTop: 8 }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              style={{ fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: 8 }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
             >Close</button>
           </div>
         </div>

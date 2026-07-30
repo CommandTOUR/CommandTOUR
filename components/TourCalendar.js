@@ -122,10 +122,10 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
     <div style={{ display: 'flex', flexDirection: 'column' }}>
 
       {/* Calendar grid */}
-      <div className="glass-card" style={{ overflow: 'hidden', margin: 0 }}>
+      <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-card)', margin: 0 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--surface-raised)', borderBottom: cellBorder }}>
           {DAYS.map(d => (
-            <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
+            <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>
           ))}
         </div>
 
@@ -141,11 +141,11 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
                   borderRight: (i + 1) % 7 === 0 ? 'none' : cellBorder,
                   borderBottom: i < 35 ? cellBorder : 'none',
                   padding: '6px 5px',
-                  background: isToday ? 'rgba(51,255,153,0.1)' : cell.inMonth ? 'var(--surface-card)' : 'var(--surface-default)',
+                  background: isToday ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : cell.inMonth ? 'var(--surface-card)' : 'var(--surface-raised)',
                 }}>
                   <div style={{
                     fontSize: 12, fontWeight: isToday ? 700 : 400,
-                    color: isToday ? 'var(--color-mint)' : cell.inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
+                    color: isToday ? 'var(--accent)' : cell.inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
                     marginBottom: 4, textAlign: 'right', paddingRight: 2,
                     opacity: cell.inMonth ? 1 : 0.5,
                   }}>
@@ -154,7 +154,7 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
                   {visible.map(ev => <EventBar key={ev.id} event={ev} faded={!cell.inMonth} onClick={navigateEvent} />)}
                   {overflow > 0 && (
                     <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                      style={{ fontSize: 10, color: 'var(--color-mint)', cursor: 'pointer', padding: '2px 7px' }}>
+                      style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer', padding: '2px 7px' }}>
                       +{overflow} more
                     </div>
                   )}
@@ -175,16 +175,16 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
                 <div key={i} style={{
                   borderRight: i < 6 ? cellBorder : 'none',
                   padding: '8px 6px',
-                  background: isToday ? 'rgba(51,255,153,0.1)' : 'var(--surface-card)',
+                  background: isToday ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--surface-card)',
                 }}>
                   <div style={{ marginBottom: 6, textAlign: 'right', paddingRight: 2 }}>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
-                    <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--color-mint)' : 'var(--text-primary)' }}>{cell.date.getDate()}</div>
+                    <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--text-primary)' }}>{cell.date.getDate()}</div>
                   </div>
                   {visible.map(ev => <EventBar key={ev.id} event={ev} faded={false} onClick={navigateEvent} />)}
                   {overflow > 0 && (
                     <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                      style={{ fontSize: 10, color: 'var(--color-mint)', cursor: 'pointer', padding: '2px 7px' }}>
+                      style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer', padding: '2px 7px' }}>
                       +{overflow} more
                     </div>
                   )}
@@ -215,7 +215,7 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
             ))}
             <button
               onClick={() => setOverflowDay(null)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', marginTop: 8 }}
+              style={{ fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', marginTop: 8 }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
             >Close</button>

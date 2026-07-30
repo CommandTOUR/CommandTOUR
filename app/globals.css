@@ -79,8 +79,8 @@
 }
 
 [data-theme="dark"] {
-  --page-bg: #1e2130;
-  --surface-nav: #191c28;
+  --page-bg: #1a1a1a;
+  --surface-nav: #141414;
   --surface-card: #0d0d0f;
   --surface-raised: #252525;
   --surface-input: #252525;

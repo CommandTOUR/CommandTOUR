@@ -48,7 +48,7 @@ see the "Legacy light-mode override rules" note at the end of this section.)
 ```css
 /* Page */
 --page-bg: #edeef0;
---page-bg-dark: #111111;   /* defined but not referenced by any component — vestigial */
+--page-bg-dark: #111111;   /* vestigial — now redundant with dark mode's --page-bg, which uses the same value */
 
 /* Surfaces */
 --surface-nav: #ffffff;
@@ -115,8 +115,8 @@ see the "Legacy light-mode override rules" note at the end of this section.)
 ### Dark Mode — `[data-theme="dark"]`
 
 ```css
---page-bg: #1e2130;
---surface-nav: #191c28;
+--page-bg: #1a1a1a;
+--surface-nav: #141414;
 --surface-card: #0d0d0f;
 --surface-raised: #252525;
 --surface-input: #252525;

@@ -32,18 +32,6 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
-// WCAG-weighted luminance to decide whether white or near-black text reads better
-// on a given hex background color. Threshold 0.55 tuned for the tinted header surface.
-function getContrastTextColor(hexColor) {
-  const hex = hexColor.replace('#', '')
-  const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex
-  const r = parseInt(fullHex.substring(0, 2), 16)
-  const g = parseInt(fullHex.substring(2, 4), 16)
-  const b = parseInt(fullHex.substring(4, 6), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.55 ? '#1A2422' : '#FFFFFF'
-}
-
 function initials(name) {
   return (name || '')
     .split(' ')
@@ -108,19 +96,6 @@ const TOUR_STATUS_COLORS = {
   completed: 'var(--text-secondary)',
   cancelled: 'var(--color-danger)',
 }
-
-const COLS = [
-  { key: 'loadIn',    label: 'Load-In Date', width: '1fr',   align: 'left' },
-  { key: 'city',      label: 'City',         width: '1.5fr', align: 'left' },
-  { key: 'venue',     label: 'Venue',        width: '1.5fr', align: 'left' },
-  { key: 'shows',     label: '# Shows',      width: '0.6fr', align: 'center' },
-  { key: 'firstShow', label: 'First Show',   width: '1fr',   align: 'center' },
-  { key: 'lastShow',  label: 'Last Show',    width: '1fr',   align: 'center' },
-  { key: 'status',    label: 'Status',       width: '1.2fr', align: 'center' },
-  { key: 'alert',     label: '',             width: '40px',  align: 'center' },
-]
-
-const GRID_TEMPLATE = COLS.map(c => c.width).join(' ')
 
 function getAlerts(event, showData) {
   const alerts = []
@@ -276,54 +251,6 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
   )
 }
 
-function EventRow({ event, eventShows, tourId, router, onStatusUpdate, onLoadInUpdate, fmt, index = 0, tourColor }) {
-  const shows = eventShows[event.id] || []
-  const firstShow = shows.length > 0 ? shows[0].show_date : (event.saturday_date || null)
-  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : (event.sunday_date || null)
-  const numShows = shows.length > 0 ? shows.length : '—'
-  const alerts = getAlerts(event, shows)
-  const isEven = index % 2 === 0
-  const stripeBg = (isEven && tourColor) ? `${tourColor}0d` : 'transparent'
-
-  return (
-    <div
-      onClick={() => router.push(`/tours/${tourId}/events/${event.id}`)}
-      style={{
-        display: 'grid', gridTemplateColumns: GRID_TEMPLATE,
-        gap: '0 24px', padding: '0 20px', height: 40,
-        cursor: 'pointer', borderBottom: '0.5px solid var(--border-default)',
-        transition: 'background 0.15s', alignItems: 'center',
-        background: stripeBg,
-      }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
-      onMouseLeave={e => e.currentTarget.style.background = stripeBg}
-    >
-      <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} />
-      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {formatLocation(event.city, event.state, event.country, 'compact')}
-      </div>
-      <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {event.venue_name || 'TBC'}
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: numShows === '—' ? 'var(--text-secondary)' : 'var(--text-primary)', opacity: numShows === '—' ? 0.3 : 1 }}>
-        {numShows}
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: firstShow ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: firstShow ? 1 : 0.3 }}>
-        {fmt(firstShow)}
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: lastShow ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: lastShow ? 1 : 0.3 }}>
-        {fmt(lastShow)}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={onStatusUpdate} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <AlertIcon alerts={alerts} />
-      </div>
-    </div>
-  )
-}
-
 export default function TourPage() {
   const router = useRouter()
   const { id } = useParams()
@@ -472,7 +399,6 @@ export default function TourPage() {
   )
 
   const color = tour.color || '#C9A84C'
-  const headerTextColor = getContrastTextColor(color)
   const tabs = ['Overview', 'Schedule', 'Staffing', 'Travel', 'Calendar', 'Venues', 'Files']
   const tourStatusColor = TOUR_STATUS_COLORS[tour.status] || TOUR_STATUS_COLORS.upcoming
 
@@ -876,71 +802,151 @@ export default function TourPage() {
               </div>
             )}
 
-            {/* Table card — flex: 1 fills remaining height, overflow: hidden is the clip shell */}
             {events.length > 0 && (
-              <div style={{ flex: 1, overflow: 'hidden', ...GLASS }}>
-                {/* Inner scroll surface — sticky header works because this is the scroll container */}
-                <div style={{ height: '100%', overflow: 'auto' }}>
-                  {/* Column headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, gap: '0 24px', padding: '12px 20px', background: color, position: 'sticky', top: 0, zIndex: 10 }}>
-                    {COLS.map(col => (
-                      <div key={col.key} style={{ fontSize: 11, fontWeight: 800, color: headerTextColor, textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: col.align }}>
-                        {col.label}
-                      </div>
-                    ))}
-                  </div>
+              <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-                  {/* Upcoming event rows */}
-                  {upcomingEvents.map((event, i) => (
-                    <EventRow
-                      key={event.id}
-                      event={event}
-                      eventShows={eventShows}
-                      tourId={id}
-                      router={router}
-                      onStatusUpdate={handleStatusUpdate}
-                      onLoadInUpdate={handleLoadInUpdate}
-                      fmt={fmt}
-                      index={i}
-                      tourColor={color}
-                    />
-                  ))}
-
-                  {/* Past events — collapsible */}
-                  {pastEvents.length > 0 && (
-                    <div>
-                      <div
-                        onClick={() => setPastExpanded(p => !p)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', cursor: 'pointer', borderTop: '1px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--color-info)', userSelect: 'none' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-card)'}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0, color: 'var(--color-info)' }}>
-                          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span style={{ fontSize: 12, fontWeight: 550, color: 'var(--color-info)' }}>
-                          Past Events <span style={{ fontSize: 12, marginLeft: 4 }}>({pastEvents.length})</span>
-                        </span>
-                      </div>
-
-                      {pastExpanded && pastEvents.map((event, i) => (
-                        <div key={event.id} style={{ opacity: 0.6 }}>
-                          <EventRow
-                            event={event}
-                            eventShows={eventShows}
-                            tourId={id}
-                            router={router}
-                            onStatusUpdate={handleStatusUpdate}
-                            onLoadInUpdate={handleLoadInUpdate}
-                            fmt={fmt}
-                            index={i}
-                            tourColor={color}
-                          />
-                        </div>
-                      ))}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
+                  alignItems: 'center',
+                  gap: '0 20px',
+                  padding: '0 16px',
+                  height: 32,
+                  flexShrink: 0,
+                }}>
+                  {['Load-In', 'City', 'Venue', 'Shows', 'First Show', 'Last Show', 'Status', ''].map((label, i) => (
+                    <div key={i} style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: 'var(--color-info)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.07em',
+                      textAlign: (i >= 3 && i <= 6) ? 'center' : 'left',
+                    }}>
+                      {label}
                     </div>
-                  )}
+                  ))}
                 </div>
+
+                {/* Upcoming events */}
+                {upcomingEvents.map((event) => {
+                  const shows = eventShows[event.id] || []
+                  const firstShow = shows.length > 0 ? shows[0].show_date : null
+                  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
+                  const alerts = getAlerts(event, shows)
+                  return (
+                    <div
+                      key={event.id}
+                      onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
+                      style={{
+                        ...GLASS,
+                        display: 'grid',
+                        gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
+                        alignItems: 'center',
+                        gap: '0 20px',
+                        padding: '0 16px',
+                        height: 44,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
+                    >
+                      <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {formatLocation(event.city, event.state, event.country, 'compact')}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {event.venue_name || 'TBC'}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text-primary)', textAlign: 'center' }}>
+                        {shows.length > 0 ? shows.length : '—'}
+                      </div>
+                      <div style={{ fontSize: 13, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
+                        {fmt(firstShow)}
+                      </div>
+                      <div style={{ fontSize: 13, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
+                        {fmt(lastShow)}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={handleStatusUpdate} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <AlertIcon alerts={alerts} />
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Past events — collapsible */}
+                {pastEvents.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div
+                      onClick={() => setPastExpanded(p => !p)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 4px', cursor: 'pointer', color: 'var(--color-info)', userSelect: 'none' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-info)' }}>
+                        Past Events ({pastEvents.length})
+                      </span>
+                    </div>
+
+                    {pastExpanded && pastEvents.map((event) => {
+                      const shows = eventShows[event.id] || []
+                      const firstShow = shows.length > 0 ? shows[0].show_date : null
+                      const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
+                      const alerts = getAlerts(event, shows)
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
+                          style={{
+                            ...GLASS,
+                            display: 'grid',
+                            gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
+                            alignItems: 'center',
+                            gap: '0 20px',
+                            padding: '0 16px',
+                            height: 44,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            opacity: 0.6,
+                            marginTop: 4,
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-raised)'; e.currentTarget.style.opacity = '1' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)'; e.currentTarget.style.opacity = '0.6' }}
+                        >
+                          <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
+                          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {formatLocation(event.city, event.state, event.country, 'compact')}
+                          </div>
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {event.venue_name || 'TBC'}
+                          </div>
+                          <div style={{ fontSize: 13, color: 'var(--text-primary)', textAlign: 'center' }}>
+                            {shows.length > 0 ? shows.length : '—'}
+                          </div>
+                          <div style={{ fontSize: 13, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
+                            {fmt(firstShow)}
+                          </div>
+                          <div style={{ fontSize: 13, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
+                            {fmt(lastShow)}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={handleStatusUpdate} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <AlertIcon alerts={alerts} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1030,7 +1036,7 @@ export default function TourPage() {
                 <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>No upcoming events on this tour.</div>
               )
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {upcomingEvents.map(event => {
                     const shows = eventShows[event.id] || []
                     const lastShowDate = shows.length > 0 ? shows[shows.length - 1].show_date : null
@@ -1044,27 +1050,27 @@ export default function TourPage() {
                         key={event.id}
                         onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
                         style={{ ...GLASS, padding: '12px 14px', cursor: 'pointer', transition: 'background 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-raised)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                       >
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, minWidth: 0 }}>
                             {formatLocation(event.city, event.state, event.country, 'compact')}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                            {missingTravel && (
-                              <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
-                                <IconAlertTriangleFilled size={16} color="#FFD60A" />
-                                <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
-                              </div>
-                            )}
-                            <StatusBadge status={event.status} />
-                          </div>
+                          {missingTravel && (
+                            <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0, marginTop: 2 }}>
+                              <IconAlertTriangleFilled size={16} color="#FFD60A" />
+                              <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 3 }}>
                           {event.venue_name || 'Venue TBC'}
                         </div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{dateRange}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{dateRange}</div>
+                          <StatusBadge status={event.status} />
+                        </div>
                       </div>
                     )
                   })}
