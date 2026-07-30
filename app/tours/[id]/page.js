@@ -955,8 +955,8 @@ export default function TourPage() {
         )}
 
         {activeTab === 'calendar' && (
-          <div style={{ padding: '16px 20px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, paddingTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexShrink: 0 }}>
               {/* Month/Week toggle */}
               <div style={{ display: 'flex', borderRadius: 8,
                 border: '1px solid var(--border-default)', overflow: 'hidden' }}>
@@ -1083,20 +1083,20 @@ export default function TourPage() {
         )}
 
         {activeTab === 'venues' && (
-          <div style={{ padding: '28px 32px' }}>
+          <div style={{ padding: '12px 0' }}>
             {venues.length === 0 ? (
               <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>No venues linked to this tour yet.</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {venues.map(venue => (
                   <div
                     key={venue.id}
                     onClick={() => router.push(`/venues/${venue.id}`)}
-                    style={{ ...GLASS, padding: '14px 18px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
+                    style={{ ...GLASS, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.15s, box-shadow 0.15s' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
                   >
-                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3, color: 'var(--text-primary)' }}>{venue.name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2, color: 'var(--text-primary)' }}>{venue.name}</div>
                     <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>
                       {formatLocation(venue.city, venue.state, venue.country, 'compact')}
                     </div>

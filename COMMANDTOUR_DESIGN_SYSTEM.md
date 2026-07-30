@@ -107,7 +107,7 @@ see the "Legacy light-mode override rules" note at the end of this section.)
 
 /* Glass tile (water-on-glass — Dashboard only, see Section 5) */
 --glass-tile-bg: rgba(255, 255, 255, 0.72);
---glass-tile-hover: rgba(255, 255, 255, 0.82);
+--glass-tile-hover: rgba(0, 0, 0, 0.04);
 --glass-tile-border: rgba(255, 255, 255, 0.6);
 --glass-tile-highlight: rgba(255, 255, 255, 0.85);   /* defined, currently unused in JS — see Section 5 */
 --glass-tile-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85);
@@ -279,7 +279,7 @@ consumed anywhere in JS (the inset highlight is baked directly into the
 `--glass-tile-shadow` value instead) — reserved/vestigial for now.
 
 `--glass-tile-hover`: subtle hover lift for clickable GLASS tiles. Light:
-`rgba(255,255,255,0.82)`, Dark: `rgba(255,255,255,0.06)`. Use this instead of
+`rgba(0,0,0,0.04)`, Dark: `rgba(255,255,255,0.06)`. Use this instead of
 `--surface-raised` on `onMouseEnter`/`onMouseLeave` for any tile that uses the
 `GLASS` const. Never use `--surface-raised` as a hover target on GLASS tiles.
 
