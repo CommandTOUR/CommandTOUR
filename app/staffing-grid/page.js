@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
-import TopNav from '@/components/TopNav'
 import StaffingGridComponent from '@/components/StaffingGrid'
 
 export default function AllToursStaffingGridPage() {
@@ -28,28 +27,33 @@ export default function AllToursStaffingGridPage() {
   }, [])
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <TopNav />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* Header bar */}
-      <div style={{ marginTop: 88, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', height: 48, flexShrink: 0, position: 'relative' }}>
-        {/* Left: back button */}
-        <button
-          onClick={() => router.push('/staff')}
-          style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--color-mint)', background: 'transparent', color: 'var(--color-mint)', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', flexShrink: 0 }}>
-          ← Back to Staff
-        </button>
-
-        {/* Center: title (absolutely centered) */}
-        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-          All Tours Staffing Grid
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', marginBottom: 12, flexShrink: 0 }}>
+        {/* Left: back button + title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button
+            onClick={() => router.push('/staff')}
+            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}>
+            ← Back to Staff
+          </button>
+          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>
+            All Tours Staffing Grid
+          </div>
         </div>
 
         {/* Right: show past toggle + year selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <button
             onClick={() => setShowPast(p => !p)}
-            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--border-card)', background: showPast ? 'var(--bg-card-hover)' : 'transparent', color: showPast ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            style={{
+              fontSize: 13, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+              border: showPast ? 'none' : '0.5px solid var(--border-default)',
+              background: showPast ? 'var(--accent)' : 'transparent',
+              color: showPast ? 'var(--surface-card)' : 'var(--text-secondary)',
+              fontWeight: showPast ? 600 : 400,
+            }}>
             {showPast ? 'Hide Past Events' : 'Show Past Events'}
           </button>
 
@@ -57,7 +61,7 @@ export default function AllToursStaffingGridPage() {
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
-              style={{ fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none' }}>
               {availableYears.map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -66,8 +70,8 @@ export default function AllToursStaffingGridPage() {
         </div>
       </div>
 
-      {/* Grid — fills remaining height */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      {/* Scrollable content area */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
         <StaffingGridComponent
           year={selectedYear}
           showPastEvents={showPast}

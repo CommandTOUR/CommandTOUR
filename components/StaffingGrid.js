@@ -7,6 +7,7 @@ import { getSupabase } from '../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
+import { IconLock } from '@tabler/icons-react'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -65,12 +66,12 @@ function hexToRgba(hex, alpha) {
 }
 
 const EVENT_STATUS_STYLES = {
-  confirmed: { label: 'Confirmed', color: 'var(--status-confirmed)', bg: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
-  '1-hold': { label: '1-Hold', color: 'var(--status-1hold)', bg: 'var(--status-1hold-bg)', border: 'var(--status-1hold-border)' },
-  '2-hold': { label: '2-Hold', color: 'var(--status-2hold)', bg: 'var(--status-2hold-bg)', border: 'var(--status-2hold-border)' },
-  '3-hold': { label: '3+ Hold', color: 'var(--status-3hold)', bg: 'var(--status-3hold-bg)', border: 'var(--status-3hold-border)' },
-  tentative: { label: 'Tentative', color: 'var(--status-tentative)', bg: 'var(--status-tentative-bg)', border: 'var(--status-tentative-border)' },
-  'date-hold': { label: 'Date Hold', color: 'var(--status-dateHold)', bg: 'var(--status-dateHold-bg)', border: 'var(--status-dateHold-border)' },
+  confirmed: { label: 'Confirmed', color: 'var(--status-confirmed-text)', bg: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
+  '1-hold': { label: '1-Hold', color: 'var(--status-1hold-text)', bg: 'var(--status-1hold-bg)', border: 'var(--status-1hold-border)' },
+  '2-hold': { label: '2-Hold', color: 'var(--status-2hold-text)', bg: 'var(--status-2hold-bg)', border: 'var(--status-2hold-border)' },
+  '3-hold': { label: '3+ Hold', color: 'var(--status-3hold-text)', bg: 'var(--status-3hold-bg)', border: 'var(--status-3hold-border)' },
+  tentative: { label: 'Tentative', color: 'var(--status-tentative-text)', bg: 'var(--status-tentative-bg)', border: 'var(--status-tentative-border)' },
+  'date-hold': { label: 'Date Hold', color: 'var(--status-datehold-text)', bg: 'var(--status-datehold-bg)', border: 'var(--status-datehold-border)' },
 }
 
 const STATUS_OPTIONS = [
@@ -90,24 +91,6 @@ const CELL_COLOR_SWATCHES = [
   { label: 'Blue', bg: 'rgba(51,153,255,0.15)', text: '#0055bb' },
   { label: 'Orange', bg: 'rgba(255,140,0,0.15)', text: '#bb5500' },
 ]
-
-// ── LOCK ICON ──────────────────────────────────────────────────────────────
-
-function LockIcon({ unlocked = false, size = 13, color = 'var(--color-danger)' }) {
-  return (
-    <svg width={size} height={size + 2} viewBox="0 0 13 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x=".5" y="6.5" width="12" height="8" rx="2" fill={color} />
-      <path
-        d={unlocked
-          ? 'M2.5 6.5V4A4 4 0 0 1 10.5 4V1.2'
-          : 'M2.5 6.5V4A4 4 0 0 1 10.5 4V6.5'}
-        stroke={color} strokeWidth="2" strokeLinecap="round" fill="none"
-      />
-      <circle cx="6.5" cy="10.5" r="1.4" fill="rgba(255,255,255,0.72)" />
-      <rect x="5.8" y="11.5" width="1.4" height="1.8" rx=".4" fill="rgba(255,255,255,0.72)" />
-    </svg>
-  )
-}
 
 // ── INLINE STAFF SEARCH ────────────────────────────────────────────────────
 
@@ -346,7 +329,6 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
   const [hardBlockMessage, setHardBlockMessage] = useState(null)
-  const [lockHovered, setLockHovered] = useState(false)
   const eventId = event.id
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
   const staffName = hasStaff ? staffDisplayName(assignment.staff) : null
@@ -462,18 +444,11 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
     onActivate('edit')
   }
 
-  const isDragOverLocked = isDragTarget && cellState === 'HATCHED'
-
   const stateBorder = null
 
-  const stateBg = assignError ? 'rgba(220,38,38,0.12)'
-    : cellColor?.bg
-    || ((cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? LOCKED_BG_COLOR
-       : isDragOverLocked ? 'rgba(224,82,82,0.08)'
-       : (isDragTarget && cellState !== 'FULLY_LOCKED' && cellState !== 'HATCHED') ? 'rgba(51,255,153,0.10)'
-       : (cellState === 'EMPTY' && hovered) ? 'rgba(255,214,10,0.06)'
-       : (hovered && !isActive) ? 'rgba(255,255,255,0.07)'
-       : (rowBg || 'transparent'))
+  const stateBg = (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED')
+    ? 'var(--surface-raised)'
+    : 'var(--surface-card)'
 
   const tooltip = hardBlockMessage
     ? hardBlockMessage
@@ -491,21 +466,15 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           position: 'relative', width: COL_WIDTH, minWidth: COL_WIDTH, maxWidth: COL_WIDTH, height: ROW_HEIGHT,
           padding: '0 8px', cursor: isActive ? 'default' : (cellState === 'FULLY_LOCKED' ? 'default' : 'pointer'),
           backgroundColor: stateBg,
-          backgroundImage: (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? LOCKED_STRIPE : 'none',
-          backgroundPosition: '0 0',
-          backgroundClip: 'padding-box',
           textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box',
-          borderTop: stateBorder || undefined,
-          borderLeft: stateBorder || undefined,
+          borderTop: '0.5px solid #000000',
+          borderLeft: '0.5px solid #000000',
           borderRight: isLastCol ? 'none' : (stateBorder || borderRight),
-          borderBottom: stateBorder || cellBorder || '1px solid rgba(0,0,0,0.14)',
+          borderBottom: stateBorder || cellBorder || '0.5px solid #000000',
           borderBottomRightRadius: (isLastRow && isLastCol) ? 10 : undefined,
-          boxShadow: assignError ? 'inset 0 0 0 1px #dc2626'
-            : isDragOverLocked ? 'inset 0 0 0 1.5px #e05252'
-            : (isDragTarget && cellState !== 'FULLY_LOCKED' && cellState !== 'HATCHED') ? 'inset 0 0 0 1.5px #33FF99'
-            : (isFocused && !isActive) ? 'inset 0 0 0 1.5px rgba(255,255,255,0.4)'
-            : cellState === 'EMPTY' ? 'inset 0 0 0 1px rgba(255, 214, 10, 0.65)'
+          boxShadow: assignError ? 'inset 0 0 0 1px var(--color-danger)'
+            : isDragTarget ? 'inset 0 0 0 1.5px var(--color-success)'
             : 'none',
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
         }}
@@ -553,28 +522,21 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           </React.Fragment>
 
         ) : (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? (
-          <div
-            onMouseEnter={() => setLockHovered(true)}
-            onMouseLeave={() => setLockHovered(false)}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: cellState === 'HATCHED' ? 'pointer' : 'default' }}
             onClick={e => {
               e.stopPropagation()
               if (cellState === 'HATCHED') onUnlockHatched && onUnlockHatched()
               else onUnlockFullyLocked && onUnlockFullyLocked()
-            }}
-            title="Click to unlock"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'filter 0.15s', filter: lockHovered ? 'drop-shadow(0 0 5px var(--color-success))' : 'none' }}>
-            <LockIcon unlocked={false} size={14} color={lockHovered ? 'var(--color-success)' : 'var(--color-danger)'} />
+            }}>
+            <IconLock size={13} color={cellState === 'HATCHED' ? 'var(--text-muted)' : 'var(--text-muted)'} style={{ opacity: 0.4 }} />
           </div>
 
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.28, flexShrink: 0 }}>
-              <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-primary)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
-              <path d="M8.5 3.5L10.5 5.5" stroke="var(--text-primary)" strokeWidth="1.3"/>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
+              <path d="M8.5 3.5L10.5 5.5" stroke="var(--text-muted)" strokeWidth="1.3"/>
             </svg>
-            <div style={{ transition: 'filter 0.15s', filter: hovered ? 'drop-shadow(0 0 4px var(--color-danger))' : 'none' }}>
-              <LockIcon unlocked={false} size={13} color="var(--color-danger)" />
-            </div>
           </div>
         )}
 
@@ -828,16 +790,14 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     return () => window.removeEventListener('themeChanged', checkTheme)
   }, [])
 
-  const LOCKED_STRIPE = isLightMode
-    ? 'repeating-linear-gradient(45deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 7px)'
-    : 'repeating-linear-gradient(45deg, rgba(255,255,255,0.09) 0px, rgba(255,255,255,0.09) 1px, transparent 1px, transparent 7px)'
+  const LOCKED_STRIPE = 'none'
   const LOCKED_BG_COLOR = isLightMode
     ? 'rgba(0,0,0,0.04)'
     : 'rgba(255,255,255,0.02)'
   const STAFF_NAME_COLORS = {
-    confirmed: 'var(--color-success)',
+    confirmed: 'var(--text-primary)',
     pending: 'var(--color-warning)',
-    needs_attention: 'var(--color-danger)'
+    needs_attention: 'var(--color-danger)',
   }
 
   const showToast = (msg) => {
@@ -855,23 +815,18 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const H4 = 32
   const H5 = 32
 
-  const CELL_BORDER = isLightMode
-    ? '1px solid rgba(0,0,0,0.14)'
-    : '1px solid rgba(255,255,255,0.11)'
-  const WEEKEND_SEP = isLightMode
-    ? '2px solid rgba(0,0,0,0.22)'
-    : '2px solid rgba(255,255,255,0.18)'
-  const B_HDR_INNER = CELL_BORDER
-  const B_HDR_WEEKEND = WEEKEND_SEP
-  const B_BODY_INNER = CELL_BORDER
-  const B_BODY_WEEKEND = WEEKEND_SEP
-  const B_LEFT_COL = CELL_BORDER
-  const B_DEPT_TOP = CELL_BORDER
+  const CELL_BORDER = '0.5px solid #000000'
+  const B_HDR_INNER = '0.5px solid #000000'
+  const B_HDR_WEEKEND = '0.5px solid #000000'
+  const B_BODY_INNER = '0.5px solid #000000'
+  const B_BODY_WEEKEND = '0.5px solid #000000'
+  const B_LEFT_COL = '0.5px solid #000000'
+  const B_DEPT_TOP = '0.5px solid #000000'
   const HDR_BG = 'var(--surface-card)'
   const DEPT_BG = 'var(--surface-card)'
   const BODY_DEPT_BG = 'var(--surface-nav)'
-  const DEPT_HEADER_BG = isLightMode ? '#e8e9ec' : '#202228'
-  const DEPT_HEADER_TEXT = isLightMode ? '#555555' : '#a8a8a8'
+  const DEPT_HEADER_BG = 'color-mix(in srgb, var(--color-info) 12%, var(--surface-card))'
+  const DEPT_HEADER_TEXT = 'var(--color-info)'
 
   const [reloadKey, setReloadKey] = useState(0)
   const reload = () => setReloadKey(k => k + 1)
@@ -1122,14 +1077,14 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     const existingEventRow = assignments.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && a.event_id === event.id)
     if (existingEventRow) {
       const { error } = await supabase.from('staff_assignments')
-        .update({ staff_id: staffMember.id, status: 'pending', confirmed: false }).eq('id', existingEventRow.id)
+        .update({ staff_id: staffMember.id, status: 'confirmed', confirmed: true }).eq('id', existingEventRow.id)
       if (error) return { error }
-      setAssignments(prev => prev.map(a => a.id === existingEventRow.id ? { ...a, staff_id: staffMember.id, status: 'pending', confirmed: false, staff: staffMember } : a))
+      setAssignments(prev => prev.map(a => a.id === existingEventRow.id ? { ...a, staff_id: staffMember.id, status: 'confirmed', confirmed: true, staff: staffMember } : a))
       return { error: null }
     }
 
     const { data, error } = await supabase.from('staff_assignments')
-      .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: staffMember.id, event_id: event.id, status: 'pending', confirmed: false }])
+      .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: staffMember.id, event_id: event.id, status: 'confirmed', confirmed: true }])
       .select('id, tour_position_id, slot_index, staff_id, event_id, status, confirmed, notes, travel_in_date, travel_out_date')
       .single()
     if (error) return { error }
@@ -1468,7 +1423,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   let globalRowIndex = 0
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: 'transparent' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: '#ffffff' }}>
       {selectedKeys.size > 0 && (
         <BulkActionBar count={selectedKeys.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedKeys(new Set())} />
       )}
@@ -1478,31 +1433,31 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Add events to see them in the staffing grid</div>
         </div>
       ) : (
-        <div style={{ flex: 1, background: 'transparent', border: '0.5px solid var(--border-stronger)', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'auto', borderRadius: 10, paddingBottom: 12, background: 'transparent', transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}>
-            <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 'max-content', background: 'transparent' }}>
-              <thead>
+        <div style={{ flex: 1, background: '#ffffff', border: '0.5px solid #000000', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflow: 'auto', borderRadius: 10, paddingBottom: 12, background: '#ffffff', transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 'max-content', background: 'transparent' }}>
+              <thead style={{ background: '#ffffff' }}>
                 <tr>
-                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
+                  <th style={{ position: 'sticky', top: 0, left: 0, zIndex: 55, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1, background: '#1a56db', borderRight: B_LEFT_COL, borderBottom: '0.5px solid #000000', padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }} />
                   {weekendGroups.map((wk, wi) => {
                     const wkEvs = weekendMap[wk]
                     return (
-                      <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, borderTopRightRadius: wi === weekendGroups.length - 1 ? 10 : undefined, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
+                      <th key={wk} colSpan={wkEvs.length} style={{ position: 'sticky', top: 0, zIndex: 40, height: H1, background: '#1a56db', borderBottom: '0.5px solid #000000', borderRight: wi < weekendGroups.length - 1 ? B_HDR_WEEKEND : B_HDR_INNER, borderTopRightRadius: wi === weekendGroups.length - 1 ? 10 : undefined, textAlign: 'center', fontWeight: 400, padding: '6px 0' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
                       </th>
                     )
                   })}
                 </tr>
                 {!tourId && (
                   <tr>
-                    <th style={{ position: 'sticky', top: TOP_TOUR, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                    <th style={{ position: 'sticky', top: TOP_TOUR, left: 0, zIndex: 55, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, background: '#ffffff', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
                     </th>
                     {orderedEvents.map((ev, i) => {
                       const color = toursById[ev.tour_id]?.color || '#33FF99'
                       return (
-                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, background: '#ffffff', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                           <span
                             onClick={() => router.push(`/tours/${ev.tour_id}`)}
                             style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.01em', color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
@@ -1516,11 +1471,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   </tr>
                 )}
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_CITY, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_CITY, left: 0, zIndex: 55, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, background: '#ffffff', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
                   </th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_CITY, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                    <th key={ev.id} style={{ position: 'sticky', top: TOP_CITY, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, background: '#ffffff', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                       <span
                         onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
                         style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.01em', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
@@ -1532,13 +1487,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   ))}
                 </tr>
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_STATUS, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_STATUS, left: 0, zIndex: 55, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, background: '#ffffff', borderRight: B_LEFT_COL, borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
                   </th>
                   {orderedEvents.map((ev, i) => {
                     const st = EVENT_STATUS_STYLES[ev.status]
                     return (
-                      <th key={ev.id} style={{ position: 'sticky', top: TOP_STATUS, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: 'var(--surface-card)', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
+                      <th key={ev.id} style={{ position: 'sticky', top: TOP_STATUS, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, background: '#ffffff', borderBottom: B_HDR_INNER, borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
                         {st ? (
                           <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid ' + st.border, background: st.bg, color: st.color }}>
                             {st.label}
@@ -1549,11 +1504,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                   })}
                 </tr>
                 <tr>
-                  <th style={{ position: 'sticky', top: TOP_VENUE, left: 0, zIndex: 50, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: 'var(--surface-card)', borderRight: B_LEFT_COL, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
+                  <th style={{ position: 'sticky', top: TOP_VENUE, left: 0, zIndex: 55, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, background: '#ffffff', borderRight: B_LEFT_COL, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
                   </th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 30, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: 'var(--surface-card)', borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, background: '#ffffff', borderRight: cellBorderRightDark(ev, i), padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       <span
                         onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
                         style={{ fontWeight: 600, color: ev.venue_name ? 'var(--text-primary)' : 'var(--text-muted)', cursor: ev.venue_id ? 'pointer' : 'default' }}
@@ -1571,7 +1526,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                     style={{
                       height: 3,
                       padding: 0,
-                      background: isLightMode ? '#000000' : deptAccentColor,
+                      background: deptAccentColor,
                       position: 'sticky',
                       top: TOP_VENUE + H5,
                       zIndex: 51,
@@ -1590,17 +1545,17 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         <td
                           className="sg-dept-header"
                           onClick={() => toggleDept(dept.id)}
-                          style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 10px', cursor: 'pointer', userSelect: 'none', background: deptHeaderBg, borderTop: 'none', borderBottom: B_DEPT_TOP }}
-                          onMouseEnter={e => { e.currentTarget.style.background = isLightMode ? '#dfe0e3' : '#262a33' }}
+                          style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: DEPT_H, padding: '0 10px', cursor: 'pointer', userSelect: 'none', background: deptHeaderBg, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'color-mix(in srgb, var(--text-primary) 8%, var(--surface-raised))' }}
                           onMouseLeave={e => { e.currentTarget.style.background = deptHeaderBg }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                            <div style={{ width: 3, height: 14, borderRadius: 2, background: deptAccentColor, flexShrink: 0 }} />
+                            <div style={{ width: 3, height: 14, borderRadius: 2, background: 'var(--color-info)', flexShrink: 0 }} />
                             <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: deptHeaderTextColor, whiteSpace: 'nowrap' }}>{dept.name}</span>
                             <span style={{ fontSize: 9, color: deptHeaderTextColor, opacity: 0.45, marginLeft: 2 }}>{collapsed ? '▸' : '▾'}</span>
                           </div>
                         </td>
-                        {orderedEvents.map((ev, i) => (
-                          <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: 'none', borderBottom: B_DEPT_TOP, borderRight: cellBorderRightDark(ev, i) }} />
+                        {orderedEvents.map((ev) => (
+                          <td key={ev.id} className="sg-dept-header" style={{ height: DEPT_H, background: deptHeaderBg, color: deptHeaderTextColor, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: 'none' }} />
                         ))}
                       </tr>
                       {!collapsed && dept.rows.map(({ position, slotIndex }, rowIdx) => {
@@ -1611,7 +1566,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         const isLastRow = (deptIdx === departmentsWithRows.length - 1) && (rowIdx === dept.rows.length - 1)
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
-                          <td style={{ position: 'sticky', left: 0, zIndex: 10, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', background: rowStripeBg || 'var(--surface-card)', borderRight: B_LEFT_COL, borderBottom: B_BODY_INNER, borderBottomLeftRadius: isLastRow ? 10 : undefined, fontSize: 12, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 20, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', background: '#ffffff', borderRight: '2px solid #000000', borderBottom: B_BODY_INNER, borderBottomLeftRadius: isLastRow ? 10 : undefined, fontSize: 12, fontWeight: 400, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                           </td>
                           {orderedEvents.map((ev, i) => {
