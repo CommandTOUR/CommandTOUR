@@ -71,7 +71,7 @@ export default function AllToursStaffingGridPage() {
       </div>
 
       {/* Scrollable content area */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: '12px 0 0 0' }}>
         <StaffingGridComponent
           year={selectedYear}
           showPastEvents={showPast}
