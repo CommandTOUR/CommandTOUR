@@ -779,11 +779,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const [dragConflict, setDragConflict] = useState(null)
   const [dragLockedModal, setDragLockedModal] = useState(null)
   const [conflictModal, setConflictModal] = useState(null)
-  const [isLightMode, setIsLightMode] = useState(() => {
-    if (typeof document === 'undefined') return true
-    const theme = document.documentElement.getAttribute('data-theme')
-    return theme !== 'dark'
-  })
+  const [isLightMode, setIsLightMode] = useState(false)
   const activeCellElRef = useRef(null)
 
   useEffect(() => {
@@ -1431,54 +1427,63 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
         <div style={{ flex: 1, background: '#ffffff', border: '0.5px solid #000000', borderRadius: 12, overflow: 'visible' }}>
           <div style={{ height: '100%', overflow: 'auto', borderRadius: 12, paddingBottom: 12, background: '#ffffff' }}>
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 'max-content', background: 'transparent' }}>
-              <thead style={{ backgroundColor: '#1a56db' }}>
-                <tr style={{ backgroundColor: '#1a56db' }}>
+              <thead>
+                <tr>
                   <th style={{
-                    position: 'sticky', top: 0, left: 0, zIndex: 60,
+                    position: 'sticky', top: 0, left: 0, zIndex: 200,
                     width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1,
-                    backgroundColor: '#1a56db',
-                    color: '#ffffff',
-                    padding: '0 14px',
-                    textAlign: 'left',
-                    verticalAlign: 'middle',
-                    borderBottom: '0.5px solid rgba(255,255,255,0.3)',
-                    borderRight: '0.5px solid rgba(255,255,255,0.3)',
+                    backgroundColor: '#1a56db', color: '#ffffff',
+                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
+                    borderBottom: '1px solid #000000',
+                    boxShadow: '2px 0 0 0 #000000',
                   }} />
                   {weekendGroups.map((wk, wi) => {
                     const wkEvs = weekendMap[wk]
                     return (
                       <th key={wk} colSpan={wkEvs.length} style={{
-                        position: 'sticky', top: 0, zIndex: 40,
+                        position: 'sticky', top: 0, zIndex: 150,
                         height: H1,
-                        backgroundColor: '#1a56db',
-                        color: '#ffffff',
-                        borderBottom: '0.5px solid rgba(255,255,255,0.3)',
-                        borderRight: wi < weekendGroups.length - 1 ? '1px solid rgba(255,255,255,0.5)' : 'none',
-                        textAlign: 'center',
-                        fontWeight: 400,
-                        padding: '6px 0',
+                        backgroundColor: '#1a56db', color: '#ffffff',
+                        borderBottom: '1px solid #000000',
+                        borderRight: wi < weekendGroups.length - 1 ? '2px solid #000000' : 'none',
+                        textAlign: 'center', padding: '6px 0',
                       }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', letterSpacing: '0.01em', marginTop: 2 }}>{fmtWeekend(wk)}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', marginTop: 2 }}>{fmtWeekend(wk)}</div>
                       </th>
                     )
                   })}
                 </tr>
+
                 {!tourId && (
-                  <tr style={{ backgroundColor: '#ffffff' }}>
-                    <th style={{ position: 'sticky', top: TOP_TOUR, left: 0, zIndex: 60, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2, backgroundColor: '#ffffff', isolation: 'isolate', borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tour</span>
-                      <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: '#000000', zIndex: 56 }} />
-                    </th>
+                  <tr>
+                    <th style={{
+                      position: 'sticky', top: H1, left: 0, zIndex: 200,
+                      width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2,
+                      backgroundColor: '#f0f0f0', color: '#555555',
+                      padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
+                      borderTop: '1px solid #000000',
+                      borderBottom: '0.5px solid #000000',
+                      borderRight: 'none',
+                      boxShadow: '2px 0 0 0 #000000',
+                      fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    }}>TOUR</th>
                     {orderedEvents.map((ev, i) => {
-                      const color = toursById[ev.tour_id]?.color || '#33FF99'
+                      const color = toursById[ev.tour_id]?.color || '#333333'
                       return (
-                        <th key={ev.id} style={{ position: 'sticky', top: TOP_TOUR, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H2, backgroundColor: '#ffffff', isolation: 'isolate', borderTop: '0.5px solid #000000', borderBottom: '0.5px solid #cccccc', borderRight: '0.5px solid #cccccc', padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
-                          <span
-                            onClick={() => router.push(`/tours/${ev.tour_id}`)}
-                            style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.01em', color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
-                            onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline' }}
-                            onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}>
+                        <th key={ev.id} style={{
+                          position: 'sticky', top: H1, zIndex: 150,
+                          width: COL_WIDTH, minWidth: COL_WIDTH, height: H2,
+                          backgroundColor: '#f0f0f0',
+                          borderTop: '0.5px solid #000000',
+                          borderBottom: '1px solid #000000',
+                          borderRight: isLastInGroup(ev) ? '2px solid #000000' : '0.5px solid #000000',
+                          padding: '0 6px', textAlign: 'center',
+                        }}>
+                          <span onClick={() => router.push(`/tours/${ev.tour_id}`)}
+                            style={{ fontSize: 12, fontWeight: 600, color, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
+                            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
                             {toursById[ev.tour_id]?.name || '—'}
                           </span>
                         </th>
@@ -1486,51 +1491,64 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                     })}
                   </tr>
                 )}
-                <tr style={{ backgroundColor: '#ffffff' }}>
-                  <th style={{ position: 'sticky', top: TOP_CITY, left: 0, zIndex: 60, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3, backgroundColor: '#ffffff', isolation: 'isolate', borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>City</span>
-                    <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: '#000000', zIndex: 56 }} />
-                  </th>
+
+                <tr>
+                  <th style={{
+                    position: 'sticky', top: tourId ? H1 : H1 + H2, left: 0, zIndex: 200,
+                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3,
+                    backgroundColor: '#f0f0f0', color: '#555555',
+                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
+                    borderTop: '1px solid #000000',
+                    borderBottom: '1px solid #000000',
+                    borderRight: 'none',
+                    boxShadow: '2px 0 0 0 #000000',
+                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>CITY</th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_CITY, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H3, backgroundColor: '#ffffff', isolation: 'isolate', borderTop: '0.5px solid #000000', borderBottom: '0.5px solid #cccccc', borderRight: '0.5px solid #cccccc', padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
-                      <span
-                        onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
-                        style={{ fontSize: 12, fontWeight: 500, letterSpacing: '0.01em', color: '#111111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }}
-                        onMouseEnter={e => { e.currentTarget.style.opacity = '0.55'; e.currentTarget.style.textDecoration = 'underline' }}
+                    <th key={ev.id} style={{
+                      position: 'sticky', top: tourId ? H1 : H1 + H2, zIndex: 150,
+                      width: COL_WIDTH, minWidth: COL_WIDTH, height: H3,
+                      backgroundColor: '#f0f0f0',
+                      borderTop: '0.5px solid #000000',
+                      borderBottom: '1px solid #000000',
+                      borderRight: isLastInGroup(ev) ? '2px solid #000000' : '0.5px solid #000000',
+                      padding: '0 6px', textAlign: 'center',
+                    }}>
+                      <span onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
+                        style={{ fontSize: 12, fontWeight: 500, color: '#111111', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.textDecoration = 'underline' }}
                         onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.textDecoration = 'none' }}>
                         {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                       </span>
                     </th>
                   ))}
                 </tr>
-                <tr style={{ backgroundColor: '#ffffff' }}>
-                  <th style={{ position: 'sticky', top: TOP_STATUS, left: 0, zIndex: 60, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4, backgroundColor: '#ffffff', isolation: 'isolate', borderBottom: B_HDR_INNER, padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</span>
-                    <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: '#000000', zIndex: 56 }} />
-                  </th>
-                  {orderedEvents.map((ev, i) => {
-                    const st = EVENT_STATUS_STYLES[ev.status]
-                    return (
-                      <th key={ev.id} style={{ position: 'sticky', top: TOP_STATUS, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H4, backgroundColor: '#ffffff', isolation: 'isolate', borderTop: '0.5px solid #000000', borderBottom: '0.5px solid #cccccc', borderRight: '0.5px solid #cccccc', padding: '0 6px', textAlign: 'center', fontWeight: 400 }}>
-                        {st ? (
-                          <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid ' + st.border, background: st.bg, color: st.color }}>
-                            {st.label}
-                          </span>
-                        ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>}
-                      </th>
-                    )
-                  })}
-                </tr>
-                <tr style={{ backgroundColor: '#ffffff' }}>
-                  <th style={{ position: 'sticky', top: TOP_VENUE, left: 0, zIndex: 60, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5, backgroundColor: '#ffffff', isolation: 'isolate', padding: '0 14px', textAlign: 'left', verticalAlign: 'middle' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Venue</span>
-                    <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: '#000000', zIndex: 56 }} />
-                  </th>
+
+                <tr>
+                  <th style={{
+                    position: 'sticky', top: tourId ? H1 + H3 : H1 + H2 + H3, left: 0, zIndex: 200,
+                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5,
+                    backgroundColor: '#f0f0f0', color: '#555555',
+                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
+                    borderTop: '1px solid #000000',
+                    borderBottom: '1px solid #000000',
+                    borderRight: 'none',
+                    boxShadow: '2px 0 0 0 #000000',
+                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>VENUE</th>
                   {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{ position: 'sticky', top: TOP_VENUE, zIndex: 40, width: COL_WIDTH, minWidth: COL_WIDTH, height: H5, backgroundColor: '#ffffff', isolation: 'isolate', borderTop: '0.5px solid #000000', borderBottom: '0.5px solid #cccccc', borderRight: '0.5px solid #cccccc', padding: '0 6px', textAlign: 'center', fontWeight: 400, fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      <span
-                        onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
-                        style={{ fontWeight: 600, color: ev.venue_name ? '#111111' : 'var(--text-muted)', cursor: ev.venue_id ? 'pointer' : 'default' }}
+                    <th key={ev.id} style={{
+                      position: 'sticky', top: tourId ? H1 + H3 : H1 + H2 + H3, zIndex: 150,
+                      width: COL_WIDTH, minWidth: COL_WIDTH, height: H5,
+                      backgroundColor: '#f0f0f0',
+                      borderTop: '0.5px solid #000000',
+                      borderBottom: '1px solid #000000',
+                      borderRight: isLastInGroup(ev) ? '2px solid #000000' : '0.5px solid #000000',
+                      padding: '0 6px', textAlign: 'center',
+                      fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      <span onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
+                        style={{ fontWeight: 600, color: ev.venue_name ? '#111111' : '#999999', cursor: ev.venue_id ? 'pointer' : 'default', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
                         onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
                         onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
                         {ev.venue_name || '—'}
@@ -1538,20 +1556,50 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                     </th>
                   ))}
                 </tr>
-                <tr style={{ height: 3, padding: 0, margin: 0, backgroundColor: '#FFD60A' }}>
-                  <td
-                    className="sg-cell"
-                    colSpan={orderedEvents.length + 1}
-                    style={{
-                      height: 3,
-                      padding: 0,
-                      background: deptAccentColor,
-                      position: 'sticky',
-                      top: TOP_VENUE + H5,
-                      zIndex: 51,
-                      border: 'none',
-                    }}
-                  />
+
+                <tr>
+                  <th style={{
+                    position: 'sticky', top: tourId ? H1 + H3 + H4 : H1 + H2 + H3 + H4, left: 0, zIndex: 200,
+                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4,
+                    backgroundColor: '#f0f0f0', color: '#555555',
+                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
+                    borderTop: '1px solid #000000',
+                    borderBottom: '1px solid #000000',
+                    borderRight: 'none',
+                    boxShadow: '2px 0 0 0 #000000',
+                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>STATUS</th>
+                  {orderedEvents.map((ev, i) => {
+                    const st = EVENT_STATUS_STYLES[ev.status]
+                    return (
+                      <th key={ev.id} style={{
+                        position: 'sticky', top: tourId ? H1 + H3 + H4 : H1 + H2 + H3 + H4, zIndex: 150,
+                        width: COL_WIDTH, minWidth: COL_WIDTH, height: H4,
+                        backgroundColor: '#f0f0f0',
+                        borderTop: '0.5px solid #000000',
+                        borderBottom: '1px solid #000000',
+                        borderRight: isLastInGroup(ev) ? '2px solid #000000' : '0.5px solid #000000',
+                        padding: '0 6px', textAlign: 'center',
+                      }}>
+                        {st ? (
+                          <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid ' + st.border, background: st.bg, color: st.color }}>
+                            {st.label}
+                          </span>
+                        ) : <span style={{ fontSize: 11, color: '#999999' }}>—</span>}
+                      </th>
+                    )
+                  })}
+                </tr>
+
+                <tr style={{ height: 3 }}>
+                  <td colSpan={orderedEvents.length + 1} style={{
+                    height: 3, padding: 0,
+                    backgroundColor: deptAccentColor,
+                    position: 'sticky',
+                    top: tourId ? H1 + H3 + H5 + H4 : H1 + H2 + H3 + H5 + H4,
+                    zIndex: 91,
+                    border: 'none',
+                  }} />
                 </tr>
               </thead>
 
@@ -1579,7 +1627,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         const isLastRow = (deptIdx === departmentsWithRows.length - 1) && (rowIdx === dept.rows.length - 1)
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
-                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: '#ffffff', borderBottom: B_BODY_INNER, fontSize: 12, fontWeight: 400, color: 'var(--text-primary)', overflow: 'visible' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: '#f0f0f0', borderBottom: B_BODY_INNER, fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', overflow: 'visible' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                             <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: '#000000', zIndex: 26 }} />
                           </td>
