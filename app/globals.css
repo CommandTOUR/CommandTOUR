@@ -350,3 +350,6 @@ html, body {
   background: var(--bg);
   z-index: 99;
 }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { scrollbar-width: none; }

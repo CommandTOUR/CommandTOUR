@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import ReactDOM from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
@@ -468,8 +468,8 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           backgroundColor: stateBg,
           textAlign: 'center', verticalAlign: 'middle',
           boxSizing: 'border-box',
-          borderTop: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.12)',
-          borderLeft: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.12)',
+          borderTop: isLightMode ? '0.75px solid #000000' : '0.75px solid rgba(255,255,255,0.12)',
+          borderLeft: 'none',
           borderRight: isLastCol ? 'none' : (stateBorder || borderRight),
           borderBottom: stateBorder || cellBorder || '0.5px solid #000000',
           borderBottomRightRadius: (isLastRow && isLastCol) ? 10 : undefined,
@@ -788,6 +788,20 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
     return document.documentElement.getAttribute('data-theme') !== 'dark'
   })
   const activeCellElRef = useRef(null)
+  const headerScrollRef = useRef(null)
+  const bodyScrollRef = useRef(null)
+
+  const handleBodyScroll = useCallback((e) => {
+    if (headerScrollRef.current) {
+      headerScrollRef.current.scrollLeft = e.target.scrollLeft
+    }
+  }, [])
+
+  const handleHeaderScroll = useCallback((e) => {
+    if (bodyScrollRef.current) {
+      bodyScrollRef.current.scrollLeft = e.target.scrollLeft
+    }
+  }, [])
 
   useEffect(() => {
     const checkTheme = () => {
@@ -823,11 +837,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const H4 = 32
   const H5 = 32
 
-  const CELL_BORDER = isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.12)'
+  const CELL_BORDER = isLightMode ? '0.75px solid #000000' : '0.75px solid rgba(255,255,255,0.12)'
   const B_HDR_INNER = isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.12)'
-  const B_BODY_INNER = isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.12)'
+  const B_BODY_INNER = isLightMode ? '0.75px solid #000000' : '0.75px solid rgba(255,255,255,0.12)'
   const B_BODY_WEEKEND = isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)'
-  const B_DEPT_TOP = isLightMode ? '0.5px solid #000000' : '1px solid rgba(255,255,255,0.12)'
+  const B_DEPT_TOP = isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)'
   const HDR_BG = 'var(--surface-card)'
   const DEPT_BG = 'var(--surface-card)'
   const BODY_DEPT_BG = 'var(--surface-nav)'
@@ -1421,7 +1435,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   let globalRowIndex = 0
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: '#ffffff', borderRadius: 12, overflow: 'visible' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: '#ffffff', overflow: 'hidden' }}>
       {selectedKeys.size > 0 && (
         <BulkActionBar count={selectedKeys.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedKeys(new Set())} />
       )}
@@ -1431,184 +1445,111 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
           <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Add events to see them in the staffing grid</div>
         </div>
       ) : (
-        <div style={{ flex: 1, background: '#ffffff', border: '0.5px solid #000000', borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'auto', background: '#ffffff' }}>
-            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 'max-content', background: 'transparent' }}>
-              <thead>
-                <tr>
-                  <th style={{
-                    position: 'sticky', top: 0, left: 0, zIndex: 200,
-                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H1,
-                    backgroundColor: '#1a56db', color: '#ffffff',
-                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
-                    borderBottom: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.2)',
-                    boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)',
-                  }} />
-                  {weekendGroups.map((wk, wi) => {
-                    const wkEvs = weekendMap[wk]
-                    return (
-                      <th key={wk} colSpan={wkEvs.length} style={{
-                        position: 'sticky', top: 0, zIndex: 150,
-                        height: H1,
-                        backgroundColor: '#1a56db', color: '#ffffff',
-                        borderBottom: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.2)',
-                        borderRight: wi < weekendGroups.length - 1 ? (isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)') : 'none',
-                        textAlign: 'center', padding: '6px 0',
-                      }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', marginTop: 2 }}>{fmtWeekend(wk)}</div>
-                      </th>
-                    )
-                  })}
-                </tr>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#ffffff', border: '0.5px solid #000000', overflow: 'visible' }}>
+          {/* FIXED HEADER — does not scroll vertically, syncs horizontal scroll */}
+          <div
+            ref={headerScrollRef}
+            onScroll={handleHeaderScroll}
+            className="hide-scrollbar"
+            style={{
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              flexShrink: 0,
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: `${LEFT_WIDTH}px repeat(${orderedEvents.length}, ${COL_WIDTH}px)`, minWidth: LEFT_WIDTH + orderedEvents.length * COL_WIDTH }}>
 
-                {!tourId && (
-                  <tr>
-                    <th style={{
-                      position: 'sticky', top: H1, left: 0, zIndex: 200,
-                      width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H2,
-                      backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', color: isLightMode ? '#555555' : '#8899aa',
-                      padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
-                      borderTop: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                      borderBottom: isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.15)',
-                      borderRight: 'none',
-                      boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)',
-                      fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-                    }}>TOUR</th>
-                    {orderedEvents.map((ev, i) => {
-                      const color = toursById[ev.tour_id]?.color || '#333333'
-                      return (
-                        <th key={ev.id} style={{
-                          position: 'sticky', top: H1, zIndex: 150,
-                          width: COL_WIDTH, minWidth: COL_WIDTH, height: H2,
-                          backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a',
-                          borderTop: isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.1)',
-                          borderBottom: isLightMode ? '1px solid #000000' : '0.5px solid rgba(255,255,255,0.06)',
-                          borderRight: isLastInGroup(ev) ? (isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)') : (isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.15)'),
-                          padding: '0 6px', textAlign: 'center',
-                        }}>
-                          <span onClick={() => router.push(`/tours/${ev.tour_id}`)}
-                            style={{ fontSize: 12, fontWeight: 600, color, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
-                            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                            {toursById[ev.tour_id]?.name || '—'}
-                          </span>
-                        </th>
-                      )
-                    })}
-                  </tr>
-                )}
+              {/* Weekend row */}
+              <div style={{ backgroundColor: '#1a56db', height: H1, display: 'flex', alignItems: 'center', padding: '0 14px', position: 'sticky', left: 0, zIndex: 10, boxShadow: '2px 0 0 0 rgba(255,255,255,0.3)' }} />
+              {weekendGroups.map((wk, wi) => {
+                const wkEvs = weekendMap[wk]
+                return (
+                  <div key={wk} style={{
+                    gridColumn: `span ${wkEvs.length}`,
+                    backgroundColor: '#1a56db',
+                    height: H1,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    borderRight: wi < weekendGroups.length - 1 ? '2px solid rgba(255,255,255,0.4)' : 'none',
+                    boxShadow: '0 0.75px 0 0 rgba(255,255,255,0.3)',
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#ffffff', marginTop: 2 }}>{fmtWeekend(wk)}</div>
+                  </div>
+                )
+              })}
 
-                <tr>
-                  <th style={{
-                    position: 'sticky', top: tourId ? H1 : H1 + H2, left: 0, zIndex: 200,
-                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H3,
-                    backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', color: isLightMode ? '#555555' : '#8899aa',
-                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
-                    borderTop: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderBottom: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderRight: 'none',
-                    boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)',
-                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>CITY</th>
-                  {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{
-                      position: 'sticky', top: tourId ? H1 : H1 + H2, zIndex: 150,
-                      width: COL_WIDTH, minWidth: COL_WIDTH, height: H3,
-                      backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a',
-                      borderTop: isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.1)',
-                      borderBottom: isLightMode ? '1px solid #000000' : '0.5px solid rgba(255,255,255,0.06)',
-                      borderRight: isLastInGroup(ev) ? (isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)') : (isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.15)'),
-                      padding: '0 6px', textAlign: 'center',
-                    }}>
-                      <span onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
-                        style={{ fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#cccccc', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
-                        onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.textDecoration = 'underline' }}
-                        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.textDecoration = 'none' }}>
-                        {formatLocation(ev.city, ev.state, ev.country, 'compact')}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr>
-                  <th style={{
-                    position: 'sticky', top: tourId ? H1 + H3 : H1 + H2 + H3, left: 0, zIndex: 200,
-                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H5,
-                    backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', color: isLightMode ? '#555555' : '#8899aa',
-                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
-                    borderTop: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderBottom: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderRight: 'none',
-                    boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)',
-                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>VENUE</th>
-                  {orderedEvents.map((ev, i) => (
-                    <th key={ev.id} style={{
-                      position: 'sticky', top: tourId ? H1 + H3 : H1 + H2 + H3, zIndex: 150,
-                      width: COL_WIDTH, minWidth: COL_WIDTH, height: H5,
-                      backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a',
-                      borderTop: isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.1)',
-                      borderBottom: isLightMode ? '1px solid #000000' : '0.5px solid rgba(255,255,255,0.06)',
-                      borderRight: isLastInGroup(ev) ? (isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)') : (isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.15)'),
-                      padding: '0 6px', textAlign: 'center',
-                      fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      <span onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
-                        style={{ fontWeight: 600, color: isLightMode ? (ev.venue_name ? '#111111' : '#999999') : (ev.venue_name ? '#cccccc' : '#666666'), cursor: ev.venue_id ? 'pointer' : 'default', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                        onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
-                        onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
-                        {ev.venue_name || '—'}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr>
-                  <th style={{
-                    position: 'sticky', top: tourId ? H1 + H3 + H4 : H1 + H2 + H3 + H4, left: 0, zIndex: 200,
-                    width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: H4,
-                    backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', color: isLightMode ? '#555555' : '#8899aa',
-                    padding: '0 14px', textAlign: 'left', verticalAlign: 'middle',
-                    borderTop: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderBottom: isLightMode ? '1px solid #000000' : '1px solid rgba(255,255,255,0.15)',
-                    borderRight: 'none',
-                    boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)',
-                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>STATUS</th>
+              {/* Tour row — only when !tourId */}
+              {!tourId && (
+                <>
+                  <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H2, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15), 0 0.75px 0 0 rgba(255,255,255,0.15)' }}>TOUR</div>
                   {orderedEvents.map((ev, i) => {
-                    const st = EVENT_STATUS_STYLES[ev.status]
+                    const tourColor = toursById[ev.tour_id]?.color || '#333'
                     return (
-                      <th key={ev.id} style={{
-                        position: 'sticky', top: tourId ? H1 + H3 + H4 : H1 + H2 + H3 + H4, zIndex: 150,
-                        width: COL_WIDTH, minWidth: COL_WIDTH, height: H4,
-                        backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a',
-                        borderTop: isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.1)',
-                        borderBottom: isLightMode ? '1px solid #000000' : '0.5px solid rgba(255,255,255,0.06)',
-                        borderRight: isLastInGroup(ev) ? (isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.25)') : (isLightMode ? '0.5px solid #000000' : '0.5px solid rgba(255,255,255,0.15)'),
-                        padding: '0 6px', textAlign: 'center',
-                      }}>
-                        {st ? (
-                          <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid ' + st.border, background: st.bg, color: st.color }}>
-                            {st.label}
-                          </span>
-                        ) : <span style={{ fontSize: 11, color: '#999999' }}>—</span>}
-                      </th>
+                      <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H2, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < orderedEvents.length-1 ? '2px solid #000000' : '0.75px solid #000000', boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                        <span onClick={() => router.push(`/tours/${ev.tour_id}`)} style={{ fontSize: 11, fontWeight: 600, color: tourColor, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+                          {toursById[ev.tour_id]?.name || '—'}
+                        </span>
+                      </div>
                     )
                   })}
-                </tr>
+                </>
+              )}
 
-                <tr style={{ height: 3 }}>
-                  <td colSpan={orderedEvents.length + 1} style={{
-                    height: 3, padding: 0,
-                    backgroundColor: deptAccentColor,
-                    position: 'sticky',
-                    top: tourId ? H1 + H3 + H5 + H4 : H1 + H2 + H3 + H5 + H4,
-                    zIndex: 91,
-                    border: 'none',
-                  }} />
-                </tr>
-              </thead>
+              {/* City row */}
+              <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15), 0 0.75px 0 0 rgba(255,255,255,0.15)' }}>CITY</div>
+              {orderedEvents.map((ev, i) => (
+                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < orderedEvents.length-1 ? '2px solid #000000' : '0.75px solid #000000', boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                  <span onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)} style={{ fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#cccccc', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.textDecoration = 'underline' }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.textDecoration = 'none' }}>
+                    {formatLocation(ev.city, ev.state, ev.country, 'compact')}
+                  </span>
+                </div>
+              ))}
+
+              {/* Venue row */}
+              <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15), 0 0.75px 0 0 rgba(255,255,255,0.15)' }}>VENUE</div>
+              {orderedEvents.map((ev, i) => (
+                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < orderedEvents.length-1 ? '2px solid #000000' : '0.75px solid #000000', boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: ev.venue_name ? (isLightMode ? '#111111' : '#cccccc') : (isLightMode ? '#999999' : '#666666'), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px', cursor: ev.venue_id ? 'pointer' : 'default' }}
+                    onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
+                    onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
+                    onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
+                    {ev.venue_name || '—'}
+                  </span>
+                </div>
+              ))}
+
+              {/* Status row */}
+              <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H5, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)' }}>STATUS</div>
+              {orderedEvents.map((ev, i) => {
+                const st = EVENT_STATUS_STYLES[ev.status]
+                return (
+                  <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H5, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < orderedEvents.length-1 ? '2px solid #000000' : '0.75px solid #000000' }}>
+                    {st ? (
+                      <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: `1px solid ${st.border}`, background: st.bg, color: st.color }}>{st.label}</span>
+                    ) : <span style={{ fontSize: 11, color: '#999999' }}>—</span>}
+                  </div>
+                )
+              })}
+
+              {/* Blue accent bar — full width */}
+              <div style={{ gridColumn: `1 / -1`, height: 4, backgroundColor: '#1a56db' }} />
+
+            </div>
+          </div>
+
+          {/* SCROLLABLE BODY */}
+          <div
+            ref={bodyScrollRef}
+            onScroll={handleBodyScroll}
+            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', background: '#ffffff' }}
+          >
+            <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: LEFT_WIDTH + orderedEvents.length * COL_WIDTH, background: 'transparent' }}>
 
               <tbody>
                 {departmentsWithRows.map((dept, deptIdx) => {
@@ -1617,13 +1558,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                       <tr>
                         <td
                           className="sg-dept-header"
-                          style={{ position: 'sticky', left: 0, zIndex: 24, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: deptHeaderBg, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: isLightMode ? 'none' : '2px solid rgba(255,255,255,0.2)', overflow: 'visible', whiteSpace: 'nowrap' }}>
+                          style={{ position: 'sticky', left: 0, zIndex: 150, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 14px', background: deptHeaderBg, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: isLightMode ? 'none' : '2px solid rgba(255,255,255,0.2)', overflow: 'visible', whiteSpace: 'nowrap', willChange: 'transform', transform: 'translateZ(0)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                             <span style={{ position: 'absolute', left: 14, right: 0, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--color-info)', whiteSpace: 'nowrap' }}>{dept.name}</span>
                           </div>
                         </td>
                         {orderedEvents.map((ev) => (
-                          <td key={ev.id} className="sg-dept-header" style={{ height: ROW_HEIGHT, background: deptHeaderBg, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: 'none' }} />
+                          <td key={ev.id} className="sg-dept-header" style={{ height: ROW_HEIGHT, background: deptHeaderBg, borderTop: B_DEPT_TOP, borderBottom: B_DEPT_TOP, borderRight: 'none', zIndex: 100, position: 'relative' }} />
                         ))}
                       </tr>
                       {dept.rows.map(({ position, slotIndex }, rowIdx) => {
@@ -1634,7 +1575,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
                         const isLastRow = (deptIdx === departmentsWithRows.length - 1) && (rowIdx === dept.rows.length - 1)
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
-                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', borderBottom: B_BODY_INNER, boxShadow: isLightMode ? '2px 0 0 0 #000000' : '2px 0 0 0 rgba(255,255,255,0.15)', fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#e0e0e0', overflow: 'visible' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', borderBottom: 'none', borderLeft: 'none', borderRight: isLightMode ? '2px solid #000000' : '2px solid rgba(255,255,255,0.2)', fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#e0e0e0', overflow: 'visible', willChange: 'transform', transform: 'translateZ(0)' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                             <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: isLightMode ? '#000000' : 'rgba(255,255,255,0.15)', zIndex: 26 }} />
                           </td>
