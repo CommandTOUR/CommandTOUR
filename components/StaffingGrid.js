@@ -790,16 +790,27 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
   const activeCellElRef = useRef(null)
   const headerScrollRef = useRef(null)
   const bodyScrollRef = useRef(null)
+  const isSyncingScroll = useRef(false)
 
   const handleBodyScroll = useCallback((e) => {
-    if (headerScrollRef.current) {
-      headerScrollRef.current.scrollLeft = e.target.scrollLeft
+    if (headerScrollRef.current && !isSyncingScroll.current) {
+      isSyncingScroll.current = true
+      const scrollLeft = e.target.scrollLeft
+      requestAnimationFrame(() => {
+        if (headerScrollRef.current) headerScrollRef.current.scrollLeft = scrollLeft
+        isSyncingScroll.current = false
+      })
     }
   }, [])
 
   const handleHeaderScroll = useCallback((e) => {
-    if (bodyScrollRef.current) {
-      bodyScrollRef.current.scrollLeft = e.target.scrollLeft
+    if (bodyScrollRef.current && !isSyncingScroll.current) {
+      isSyncingScroll.current = true
+      const scrollLeft = e.target.scrollLeft
+      requestAnimationFrame(() => {
+        if (bodyScrollRef.current) bodyScrollRef.current.scrollLeft = scrollLeft
+        isSyncingScroll.current = false
+      })
     }
   }, [])
 
@@ -1456,6 +1467,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
               overflowY: 'hidden',
               flexShrink: 0,
               borderRadius: '12px 12px 0 0',
+              WebkitOverflowScrolling: 'touch',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
@@ -1548,7 +1560,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false }) {
           <div
             ref={bodyScrollRef}
             onScroll={handleBodyScroll}
-            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', background: '#ffffff', borderRadius: '0 0 12px 12px' }}
+            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', background: '#ffffff', borderRadius: '0 0 12px 12px', WebkitOverflowScrolling: 'touch' }}
           >
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: LEFT_WIDTH + orderedEvents.length * COL_WIDTH, background: 'transparent' }}>
 
