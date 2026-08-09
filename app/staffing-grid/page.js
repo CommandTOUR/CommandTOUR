@@ -10,6 +10,7 @@ export default function AllToursStaffingGridPage() {
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
   const [showPast, setShowPast] = useState(false)
   const [availableYears, setAvailableYears] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -35,12 +36,32 @@ export default function AllToursStaffingGridPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => router.push('/staff')}
-            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}>
+            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
             ← Back to Staff
           </button>
           <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>
             All Tours Staffing Grid
           </div>
+        </div>
+
+        {/* Center: search bar */}
+        <div style={{ flex: 1, maxWidth: 480, margin: '0 24px' }}>
+          <input
+            type="text"
+            placeholder="Search city, venue, staff, date, position..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              fontSize: 13,
+              padding: '7px 14px',
+              borderRadius: 8,
+              border: '0.5px solid var(--border-default)',
+              background: 'var(--surface-card)',
+              color: 'var(--text-primary)',
+              outline: 'none',
+            }}
+          />
         </div>
 
         {/* Right: show past toggle + year selector */}
@@ -50,8 +71,8 @@ export default function AllToursStaffingGridPage() {
             style={{
               fontSize: 13, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
               border: showPast ? 'none' : '0.5px solid var(--border-default)',
-              background: showPast ? 'var(--accent)' : 'transparent',
-              color: showPast ? 'var(--surface-card)' : 'var(--text-secondary)',
+              background: showPast ? 'var(--color-info)' : 'transparent',
+              color: showPast ? '#ffffff' : 'var(--text-secondary)',
               fontWeight: showPast ? 600 : 400,
             }}>
             {showPast ? 'Hide Past Events' : 'Show Past Events'}
@@ -61,7 +82,7 @@ export default function AllToursStaffingGridPage() {
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
-              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none' }}>
+              style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none', height: 34 }}>
               {availableYears.map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -75,6 +96,7 @@ export default function AllToursStaffingGridPage() {
         <StaffingGridComponent
           year={selectedYear}
           showPastEvents={showPast}
+          searchQuery={searchQuery}
         />
       </div>
     </div>
