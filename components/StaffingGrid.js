@@ -875,9 +875,6 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       if (tourId) {
         eventsQuery = eventsQuery.eq('tour_id', tourId).gte('load_in_date', today)
       } else {
-        eventsQuery = eventsQuery
-          .gte('load_in_date', `${effectiveYear}-01-01`)
-          .lte('load_in_date', `${effectiveYear}-12-31`)
         if (!showPastEvents) eventsQuery = eventsQuery.gte('load_out_date', today)
       }
 
@@ -902,22 +899,32 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         return
       }
 
-      const { data: assignmentsData } = await supabase
-        .from('staff_assignments')
-        .select(`
-          id,
-          tour_position_id,
-          slot_index,
-          staff_id,
-          event_id,
-          status,
-          confirmed,
-          notes,
-          travel_in_date,
-          travel_out_date,
-          staff:staff(id, first_name, last_name, display_name)
-        `)
-        .in('tour_position_id', tpIds)
+      let assignmentsData = []
+      let assignmentsFrom = 0
+      const ASSIGNMENTS_PAGE_SIZE = 1000
+      while (true) {
+        const { data: page, error: pageError } = await supabase
+          .from('staff_assignments')
+          .select(`
+            id,
+            tour_position_id,
+            slot_index,
+            staff_id,
+            event_id,
+            status,
+            confirmed,
+            notes,
+            travel_in_date,
+            travel_out_date,
+            staff:staff(id, first_name, last_name, display_name)
+          `)
+          .in('tour_position_id', tpIds)
+          .range(assignmentsFrom, assignmentsFrom + ASSIGNMENTS_PAGE_SIZE - 1)
+        if (pageError || !page || page.length === 0) break
+        assignmentsData = [...assignmentsData, ...page]
+        if (page.length < ASSIGNMENTS_PAGE_SIZE) break
+        assignmentsFrom += ASSIGNMENTS_PAGE_SIZE
+      }
 
       setAssignments(assignmentsData || [])
       setLoading(false)
@@ -1142,11 +1149,20 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     }
 
     const { data, error } = await supabase.from('staff_assignments')
-      .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: staffMember.id, event_id: event.id, status: 'confirmed', confirmed: true }])
+      .upsert(
+        [{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: staffMember.id, event_id: event.id, status: 'confirmed', confirmed: true }],
+        { onConflict: 'tour_position_id,slot_index,event_id', ignoreDuplicates: false }
+      )
       .select('id, tour_position_id, slot_index, staff_id, event_id, status, confirmed, notes, travel_in_date, travel_out_date')
       .single()
     if (error) return { error }
-    setAssignments(prev => [...prev, { ...data, staff: staffMember }])
+    setAssignments(prev => {
+      const existing = prev.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && a.event_id === event.id)
+      if (existing) {
+        return prev.map(a => a.id === existing.id ? { ...a, ...data, staff: staffMember } : a)
+      }
+      return [...prev, { ...data, staff: staffMember }]
+    })
     if (data?.confirmed && data?.staff_id) {
       await confirmStaffMember({
         supabase,
