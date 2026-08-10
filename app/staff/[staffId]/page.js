@@ -1,61 +1,72 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import TopNav from '../../../components/TopNav'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
-import { IconPrinter, IconFileText, IconCamera } from '@tabler/icons-react'
+import { IconPrinter, IconId, IconUserCircle, IconMail, IconPhone } from '@tabler/icons-react'
 
-function EventListHeader() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card-hover)', padding: '8px 16px', borderRadius: '8px 8px 0 0', borderBottom: '1px solid var(--border-card)' }}>
-      <div style={{ flex: '0 0 220px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Location</div>
-      <div style={{ flex: '0 0 130px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Date</div>
-      <div style={{ flex: '0 0 200px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Tour</div>
-      <div style={{ flex: '0 0 160px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Position</div>
-      <div style={{ marginLeft: 'auto', flexShrink: 0, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Status</div>
-    </div>
-  )
+const GLASS = {
+  background: 'var(--glass-tile-bg)',
+  backdropFilter: 'blur(12px) saturate(1.4)',
+  border: '0.5px solid var(--glass-tile-border)',
+  borderRadius: 14,
+  boxShadow: 'var(--glass-tile-shadow)',
+}
+
+const OUTLINE_BTN = {
+  background: 'transparent',
+  border: '0.5px solid var(--color-info)',
+  color: 'var(--color-info)',
+  borderRadius: 8,
+  fontSize: 13,
+  fontWeight: 400,
+  padding: '9px 16px',
+  cursor: 'pointer',
 }
 
 const labelStyle = {
   fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: 'var(--text-muted)',
+  letterSpacing: '0.07em',
+  color: 'var(--color-info)',
   marginBottom: 2,
 }
 
 const valueStyle = {
-  fontSize: 14,
+  fontSize: 13,
   color: 'var(--text-primary)',
+}
+
+const STAFF_STATUS = {
+  confirmed: { color: 'var(--color-success)', label: 'Confirmed' },
+  pending: { color: 'var(--color-warning)', label: 'Pending' },
+  needs_attention: { color: 'var(--color-danger)', label: 'Needs Attention' },
+}
+
+function normalizeStaffStatus(s) {
+  if (s === 'scheduled') return 'pending'
+  if (s === 'attention') return 'needs_attention'
+  return s
 }
 
 function Field({ label, value }) {
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 14 }}>
       <div style={labelStyle}>{label}</div>
       <div style={valueStyle}>{value || '—'}</div>
     </div>
   )
 }
 
-function UploadSlot({ label, url, icon: Icon }) {
+function UploadSlot({ label, url, icon: Icon, onPreview }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-      {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          <img src={url} alt={label} style={{ width: 80, height: 100, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border-card)', display: 'block' }} />
-        </a>
-      ) : (
-        <div style={{ width: 80, height: 100, borderRadius: 4, border: '1px dashed var(--border-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={22} stroke={1.5} color="var(--text-muted)" />
-        </div>
-      )}
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'center' }}>{label}</div>
-      {!url && <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>Upload in Edit Profile</div>}
+    <div
+      onClick={url ? () => onPreview(url) : undefined}
+      style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 0, cursor: url ? 'pointer' : 'default' }}
+    >
+      <Icon size={36} stroke={1.5} color={url ? 'var(--color-info)' : 'var(--text-muted)'} />
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: url ? 'var(--color-info)' : 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>{label}</div>
     </div>
   )
 }
@@ -66,11 +77,10 @@ export default function StaffProfile() {
   const [person, setPerson] = useState(null)
   const [staffAirports, setStaffAirports] = useState([])
   const [events, setEvents] = useState([])
-  const [showPast, setShowPast] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showMap, setShowMap] = useState({})
-  const [stickyVisible, setStickyVisible] = useState(false)
-  const nameRef = useRef(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [passportExpanded, setPassportExpanded] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -158,33 +168,27 @@ export default function StaffProfile() {
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase()
   }
 
-  useEffect(() => {
-    if (!nameRef.current) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setStickyVisible(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-62px 0px 0px 0px' }
-    )
-    observer.observe(nameRef.current)
-    return () => observer.disconnect()
-  }, [person])
-
-  const sectionLabel = (title) => (
-    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid var(--bg-card)' }}>
-      {title}
-    </div>
-  )
+  const handlePrint = () => window.print()
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <TopNav />
-      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
+      <div style={{ padding: '4px 4px 0' }}>
+        <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+      </div>
     </div>
   )
 
   if (!person) return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <TopNav />
-      <div style={{ marginTop: 88, padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Staff member not found.</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
+      <div style={{ padding: '4px 4px 0' }}>
+        <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Staff member not found.</div>
+      </div>
     </div>
   )
 
@@ -193,184 +197,137 @@ export default function StaffProfile() {
 
   const now = new Date()
   const upcomingEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') >= now)
-  const pastEvents = events.filter(es => es.events && new Date(es.events.load_in_date + 'T00:00:00') < now)
 
   const addressLines = (person.mailing_address || '').split('\n').map(l => l.trim()).filter(Boolean)
 
-  const STAFF_STATUS = {
-    confirmed: { color: '#33FF99', label: 'Confirmed' },
-    pending: { color: '#FFD60A', label: 'Pending' },
-    needs_attention: { color: '#e05252', label: 'Needs Attention' },
-  }
-  function normalizeStaffStatus(s) {
-    if (s === 'scheduled') return 'pending'
-    if (s === 'attention') return 'needs_attention'
-    return s
-  }
+  const sortedAirports = [...staffAirports].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0))
+  const sortedAirlines = [...(person.staff_airlines || [])].sort((a, b) => (b.preferred ? 1 : 0) - (a.preferred ? 1 : 0))
 
-  const EventTile = ({ es }) => {
-    const ev = es.events
-    if (!ev) return null
-    const tourColor = ev.tours?.color || 'var(--color-mint)'
-    const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
-    return (
-      <div
-        onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
-        style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '10px 16px', borderBottom: '1px solid var(--border-card)', background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-hover)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <div style={{ flex: '0 0 220px', color: 'var(--text-primary)', fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {formatLocation(ev.city, ev.state, ev.country, 'full')}
-        </div>
-        <div style={{ flex: '0 0 130px', color: 'var(--text-secondary)', fontSize: 13, whiteSpace: 'nowrap' }}>
-          {fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null)}
-        </div>
-        <div style={{ flex: '0 0 200px', color: tourColor, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {ev.tours?.name || '—'}
-        </div>
-        <div style={{ flex: '0 0 160px', color: 'var(--text-secondary)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {es.tour_positions?.positions?.title}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto', flexShrink: 0 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: st.color }}>{st.label}</span>
-        </div>
-      </div>
-    )
-  }
+  const emergencyContact = (person.emergency_contact_name || person.emergency_contact_phone)
+    ? `${person.emergency_contact_name || ''} · ${person.emergency_contact_phone || ''}`
+    : null
 
-  const handlePrint = () => window.print()
+  const nextEvent = upcomingEvents[0]?.events || null
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-      <TopNav />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
 
-      {/* Sticky name header — appears when the main name scrolls out of view */}
-      {stickyVisible && (
-        <div style={{ position: 'sticky', top: 88, zIndex: 50, background: 'var(--bg)', borderBottom: '0.5px solid var(--border-card)', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{fullName}</div>
-          {person.email && (
-            <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{person.email}</a>
-          )}
-          {person.phone && (
-            <a href={`tel:${person.phone}`} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{person.phone}</a>
-          )}
-        </div>
-      )}
-
-      <div style={{ marginTop: 88, padding: 28 }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button
-              onClick={() => router.push('/staff')}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-mint)', background: 'transparent', color: 'var(--color-mint)', cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-mint-bg)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              ← Staff
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--color-mint-bg)', border: '0.5px solid var(--color-mint-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, color: 'var(--color-mint)', flexShrink: 0 }}>
-                {initials}
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div ref={nameRef} style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{fullName}</div>
-                  {person.attention_flag && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: 'var(--color-yellow-bg)', border: '1px solid var(--color-yellow-border)' }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-yellow)' }} />
-                      <span style={{ fontSize: 11, color: 'var(--color-yellow)', fontWeight: 500 }}>{person.attention_note || 'Needs Attention'}</span>
-                    </div>
-                  )}
-                </div>
-                {person.display_name && <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>{person.display_name}</div>}
-              </div>
-            </div>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
+        <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => router.push(`/staff/${staffId}/edit`)} style={OUTLINE_BTN}>Edit Profile</button>
           <button
-            onClick={() => router.push(`/staff/${staffId}/edit`)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-mint)', background: 'transparent', color: 'var(--color-mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-mint-bg)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            onClick={handlePrint}
+            style={{ ...OUTLINE_BTN, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '9px 12px' }}
           >
-            Edit Profile
+            <IconPrinter size={15} stroke={1.5} />
           </button>
         </div>
+      </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-          {/* Basic Info / Travel / Passport */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: 16 }}>
+          {/* Hero tile */}
+          <div style={{ ...GLASS, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(26,86,219,0.10)', border: '1.5px solid var(--color-info)', color: 'var(--color-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 600, flexShrink: 0 }}>
+              {initials}
+            </div>
 
-            {/* Card 1 — Basic Info */}
-            <div className="glass-card" style={{ padding: 24 }}>
-              {sectionLabel('Basic Info')}
-              <Field label="Display Name" value={person.display_name} />
-              <Field label="Name" value={[person.first_name, person.middle_name, person.last_name, person.suffix].filter(Boolean).join(' ')} />
-              <Field label="Department" value={person.staff_departments?.name} />
-              <Field label="Cell Phone" value={person.phone} />
-              <div style={{ marginBottom: 16 }}>
-                <div style={labelStyle}>Email</div>
-                {person.email ? (
-                  <a href={`mailto:${person.email}`} style={{ fontSize: 14, color: 'var(--color-mint)', textDecoration: 'none' }}>{person.email}</a>
-                ) : (
-                  <div style={valueStyle}>—</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' }}>{fullName}</div>
+              <div style={{ fontSize: 14, color: 'var(--color-info)' }}>{person.staff_departments?.name || '—'}</div>
+              <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
+                {person.email && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <IconMail size={14} stroke={1.5} />
+                    {person.email}
+                  </div>
                 )}
-              </div>
-              <Field label="Date of Birth" value={fmt(person.dob)} />
-              <div style={{ marginBottom: 0 }}>
-                <div style={labelStyle}>Mailing Address</div>
-                <div style={{ ...valueStyle, lineHeight: 1.6 }}>
-                  {addressLines.length > 0 ? addressLines.map((line, i) => <div key={i}>{line}</div>) : '—'}
-                </div>
+                {person.phone && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <IconPhone size={14} stroke={1.5} />
+                    {person.phone}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ ...GLASS, borderRadius: 10, padding: '14px 20px', minWidth: 220, textAlign: 'left' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>
+                NEXT EVENT
+              </div>
+              {nextEvent ? (
+                <>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {nextEvent.tours?.name || '—'}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    {fmtDateRange(nextEvent.load_in_date, nextEvent.load_out_date || showMap[nextEvent.id] || null)}
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>None scheduled</div>
+              )}
+            </div>
+          </div>
 
-              {/* Card 2 — Travel */}
-              <div className="glass-card" style={{ padding: 24 }}>
-                {sectionLabel('Travel')}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={labelStyle}>Home Airport(s)</div>
-                  {staffAirports.length > 0 ? (
-                    <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', marginTop: 4 }}>
-                      {[...staffAirports].sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)).map(airport => (
-                        <div key={airport.id} style={{ display: 'table-row' }}>
-                          <div style={{ display: 'table-cell', width: 20, paddingRight: 4, paddingBottom: 8, verticalAlign: 'middle' }}>
-                            <span style={{ color: airport.is_primary ? 'var(--color-yellow)' : 'transparent', fontSize: 13 }}>★</span>
-                          </div>
-                          <div style={{ display: 'table-cell', paddingRight: 16, paddingBottom: 8, fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap', width: 50 }}>
-                            {airport.iata_code}
-                          </div>
-                          <div style={{ display: 'table-cell', paddingRight: 16, paddingBottom: 8, fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                            {[airport.city, airport.state].filter(Boolean).join(', ')}
-                          </div>
-                          <div style={{ display: 'table-cell', paddingBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-                            {airport.airport_name}
-                          </div>
+          {/* 3-column grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+
+            {/* Column 1 — Basic Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Basic Info</div>
+              <div style={{ ...GLASS, padding: '18px 20px' }}>
+                <Field label="Legal name" value={fullName} />
+                <Field label="Date of birth" value={fmt(person.dob)} />
+                <Field label="Cell phone" value={person.phone} />
+                <div style={{ marginBottom: 14 }}>
+                  <div style={labelStyle}>Email</div>
+                  {person.email ? (
+                    <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: 'var(--color-info)', textDecoration: 'none' }}>{person.email}</a>
+                  ) : (
+                    <div style={valueStyle}>—</div>
+                  )}
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={labelStyle}>Mailing address</div>
+                  <div style={{ ...valueStyle, lineHeight: 1.5 }}>
+                    {addressLines.length > 0 ? addressLines.map((line, i) => <div key={i}>{line}</div>) : '—'}
+                  </div>
+                </div>
+                <Field label="T-shirt size" value={person.tshirt_size} />
+                <Field label="Emergency contact" value={emergencyContact} />
+              </div>
+            </div>
+
+            {/* Column 2 — Travel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Travel</div>
+              <div style={{ ...GLASS, padding: '18px 20px' }}>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={labelStyle}>Home airports</div>
+                  {sortedAirports.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                      {sortedAirports.map(airport => (
+                        <div key={airport.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, color: airport.is_primary ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{airport.iata_code}</span>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{[airport.city, airport.state].filter(Boolean).join(', ')}</span>
                         </div>
                       ))}
                     </div>
-                  ) : person.home_airport ? (
-                    <div style={valueStyle}>
-                      {person.home_airport}
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>(legacy — update in Edit Profile)</span>
-                    </div>
                   ) : <div style={valueStyle}>—</div>}
                 </div>
-                <div style={{ marginBottom: 16 }}>
+                <div style={{ marginBottom: 14 }}>
                   <div style={labelStyle}>Airlines</div>
-                  {person.staff_airlines?.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
-                      {[...person.staff_airlines].sort((a, b) => (b.preferred ? 1 : 0) - (a.preferred ? 1 : 0)).map(a => (
-                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                          <span style={{ color: a.preferred ? 'var(--color-yellow)' : 'transparent', fontSize: 13, width: 16, flexShrink: 0 }}>★</span>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.airline}</span>
-                          {a.frequent_flyer_number && <span style={{ fontSize: 14, color: 'var(--text-primary)', marginLeft: 8 }}>#{a.frequent_flyer_number}</span>}
+                  {sortedAirlines.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                      {sortedAirlines.map(a => (
+                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, color: a.preferred ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{a.airline}</span>
+                          {a.frequent_flyer_number && <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>#{a.frequent_flyer_number}</span>}
                         </div>
                       ))}
                     </div>
@@ -378,90 +335,191 @@ export default function StaffProfile() {
                 </div>
                 <Field label="TSA PreCheck" value={person.tsa_precheck} />
                 <Field label="Global Entry" value={person.global_entry} />
+                <Field label="Known Traveler #" value={person.known_traveler_number} />
+                <Field label="Seat preference" value={person.seat_preference} />
+              </div>
+            </div>
+
+            {/* Column 3 — Passport */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Passport</div>
+              <div style={{ ...GLASS, padding: '18px 20px' }}>
+                <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
+                  <UploadSlot label="Passport page" url={person.passport_image_url} icon={IconId} onPreview={setPreviewUrl} />
+                  <UploadSlot label="Headshot" url={person.passport_headshot_url} icon={IconUserCircle} onPreview={setPreviewUrl} />
+                </div>
                 <div style={{ marginBottom: 0 }}>
-                  <div style={labelStyle}>Known Traveler #</div>
-                  <div style={valueStyle}>{person.known_traveler_number || '—'}</div>
-                </div>
-              </div>
-
-              {/* Card 3 — Passport */}
-              <div className="glass-card" style={{ padding: 24 }}>
-                {sectionLabel('Passport')}
-                <div style={{ display: 'flex', gap: 24 }}>
-                  <div style={{ flex: '0 0 60%' }}>
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={labelStyle}>Passport Number</div>
-                      <div style={valueStyle}>{person.passport_number || '—'}</div>
-                    </div>
-                    <Field label="Nationality" value={person.passport_nationality} />
-                    <Field label="Surname" value={person.passport_surname} />
-                    <Field label="Given Names" value={person.passport_given_names} />
-                    <Field label="Date of Birth" value={formatPassportDate(person.dob)} />
-                    <Field label="Place of Birth" value={person.place_of_birth} />
-                    <Field label="Date of Issue" value={formatPassportDate(person.date_of_issue)} />
-                    <div style={{ marginBottom: 0 }}>
-                      <div style={labelStyle}>Date of Expiration</div>
-                      <div style={{ fontSize: 14, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-red)' : 'var(--text-primary)' }}>{formatPassportDate(person.passport_expiry)}</div>
-                    </div>
-                  </div>
-                  <div style={{ flex: '0 0 40%', display: 'flex', gap: 12 }}>
-                    <UploadSlot label="Passport Page" url={person.passport_image_url} icon={IconFileText} />
-                    <UploadSlot label="Headshot" url={person.passport_headshot_url} icon={IconCamera} />
+                  <div style={labelStyle}>Date of expiration</div>
+                  <div style={{ fontSize: 13, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
+                    {formatPassportDate(person.passport_expiry)}
                   </div>
                 </div>
+                <button
+                  onClick={() => setPassportExpanded(true)}
+                  style={{ marginTop: 8, fontSize: 12, color: 'var(--color-info)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+                >
+                  Show all passport info →
+                </button>
               </div>
+            </div>
 
+          </div>
+
+          {/* Upcoming events */}
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+              Upcoming Events ({upcomingEvents.length})
+            </div>
+            <div style={{ ...GLASS, padding: '18px 20px' }}>
+            {upcomingEvents.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No upcoming events</div>
+            ) : (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.2fr 100px', gap: 8, padding: '0 12px 8px' }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Location</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dates</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Tour</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Position</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'right' }}>Status</div>
+                </div>
+                {upcomingEvents.map((es, i) => {
+                  const ev = es.events
+                  if (!ev) return null
+                  const st = STAFF_STATUS[normalizeStaffStatus(es.status)] || (es.confirmed ? STAFF_STATUS.confirmed : STAFF_STATUS.pending)
+                  return (
+                    <div
+                      key={es.id}
+                      onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)}
+                      style={{
+                        display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.2fr 100px', gap: 8,
+                        padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                        background: i % 2 === 0 ? 'color-mix(in srgb, var(--surface-card) 50%, transparent)' : 'transparent',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? 'color-mix(in srgb, var(--surface-card) 50%, transparent)' : 'transparent' }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {formatLocation(ev.city, ev.state, ev.country, 'full')}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null)}
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: ev.tours?.color || 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {ev.tours?.name || '—'}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {es.tour_positions?.positions?.title || '—'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 5 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 11, color: st.color }}>{st.label}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             </div>
           </div>
 
-          {/* Upcoming Events */}
-          {upcomingEvents.length > 0 && (
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 8, borderBottom: '0.5px solid var(--bg-card)' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
-                  Upcoming Events ({upcomingEvents.length})
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={handlePrint}
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
-                  >
-                    <IconPrinter size={16} stroke={1.5} color="var(--text-secondary)" />
-                  </button>
-                </div>
+          {/* Notes and flags */}
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+              Notes & Flags
+            </div>
+            <div style={{ ...GLASS, padding: '18px 20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Internal notes</div>
+                {person.notes ? (
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>{person.notes}</div>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>No notes yet.</div>
+                )}
               </div>
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 8, overflow: 'hidden' }}>
-                <EventListHeader />
-                {upcomingEvents.map((es, i) => <EventTile key={i} es={es} />)}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Attention flag</div>
+                {person.attention_flag ? (
+                  <div style={{ fontSize: 13, color: '#d97706' }}>⚠ {person.attention_note}</div>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>—</div>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Past Events — collapsible */}
-          {pastEvents.length > 0 && (
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div
-                onClick={() => setShowPast(!showPast)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: showPast ? 16 : 0 }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
-                  {showPast ? '▾' : '▸'} Past Events ({pastEvents.length})
-                </div>
-              </div>
-              {showPast && (
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 8, overflow: 'hidden' }}>
-                  <EventListHeader />
-                  {pastEvents.map((es, i) => <EventTile key={i} es={es} />)}
-                </div>
-              )}
             </div>
-          )}
+          </div>
 
         </div>
-
       </div>
+
+      {previewUrl && (
+        <div
+          onClick={() => setPreviewUrl(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <img src={previewUrl} alt="Document" style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain', display: 'block' }} />
+            <button
+              onClick={() => setPreviewUrl(null)}
+              style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: '50%', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', color: 'var(--text-primary)', fontSize: 16, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >×</button>
+          </div>
+        </div>
+      )}
+
+      {passportExpanded && (
+        <div
+          onClick={() => setPassportExpanded(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 440, maxWidth: '90vw', position: 'relative' }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Passport Details</div>
+            <button
+              onClick={() => setPassportExpanded(false)}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
+            >×</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <div style={labelStyle}>Passport Number</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_number || '—'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Surname</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_surname || '—'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Given Names</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_given_names || '—'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Nationality</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_nationality || '—'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Place of Birth</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.place_of_birth || '—'}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Date of Birth</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{formatPassportDate(person.dob)}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Date of Issue</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{formatPassportDate(person.date_of_issue)}</div>
+              </div>
+              <div>
+                <div style={labelStyle}>Date of Expiration</div>
+                <div style={{ fontSize: 14, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
+                  {formatPassportDate(person.passport_expiry)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
