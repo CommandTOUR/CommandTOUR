@@ -851,7 +851,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const CELL_BORDER = isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'
   const B_HDR_INNER = isLightMode ? '1px solid #000000' : '1px solid #64748b'
   const B_BODY_INNER = isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'
-  const B_BODY_WEEKEND = isLightMode ? '2px solid #000000' : '2px solid #64748b'
+  const B_BODY_WEEKEND = isLightMode ? '3px solid #000000' : '3px solid #64748b'
   const B_DEPT_TOP = isLightMode ? '1px solid #000000' : '1px solid #64748b'
   const HDR_BG = 'var(--surface-card)'
   const DEPT_BG = 'var(--surface-card)'
@@ -882,7 +882,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         supabase.from('departments').select('id, name, sort_order').order('sort_order', { ascending: true }),
         supabase.from('positions').select('id, title, sort_order, department_id').order('sort_order', { ascending: true }),
         tpQuery,
-        supabase.from('tours').select('id, name, color, status').order('name', { ascending: true }),
+        supabase.from('tours').select('id, name, color, status, sort_order').order('sort_order', { ascending: true, nullsFirst: false }),
         eventsQuery,
       ])
 
@@ -1019,7 +1019,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     weekendMap[wk].push(ev)
   })
   weekendGroups.sort()
-  const orderedEvents = weekendGroups.flatMap(wk => weekendMap[wk])
+  const orderedEvents = weekendGroups.flatMap(wk =>
+    [...weekendMap[wk]].sort((a, b) => {
+      const sortA = toursById[a.tour_id]?.sort_order ?? 999
+      const sortB = toursById[b.tour_id]?.sort_order ?? 999
+      return sortA - sortB
+    })
+  )
 
   const q = searchQuery.toLowerCase().trim()
 
@@ -1055,7 +1061,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
   const isLastInGroup = (ev) => {
     const wk = getWeekendGroup(ev.load_in_date) || ev.load_in_date
-    const grp = weekendMap[wk]
+    const grp = [...(weekendMap[wk] || [])].sort((a, b) => {
+      const sortA = toursById[a.tour_id]?.sort_order ?? 999
+      const sortB = toursById[b.tour_id]?.sort_order ?? 999
+      return sortA - sortB
+    })
     return grp[grp.length - 1].id === ev.id
   }
   const cellBorderRight = (ev, i) => {
@@ -1532,7 +1542,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                     backgroundColor: '#1a56db',
                     height: H1,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    borderRight: wi < filteredWeekendGroups.length - 1 ? (isLightMode ? '2px solid #000000' : '2px solid #64748b') : 'none',
+                    borderRight: wi < filteredWeekendGroups.length - 1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : 'none',
                     boxShadow: '0 0.75px 0 0 #64748b',
                   }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Weekend</div>
@@ -1548,7 +1558,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                   {filteredEvents.map((ev, i) => {
                     const tourColor = toursById[ev.tour_id]?.color || '#333'
                     return (
-                      <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H2, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '2px solid #000000' : '2px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                      <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H2, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
                         <span onClick={() => router.push(`/tours/${ev.tour_id}`)} style={{ fontSize: 11, fontWeight: 600, color: tourColor, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}
                           onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                           onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
@@ -1563,7 +1573,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
               {/* City row */}
               <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 #64748b, 0 0.75px 0 0 #64748b' }}>CITY</div>
               {filteredEvents.map((ev, i) => (
-                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '2px solid #000000' : '2px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
                   <span onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)} style={{ fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#cccccc', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}
                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.textDecoration = 'none' }}>
@@ -1575,7 +1585,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
               {/* Venue row */}
               <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 #64748b, 0 0.75px 0 0 #64748b' }}>VENUE</div>
               {filteredEvents.map((ev, i) => (
-                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '2px solid #000000' : '2px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: ev.venue_name ? (isLightMode ? '#111111' : '#cccccc') : (isLightMode ? '#999999' : '#666666'), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px', cursor: ev.venue_id ? 'pointer' : 'default' }}
                     onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
                     onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
@@ -1590,7 +1600,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
               {filteredEvents.map((ev, i) => {
                 const st = EVENT_STATUS_STYLES[ev.status]
                 return (
-                  <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H5, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '2px solid #000000' : '2px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b') }}>
+                  <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H5, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b') }}>
                     {st ? (
                       <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: `1px solid ${st.border}`, background: st.bg, color: st.color }}>{st.label}</span>
                     ) : <span style={{ fontSize: 11, color: '#999999' }}>—</span>}
@@ -1648,7 +1658,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                         const isLastRow = (deptIdx === departmentsWithRows.length - 1) && (rowIdx === visibleRows.length - 1)
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
-                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', borderBottom: 'none', borderLeft: 'none', borderRight: isLightMode ? '2px solid #000000' : '2px solid #64748b', fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#e0e0e0', overflow: 'visible', willChange: 'transform', transform: 'translateZ(0)' }}>
+                          <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', borderBottom: 'none', borderLeft: 'none', borderRight: isLightMode ? '3px solid #000000' : '3px solid #64748b', fontSize: 12, fontWeight: 500, color: isLightMode ? '#111111' : '#e0e0e0', overflow: 'visible', willChange: 'transform', transform: 'translateZ(0)' }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                             <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: isLightMode ? '#000000' : 'rgba(255,255,255,0.15)', zIndex: 26 }} />
                           </td>

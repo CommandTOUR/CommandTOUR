@@ -64,8 +64,8 @@ export default function Tours() {
       ] = await Promise.all([
         supabase
           .from('tours')
-          .select('id, name, color, status, region, year, logo_url, tour_type, director_name, tour_category')
-          .order('name'),
+          .select('id, name, color, status, region, year, logo_url, tour_type, director_name, tour_category, sort_order')
+          .order('sort_order', { ascending: true, nullsFirst: false }),
 
         supabase
           .from('events')
@@ -286,8 +286,8 @@ export default function Tours() {
                     ))}
                   </div>
 
-                  <div style={{ marginLeft: 16, textAlign: 'center' }}>
-                    <span style={{ ...statusPillStyle(tour.status), fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize', display: 'inline-block' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ ...statusPillStyle(tour.status), fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize', display: 'inline-block' }}>
                       {STATUS_LABELS[tour.status] || tour.status}
                     </span>
                   </div>
