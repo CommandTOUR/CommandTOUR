@@ -197,7 +197,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
     const tab = searchParams.get('tab')
-    if (tab === 'travel') return 'travel & hotel'
+    if (tab === 'travel') return 'travel'
     return tab || 'overview'
   })
   const [addingShow, setAddingShow] = useState(false)
@@ -406,7 +406,7 @@ export default function EventPage() {
   )
 
   const color = tour?.color || 'var(--accent)'
-  const tabs = ['Overview', 'Shows', 'Staffing', 'Travel & Hotel', 'Schedule', 'Tasks', 'Notes', 'Files']
+  const tabs = ['Overview', 'Shows', 'Staffing', 'Travel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
@@ -604,7 +604,7 @@ export default function EventPage() {
                       return 'no travel data'
                     })(),
                     color: travelToday > 0 ? 'var(--color-info)' : 'var(--text-primary)',
-                    onClick: () => setActiveTab('travel & hotel'),
+                    onClick: () => setActiveTab('travel'),
                   },
                   {
                     label: 'Booking Status',
@@ -922,7 +922,7 @@ export default function EventPage() {
             <StaffingTab eventId={eventId} event={event} tourColor={color} />
           )}
 
-          {activeTab === 'travel & hotel' && (
+          {activeTab === 'travel' && (
             <TravelHotelTab eventId={eventId} event={event} />
           )}
 

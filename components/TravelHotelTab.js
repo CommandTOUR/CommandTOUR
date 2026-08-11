@@ -3,11 +3,39 @@
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 
+const GLASS = { background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 14, boxShadow: 'var(--glass-tile-shadow)' }
+
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
+
+const OVERLAY = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }
+
+const SECTION_LABEL = { fontSize: 15, fontWeight: 700, color: 'var(--color-info)' }
+
+const ADD_BTN = { fontSize: 12, padding: '4px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
+
+const CANCEL_BTN = { fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
+
+const SYSTEM_INPUT = { fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%' }
+
+const SYSTEM_SELECT = { fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', width: '100%' }
+
+const hoverBlue = e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }
+const unhoverBlue = e => { e.currentTarget.style.background = 'transparent' }
+const hoverDanger = e => { e.currentTarget.style.color = 'var(--color-danger)' }
+const unhoverDanger = e => { e.currentTarget.style.color = 'var(--text-muted)' }
+const hoverRow = e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }
+const unhoverRow = e => { e.currentTarget.style.background = 'transparent' }
 
 function fmtDate(d) {
   if (!d) return '—'
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function fmtDateHeader(d) {
+  const date = new Date(d + 'T00:00:00')
+  const wd = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const md = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${wd} ${md}`
 }
 
 function fmtTime(t) {
@@ -19,11 +47,15 @@ function fmtTime(t) {
   return `${h12}:${m} ${ampm}`
 }
 
+function fmtMoney(v) {
+  return `$${(Number(v) || 0).toFixed(2)}`
+}
+
 function SortHeader({ label, field, sortField, sortDir, onSort }) {
   const active = sortField === field
   return (
     <div onClick={() => onSort(field)}
-      style={{ fontSize: 10.5, color: active ? '#f1f5f9' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+      style={{ fontSize: 10, fontWeight: 700, color: active ? '#ffffff' : 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
     >
       {label}{active && <span style={{ fontSize: 9 }}>{sortDir === 'asc' ? '▲' : '▼'}</span>}
     </div>
@@ -40,7 +72,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid #33FF99', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
         value={val}
         onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
@@ -50,11 +82,28 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—' }) {
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 13, cursor: 'text', color: val ? '#f1f5f9' : 'transparent', minHeight: 20, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}
-      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.20)'; if (!val) e.currentTarget.style.color = '#64748b' }}
-      onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent'; if (!val) e.currentTarget.style.color = 'transparent' }}
+      style={{ fontSize: 12, cursor: 'text', color: val ? 'var(--text-secondary)' : 'var(--text-muted)', minHeight: 18, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}
+      onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'var(--border-default)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent' }}
     >
       {type === 'date' ? fmtDate(val) : type === 'time' ? fmtTime(val) : (val || placeholder)}
+    </div>
+  )
+}
+
+function Checkbox({ checked, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      width: 16, height: 16, borderRadius: 4, cursor: 'pointer', flexShrink: 0,
+      background: checked ? 'rgba(26,86,219,0.12)' : 'transparent',
+      border: checked ? '1px solid var(--color-info)' : '1px solid var(--border-default)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {checked && (
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6L5 9L10 3" stroke="var(--color-info)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
     </div>
   )
 }
@@ -75,11 +124,11 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
     fetch()
   }, [search])
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
-      <div style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 15, fontWeight: 600 }}>Select Staff</div>
+    <div style={OVERLAY} onClick={onClose}>
+      <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Select Staff</div>
         <input ref={inputRef}
-          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: '#ffffff', caretColor: '#ffffff', outline: 'none', width: '100%' }}
+          style={SYSTEM_INPUT}
           placeholder="Search by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -87,9 +136,9 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {results.map(s => (
             <div key={s.id} onClick={() => onSelect(s)}
-              style={{ padding: '9px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 14 }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              style={{ padding: '9px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)' }}
+              onMouseEnter={hoverRow}
+              onMouseLeave={unhoverRow}
             >
               {s.first_name} {s.last_name}
             </div>
@@ -97,9 +146,9 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
         </div>
         <button
           onClick={onClose}
-          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          style={CANCEL_BTN}
+          onMouseEnter={hoverBlue}
+          onMouseLeave={unhoverBlue}
         >Cancel</button>
       </div>
     </div>
@@ -109,9 +158,9 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
 function WarningTriangle() {
   return (
     <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFD60A" strokeWidth="1.5" strokeLinejoin="round"/>
-      <path d="M9 7V10" stroke="#FFD60A" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="9" cy="13" r="0.75" fill="#FFD60A"/>
+      <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FF8C00" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M9 7V10" stroke="#FF8C00" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="9" cy="13" r="0.75" fill="#FF8C00"/>
     </svg>
   )
 }
@@ -121,7 +170,7 @@ function TravelTypeDropdown({ value, onChange }) {
     <select
       value={value || 'flight'}
       onChange={e => onChange(e.target.value)}
-      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.12)', background: '#0d1f3a', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
+      style={SYSTEM_SELECT}>
       <option value="flight">Flight</option>
       <option value="train">Train</option>
       <option value="bus">Bus</option>
@@ -131,44 +180,43 @@ function TravelTypeDropdown({ value, onChange }) {
 }
 
 function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
-  // Name 180 | Travel Type 140 | Date 130 | Airline/Op 180 | Flight# 140 | Time 110 | Airport 180 | Transport 160 | × 36
-  const GRID = '180px 140px 130px 180px 140px 110px 180px 160px 36px'
-  const HDR = { fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }
-  const CELL = { height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', boxSizing: 'border-box', overflow: 'hidden' }
+  const GRID = '1.4fr 0.8fr 0.8fr 1fr 0.9fr 0.7fr 1fr 1fr 24px'
+  const HDR = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }
+  const CELL = { display: 'flex', alignItems: 'center', overflow: 'hidden' }
 
   return (
-    <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ ...CELL, padding: '0 20px' }}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL }}><div style={HDR}>Travel Type</div></div>
-        <div style={{ ...CELL }}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL }}><div style={HDR}>Airline / Operator</div></div>
-        <div style={{ ...CELL }}><div style={HDR}>Flight # / Train #</div></div>
-        <div style={{ ...CELL }}><SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL }}><div style={HDR}>Airport / Station</div></div>
-        <div style={{ ...CELL }}><SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+    <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', background: '#1a56db', padding: '8px 12px' }}>
+        <div style={CELL}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={CELL}><div style={HDR}>Type</div></div>
+        <div style={CELL}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={CELL}><div style={HDR}>Airline</div></div>
+        <div style={CELL}><div style={HDR}>Flight #</div></div>
+        <div style={CELL}><SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
+        <div style={CELL}><div style={HDR}>Airport</div></div>
+        <div style={CELL}><SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
         <div />
       </div>
 
       {rows.length === 0 && (
-        <div style={{ padding: '20px 16px', fontSize: 13, color: '#64748b' }}>
+        <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>
           No {type === 'arrival' ? 'arrivals' : 'departures'} yet. Confirm staff on the Staffing tab to auto-populate.
         </div>
       )}
 
-      {rows.map((row, idx) => {
+      {rows.map(row => {
         const isBusOrDriving = row.travel_type === 'bus' || row.travel_type === 'driving'
         const showWarning = isBusOrDriving
           ? !row.travel_date
           : (!row.travel_date || !row.airline || !row.flight_number || !row.airport)
         return (
-          <div key={row.id ?? `synthetic-${row.staff_id}`} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: idx < rows.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          <div key={row.id ?? `synthetic-${row.staff_id}`} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)', background: 'transparent', transition: 'background 0.12s' }}
+            onMouseEnter={hoverRow}
+            onMouseLeave={unhoverRow}
           >
-            <div style={{ ...CELL, padding: '0 20px', gap: 8, flexShrink: 0 }}>
+            <div style={{ ...CELL, gap: 6 }}>
               {showWarning && <WarningTriangle />}
-              <span style={{ fontSize: 13, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
             </div>
             <div style={CELL}><TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row, 'travel_type', v)} /></div>
             <div style={CELL}><EditableCell value={row.travel_date} type="date" onSave={v => onUpdate(row, 'travel_date', v)} /></div>
@@ -177,10 +225,10 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
             <div style={CELL}><EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} /></div>
             <div style={CELL}><EditableCell value={row.airport} onSave={v => onUpdate(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : 'Airport'} /></div>
             <div style={CELL}><EditableCell value={row.transport} onSave={v => onUpdate(row, 'transport', v)} placeholder="Transport" /></div>
-            <div style={{ ...CELL, justifyContent: 'center', padding: 0 }}>
-              <div onClick={() => onRemove(row.id)} style={{ fontSize: 18, color: '#64748b', cursor: 'pointer', opacity: 0.4, lineHeight: 1 }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#e05252'; e.currentTarget.style.opacity = '1' }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.opacity = '0.4' }}
+            <div style={{ ...CELL, justifyContent: 'center' }}>
+              <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
+                onMouseEnter={hoverDanger}
+                onMouseLeave={unhoverDanger}
               >×</div>
             </div>
           </div>
@@ -188,6 +236,19 @@ function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, typ
       })}
     </div>
   )
+}
+
+function RateField({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtMoney(value)}</div>
+    </div>
+  )
+}
+
+function FieldDivider() {
+  return <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border-default)' }} />
 }
 
 export default function TravelHotelTab({ eventId, event }) {
@@ -198,6 +259,7 @@ export default function TravelHotelTab({ eventId, event }) {
   const [tour, setTour] = useState(null)
   const [confirmedStaff, setConfirmedStaff] = useState([])
   const [loading, setLoading] = useState(true)
+  const [travelTab, setTravelTab] = useState('arrivals')
   const [arrivalSort, setArrivalSort] = useState({ field: 'travel_date', dir: 'asc' })
   const [departureSort, setDepartureSort] = useState({ field: 'travel_date', dir: 'asc' })
   const [addingArrival, setAddingArrival] = useState(false)
@@ -205,11 +267,14 @@ export default function TravelHotelTab({ eventId, event }) {
   const [roomStaffPicker, setRoomStaffPicker] = useState(null)
   const [editingHotel, setEditingHotel] = useState(false)
   const [hotelForm, setHotelForm] = useState({ hotel_name: '', address: '', check_in_date: '', check_out_date: '', notes: '' })
-  const [arrivalsOpen, setArrivalsOpen] = useState(true)
-  const [departuresOpen, setDeparturesOpen] = useState(true)
-  const [hotelOpen, setHotelOpen] = useState(true)
   const [selectedUnroomed, setSelectedUnroomed] = useState([])
   const [saveError, setSaveError] = useState(null)
+  const [perDiemRates, setPerDiemRates] = useState(null)
+  const [perDiemMeals, setPerDiemMeals] = useState([])
+  const [perDiemStaff, setPerDiemStaff] = useState([])
+  const [showRatesModal, setShowRatesModal] = useState(false)
+  const [showEligibleModal, setShowEligibleModal] = useState(false)
+  const [ratesForm, setRatesForm] = useState({ breakfast_rate: '', lunch_rate: '', dinner_rate: '' })
 
   useEffect(() => { fetchAll() }, [eventId])
 
@@ -292,6 +357,16 @@ export default function TravelHotelTab({ eventId, event }) {
     setRooms(roomsRes.data || [])
     setConfirmedStaff(confirmedRows.map(r => r.staff).filter(Boolean))
     if (tourRes.data) setTour(tourRes.data)
+
+    const [perDiemRatesRes, perDiemMealsRes, perDiemStaffRes] = await Promise.all([
+      supabase.from('event_perdiem_rates').select('*').eq('event_id', eventId).maybeSingle(),
+      supabase.from('event_perdiem_meals').select('*').eq('event_id', eventId).order('meal_date', { ascending: true }),
+      supabase.from('event_perdiem_staff').select('*, staff:staff_id(id, first_name, last_name)').eq('event_id', eventId),
+    ])
+    if (perDiemRatesRes.data) { setPerDiemRates(perDiemRatesRes.data); setRatesForm({ breakfast_rate: perDiemRatesRes.data.breakfast_rate, lunch_rate: perDiemRatesRes.data.lunch_rate, dinner_rate: perDiemRatesRes.data.dinner_rate }) }
+    setPerDiemMeals(perDiemMealsRes.data || [])
+    setPerDiemStaff(perDiemStaffRes.data || [])
+
     setLoading(false)
   }
 
@@ -437,176 +512,403 @@ export default function TravelHotelTab({ eventId, event }) {
     fetchAll()
   }
 
-  const sectionHeader = (label, count, isOpen, onToggle, onAdd) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isOpen ? 12 : 0, cursor: 'pointer' }} onClick={onToggle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{isOpen ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{label}</span>
-        {count !== null && <span style={{ fontSize: 11, color: '#64748b' }}>({count})</span>}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
-        {onAdd && <button onClick={onAdd} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}>+ Add</button>}
-      </div>
-    </div>
-  )
+  const getEventDates = () => {
+    if (!event?.load_in_date || !event?.load_out_date) return []
+    const dates = []
+    const current = new Date(event.load_in_date + 'T00:00:00')
+    const end = new Date(event.load_out_date + 'T00:00:00')
+    while (current <= end) {
+      const pad = n => String(n).padStart(2, '0')
+      dates.push(`${current.getFullYear()}-${pad(current.getMonth()+1)}-${pad(current.getDate())}`)
+      current.setDate(current.getDate() + 1)
+    }
+    return dates
+  }
 
-  if (loading) return <div style={{ fontSize: 14, color: '#94a3b8' }}>Loading...</div>
+  const formatStaffDays = (staffId) => {
+    const arrival = arrivals.find(a => a.staff_id === staffId)
+    const departure = departures.find(d => d.staff_id === staffId)
+    const inDate = arrival?.travel_date
+    const outDate = departure?.travel_date
+    if (!inDate && !outDate) return '—'
+    let nights = ''
+    if (inDate && outDate) {
+      const d1 = new Date(inDate + 'T00:00:00')
+      const d2 = new Date(outDate + 'T00:00:00')
+      const days = Math.round((d2 - d1) / 86400000) + 1
+      nights = ` (${days} day${days === 1 ? '' : 's'})`
+    }
+    return `${fmtDate(inDate)} – ${fmtDate(outDate)}${nights}`
+  }
 
-  const ROOM_GRID = '180px 180px 110px 100px 100px 1fr 36px'
+  const handleSaveRates = async () => {
+    const supabase = getSupabase()
+    const data = { breakfast_rate: parseFloat(ratesForm.breakfast_rate) || 0, lunch_rate: parseFloat(ratesForm.lunch_rate) || 0, dinner_rate: parseFloat(ratesForm.dinner_rate) || 0, event_id: eventId }
+    if (perDiemRates) {
+      await supabase.from('event_perdiem_rates').update(data).eq('event_id', eventId)
+    } else {
+      await supabase.from('event_perdiem_rates').insert([data])
+    }
+    setShowRatesModal(false)
+    fetchAll()
+  }
+
+  const handleToggleMeal = async (date, meal) => {
+    const supabase = getSupabase()
+    const existing = perDiemMeals.find(m => m.meal_date === date)
+    if (existing) {
+      await supabase.from('event_perdiem_meals').update({ [meal]: !existing[meal] }).eq('id', existing.id)
+    } else {
+      await supabase.from('event_perdiem_meals').insert([{ event_id: eventId, meal_date: date, [meal]: true }])
+    }
+    fetchAll()
+  }
+
+  const handleToggleExtraDay = async (perDiemStaffId, current) => {
+    const supabase = getSupabase()
+    await supabase.from('event_perdiem_staff').update({ extra_day: !current }).eq('id', perDiemStaffId)
+    fetchAll()
+  }
+
+  const handleAddPerDiemStaff = async (staffId) => {
+    const supabase = getSupabase()
+    await supabase.from('event_perdiem_staff').insert([{ event_id: eventId, staff_id: staffId, extra_day: false }])
+    fetchAll()
+  }
+
+  const handleRemovePerDiemStaff = async (perDiemStaffId) => {
+    const supabase = getSupabase()
+    await supabase.from('event_perdiem_staff').delete().eq('id', perDiemStaffId)
+    fetchAll()
+  }
+
+  const calcStaffPerDiem = (staffEntry) => {
+    if (!perDiemRates) return 0
+    const { breakfast_rate, lunch_rate, dinner_rate } = perDiemRates
+    const dailyMax = (breakfast_rate || 0) + (lunch_rate || 0) + (dinner_rate || 0)
+    const eventDates = getEventDates()
+    let total = 0
+    for (const date of eventDates) {
+      const meal = perDiemMeals.find(m => m.meal_date === date)
+      let dayTotal = 0
+      if (!meal?.breakfast_provided) dayTotal += (breakfast_rate || 0)
+      if (!meal?.lunch_provided) dayTotal += (lunch_rate || 0)
+      if (!meal?.dinner_provided) dayTotal += (dinner_rate || 0)
+      total += dayTotal
+    }
+    if (staffEntry.extra_day) total += dailyMax
+    return total
+  }
+
+  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+
+  const ROOM_GRID = '1.2fr 1.2fr 0.8fr 0.7fr 0.7fr 1fr 24px'
+  const eventDates = getEventDates()
+  const dailyMax = perDiemRates ? (Number(perDiemRates.breakfast_rate) || 0) + (Number(perDiemRates.lunch_rate) || 0) + (Number(perDiemRates.dinner_rate) || 0) : 0
+  const grandTotal = perDiemStaff.reduce((sum, s) => sum + calcStaffPerDiem(s), 0)
+  const MEAL_TYPES = [
+    { key: 'breakfast_provided', label: 'Breakfast', rate: perDiemRates?.breakfast_rate },
+    { key: 'lunch_provided', label: 'Lunch', rate: perDiemRates?.lunch_rate },
+    { key: 'dinner_provided', label: 'Dinner', rate: perDiemRates?.dinner_rate },
+  ]
+
+  const TABS = [
+    { key: 'arrivals', label: `Arrivals (${arrivals.length})` },
+    { key: 'departures', label: `Departures (${departures.length})` },
+    { key: 'hotel', label: 'Hotel' },
+    { key: 'perdiem', label: 'Per Diem' },
+  ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 4px' }}>{saveError}</p>}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {saveError && <p style={{ color: 'var(--color-danger)', fontSize: 12, margin: 0 }}>{saveError}</p>}
+
+      <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => setTravelTab(t.key)}
+            style={travelTab === t.key
+              ? { background: 'rgba(26,86,219,0.08)', color: 'var(--color-info)', fontWeight: 600, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }
+              : { background: 'transparent', color: 'var(--text-secondary)', fontWeight: 400, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }}
+          >{t.label}</button>
+        ))}
+      </div>
 
       {/* ARRIVALS */}
-      <div>
-        {sectionHeader('Arrivals', arrivals.length, arrivalsOpen, () => setArrivalsOpen(p => !p), () => setAddingArrival(true))}
-        {arrivalsOpen && (
+      {travelTab === 'arrivals' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={SECTION_LABEL}>Arrivals</span>
+            <button onClick={() => setAddingArrival(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>+ Add</button>
+          </div>
           <TravelTable rows={sortRows(arrivals, arrivalSort)} onUpdate={handleUpdateArrival} onRemove={handleRemoveArrival} sortField={arrivalSort.field} sortDir={arrivalSort.dir} onSort={(f) => handleSort('arrival', f)} type="arrival" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* DEPARTURES */}
-      <div>
-        {sectionHeader('Departures', departures.length, departuresOpen, () => setDeparturesOpen(p => !p), () => setAddingDeparture(true))}
-        {departuresOpen && (
+      {travelTab === 'departures' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={SECTION_LABEL}>Departures</span>
+            <button onClick={() => setAddingDeparture(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>+ Add</button>
+          </div>
           <TravelTable rows={sortRows(departures, departureSort)} onUpdate={handleUpdateDeparture} onRemove={handleRemoveDeparture} sortField={departureSort.field} sortDir={departureSort.dir} onSort={(f) => handleSort('departure', f)} type="departure" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* HOTEL */}
-      <div>
-        {sectionHeader('Hotel', null, hotelOpen, () => setHotelOpen(p => !p), () => setEditingHotel(true))}
-        {hotelOpen && (
-          <>
-            {hotel && (
-              <div className="glass-card" style={{ padding: '14px 18px', marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                <div><div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Hotel</div><div style={{ fontSize: 14, fontWeight: 500, color: '#f1f5f9' }}>{hotel.hotel_name || '—'}</div></div>
-                {hotel.address && <div><div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div><div style={{ fontSize: 14, color: '#f1f5f9' }}>{hotel.address}</div></div>}
-                <div><div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check In</div><div style={{ fontSize: 14, color: '#f1f5f9' }}>{fmtDate(hotel.check_in_date)}</div></div>
-                <div><div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 14, color: '#f1f5f9' }}>{fmtDate(hotel.check_out_date)}</div></div>
-                {hotel.notes && <div><div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 14, color: '#f1f5f9' }}>{hotel.notes}</div></div>}
-                <div style={{ marginLeft: 'auto' }}>
-                  <button
-                    onClick={() => setEditingHotel(true)}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >Edit</button>
-                </div>
-              </div>
-            )}
+      {travelTab === 'hotel' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={SECTION_LABEL}>Hotel</span>
+            {hotel && <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Edit</button>}
+          </div>
 
-            {!hotel && (
-              <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 16 }}>No hotel added yet.</div>
-            )}
+          {hotel ? (
+            <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Hotel</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.hotel_name || '—'}</div></div>
+              {hotel.address && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.address}</div></div>}
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check In</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_in_date)}</div></div>
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_out_date)}</div></div>
+              {hotel.notes && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.notes}</div></div>}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>No hotel added yet.</span>
+              <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Add Hotel</button>
+            </div>
+          )}
 
-            <div style={{ border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', background: '#0d1f3a', borderBottom: '0.5px solid var(--glass-border)', position: 'sticky', top: 0, zIndex: 10 }}>
-                {['Name 1', 'Name 2', 'Room Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
-                  <div key={i} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
-                ))}
-              </div>
-              {rooms.length === 0 && <div style={{ padding: '16px 14px', fontSize: 13, color: '#64748b' }}>No rooms added yet.</div>}
-              {rooms.map((room, i) => (
-                <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 12px', padding: '10px 14px', alignItems: 'center', borderBottom: i < rooms.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none', background: 'transparent', transition: 'background 0.12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? '#f1f5f9' : '#33FF99' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                    {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
-                  </div>
-                  <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? '#f1f5f9' : '#64748b' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                    {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
-                  </div>
-                  <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', outline: 'none', cursor: 'pointer', width: '100%' }}>
-                    {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
-                  <EditableCell value={room.check_out_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
-                  <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
-                  <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: '#64748b', cursor: 'pointer', opacity: 0.4, textAlign: 'right' }} onMouseEnter={e => { e.currentTarget.style.color = '#e05252'; e.currentTarget.style.opacity = '1' }} onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.opacity = '0.4' }}>×</div>
-                </div>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
+              {['Guest 1', 'Guest 2', 'Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
+                <div key={i} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>{h}</div>
               ))}
-              <div style={{ padding: '10px 14px', borderTop: rooms.length > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                <span onClick={handleAddRoom} style={{ fontSize: 13, fontWeight: 600, color: '#33FF99', cursor: 'pointer' }}>+ Add Room</span>
+            </div>
+            {rooms.length === 0 && <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>}
+            {rooms.map(room => (
+              <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', padding: '7px 12px', alignItems: 'center', borderTop: '0.5px solid var(--border-default)', background: 'transparent', transition: 'background 0.12s' }}
+                onMouseEnter={hoverRow}
+                onMouseLeave={unhoverRow}
+              >
+                <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                  {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
+                </div>
+                <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                  {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
+                </div>
+                <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={SYSTEM_SELECT}>
+                  {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
+                <EditableCell value={room.check_out_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
+                <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
+                <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+              </div>
+            ))}
+            <div style={{ padding: '8px 12px', borderTop: rooms.length > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
+              <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add room</span>
+            </div>
+          </div>
+
+          {unroomedStaff.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+                  Unroomed Staff ({unroomedStaff.length})
+                </div>
+                {selectedUnroomed.length > 0 && (
+                  <button
+                    onClick={handleAddSelectedToRooming}
+                    className="btn-primary"
+                    style={{ fontSize: 12, padding: '5px 12px' }}
+                  >
+                    Add {selectedUnroomed.length} to Rooming List
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {unroomedStaff.map(s => {
+                  const selected = selectedUnroomed.includes(s.id)
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                      style={{
+                        ...GLASS,
+                        padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        ...(selected ? { border: '0.5px solid var(--color-info)', background: 'rgba(26,86,219,0.10)' } : null),
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <Checkbox checked={selected} onClick={() => {}} />
+                      {s.first_name} {s.last_name}
+                    </div>
+                  )
+                })}
               </div>
             </div>
+          )}
+        </div>
+      )}
 
-            {unroomedStaff.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8' }}>
-                    Unroomed Staff ({unroomedStaff.length})
-                  </div>
-                  {selectedUnroomed.length > 0 && (
-                    <button
-                      onClick={handleAddSelectedToRooming}
-                      className="btn-primary"
-                      style={{ fontSize: 12, padding: '5px 12px' }}
-                    >
-                      Add {selectedUnroomed.length} to Rooming List
-                    </button>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {unroomedStaff.map(s => {
-                    const selected = selectedUnroomed.includes(s.id)
-                    return (
-                      <div
-                        key={s.id}
-                        onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
-                        className="glass-card"
-                        style={{
-                          padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: '#f1f5f9',
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          border: selected ? '1px solid rgba(51,255,153,0.50)' : undefined,
-                          background: selected ? 'rgba(51,255,153,0.12)' : undefined,
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        <div style={{
-                          width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
-                          background: selected ? '#33FF99' : 'transparent',
-                          border: selected ? 'none' : '1.5px solid rgba(255,255,255,0.20)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          {selected && (
-                            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6L5 9L10 3" stroke="#0a1628" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                        {s.first_name} {s.last_name}
+      {/* PER DIEM */}
+      {travelTab === 'perdiem' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={SECTION_LABEL}>Per Diem</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setShowEligibleModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Eligible Staff</button>
+              <button onClick={() => setShowRatesModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
+            </div>
+          </div>
+
+          {!perDiemRates ? (
+            <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Set meal rates to get started.</div>
+              <button onClick={() => setShowRatesModal(true)} style={{ ...ADD_BTN, margin: '0 auto' }} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 16px', display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
+                <RateField label="Breakfast" value={perDiemRates.breakfast_rate} />
+                <FieldDivider />
+                <RateField label="Lunch" value={perDiemRates.lunch_rate} />
+                <FieldDivider />
+                <RateField label="Dinner" value={perDiemRates.dinner_rate} />
+                <FieldDivider />
+                <RateField label="Daily Max" value={dailyMax} />
+                <FieldDivider />
+                <RateField label="Grand Total" value={grandTotal} />
+              </div>
+
+              {eventDates.length === 0 ? (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>No event dates available.</div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Meals provided by production — checked meals are deducted from per diem</div>
+                  <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden', marginBottom: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: `140px repeat(${eventDates.length}, 1fr)`, gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Meal</div>
+                      {eventDates.map(d => (
+                        <div key={d} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>{fmtDateHeader(d)}</div>
+                      ))}
+                    </div>
+                    {MEAL_TYPES.map(meal => (
+                      <div key={meal.key} style={{ display: 'grid', gridTemplateColumns: `140px repeat(${eventDates.length}, 1fr)`, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{meal.label} · {fmtMoney(meal.rate)}</div>
+                        {eventDates.map(d => {
+                          const m = perDiemMeals.find(pm => pm.meal_date === d)
+                          return (
+                            <Checkbox key={d} checked={!!m?.[meal.key]} onClick={() => handleToggleMeal(d, meal.key)} />
+                          )
+                        })}
                       </div>
-                    )
-                  })}
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Name</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Days on site</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>+1 Day</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)', textAlign: 'right' }}>Total</div>
+                </div>
+                {perDiemStaff.length === 0 && <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No eligible staff yet.</div>}
+                {perDiemStaff.map(entry => (
+                  <div key={entry.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)' }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{entry.staff ? `${entry.staff.first_name} ${entry.staff.last_name}` : '—'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatStaffDays(entry.staff_id)}</div>
+                    <Checkbox checked={!!entry.extra_day} onClick={() => handleToggleExtraDay(entry.id, entry.extra_day)} />
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>{fmtMoney(calcStaffPerDiem(entry))}</div>
+                  </div>
+                ))}
+                <div style={{ padding: '10px 12px', borderTop: '0.5px solid var(--border-default)', textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Grand total: {fmtMoney(grandTotal)}
                 </div>
               </div>
-            )}
-          </>
-        )}
-      </div>
+              <div style={{ marginTop: 8 }}>
+                <span onClick={() => setShowEligibleModal(true)} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add staff</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* HOTEL EDIT MODAL */}
       {editingHotel && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditingHotel(false)}>
-          <div style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
+        <div style={OVERLAY} onClick={() => setEditingHotel(false)}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
             {[{ label: 'Hotel Name', key: 'hotel_name', type: 'text' }, { label: 'Address', key: 'address', type: 'text' }, { label: 'Check In', key: 'check_in_date', type: 'date' }, { label: 'Check Out', key: 'check_out_date', type: 'date' }, { label: 'Notes', key: 'notes', type: 'text' }].map(f => (
               <div key={f.key}>
                 <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
-                <input type={f.type} style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 12px', borderRadius: 7, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: '#ffffff', caretColor: '#ffffff', outline: 'none', width: '100%' }} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
+                <input type={f.type} style={SYSTEM_INPUT} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setEditingHotel(false)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={CANCEL_BTN}
+                onMouseEnter={hoverBlue}
+                onMouseLeave={unhoverBlue}
               >Cancel</button>
               <button className="btn-primary" onClick={handleSaveHotel}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SET RATES MODAL */}
+      {showRatesModal && (
+        <div style={OVERLAY} onClick={() => setShowRatesModal(false)}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 360, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Set Meal Rates</div>
+            {[{ label: 'Breakfast Rate', key: 'breakfast_rate' }, { label: 'Lunch Rate', key: 'lunch_rate' }, { label: 'Dinner Rate', key: 'dinner_rate' }].map(f => (
+              <div key={f.key}>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <input type="number" step="0.01" style={SYSTEM_INPUT} value={ratesForm[f.key]} onChange={e => setRatesForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowRatesModal(false)}
+                style={CANCEL_BTN}
+                onMouseEnter={hoverBlue}
+                onMouseLeave={unhoverBlue}
+              >Cancel</button>
+              <button onClick={handleSaveRates} style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ELIGIBLE STAFF MODAL */}
+      {showEligibleModal && (
+        <div style={OVERLAY} onClick={() => setShowEligibleModal(false)}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 400, maxHeight: 480, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Per Diem Eligible Staff</div>
+              <div onClick={() => setShowEligibleModal(false)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer' }}>×</div>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {confirmedStaff.map(s => {
+                const entry = perDiemStaff.find(p => p.staff_id === s.id)
+                const checked = !!entry
+                return (
+                  <div key={s.id}
+                    onClick={() => checked ? handleRemovePerDiemStaff(entry.id) : handleAddPerDiemStaff(s.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer' }}
+                    onMouseEnter={hoverRow}
+                    onMouseLeave={unhoverRow}
+                  >
+                    <Checkbox checked={checked} onClick={() => {}} />
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{s.first_name} {s.last_name}</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
