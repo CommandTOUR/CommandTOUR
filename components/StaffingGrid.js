@@ -549,7 +549,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
             <div style={{
               position: 'absolute',
               inset: 3,
-              border: '1.5px solid #FFD60A',
+              border: '1.5px solid #FF8C00',
               borderRadius: 2,
               pointerEvents: 'none',
             }} />
