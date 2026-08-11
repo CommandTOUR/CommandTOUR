@@ -24,20 +24,13 @@ export default function StaffPage() {
   const [isLight, setIsLight] = useState(false)
   const [sortField, setSortField] = useState('last_name')
   const [sortDir, setSortDir] = useState('asc')
-  const [gridCols, setGridCols] = useState(4)
+  const [activeDept, setActiveDept] = useState(null) // null = All
 
   useEffect(() => {
     const check = () => setIsLight(document.documentElement.getAttribute('data-theme') === 'light')
     check()
     window.addEventListener('themeChanged', check)
     return () => window.removeEventListener('themeChanged', check)
-  }, [])
-
-  useEffect(() => {
-    const updateCols = () => setGridCols(window.innerWidth >= 1400 ? 5 : 4)
-    updateCols()
-    window.addEventListener('resize', updateCols)
-    return () => window.removeEventListener('resize', updateCols)
   }, [])
 
   useEffect(() => {
@@ -65,7 +58,13 @@ export default function StaffPage() {
 
   const deptById = Object.fromEntries(departments.map(d => [d.id, d.name]))
 
-  const sortedStaff = [...filteredStaff].sort((a, b) => {
+  const displayedStaff = activeDept === null
+    ? filteredStaff
+    : activeDept === 'uncategorized'
+    ? filteredStaff.filter(s => !s.staff_department_id)
+    : filteredStaff.filter(s => s.staff_department_id === activeDept)
+
+  const sortedStaff = [...displayedStaff].sort((a, b) => {
     const aVal = (a[sortField] || '').toLowerCase()
     const bVal = (b[sortField] || '').toLowerCase()
     return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
@@ -132,6 +131,49 @@ export default function StaffPage() {
         </div>
       </div>
 
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 4px 8px' }}>
+        {/* All pill */}
+        <button
+          onClick={() => setActiveDept(null)}
+          style={{
+            fontSize: 13, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
+            borderColor: activeDept === null ? 'var(--color-info)' : 'var(--border-default)',
+            background: activeDept === null ? 'rgba(26,86,219,0.10)' : 'transparent',
+            color: activeDept === null ? 'var(--color-info)' : 'var(--text-secondary)',
+            fontWeight: activeDept === null ? 600 : 400,
+            cursor: 'pointer'
+          }}
+        >All</button>
+
+        {/* One pill per department that has staff */}
+        {departments.filter(d => filteredStaff.some(s => s.staff_department_id === d.id)).map(dept => (
+          <button
+            key={dept.id}
+            onClick={() => setActiveDept(dept.id)}
+            style={{
+              fontSize: 13, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
+              borderColor: activeDept === dept.id ? 'var(--color-info)' : 'var(--border-default)',
+              background: activeDept === dept.id ? 'rgba(26,86,219,0.10)' : 'transparent',
+              color: activeDept === dept.id ? 'var(--color-info)' : 'var(--text-secondary)',
+              fontWeight: activeDept === dept.id ? 600 : 400,
+              cursor: 'pointer'
+            }}
+          >{dept.name}</button>
+        ))}
+
+        <button
+          onClick={() => setActiveDept('uncategorized')}
+          style={{
+            fontSize: 13, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
+            borderColor: activeDept === 'uncategorized' ? 'var(--color-info)' : 'var(--border-default)',
+            background: activeDept === 'uncategorized' ? 'rgba(26,86,219,0.10)' : 'transparent',
+            color: activeDept === 'uncategorized' ? 'var(--color-info)' : 'var(--text-secondary)',
+            fontWeight: activeDept === 'uncategorized' ? 600 : 400,
+            cursor: 'pointer'
+          }}
+        >Uncategorized</button>
+      </div>
+
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
         <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
@@ -150,7 +192,7 @@ export default function StaffPage() {
           )}
 
           {!loading && sortedStaff.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               {sortedStaff.map(person => {
                 const name = [person.first_name, person.last_name, person.suffix].filter(Boolean).join(' ')
                 const initials = (person.first_name?.[0] || '') + (person.last_name?.[0] || '')

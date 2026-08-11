@@ -101,7 +101,9 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   const [conflictMap, setConflictMap] = useState({})
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [openUp, setOpenUp] = useState(false)
   const inputRef = useRef(null)
+  const wrapperRef = useRef(null)
 
   useEffect(() => {
     const el = inputRef.current
@@ -109,6 +111,13 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
     el.focus()
     const len = el.value.length
     el.setSelectionRange(len, len)
+  }, [])
+
+  useEffect(() => {
+    if (!wrapperRef.current) return
+    const rect = wrapperRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    setOpenUp(spaceBelow < 260)
   }, [])
 
   useEffect(() => {
@@ -207,7 +216,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   }
 
   return (
-    <div onClick={e => e.stopPropagation()} style={{ position: 'relative', textAlign: 'left' }}>
+    <div ref={wrapperRef} onClick={e => e.stopPropagation()} style={{ position: 'relative', textAlign: 'left' }}>
       <input
         ref={inputRef}
         value={query}
@@ -223,7 +232,7 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
         style={{ fontFamily: 'inherit', fontSize: 11, padding: '4px 6px', borderRadius: 5, border: '1px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', caretColor: 'var(--color-success)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {showDropdown && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1100, width: 200, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+        <div style={{ position: 'absolute', ...(openUp ? { bottom: '100%', marginBottom: 4, marginTop: 0 } : { top: '100%', marginTop: 4 }), left: 0, zIndex: 1100, width: 200, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, maxHeight: 230, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
           {loading && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Searching...</div>}
           {!loading && results.length === 0 && <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-muted)' }}>No results</div>}
           {results.map((s, i) => {
@@ -536,12 +545,21 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           </div>
 
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
-              <path d="M8.5 3.5L10.5 5.5" stroke="var(--text-muted)" strokeWidth="1.3"/>
-            </svg>
-          </div>
+          <React.Fragment>
+            <div style={{
+              position: 'absolute',
+              inset: 3,
+              border: '1.5px solid #FFD60A',
+              borderRadius: 2,
+              pointerEvents: 'none',
+            }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
+                <path d="M8.5 3.5L10.5 5.5" stroke="var(--text-muted)" strokeWidth="1.3"/>
+              </svg>
+            </div>
+          </React.Fragment>
         )}
 
         {isActive && activeType === 'menu' && assignment && (
@@ -1618,7 +1636,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
           <div
             ref={bodyScrollRef}
             onScroll={handleBodyScroll}
-            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', background: '#ffffff', borderRadius: '0 0 12px 12px', WebkitOverflowScrolling: 'touch' }}
+            style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', background: 'var(--page-bg)', borderRadius: '0 0 12px 12px', WebkitOverflowScrolling: 'touch' }}
           >
             <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: LEFT_WIDTH + filteredEvents.length * COL_WIDTH, background: 'transparent' }}>
 
