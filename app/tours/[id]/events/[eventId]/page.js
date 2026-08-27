@@ -535,34 +535,34 @@ export default function EventPage() {
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 8, flexShrink: 0 }}>
-          <button
-            onClick={() => router.push(`/tours/${id}`)}
-            style={{ fontSize: 13, padding: '6px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', marginRight: 8, whiteSpace: 'nowrap' }}
-          >
-            ← {tour?.name || 'Tour'}
-          </button>
-          {tabs.map(tab => {
-            const active = activeTab === tab.toLowerCase()
-            return (
-              <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())}
-                style={{
-                  fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
-                  background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
-                  color: active ? 'var(--color-info)' : 'var(--text-secondary)',
-                  cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
-                }}>
-                {tab}
-                {tab === 'Shows' && shows.length > 0 && (
-                  <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-muted)' }}>({shows.length})</span>
-                )}
-              </button>
-            )
-          })}
+        <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0, marginBottom: 0 }}>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+            {tabs.map(tab => {
+              const active = activeTab === tab.toLowerCase()
+              return (
+                <button key={tab} onClick={() => {
+                  const key = tab.toLowerCase()
+                  setActiveTab(key)
+                  router.replace(`/tours/${id}/events/${eventId}?tab=${key}`, { scroll: false })
+                }}
+                  style={{
+                    fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
+                    background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
+                    color: active ? 'var(--color-info)' : 'var(--text-secondary)',
+                    cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
+                  }}>
+                  {tab}
+                  {tab === 'Shows' && shows.length > 0 && (
+                    <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-muted)' }}>({shows.length})</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '12px 0' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '8px 0 0' }}>
 
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
