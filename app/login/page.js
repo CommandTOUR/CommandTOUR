@@ -43,14 +43,14 @@ export default function Login() {
   const inputStyle = (focused) => ({
     width: '100%',
     background: 'rgba(255,255,255,0.08)',
-    border: focused ? '0.5px solid #33FF99' : '0.5px solid rgba(255,255,255,0.15)',
-    boxShadow: focused ? '0 0 0 3px rgba(51,255,153,0.10)' : 'none',
+    border: focused ? '0.5px solid rgba(255,255,255,0.35)' : '0.5px solid rgba(255,255,255,0.15)',
+    boxShadow: focused ? '0 0 0 3px rgba(255,255,255,0.10)' : 'none',
     borderRadius: 8,
     color: '#f1f5f9',
     fontSize: 14,
     padding: '12px 16px',
     outline: 'none',
-    caretColor: '#33FF99',
+    caretColor: 'rgba(255,255,255,0.4)',
     fontFamily: 'Plus Jakarta Sans, sans-serif',
     boxSizing: 'border-box',
     transition: 'border-color 0.15s, box-shadow 0.15s',
@@ -64,6 +64,15 @@ export default function Login() {
       position: 'relative',
       background: 'var(--bg)',
     }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: 'radial-gradient(circle, rgba(26,86,219,0.18) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -129,8 +138,8 @@ export default function Login() {
           style={{
             width: '100%',
             height: 48,
-            background: btnHover && !loading ? '#2be88a' : '#33FF99',
-            color: '#0a1628',
+            background: btnHover && !loading ? '#1648c4' : 'var(--color-info)',
+            color: '#ffffff',
             fontSize: 15,
             fontWeight: 700,
             border: 'none',
