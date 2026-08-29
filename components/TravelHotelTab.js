@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
+import { IconAlertTriangle, IconAlertTriangleFilled } from '@tabler/icons-react'
 
 const GLASS = { background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 14, boxShadow: 'var(--glass-tile-shadow)' }
 
@@ -25,6 +26,10 @@ const TRAVEL_TYPE_STYLES = {
   bus:     { label: 'Bus',     bg: 'rgba(255,184,0,0.12)',  color: 'var(--color-warning)', border: '0.5px solid rgba(255,184,0,0.35)' },
   driving: { label: 'Driving', bg: 'rgba(168,85,247,0.12)', color: '#A855F7',              border: '0.5px solid rgba(168,85,247,0.35)' },
 }
+
+const TRAVEL_GRID = '1.2fr 0.7fr 0.7fr 1fr 0.8fr 0.7fr 1fr 1fr 60px'
+const TRAVEL_CELL = { display: 'flex', alignItems: 'center', overflow: 'hidden' }
+const TRAVEL_HEADER_CELL = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }
 
 const hoverBlue = e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }
 const unhoverBlue = e => { e.currentTarget.style.background = 'transparent' }
@@ -56,17 +61,6 @@ function fmtTime(t) {
 
 function fmtMoney(v) {
   return `$${(Number(v) || 0).toFixed(2)}`
-}
-
-function SortHeader({ label, field, sortField, sortDir, onSort }) {
-  const active = sortField === field
-  return (
-    <div onClick={() => onSort(field)}
-      style={{ fontSize: 10, fontWeight: 700, color: active ? '#ffffff' : 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
-    >
-      {label}{active && <span style={{ fontSize: 9 }}>{sortDir === 'asc' ? '▲' : '▼'}</span>}
-    </div>
-  )
 }
 
 function EditableCell({ value, onSave, type = 'text', placeholder = '—', centered = false }) {
@@ -164,11 +158,10 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
 
 function WarningTriangle() {
   return (
-    <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FF8C00" strokeWidth="1.5" strokeLinejoin="round"/>
-      <path d="M9 7V10" stroke="#FF8C00" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="9" cy="13" r="0.75" fill="#FF8C00"/>
-    </svg>
+    <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
+      <IconAlertTriangleFilled size={16} color="#FFD60A" />
+      <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
+    </div>
   )
 }
 
@@ -206,75 +199,23 @@ function TravelTypeDropdown({ value, onChange }) {
   )
 }
 
-function TravelTable({ rows, onUpdate, onRemove, sortField, sortDir, onSort, type }) {
-  const GRID = '1.4fr 0.8fr 0.8fr 1fr 0.9fr 0.7fr 1fr 1fr 24px'
-  const CELL = { display: 'flex', alignItems: 'center', overflow: 'hidden' }
-
+function TravelTableHeader({ sortField, sortDir, onSort, type, onQuickSort }) {
   return (
-    <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', background: '#1a56db', padding: '8px 12px' }}>
-        <div style={CELL}><SortHeader label="Name" field="staff_name" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Travel Type" field="travel_type" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Date" field="travel_date" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Airline / Op" field="airline" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Flight / Route #" field="flight_number" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Time" field={type === 'arrival' ? 'arrival_time' : 'departure_time'} sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Airport / Station" field="airport" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div style={{ ...CELL, justifyContent: 'center' }}><SortHeader label="Transport" field="transport" sortField={sortField} sortDir={sortDir} onSort={onSort} /></div>
-        <div />
+    <div style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', padding: '14px 12px 0', alignItems: 'center' }}>
+      <div style={TRAVEL_HEADER_CELL}>Name</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Travel Type</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('travel_date')}>Date {sortField === 'travel_date' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('airline')}>Airline / Op {sortField === 'airline' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('flight_number')}>Flight / Route # {sortField === 'flight_number' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort(type === 'arrival' ? 'arrival_time' : 'departure_time')}>Time {sortField === (type === 'arrival' ? 'arrival_time' : 'departure_time') ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('airport')}>Airport / Station {sortField === 'airport' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('transport')}>Transport {sortField === 'transport' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button
+          onClick={onQuickSort}
+          style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer', whiteSpace: 'nowrap' }}
+        >Quick Sort</button>
       </div>
-
-      {rows.length === 0 && (
-        <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>
-          No {type === 'arrival' ? 'arrivals' : 'departures'} yet. Confirm staff on the Staffing tab to auto-populate.
-        </div>
-      )}
-
-      {rows.map(row => {
-        const isBusOrDriving = row.travel_type === 'bus' || row.travel_type === 'driving'
-        const showWarning = isBusOrDriving
-          ? !row.travel_date
-          : (!row.travel_date || !row.airline || !row.flight_number || !row.airport)
-        return (
-          <div key={row.id ?? `synthetic-${row.staff_id}`} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)', background: row.travel_type === 'driving' ? 'rgba(168,85,247,0.06)' : 'transparent', transition: 'background 0.12s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = row.travel_type === 'driving' ? 'rgba(168,85,247,0.10)' : 'var(--glass-tile-hover)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = row.travel_type === 'driving' ? 'rgba(168,85,247,0.06)' : 'transparent' }}
-          >
-            <div style={{ ...CELL, gap: 6 }}>
-              {showWarning && <WarningTriangle />}
-              <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
-            </div>
-            <div style={{ ...CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => onUpdate(row, 'travel_type', v)} /></div>
-            <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => onUpdate(row, 'travel_date', v)} /></div>
-            {row.travel_type === 'driving'
-              ? <div style={{ ...CELL, justifyContent: 'center' }} />
-              : <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={row.airline} onSave={v => onUpdate(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : row.travel_type === 'bus' ? 'Operator' : 'Airline'} centered={true} /></div>
-            }
-            {row.travel_type === 'driving'
-              ? <div style={{ ...CELL, justifyContent: 'center' }} />
-              : <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={row.flight_number} onSave={v => onUpdate(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : row.travel_type === 'bus' ? 'Route #' : 'Flight #'} centered={true} /></div>
-            }
-            {row.travel_type === 'driving'
-              ? <div style={{ ...CELL, justifyContent: 'center' }} />
-              : <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={type === 'arrival' ? row.arrival_time : row.departure_time} type="time" onSave={v => onUpdate(row, type === 'arrival' ? 'arrival_time' : 'departure_time', v)} centered /></div>
-            }
-            {row.travel_type === 'driving'
-              ? <div style={{ ...CELL, justifyContent: 'center' }} />
-              : <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => onUpdate(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>
-            }
-            {row.travel_type === 'driving'
-              ? <div style={{ ...CELL, justifyContent: 'center' }} />
-              : <div style={{ ...CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => onUpdate(row, 'transport', v)} placeholder="Transport" centered /></div>
-            }
-            <div style={{ ...CELL, justifyContent: 'center' }}>
-              <div onClick={() => onRemove(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
-                onMouseEnter={hoverDanger}
-                onMouseLeave={unhoverDanger}
-              >×</div>
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -301,8 +242,18 @@ export default function TravelHotelTab({ eventId, event }) {
   const [confirmedStaff, setConfirmedStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const [travelTab, setTravelTab] = useState('arrivals')
-  const [arrivalSort, setArrivalSort] = useState({ field: 'travel_date', dir: 'asc' })
-  const [departureSort, setDepartureSort] = useState({ field: 'travel_date', dir: 'asc' })
+  const [arrivalSort, setArrivalSort] = useState(() => {
+    try { const s = localStorage.getItem(`arrival_sort_${eventId}`); return s ? JSON.parse(s) : { field: 'travel_date', dir: 'asc' } } catch { return { field: 'travel_date', dir: 'asc' } }
+  })
+  const [departureSort, setDepartureSort] = useState(() => {
+    try { const s = localStorage.getItem(`departure_sort_${eventId}`); return s ? JSON.parse(s) : { field: 'travel_date', dir: 'asc' } } catch { return { field: 'travel_date', dir: 'asc' } }
+  })
+  const [arrivalSorted, setArrivalSorted] = useState(() => {
+    try { return !!localStorage.getItem(`arrival_sort_${eventId}`) } catch { return false }
+  })
+  const [departureSorted, setDepartureSorted] = useState(() => {
+    try { return !!localStorage.getItem(`departure_sort_${eventId}`) } catch { return false }
+  })
   const [roomStaffPicker, setRoomStaffPicker] = useState(null)
   const [editingHotel, setEditingHotel] = useState(false)
   const [hotelForm, setHotelForm] = useState({ hotel_name: '', address: '', check_in_date: '', check_out_date: '', notes: '' })
@@ -314,12 +265,28 @@ export default function TravelHotelTab({ eventId, event }) {
   const [showRatesModal, setShowRatesModal] = useState(false)
   const [showEligibleModal, setShowEligibleModal] = useState(false)
   const [ratesForm, setRatesForm] = useState({ breakfast_rate: '', lunch_rate: '', dinner_rate: '' })
+  const [displayArrivals, setDisplayArrivals] = useState([])
+  const [displayDepartures, setDisplayDepartures] = useState([])
+  const [rentalCars, setRentalCars] = useState([])
+  const [editingRental, setEditingRental] = useState(null) // null | 'new' | row object
+  const [rentalForm, setRentalForm] = useState({ staff_id: '', pickup_date: '', return_date: '', pickup_location: '', return_location: '', car_class: '', confirmation_number: '', vendor: '', notes: '' })
+  const [isLightMode, setIsLightMode] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return document.documentElement.getAttribute('data-theme') !== 'dark'
+  })
+
+  useEffect(() => {
+    const checkTheme = () => setIsLightMode(document.documentElement.getAttribute('data-theme') !== 'dark')
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => { fetchAll() }, [eventId])
 
   const fetchAll = async () => {
     const supabase = getSupabase()
-    const [arrRes, depRes, hotelRes, roomsRes, staffRes, tourRes] = await Promise.all([
+    const [arrRes, depRes, hotelRes, roomsRes, staffRes, tourRes, rentalRes] = await Promise.all([
       supabase.from('event_travel_arrivals').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_travel_departures').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_hotel').select('*').eq('event_id', eventId).maybeSingle(),
@@ -334,6 +301,7 @@ export default function TravelHotelTab({ eventId, event }) {
         .eq('event_id', eventId)
         .not('staff_id', 'is', null),
       event.tour_id ? supabase.from('tours').select('id, name, color').eq('id', event.tour_id).single() : Promise.resolve({ data: null }),
+      supabase.from('event_rental_cars').select('*, staff:staff_id(id, first_name, last_name)').eq('event_id', eventId).order('pickup_date', { ascending: true }),
     ])
     const confirmedRows = (staffRes.data || []).filter(r => r.confirmed === true || r.status === 'confirmed')
     const confirmedStaffIds = new Set(confirmedRows.map(r => r.staff_id).filter(Boolean))
@@ -356,13 +324,27 @@ export default function TravelHotelTab({ eventId, event }) {
         flagged: true,
         _synthetic: true
       }))
-    setArrivals([
+    const computedArrivals = [
       ...(arrRes.data || [])
         .filter(r => confirmedStaffIds.has(r.staff_id))
         .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
       ...missingArrivals
         .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
-    ])
+    ]
+    setArrivals(computedArrivals)
+    const arrivalKey = r => r.id ?? `synthetic-${r.staff_id}`
+    const savedArrivalSort = (() => { try { const s = localStorage.getItem(`arrival_sort_${eventId}`); return s ? JSON.parse(s) : null } catch { return null } })()
+    setDisplayArrivals(prev => {
+      const byKey = new Map(computedArrivals.map(a => [arrivalKey(a), a]))
+      if (prev.length === 0) {
+        return savedArrivalSort ? sortRows(computedArrivals, savedArrivalSort) : computedArrivals
+      }
+      const merged = prev.map(p => byKey.get(arrivalKey(p))).filter(Boolean)
+      const seenKeys = new Set(merged.map(arrivalKey))
+      const added = computedArrivals.filter(a => !seenKeys.has(arrivalKey(a)))
+      const updated = [...merged, ...added]
+      return savedArrivalSort ? sortRows(updated, savedArrivalSort) : updated
+    })
 
     const existingDepartureStaffIds = new Set((depRes.data || []).map(r => r.staff_id))
     const missingDepartures = confirmedRows
@@ -382,13 +364,27 @@ export default function TravelHotelTab({ eventId, event }) {
         flagged: true,
         _synthetic: true
       }))
-    setDepartures([
+    const computedDepartures = [
       ...(depRes.data || [])
         .filter(r => confirmedStaffIds.has(r.staff_id))
         .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
       ...missingDepartures
         .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
-    ])
+    ]
+    setDepartures(computedDepartures)
+    const departureKey = r => r.id ?? `synthetic-${r.staff_id}`
+    const savedDepartureSort = (() => { try { const s = localStorage.getItem(`departure_sort_${eventId}`); return s ? JSON.parse(s) : null } catch { return null } })()
+    setDisplayDepartures(prev => {
+      const byKey = new Map(computedDepartures.map(a => [departureKey(a), a]))
+      if (prev.length === 0) {
+        return savedDepartureSort ? sortRows(computedDepartures, savedDepartureSort) : computedDepartures
+      }
+      const merged = prev.map(p => byKey.get(departureKey(p))).filter(Boolean)
+      const seenKeys = new Set(merged.map(departureKey))
+      const added = computedDepartures.filter(a => !seenKeys.has(departureKey(a)))
+      const updated = [...merged, ...added]
+      return savedDepartureSort ? sortRows(updated, savedDepartureSort) : updated
+    })
     if (!hotelRes.error && hotelRes.data) {
       setHotel(hotelRes.data)
       setHotelForm({ hotel_name: hotelRes.data.hotel_name || '', address: hotelRes.data.address || '', check_in_date: hotelRes.data.check_in_date || '', check_out_date: hotelRes.data.check_out_date || '', notes: hotelRes.data.notes || '' })
@@ -405,31 +401,53 @@ export default function TravelHotelTab({ eventId, event }) {
     if (perDiemRatesRes.data) { setPerDiemRates(perDiemRatesRes.data); setRatesForm({ breakfast_rate: perDiemRatesRes.data.breakfast_rate, lunch_rate: perDiemRatesRes.data.lunch_rate, dinner_rate: perDiemRatesRes.data.dinner_rate }) }
     setPerDiemMeals(perDiemMealsRes.data || [])
     setPerDiemStaff(perDiemStaffRes.data || [])
+    setRentalCars(rentalRes.data || [])
 
     setLoading(false)
   }
 
   const sortRows = (rows, sort) => [...rows].sort((a, b) => {
+    if (sort.field === 'travel_date') {
+      const aDate = a.travel_date || ''
+      const bDate = b.travel_date || ''
+      const aTime = a.arrival_time || a.departure_time || ''
+      const bTime = b.arrival_time || b.departure_time || ''
+      const aHasDate = !!aDate
+      const bHasDate = !!bDate
+      const aHasTime = !!aTime
+      const bHasTime = !!bTime
+      // Empty dates sink to bottom
+      if (!aHasDate && !bHasDate) return 0
+      if (!aHasDate) return 1
+      if (!bHasDate) return -1
+      // Both have dates — compare dates first
+      const dateCmp = aDate.localeCompare(bDate)
+      if (dateCmp !== 0) return sort.dir === 'asc' ? dateCmp : -dateCmp
+      // Same date — date+time floats above date-only
+      if (aHasTime && !bHasTime) return -1
+      if (!aHasTime && bHasTime) return 1
+      // Both have time — sort by time
+      return aTime.localeCompare(bTime)
+    }
     const av = a[sort.field] || ''
     const bv = b[sort.field] || ''
-    if (sort.field === 'travel_date') {
-      const aEmpty = !av
-      const bEmpty = !bv
-      if (aEmpty && bEmpty) return 0
-      if (aEmpty) return 1
-      if (bEmpty) return -1
-      const primary = sort.dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
-      if (primary !== 0) return primary
-      const at = a.arrival_time || a.departure_time || ''
-      const bt = b.arrival_time || b.departure_time || ''
-      return at.localeCompare(bt)
-    }
     return sort.dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
   })
 
   const handleSort = (table, field) => {
-    if (table === 'arrival') setArrivalSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }))
-    else setDepartureSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }))
+    if (table === 'arrival') {
+      const newSort = { field, dir: arrivalSort.field === field && arrivalSort.dir === 'asc' ? 'desc' : 'asc' }
+      try { localStorage.setItem(`arrival_sort_${eventId}`, JSON.stringify(newSort)) } catch {}
+      setArrivalSorted(true)
+      setArrivalSort(newSort)
+      setDisplayArrivals(sortRows(arrivals, newSort))
+    } else {
+      const newSort = { field, dir: departureSort.field === field && departureSort.dir === 'asc' ? 'desc' : 'asc' }
+      try { localStorage.setItem(`departure_sort_${eventId}`, JSON.stringify(newSort)) } catch {}
+      setDepartureSorted(true)
+      setDepartureSort(newSort)
+      setDisplayDepartures(sortRows(departures, newSort))
+    }
   }
 
   const handleUpdateArrival = async (row, field, value) => {
@@ -472,6 +490,40 @@ export default function TravelHotelTab({ eventId, event }) {
     const s = getSupabase()
     const { error } = await s.from('event_travel_departures').delete().eq('id', id)
     if (error) { console.error('Failed to remove departure:', error); setSaveError('Failed to remove. Please try again.') }
+    fetchAll()
+  }
+
+  const handleAddRental = async () => {
+    const supabase = getSupabase()
+    const { error } = await supabase.from('event_rental_cars').insert([{
+      event_id: eventId,
+      staff_id: rentalForm.staff_id || null,
+      pickup_date: rentalForm.pickup_date || null,
+      return_date: rentalForm.return_date || null,
+      pickup_location: rentalForm.pickup_location || null,
+      return_location: rentalForm.return_location || null,
+      car_class: rentalForm.car_class || null,
+      confirmation_number: rentalForm.confirmation_number || null,
+      vendor: rentalForm.vendor || null,
+      notes: rentalForm.notes || null,
+    }])
+    if (error) { console.error('Failed to add rental:', error); setSaveError('Failed to add rental. Please try again.'); return }
+    setEditingRental(null)
+    setRentalForm({ staff_id: '', pickup_date: '', return_date: '', pickup_location: '', return_location: '', car_class: '', confirmation_number: '', vendor: '', notes: '' })
+    fetchAll()
+  }
+
+  const handleUpdateRental = async (id, field, value) => {
+    const supabase = getSupabase()
+    const { error } = await supabase.from('event_rental_cars').update({ [field]: value || null }).eq('id', id)
+    if (error) { console.error('Failed to update rental:', error); setSaveError('Failed to save. Please try again.') }
+    fetchAll()
+  }
+
+  const handleRemoveRental = async (id) => {
+    const supabase = getSupabase()
+    const { error } = await supabase.from('event_rental_cars').delete().eq('id', id)
+    if (error) { console.error('Failed to remove rental:', error); setSaveError('Failed to remove. Please try again.') }
     fetchAll()
   }
 
@@ -653,233 +705,430 @@ export default function TravelHotelTab({ eventId, event }) {
     { key: 'arrivals', label: `Arrivals (${arrivals.length})` },
     { key: 'departures', label: `Departures (${departures.length})` },
     { key: 'hotel', label: 'Hotel' },
+    { key: 'rental', label: `Rental Cars (${rentalCars.length})` },
     { key: 'perdiem', label: 'Per Diem' },
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', gap: 0 }}>
       {saveError && <p style={{ color: 'var(--color-danger)', fontSize: 12, margin: 0 }}>{saveError}</p>}
 
-      <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTravelTab(t.key)}
-            style={travelTab === t.key
-              ? { background: 'rgba(26,86,219,0.08)', color: 'var(--color-info)', fontWeight: 600, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }
-              : { background: 'transparent', color: 'var(--text-secondary)', fontWeight: 400, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }}
-          >{t.label}</button>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0, padding: '0 0 4px' }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setTravelTab(t.key)}
+              style={travelTab === t.key
+                ? { background: 'rgba(26,86,219,0.08)', color: 'var(--color-info)', fontWeight: 600, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }
+                : { background: 'transparent', color: 'var(--text-secondary)', fontWeight: 400, fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }}
+            >{t.label}</button>
+          ))}
+        </div>
       </div>
 
       {/* ARRIVALS */}
       {travelTab === 'arrivals' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={SECTION_LABEL}>Arrivals</span>
-            <button
-              onClick={() => setArrivalSort({ field: 'travel_date', dir: 'asc' })}
-              style={ADD_BTN}
-              onMouseEnter={hoverBlue}
-              onMouseLeave={unhoverBlue}
-            >Quick Sort</button>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {/* Sticky header block — does not scroll */}
+          <div style={{ flexShrink: 0, paddingBottom: 8, background: 'var(--page-bg, var(--surface-card))' }}>
+            <TravelTableHeader
+              sortField={arrivalSort.field}
+              sortDir={arrivalSort.dir}
+              onSort={(f) => handleSort('arrival', f)}
+              type="arrival"
+              onQuickSort={() => {
+                const sort = { field: 'travel_date', dir: 'asc' }
+                try { localStorage.setItem(`arrival_sort_${eventId}`, JSON.stringify(sort)) } catch {}
+                setArrivalSorted(true)
+                setArrivalSort(sort)
+                setDisplayArrivals(sortRows(arrivals, sort))
+              }}
+            />
           </div>
-          <TravelTable rows={sortRows(arrivals, arrivalSort)} onUpdate={handleUpdateArrival} onRemove={handleRemoveArrival} sortField={arrivalSort.field} sortDir={arrivalSort.dir} onSort={(f) => handleSort('arrival', f)} type="arrival" />
+          {/* Scrollable tile */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
+            <div style={{ height: '100%', overflowY: 'auto' }}>
+              {displayArrivals.length === 0 && (
+                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No arrivals yet. Confirm staff on the Staffing tab to auto-populate.</div>
+              )}
+              {displayArrivals.map((row, idx) => {
+                const isDriving = row.travel_type === 'driving'
+                const showWarning = isDriving
+                  ? (!row.travel_date || !row.travel_type)
+                  : (!row.travel_date || !row.travel_type || !row.airline || !row.flight_number || !row.arrival_time || !row.airport || !row.transport)
+                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
+                return (
+                  <div key={row.id ?? `synthetic-${row.staff_id}`}
+                    style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: isDriving ? 'rgba(168,85,247,0.06)' : rowBg, transition: 'background 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.10)' : 'var(--glass-tile-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.06)' : rowBg }}
+                  >
+                    <div style={{ ...TRAVEL_CELL, gap: 6 }}>
+                      {showWarning && <WarningTriangle />}
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
+                    </div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateArrival(row, 'travel_type', v)} /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateArrival(row, 'travel_date', v)} /></div>
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airline} onSave={v => handleUpdateArrival(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : row.travel_type === 'bus' ? 'Operator' : 'Airline'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.flight_number} onSave={v => handleUpdateArrival(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : row.travel_type === 'bus' ? 'Route #' : 'Flight #'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.arrival_time} type="time" onSave={v => handleUpdateArrival(row, 'arrival_time', v)} centered /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateArrival(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateArrival(row, 'transport', v)} placeholder="Transport" centered /></div>}
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
+                      <div onClick={() => handleRemoveArrival(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 
       {/* DEPARTURES */}
       {travelTab === 'departures' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={SECTION_LABEL}>Departures</span>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {/* Sticky header block — does not scroll */}
+          <div style={{ flexShrink: 0, paddingBottom: 8, background: 'var(--page-bg, var(--surface-card))' }}>
+            <TravelTableHeader
+              sortField={departureSort.field}
+              sortDir={departureSort.dir}
+              onSort={(f) => handleSort('departure', f)}
+              type="departure"
+              onQuickSort={() => {
+                const sort = { field: 'travel_date', dir: 'asc' }
+                try { localStorage.setItem(`departure_sort_${eventId}`, JSON.stringify(sort)) } catch {}
+                setDepartureSorted(true)
+                setDepartureSort(sort)
+                setDisplayDepartures(sortRows(departures, sort))
+              }}
+            />
+          </div>
+          {/* Scrollable tile */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
+            <div style={{ height: '100%', overflowY: 'auto' }}>
+              {displayDepartures.length === 0 && (
+                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No departures yet. Confirm staff on the Staffing tab to auto-populate.</div>
+              )}
+              {displayDepartures.map((row, idx) => {
+                const isDriving = row.travel_type === 'driving'
+                const showWarning = isDriving
+                  ? (!row.travel_date || !row.travel_type)
+                  : (!row.travel_date || !row.travel_type || !row.airline || !row.flight_number || !row.departure_time || !row.airport || !row.transport)
+                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
+                return (
+                  <div key={row.id ?? `synthetic-${row.staff_id}`}
+                    style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: isDriving ? 'rgba(168,85,247,0.06)' : rowBg, transition: 'background 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.10)' : 'var(--glass-tile-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.06)' : rowBg }}
+                  >
+                    <div style={{ ...TRAVEL_CELL, gap: 6 }}>
+                      {showWarning && <WarningTriangle />}
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
+                    </div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateDeparture(row, 'travel_type', v)} /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateDeparture(row, 'travel_date', v)} /></div>
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airline} onSave={v => handleUpdateDeparture(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : row.travel_type === 'bus' ? 'Operator' : 'Airline'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.flight_number} onSave={v => handleUpdateDeparture(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : row.travel_type === 'bus' ? 'Route #' : 'Flight #'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.departure_time} type="time" onSave={v => handleUpdateDeparture(row, 'departure_time', v)} centered /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateDeparture(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
+                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateDeparture(row, 'transport', v)} placeholder="Transport" centered /></div>}
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
+                      <div onClick={() => handleRemoveDeparture(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RENTAL CARS */}
+      {travelTab === 'rental' && (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr 1fr 1fr 0.8fr 1fr 1fr 24px', gap: '0 6px', flex: 1, alignItems: 'center', padding: '0 12px' }}>
+              <div style={TRAVEL_HEADER_CELL}>Driver</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Pickup Date</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Return Date</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Pickup Location</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Return Location</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Car Class</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Vendor</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Confirmation #</div>
+              <div />
+            </div>
             <button
-              onClick={() => setDepartureSort({ field: 'travel_date', dir: 'asc' })}
-              style={ADD_BTN}
+              onClick={() => { setRentalForm({ staff_id: '', pickup_date: '', return_date: '', pickup_location: '', return_location: '', car_class: '', confirmation_number: '', vendor: '', notes: '' }); setEditingRental('new') }}
+              style={{ ...ADD_BTN, marginLeft: 12, flexShrink: 0 }}
               onMouseEnter={hoverBlue}
               onMouseLeave={unhoverBlue}
-            >Quick Sort</button>
+            >+ Add</button>
           </div>
-          <TravelTable rows={sortRows(departures, departureSort)} onUpdate={handleUpdateDeparture} onRemove={handleRemoveDeparture} sortField={departureSort.field} sortDir={departureSort.dir} onSort={(f) => handleSort('departure', f)} type="departure" />
+          {/* Scrollable tile */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
+            <div style={{ height: '100%', overflowY: 'auto' }}>
+              {rentalCars.length === 0 && (
+                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rental cars added yet.</div>
+              )}
+              {rentalCars.map((car, idx) => {
+                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
+                const showWarning = !car.pickup_date || !car.return_date || !car.pickup_location || !car.vendor
+                return (
+                  <div key={car.id}
+                    style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 0.8fr 1fr 1fr 0.8fr 1fr 1fr 24px', gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: rowBg, transition: 'background 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = rowBg }}
+                  >
+                    <div style={{ ...TRAVEL_CELL, gap: 6 }}>
+                      {showWarning && <WarningTriangle />}
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {car.staff ? `${car.staff.first_name} ${car.staff.last_name}` : '—'}
+                      </span>
+                    </div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.pickup_date} type="date" centered onSave={v => handleUpdateRental(car.id, 'pickup_date', v)} /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.return_date} type="date" centered onSave={v => handleUpdateRental(car.id, 'return_date', v)} /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.pickup_location} centered onSave={v => handleUpdateRental(car.id, 'pickup_location', v)} placeholder="Location" /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.return_location} centered onSave={v => handleUpdateRental(car.id, 'return_location', v)} placeholder="Location" /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.car_class} centered onSave={v => handleUpdateRental(car.id, 'car_class', v)} placeholder="Class" /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.vendor} centered onSave={v => handleUpdateRental(car.id, 'vendor', v)} placeholder="Vendor" /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.confirmation_number} centered onSave={v => handleUpdateRental(car.id, 'confirmation_number', v)} placeholder="Conf #" /></div>
+                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
+                      <div onClick={() => handleRemoveRental(car.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 
       {/* HOTEL */}
       {travelTab === 'hotel' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={SECTION_LABEL}>Hotel</span>
-            {hotel && <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Edit</button>}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+          {/* Sticky header */}
+          <div style={{ flexShrink: 0, padding: '14px 0 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', flex: 1, alignItems: 'center', padding: '0 12px' }}>
+              <div style={TRAVEL_HEADER_CELL}>Guest 1</div>
+              <div style={TRAVEL_HEADER_CELL}>Guest 2</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Type</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Check In</div>
+              <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Check Out</div>
+              <div style={TRAVEL_HEADER_CELL}>Notes</div>
+              <div />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginLeft: 12, flexShrink: 0 }}>
+              {hotel && <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Edit Hotel</button>}
+              {!hotel && <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Add Hotel</button>}
+            </div>
           </div>
 
-          {hotel ? (
-            <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Hotel</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.hotel_name || '—'}</div></div>
-              {hotel.address && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Address</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.address}</div></div>}
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check In</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_in_date)}</div></div>
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Check Out</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_out_date)}</div></div>
-              {hotel.notes && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Notes</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.notes}</div></div>}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>No hotel added yet.</span>
-              <button onClick={() => setEditingHotel(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Add Hotel</button>
+          {/* Hotel info strip — shows above the tile when hotel exists */}
+          {hotel && (
+            <div style={{ flexShrink: 0, display: 'flex', gap: 24, flexWrap: 'wrap', padding: '0 12px 8px' }}>
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Hotel</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.hotel_name || '—'}</div></div>
+              {hotel.address && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Address</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.address}</div></div>}
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check In</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_in_date)}</div></div>
+              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check Out</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_out_date)}</div></div>
+              {hotel.notes && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.notes}</div></div>}
             </div>
           )}
 
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
-              {['Guest 1', 'Guest 2', 'Type', 'Check In', 'Check Out', 'Notes', ''].map((h, i) => (
-                <div key={i} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>{h}</div>
-              ))}
-            </div>
-            {rooms.length === 0 && <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>}
-            {rooms.map(room => (
-              <div key={room.id} style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', padding: '7px 12px', alignItems: 'center', borderTop: '0.5px solid var(--border-default)', background: 'transparent', transition: 'background 0.12s' }}
-                onMouseEnter={hoverRow}
-                onMouseLeave={unhoverRow}
-              >
-                <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--color-info)' }}>
-                  {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
-                </div>
-                <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--color-info)' }}>
-                  {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
-                </div>
-                <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={SYSTEM_SELECT}>
-                  {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <EditableCell value={room.check_in_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
-                <EditableCell value={room.check_out_date} type="date" onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
-                <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
-                <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
-              </div>
-            ))}
-            <div style={{ padding: '8px 12px', borderTop: rooms.length > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
-              <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add room</span>
-            </div>
-          </div>
-
-          {unroomedStaff.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
-                  Unroomed Staff ({unroomedStaff.length})
-                </div>
-                {selectedUnroomed.length > 0 && (
-                  <button
-                    onClick={handleAddSelectedToRooming}
-                    className="btn-primary"
-                    style={{ fontSize: 12, padding: '5px 12px' }}
+          {/* Scrollable GLASS tile — rooms + unroomed staff */}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
+            <div style={{ height: '100%', overflowY: 'auto' }}>
+              {rooms.length === 0 && (
+                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>
+              )}
+              {rooms.map((room, idx) => {
+                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
+                return (
+                  <div key={room.id}
+                    style={{ display: 'grid', gridTemplateColumns: ROOM_GRID, gap: '0 6px', padding: '7px 12px', alignItems: 'center', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: rowBg, transition: 'background 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = rowBg }}
                   >
-                    Add {selectedUnroomed.length} to Rooming List
-                  </button>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {unroomedStaff.map(s => {
-                  const selected = selectedUnroomed.includes(s.id)
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
-                      style={{
-                        ...GLASS,
-                        padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)',
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        ...(selected ? { border: '0.5px solid var(--color-info)', background: 'rgba(26,86,219,0.10)' } : null),
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <Checkbox checked={selected} onClick={() => {}} />
-                      {s.first_name} {s.last_name}
+                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                      {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
                     </div>
-                  )
-                })}
+                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                      {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
+                    </div>
+                    <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={SYSTEM_SELECT}>
+                      {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <EditableCell value={room.check_in_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
+                    <EditableCell value={room.check_out_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
+                    <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
+                    <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                  </div>
+                )
+              })}
+              <div style={{ padding: '8px 12px', borderTop: rooms.length > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
+                <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add room</span>
               </div>
+
+              {/* Unroomed staff */}
+              {unroomedStaff.length > 0 && (
+                <div style={{ padding: '12px 12px 16px', borderTop: '0.5px solid var(--border-default)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+                      Unroomed Staff ({unroomedStaff.length})
+                    </div>
+                    {selectedUnroomed.length > 0 && (
+                      <button onClick={handleAddSelectedToRooming} className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }}>
+                        Add {selectedUnroomed.length} to Rooming List
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {unroomedStaff.map(s => {
+                      const selected = selectedUnroomed.includes(s.id)
+                      return (
+                        <div key={s.id}
+                          onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                          style={{ ...GLASS, padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, ...(selected ? { border: '0.5px solid var(--color-info)', background: 'rgba(26,86,219,0.10)' } : null), transition: 'all 0.15s' }}
+                        >
+                          <Checkbox checked={selected} onClick={() => {}} />
+                          {s.first_name} {s.last_name}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {/* PER DIEM */}
       {travelTab === 'perdiem' && (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={SECTION_LABEL}>Per Diem</span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setShowEligibleModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Eligible Staff</button>
-              <button onClick={() => setShowRatesModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
           {!perDiemRates ? (
-            <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Set meal rates to get started.</div>
-              <button onClick={() => setShowRatesModal(true)} style={{ ...ADD_BTN, margin: '0 auto' }} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
+            <div style={{ ...GLASS, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set meal rates to get started.</div>
+              <button onClick={() => setShowRatesModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
             </div>
           ) : (
-            <>
-              <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 16px', display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
-                <RateField label="Breakfast" value={perDiemRates.breakfast_rate} />
-                <FieldDivider />
-                <RateField label="Lunch" value={perDiemRates.lunch_rate} />
-                <FieldDivider />
-                <RateField label="Dinner" value={perDiemRates.dinner_rate} />
-                <FieldDivider />
-                <RateField label="Daily Max" value={dailyMax} />
-                <FieldDivider />
-                <RateField label="Grand Total" value={grandTotal} />
+            <div style={{ display: 'grid', gridTemplateColumns: '65fr 35fr', gap: 12, flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+              {/* LEFT — Per Diem Breakout (scrollable) */}
+              <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2, flexShrink: 0 }}>Per Diem Breakout</div>
+                <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', ...GLASS }}>
+                  {/* Column headers */}
+                  <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', padding: '12px 16px 6px', borderBottom: '0.5px solid var(--border-default)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Name</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Days on Site</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'center' }}>+1 Day</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right' }}>Total</div>
+                  </div>
+                {/* Scrollable rows */}
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  {perDiemStaff.length === 0 && (
+                    <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-muted)' }}>No eligible staff yet.</div>
+                  )}
+                  {perDiemStaff.map((entry, idx) => {
+                    const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
+                    return (
+                      <div key={entry.id}
+                        style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', alignItems: 'center', padding: '7px 16px', borderTop: '0.5px solid var(--border-default)', background: rowBg, transition: 'background 0.12s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = rowBg }}
+                      >
+                        <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{entry.staff ? `${entry.staff.first_name} ${entry.staff.last_name}` : '—'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatStaffDays(entry.staff_id)}</div>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <Checkbox checked={!!entry.extra_day} onClick={() => handleToggleExtraDay(entry.id, entry.extra_day)} />
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>{fmtMoney(calcStaffPerDiem(entry))}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Footer */}
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderTop: '0.5px solid var(--border-default)' }}>
+                  <span onClick={() => setShowEligibleModal(true)} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add staff</span>
+                </div>
+                </div>
               </div>
 
-              {eventDates.length === 0 ? (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>No event dates available.</div>
-              ) : (
-                <>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>Meals provided by production — checked meals are deducted from per diem</div>
-                  <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden', marginBottom: 16 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: `140px repeat(${eventDates.length}, 1fr)`, gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Meal</div>
-                      {eventDates.map(d => (
-                        <div key={d} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>{fmtDateHeader(d)}</div>
-                      ))}
-                    </div>
-                    {MEAL_TYPES.map(meal => (
-                      <div key={meal.key} style={{ display: 'grid', gridTemplateColumns: `140px repeat(${eventDates.length}, 1fr)`, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)' }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{meal.label} · {fmtMoney(meal.rate)}</div>
-                        {eventDates.map(d => {
-                          const m = perDiemMeals.find(pm => pm.meal_date === d)
-                          return (
-                            <Checkbox key={d} checked={!!m?.[meal.key]} onClick={() => handleToggleMeal(d, meal.key)} />
-                          )
-                        })}
+              {/* RIGHT COLUMN — stacked tiles */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0, overflow: 'auto' }}>
+
+                {/* TOP RIGHT — Per Diem Totals */}
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Per Diem Totals</div>
+                  <div style={{ ...GLASS, padding: '16px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    {[
+                      { label: 'Breakfast', value: perDiemRates.breakfast_rate },
+                      { label: 'Lunch', value: perDiemRates.lunch_rate },
+                      { label: 'Dinner', value: perDiemRates.dinner_rate },
+                    ].map(r => (
+                      <div key={r.label} style={{ textAlign: 'center', flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 3 }}>{r.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{fmtMoney(r.value)}</div>
                       </div>
                     ))}
                   </div>
-                </>
-              )}
-
-              <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', padding: '8px 12px', background: '#1a56db' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Name</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>Days on site</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)' }}>+1 Day</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.9)', textAlign: 'right' }}>Total</div>
-                </div>
-                {perDiemStaff.length === 0 && <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No eligible staff yet.</div>}
-                {perDiemStaff.map(entry => (
-                  <div key={entry.id} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: '0.5px solid var(--border-default)' }}>
-                    <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{entry.staff ? `${entry.staff.first_name} ${entry.staff.last_name}` : '—'}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatStaffDays(entry.staff_id)}</div>
-                    <Checkbox checked={!!entry.extra_day} onClick={() => handleToggleExtraDay(entry.id, entry.extra_day)} />
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>{fmtMoney(calcStaffPerDiem(entry))}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                    <button
+                      onClick={() => setShowRatesModal(true)}
+                      style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
+                    >Adjust Rates</button>
                   </div>
-                ))}
-                <div style={{ padding: '10px 12px', borderTop: '0.5px solid var(--border-default)', textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Grand total: {fmtMoney(grandTotal)}
+                  <div style={{ borderTop: '0.5px solid var(--border-default)', paddingTop: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Grand Total</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-info)' }}>{fmtMoney(grandTotal)}</div>
+                  </div>
+                  </div>
                 </div>
+
+                {/* BOTTOM RIGHT — Meals Provided */}
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Meals Provided</div>
+                  <div style={{ ...GLASS, padding: '16px', flexShrink: 0 }}>
+                  {eventDates.length === 0 ? (
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No event dates.</div>
+                  ) : (
+                    <div>
+                      {/* Date headers */}
+                      <div style={{ display: 'grid', gridTemplateColumns: `1fr 1fr 1fr 1fr`, gap: '0 4px', marginBottom: 6 }}>
+                        <div />
+                        {['Breakfast', 'Lunch', 'Dinner'].map(l => (
+                          <div key={l} style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center' }}>{l}</div>
+                        ))}
+                      </div>
+                      {eventDates.map((d, di) => {
+                        const m = perDiemMeals.find(pm => pm.meal_date === d)
+                        return (
+                          <div key={d} style={{ display: 'grid', gridTemplateColumns: `1fr 1fr 1fr 1fr`, gap: '0 4px', alignItems: 'center', padding: '6px 0', background: 'transparent', borderTop: di === 0 ? 'none' : '0.5px solid var(--border-default)' }}>
+                            <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fmtDateHeader(d)}</div>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                              <Checkbox checked={!!m?.breakfast_provided} onClick={() => handleToggleMeal(d, 'breakfast_provided')} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                              <Checkbox checked={!!m?.lunch_provided} onClick={() => handleToggleMeal(d, 'lunch_provided')} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                              <Checkbox checked={!!m?.dinner_provided} onClick={() => handleToggleMeal(d, 'dinner_provided')} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  </div>
+                </div>
+
               </div>
-              <div style={{ marginTop: 8 }}>
-                <span onClick={() => setShowEligibleModal(true)} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add staff</span>
-              </div>
-            </>
+            </div>
           )}
         </div>
       )}
@@ -962,6 +1211,60 @@ export default function TravelHotelTab({ eventId, event }) {
       )}
 
       {roomStaffPicker && <StaffPicker onSelect={handleAssignRoomStaff} onClose={() => setRoomStaffPicker(null)} excludeIds={roomedStaffIds} />}
+
+      {/* RENTAL CAR NEW ENTRY MODAL */}
+      {editingRental === 'new' && (
+        <div style={OVERLAY} onClick={() => setEditingRental(null)}>
+          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 520, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Add Rental Car</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Driver (Staff)</label>
+                <select style={SYSTEM_INPUT} value={rentalForm.staff_id} onChange={e => setRentalForm(p => ({ ...p, staff_id: e.target.value }))}>
+                  <option value="">Unassigned</option>
+                  {confirmedStaff.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Vendor</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.vendor} onChange={e => setRentalForm(p => ({ ...p, vendor: e.target.value }))} placeholder="Enterprise, Hertz, etc." />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Date</label>
+                <input type="date" style={SYSTEM_INPUT} value={rentalForm.pickup_date} onChange={e => setRentalForm(p => ({ ...p, pickup_date: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Date</label>
+                <input type="date" style={SYSTEM_INPUT} value={rentalForm.return_date} onChange={e => setRentalForm(p => ({ ...p, return_date: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Location</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.pickup_location} onChange={e => setRentalForm(p => ({ ...p, pickup_location: e.target.value }))} placeholder="Airport, hotel, etc." />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Location</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.return_location} onChange={e => setRentalForm(p => ({ ...p, return_location: e.target.value }))} placeholder="Airport, hotel, etc." />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Car Class</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.car_class} onChange={e => setRentalForm(p => ({ ...p, car_class: e.target.value }))} placeholder="Economy, SUV, Van, etc." />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Confirmation #</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.confirmation_number} onChange={e => setRentalForm(p => ({ ...p, confirmation_number: e.target.value }))} />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Notes</label>
+                <input style={SYSTEM_INPUT} value={rentalForm.notes} onChange={e => setRentalForm(p => ({ ...p, notes: e.target.value }))} placeholder="Optional notes..." />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditingRental(null)} style={CANCEL_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Cancel</button>
+              <button onClick={handleAddRental} style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Add Rental Car</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
