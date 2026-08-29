@@ -22,7 +22,7 @@ const fmtStatus = (s) => {
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 }
 
-const formatAddress = (v) => [v?.street_address, v?.city, v?.state, v?.country].filter(Boolean).join(', ') || '—'
+const formatAddress = (v) => v?.full_address || v?.address || [v?.city, v?.state, v?.country].filter(Boolean).join(', ') || '—'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -127,6 +127,8 @@ export default function VenuePage() {
   const [mapsLoaded, setMapsLoaded] = useState(false)
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
+  const addressInputRef = useRef(null)
+  const autocompleteRef = useRef(null)
 
   const [editingBasic, setEditingBasic] = useState(false)
   const [basicForm, setBasicForm] = useState({})
@@ -223,7 +225,7 @@ export default function VenuePage() {
 
   useEffect(() => {
     if (!venue) return
-    setBasicForm({ name: venue.name||'', venue_type: venue.venue_type||'', capacity: venue.capacity||'', website: venue.website||'', street_address: venue.street_address||'', city: venue.city||'', state: venue.state||'', country: venue.country||'', region: venue.region||'' })
+    setBasicForm({ name: venue.name||'', venue_type: venue.venue_type||'', capacity: venue.capacity||'', website: venue.website||'', address: venue.address||'', full_address: venue.full_address||'', city: venue.city||'', state: venue.state||'', country: venue.country||'', region: venue.region||'' })
     setPersonnelForm({ contact_building_manager: venue.contact_building_manager||'', contact_building_manager_phone: venue.contact_building_manager_phone||'', contact_building_manager_email: venue.contact_building_manager_email||'', contact_event_manager: venue.contact_event_manager||'', contact_event_manager_phone: venue.contact_event_manager_phone||'', contact_event_manager_email: venue.contact_event_manager_email||'', contact_production_manager: venue.contact_production_manager||'', contact_production_manager_phone: venue.contact_production_manager_phone||'', contact_production_manager_email: venue.contact_production_manager_email||'', contact_marketing_manager: venue.contact_marketing_manager||'', contact_marketing_manager_phone: venue.contact_marketing_manager_phone||'', contact_marketing_manager_email: venue.contact_marketing_manager_email||'', contact_box_office_manager: venue.contact_box_office_manager||'', contact_box_office_manager_phone: venue.contact_box_office_manager_phone||'', contact_box_office_manager_email: venue.contact_box_office_manager_email||'', contact_security_manager: venue.contact_security_manager||'', contact_security_manager_phone: venue.contact_security_manager_phone||'', contact_security_manager_email: venue.contact_security_manager_email||'' })
     setBuildingForm({ has_retractable_seats: venue.has_retractable_seats||false, seating_capacity_retracted: venue.seating_capacity_retracted||'', height_floor_to_first_row: venue.height_floor_to_first_row||'', floor_dimensions_retracted: venue.floor_dimensions_retracted||'', floor_dimensions_fixed: venue.floor_dimensions_fixed||'', height_floor_to_ceiling: venue.height_floor_to_ceiling||'', center_hung_video_board: venue.center_hung_video_board||false, video_board_retractable: venue.video_board_retractable||false, video_board_trim_height: venue.video_board_trim_height||'', video_board_rigging: venue.video_board_rigging||false, guest_entry_point: venue.guest_entry_point||'' })
     setTunnelForm({ tunnel_dimensions: venue.tunnel_dimensions||'', tunnel_door_dimensions: venue.tunnel_door_dimensions||'', tunnel_count: venue.tunnel_count||'', tunnel_can_stage_cars: venue.tunnel_can_stage_cars||false, tunnel_obstructions: venue.tunnel_obstructions||'', tunnel_notes: venue.tunnel_notes||'' })
@@ -238,9 +240,24 @@ export default function VenuePage() {
   const saveSection = async (updates, onDone) => {
     const supabase = getSupabase()
     await supabase.from('venues').update(updates).eq('id', venueId)
-    await fetchVenue()
     onDone()
+    fetchVenue()
   }
+
+  useEffect(() => {
+    if (!editingBasic || !addressInputRef.current || !window.google) return
+    if (autocompleteRef.current) return
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(addressInputRef.current, { types: ['establishment', 'geocode'] })
+    autocompleteRef.current.addListener('place_changed', () => {
+      const place = autocompleteRef.current.getPlace()
+      if (!place) return
+      const full = place.formatted_address || ''
+      const name = place.name || ''
+      setBasicForm(p => ({ ...p, full_address: full, address: name }))
+      if (addressInputRef.current) addressInputRef.current.value = full
+    })
+    return () => { autocompleteRef.current = null }
+  }, [editingBasic])
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -302,10 +319,8 @@ export default function VenuePage() {
                   venue_type: basicForm.venue_type || null,
                   capacity: basicForm.capacity ? parseInt(basicForm.capacity, 10) : null,
                   website: basicForm.website || null,
-                  street_address: basicForm.street_address || null,
-                  city: basicForm.city || null,
-                  state: basicForm.state || null,
-                  country: basicForm.country || null,
+                  address: basicForm.address || null,
+                  full_address: basicForm.full_address || null,
                   region: basicForm.region || null,
                 }, () => setEditingBasic(false))}
               >
@@ -313,26 +328,15 @@ export default function VenuePage() {
                   <div>
                     <label style={SECTION_LABEL}>Address</label>
                     {editingBasic ? (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <div style={{ gridColumn: 'span 2' }}>
-                          <label style={SECTION_LABEL}>Street Address</label>
-                          <input value={basicForm.street_address} onChange={e => setBasicForm(p => ({ ...p, street_address: e.target.value }))} style={SECTION_INPUT} />
-                        </div>
-                        <div>
-                          <label style={SECTION_LABEL}>City</label>
-                          <input value={basicForm.city} onChange={e => setBasicForm(p => ({ ...p, city: e.target.value }))} style={SECTION_INPUT} />
-                        </div>
-                        <div>
-                          <label style={SECTION_LABEL}>State</label>
-                          <input value={basicForm.state} onChange={e => setBasicForm(p => ({ ...p, state: e.target.value }))} style={SECTION_INPUT} />
-                        </div>
-                        <div style={{ gridColumn: 'span 2' }}>
-                          <label style={SECTION_LABEL}>Country</label>
-                          <input value={basicForm.country} onChange={e => setBasicForm(p => ({ ...p, country: e.target.value }))} style={SECTION_INPUT} />
-                        </div>
-                      </div>
+                      <input
+                        ref={addressInputRef}
+                        defaultValue={basicForm.full_address || basicForm.address || ''}
+                        onChange={e => setBasicForm(p => ({ ...p, full_address: e.target.value }))}
+                        style={SECTION_INPUT}
+                        placeholder="Search for address..."
+                      />
                     ) : (
-                      <div style={(venue.street_address || venue.city || venue.state || venue.country) ? FIELD_VALUE : FIELD_EMPTY}>
+                      <div style={(venue.full_address || venue.address || venue.city || venue.state || venue.country) ? FIELD_VALUE : FIELD_EMPTY}>
                         {formatAddress(venue)}
                       </div>
                     )}
@@ -343,7 +347,7 @@ export default function VenuePage() {
                   {editingBasic ? (
                     <div>
                       <label style={SECTION_LABEL}>Capacity</label>
-                      <input type="number" value={basicForm.capacity} onChange={e => setBasicForm(p => ({ ...p, capacity: e.target.value }))} style={SECTION_INPUT} />
+                      <input type="text" inputMode="numeric" value={basicForm.capacity} onChange={e => setBasicForm(p => ({ ...p, capacity: e.target.value }))} style={SECTION_INPUT} />
                     </div>
                   ) : (
                     <div>
