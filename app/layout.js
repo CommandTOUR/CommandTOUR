@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import SideNav from '../components/SideNav'
+import { NavProvider } from '../context/NavContext'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
         }} />
       </head>
       <body className={inter.variable} style={{ margin: 0, padding: 0 }}>
+        <NavProvider>
         <div style={{
           display: 'flex',
           gap: 10,
@@ -36,6 +38,7 @@ export default function RootLayout({ children }) {
             {children}
           </main>
         </div>
+        </NavProvider>
       </body>
     </html>
   )

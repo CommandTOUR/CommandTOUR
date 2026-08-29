@@ -10,10 +10,20 @@ import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
+import { useNav } from '../../../../../context/NavContext'
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
   IconCheck,
+  IconLayoutDashboard,
+  IconUsers,
+  IconCalendar,
+  IconPlane,
+  IconClipboardList,
+  IconCheckbox,
+  IconNotes,
+  IconFolder,
+  IconVideo,
 } from '@tabler/icons-react'
 
 const GLASS = {
@@ -210,6 +220,38 @@ export default function EventPage() {
   const [todayScheduleItems, setTodayScheduleItems] = useState([])
   const [travelToday, setTravelToday] = useState(0)
   const [travelDates, setTravelDates] = useState({ earliestArrival: null, latestDeparture: null })
+  const { setNav, clearNav } = useNav()
+
+  useEffect(() => {
+    if (!event && !tour) return
+    setNav({
+      backLabel: tour?.name || 'Tour',
+      backHref: `/tours/${id}`,
+      title: event ? `${event.city || ''}${event.city && event.country ? ', ' : ''}${event.country || ''}` : 'Event',
+      activeTab: activeTab,
+      onTabChange: (tab) => {
+        setActiveTab(tab)
+        router.replace(`/tours/${id}/events/${eventId}?tab=${tab}`, { scroll: false })
+      },
+      items: [
+        { label: 'Overview', tab: 'overview', icon: IconLayoutDashboard },
+        { label: 'Shows', tab: 'shows', icon: IconVideo, count: event?.shows?.length || undefined },
+        { label: 'Staffing', tab: 'staffing', icon: IconUsers },
+        { label: 'Travel', tab: 'travel', icon: IconPlane, children: [
+          { label: 'Arrivals', tab: 'arrivals' },
+          { label: 'Departures', tab: 'departures' },
+          { label: 'Hotel', tab: 'hotel' },
+          { label: 'Rental Cars', tab: 'rental' },
+          { label: 'Per Diem', tab: 'perdiem' },
+        ]},
+        { label: 'Schedule', tab: 'schedule', icon: IconCalendar },
+        { label: 'Tasks', tab: 'tasks', icon: IconCheckbox },
+        { label: 'Notes', tab: 'notes', icon: IconNotes },
+        { label: 'Files', tab: 'files', icon: IconFolder },
+      ],
+    })
+    return () => clearNav()
+  }, [event, tour, activeTab])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -406,7 +448,6 @@ export default function EventPage() {
   )
 
   const color = tour?.color || 'var(--accent)'
-  const tabs = ['Overview', 'Shows', 'Staffing', 'Travel', 'Schedule', 'Tasks', 'Notes', 'Files']
 
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
@@ -531,33 +572,6 @@ export default function EventPage() {
                 Edit Event
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Tab bar */}
-        <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0, marginBottom: 0 }}>
-          <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-            {tabs.map(tab => {
-              const active = activeTab === tab.toLowerCase()
-              return (
-                <button key={tab} onClick={() => {
-                  const key = tab.toLowerCase()
-                  setActiveTab(key)
-                  router.replace(`/tours/${id}/events/${eventId}?tab=${key}`, { scroll: false })
-                }}
-                  style={{
-                    fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
-                    background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
-                    color: active ? 'var(--color-info)' : 'var(--text-secondary)',
-                    cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
-                  }}>
-                  {tab}
-                  {tab === 'Shows' && shows.length > 0 && (
-                    <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-muted)' }}>({shows.length})</span>
-                  )}
-                </button>
-              )
-            })}
           </div>
         </div>
 
@@ -922,8 +936,8 @@ export default function EventPage() {
             <StaffingTab eventId={eventId} event={event} tourColor={color} />
           )}
 
-          {activeTab === 'travel' && (
-            <TravelHotelTab eventId={eventId} event={event} />
+          {['travel', 'arrivals', 'departures', 'hotel', 'rental', 'perdiem'].includes(activeTab) && (
+            <TravelHotelTab eventId={eventId} event={event} initialTab={activeTab === 'travel' ? 'arrivals' : activeTab} />
           )}
 
           {activeTab === 'schedule' && (

@@ -233,7 +233,7 @@ function FieldDivider() {
   return <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border-default)' }} />
 }
 
-export default function TravelHotelTab({ eventId, event }) {
+export default function TravelHotelTab({ eventId, event, initialTab }) {
   const [arrivals, setArrivals] = useState([])
   const [departures, setDepartures] = useState([])
   const [hotel, setHotel] = useState(null)
@@ -241,7 +241,7 @@ export default function TravelHotelTab({ eventId, event }) {
   const [tour, setTour] = useState(null)
   const [confirmedStaff, setConfirmedStaff] = useState([])
   const [loading, setLoading] = useState(true)
-  const [travelTab, setTravelTab] = useState('arrivals')
+  const [travelTab, setTravelTab] = useState(initialTab || 'arrivals')
   const [arrivalSort, setArrivalSort] = useState(() => {
     try { const s = localStorage.getItem(`arrival_sort_${eventId}`); return s ? JSON.parse(s) : { field: 'travel_date', dir: 'asc' } } catch { return { field: 'travel_date', dir: 'asc' } }
   })
