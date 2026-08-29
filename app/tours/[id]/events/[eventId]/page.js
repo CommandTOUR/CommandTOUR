@@ -23,7 +23,7 @@ import {
   IconCheckbox,
   IconNotes,
   IconFolder,
-  IconVideo,
+  IconTicket,
 } from '@tabler/icons-react'
 
 const GLASS = {
@@ -235,7 +235,7 @@ export default function EventPage() {
       },
       items: [
         { label: 'Overview', tab: 'overview', icon: IconLayoutDashboard },
-        { label: 'Shows', tab: 'shows', icon: IconVideo, count: event?.shows?.length || undefined },
+        { label: 'Shows', tab: 'shows', icon: IconTicket, count: event?.shows?.length || undefined },
         { label: 'Staffing', tab: 'staffing', icon: IconUsers },
         { label: 'Travel', tab: 'travel', icon: IconPlane, children: [
           { label: 'Arrivals', tab: 'arrivals' },

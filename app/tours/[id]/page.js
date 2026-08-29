@@ -1,17 +1,25 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../../lib/supabase'
 import TourCalendar from '../../../components/TourCalendar'
 import StaffingGrid from '../../../components/StaffingGrid'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
+import { useNav } from '../../../context/NavContext'
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
   IconClock,
   IconCheck,
   IconUserQuestion,
+  IconLayoutDashboard,
+  IconCalendar,
+  IconUsers,
+  IconPlane,
+  IconBuildingStadium,
+  IconFolder,
+  IconList,
 } from '@tabler/icons-react'
 
 // Determine the date that decides whether an event is "past": latest show date,
@@ -254,6 +262,8 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
 export default function TourPage() {
   const router = useRouter()
   const { id } = useParams()
+  const searchParams = useSearchParams()
+  const { setNav, clearNav } = useNav()
   const [tour, setTour] = useState(null)
   const [events, setEvents] = useState([])
   const [eventShows, setEventShows] = useState({})
@@ -266,6 +276,35 @@ export default function TourPage() {
   const [unconfirmedStaffCount, setUnconfirmedStaffCount] = useState(0)
   const [thisWeekEvents, setThisWeekEvents] = useState([])
   const [eventTravelMap, setEventTravelMap] = useState({})
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab) setActiveTab(tab)
+  }, [])
+
+  useEffect(() => {
+    if (!tour) return
+    setNav({
+      backLabel: 'Tours',
+      backHref: '/tours',
+      title: tour.name,
+      activeTab: activeTab,
+      onTabChange: (tab) => {
+        setActiveTab(tab)
+        router.replace(`/tours/${id}?tab=${tab}`, { scroll: false })
+      },
+      items: [
+        { label: 'Overview', tab: 'overview', icon: IconLayoutDashboard },
+        { label: 'Schedule', tab: 'schedule', icon: IconCalendar },
+        { label: 'Staffing', tab: 'staffing', icon: IconUsers },
+        { label: 'Travel', tab: 'travel', icon: IconPlane },
+        { label: 'Calendar', tab: 'calendar', icon: IconCalendar },
+        { label: 'Venues', tab: 'venues', icon: IconBuildingStadium },
+        { label: 'Files', tab: 'files', icon: IconFolder },
+      ],
+    })
+    return () => clearNav()
+  }, [tour, activeTab])
 
   const todayDate = new Date()
   const todayStr = ymd(todayDate)
@@ -399,7 +438,6 @@ export default function TourPage() {
   )
 
   const color = tour.color || '#C9A84C'
-  const tabs = ['Overview', 'Schedule', 'Staffing', 'Travel', 'Calendar', 'Venues', 'Files']
   const tourStatusColor = TOUR_STATUS_COLORS[tour.status] || TOUR_STATUS_COLORS.upcoming
 
   return (
@@ -500,23 +538,6 @@ export default function TourPage() {
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 8, flexShrink: 0 }}>
-        {tabs.map(tab => {
-          const active = activeTab === tab.toLowerCase()
-          return (
-            <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())}
-              style={{
-                fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
-                background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
-                color: active ? 'var(--color-info)' : 'var(--text-secondary)',
-                cursor: 'pointer', transition: 'background 0.1s, color 0.1s',
-              }}>
-              {tab}
-            </button>
-          )
-        })}
-      </div>
 
       {/* Scrollable content */}
       <div style={{ flex: 1, minHeight: 0, overflowY: (activeTab === 'staffing' || activeTab === 'schedule' || activeTab === 'overview') ? 'hidden' : 'auto' }}>
