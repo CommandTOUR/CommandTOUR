@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { IconMapPin, IconPencil } from '@tabler/icons-react'
+import { IconMapPin, IconPencil, IconLayoutDashboard, IconBuildingStadium } from '@tabler/icons-react'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { useNav } from '../../../context/NavContext'
 
 const STATUS_PILL = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -121,6 +122,7 @@ function TextField({ label, value, editing, formKey, form, setForm, placeholder,
 export default function VenuePage() {
   const router = useRouter()
   const { venueId } = useParams()
+  const { setNav, clearNav } = useNav()
   const [venue, setVenue] = useState(null)
   const [pastEvents, setPastEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -163,6 +165,21 @@ export default function VenuePage() {
   }
 
   useEffect(() => { fetchVenue() }, [venueId])
+
+  useEffect(() => {
+    if (!venue) return
+    setNav({
+      backLabel: 'Venues',
+      backHref: '/venues',
+      title: venue.name,
+      activeTab: 'overview',
+      onTabChange: () => {},
+      items: [
+        { label: 'Overview', tab: 'overview', icon: IconLayoutDashboard },
+      ],
+    })
+    return () => clearNav()
+  }, [venue])
 
   // Load Google Maps
   useEffect(() => {
@@ -277,17 +294,6 @@ export default function VenuePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-
-      <div style={{ display: 'flex', alignItems: 'center', padding: '4px 4px 0', flexShrink: 0 }}>
-        <button
-          onClick={() => router.push('/venues')}
-          style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer', fontWeight: 400 }}
-          onMouseEnter={hoverBlue}
-          onMouseLeave={unhoverBlue}
-        >
-          ← Venues
-        </button>
-      </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
         <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 16 }}>

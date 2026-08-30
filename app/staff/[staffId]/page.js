@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
-import { IconPrinter, IconId, IconUserCircle, IconMail, IconPhone } from '@tabler/icons-react'
+import { IconPrinter, IconId, IconUserCircle, IconMail, IconPhone, IconUser } from '@tabler/icons-react'
+import { useNav } from '../../../context/NavContext'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -74,6 +75,7 @@ function UploadSlot({ label, url, icon: Icon, onPreview }) {
 export default function StaffProfile() {
   const router = useRouter()
   const { staffId } = useParams()
+  const { setNav, clearNav } = useNav()
   const [person, setPerson] = useState(null)
   const [staffAirports, setStaffAirports] = useState([])
   const [events, setEvents] = useState([])
@@ -140,7 +142,22 @@ export default function StaffProfile() {
     fetchData()
   }, [staffId])
 
-  const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
+  useEffect(() => {
+    if (!person) return
+    setNav({
+      backLabel: 'Staff',
+      backHref: '/staff',
+      title: `${person.first_name || ''} ${person.last_name || ''}`.trim(),
+      activeTab: 'overview',
+      onTabChange: () => {},
+      items: [
+        { label: 'Profile', tab: 'overview', icon: IconUser },
+      ],
+    })
+    return () => clearNav()
+  }, [person])
+
+  const fmt =(d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
 
   const fmtDateRange = (start, end) => {
     if (!start) return '—'
@@ -212,8 +229,7 @@ export default function StaffProfile() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
-        <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 4px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => router.push(`/staff/${staffId}/edit`)} style={OUTLINE_BTN}>Edit Profile</button>
           <button

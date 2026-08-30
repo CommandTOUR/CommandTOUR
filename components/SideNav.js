@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   IconLayoutDashboard,
@@ -15,7 +15,7 @@ import {
   IconSettings,
   IconSun,
   IconMoon,
-  IconChevronLeft,
+  IconCornerUpLeft,
 } from '@tabler/icons-react'
 import { useNav } from '../context/NavContext'
 
@@ -45,6 +45,35 @@ const NAV = [
   },
 ]
 
+const NAV_ITEM = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '6px 8px', borderRadius: 8, cursor: 'pointer',
+  fontSize: 13, fontWeight: 400, marginBottom: 1,
+  transition: 'all 0.12s',
+}
+const NAV_ITEM_ACTIVE = {
+  ...NAV_ITEM,
+  background: 'rgba(26,86,219,0.10)',
+  color: 'var(--color-info)',
+  fontWeight: 600,
+}
+const NAV_ITEM_INACTIVE = {
+  ...NAV_ITEM,
+  background: 'transparent',
+  color: 'var(--text-primary)',
+}
+const SECTION_LABEL_STYLE = {
+  fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+  letterSpacing: '0.1em', color: 'var(--text-secondary)',
+  padding: '10px 10px 4px',
+}
+const SUB_ITEM = {
+  display: 'flex', alignItems: 'center',
+  padding: '6px 10px 6px 32px', borderRadius: 8, cursor: 'pointer',
+  fontSize: 12, fontWeight: 400, marginBottom: 1,
+  transition: 'all 0.12s',
+}
+
 export default function SideNav() {
   const pathname = usePathname()
   const router = useRouter()
@@ -70,6 +99,25 @@ export default function SideNav() {
 
   if (pathname === '/login') return null
 
+  const renderNavItem = (item) => {
+    const active = item.href === '/'
+      ? pathname === '/'
+      : pathname === item.href || pathname.startsWith(item.href)
+    const Icon = item.Icon
+    return (
+      <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+        <div
+          style={active ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}
+          onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'var(--glass-tile-hover)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+          onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+        >
+          <Icon size={16} stroke={active ? 2 : 1.5} aria-hidden="true" />
+          {item.label}
+        </div>
+      </Link>
+    )
+  }
+
   return (
     <nav style={{
       width: 200,
@@ -84,7 +132,7 @@ export default function SideNav() {
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '16px 14px 12px', borderBottom: '0.5px solid var(--border-default)' }}>
+      <div style={{ padding: '16px 14px 12px' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <img
             src={theme === 'dark' ? '/images/V1_CommandTOUR_Dark1.png' : '/images/V1_CommandTOUR_Light1.png'}
@@ -99,23 +147,33 @@ export default function SideNav() {
           {/* Back button */}
           <div
             onClick={() => router.push(navState.backHref)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 12px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13, borderRadius: 8, marginBottom: 4 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              margin: '8px 8px 4px', padding: '7px 14px', borderRadius: 8,
+              border: '0.5px solid var(--color-info)', background: 'transparent',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
-            <IconChevronLeft size={14} stroke={2} />
-            <span>{navState.backLabel}</span>
+            <IconCornerUpLeft size={13} stroke={2} color="var(--color-info)" />
+            <span style={{ fontSize: SECTION_LABEL_STYLE.fontSize, fontWeight: SECTION_LABEL_STYLE.fontWeight, textTransform: SECTION_LABEL_STYLE.textTransform, letterSpacing: SECTION_LABEL_STYLE.letterSpacing, color: 'var(--color-info)' }}>{navState.backLabel}</span>
           </div>
+
+          <div style={{ height: '0.5px', background: 'var(--border-default, #94a3b8)', margin: '0 8px 6px' }} />
 
           {/* Context title */}
           {navState.title && (
-            <div style={{ padding: '4px 12px 10px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', borderBottom: '0.5px solid var(--border-default)', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {navState.title}
-            </div>
+            <>
+              <div style={{ ...SECTION_LABEL_STYLE, padding: '4px 10px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {navState.title}
+              </div>
+              <div style={{ height: '0.5px', background: 'var(--border-default, #94a3b8)', margin: '0 8px 6px' }} />
+            </>
           )}
 
           {/* Nav items */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
             {navState.items.map(item => {
               const isActive = navState.activeTab === item.tab
               const isExpanded = expandedItems.includes(item.label)
@@ -132,29 +190,20 @@ export default function SideNav() {
                         navState.onTabChange(item.tab)
                       }
                     }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
-                      marginBottom: 2,
-                      background: isActive ? 'rgba(26,86,219,0.10)' : 'transparent',
-                      color: isActive ? 'var(--color-info)' : 'var(--text-secondary)',
-                      fontWeight: isActive ? 700 : 400,
-                      fontSize: 14,
-                      transition: 'all 0.15s',
-                    }}
+                    style={isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}
                     onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--glass-tile-hover)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
-                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)' } }}
                   >
                     {Icon && <Icon size={16} stroke={isActive ? 2 : 1.5} />}
                     <span style={{ flex: 1 }}>{item.label}</span>
                     {item.count !== undefined && (
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.count}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>{item.count}</span>
                     )}
                   </div>
 
                   {/* Children (sub-items) */}
                   {hasChildren && isExpanded && (
-                    <div style={{ paddingLeft: 28, marginBottom: 4 }}>
+                    <div>
                       {item.children.map(child => {
                         const childActive = navState.activeTab === child.tab
                         return (
@@ -162,10 +211,9 @@ export default function SideNav() {
                             key={child.tab}
                             onClick={() => navState.onTabChange(child.tab)}
                             style={{
-                              padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
-                              fontSize: 13, marginBottom: 2,
+                              ...SUB_ITEM,
                               background: childActive ? 'rgba(26,86,219,0.10)' : 'transparent',
-                              color: childActive ? 'var(--color-info)' : 'var(--text-secondary)',
+                              color: childActive ? 'var(--color-info)' : 'var(--text-primary)',
                               fontWeight: childActive ? 600 : 400,
                             }}
                             onMouseEnter={e => { if (!childActive) { e.currentTarget.style.background = 'var(--glass-tile-hover)' } }}
@@ -184,42 +232,17 @@ export default function SideNav() {
         </div>
       ) : (
         /* Nav sections */
-        NAV.map((group, gi) => (
-          <div key={group.section}>
-            {gi > 0 && <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '4px 10px' }} />}
-            <div style={{ padding: '8px 8px 4px' }}>
-              <div style={{
-                fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'var(--text-secondary)', padding: '0 6px', marginBottom: 3
-              }}>
-                {group.section}
-              </div>
-              {group.items.map(item => {
-                const active = item.href === '/'
-                  ? pathname === '/'
-                  : pathname === item.href || pathname.startsWith(item.href)
-                const Icon = item.Icon
-                return (
-                  <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center',
-                      gap: 8, padding: '6px 8px',
-                      borderRadius: 6, marginBottom: 1,
-                      fontSize: 14, fontWeight: active ? 600 : 400,
-                      color: active ? 'var(--color-info)' : 'var(--text-secondary)',
-                      background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
-                      cursor: 'pointer',
-                      transition: 'background 0.1s, color 0.1s',
-                    }}>
-                      <Icon size={14} stroke={1.75} style={{ flexShrink: 0, width: 16 }} aria-hidden="true" />
-                      {item.label}
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 8px' }}>
+          {NAV.map((group, i) => (
+            <React.Fragment key={group.section}>
+              {i > 0 && (
+                <div style={{ height: '1px', background: 'var(--border-default, #94a3b8)', margin: '6px 4px' }} />
+              )}
+              <div style={SECTION_LABEL_STYLE}>{group.section}</div>
+              {group.items.map(item => renderNavItem(item))}
+            </React.Fragment>
+          ))}
+        </div>
       )}
 
       {/* Bottom — theme toggle + user + settings */}
