@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { useNav } from '../../context/NavContext'
+import { buildNavEntry } from '../../lib/navigate'
 
 const GLASS_CARD = {
   background: 'var(--glass-tile-bg)',
@@ -42,6 +44,7 @@ function statusPillStyle(status) {
 
 export default function Tours() {
   const router = useRouter()
+  const { pushNav } = useNav()
 
   const [loading, setLoading] = useState(true)
   const [tours, setTours] = useState([])
@@ -219,7 +222,10 @@ export default function Tours() {
               return (
                 <div
                   key={tour.id}
-                  onClick={() => router.push(`/tours/${tour.id}`)}
+                  onClick={() => {
+                    pushNav(buildNavEntry(`/tours/${tour.id}`, tour.name, 'tour'))
+                    router.push(`/tours/${tour.id}`)
+                  }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                   style={{

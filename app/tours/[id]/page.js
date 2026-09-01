@@ -7,6 +7,7 @@ import TourCalendar from '../../../components/TourCalendar'
 import StaffingGrid from '../../../components/StaffingGrid'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 import { useNav } from '../../../context/NavContext'
+import { buildNavEntry } from '../../../lib/navigate'
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
@@ -263,7 +264,7 @@ export default function TourPage() {
   const router = useRouter()
   const { id } = useParams()
   const searchParams = useSearchParams()
-  const { setNav, clearNav } = useNav()
+  const { setNav, clearNav, pushNav } = useNav()
   const [tour, setTour] = useState(null)
   const [events, setEvents] = useState([])
   const [eventShows, setEventShows] = useState({})
@@ -284,6 +285,7 @@ export default function TourPage() {
 
   useEffect(() => {
     if (!tour) return
+    pushNav(buildNavEntry(`/tours/${id}`, tour.name, 'tour'))
     setNav({
       backLabel: 'Tours',
       backHref: '/tours',
@@ -504,7 +506,10 @@ export default function TourPage() {
             <>
               <div style={{ width: 1, height: 24, background: 'var(--border-default)' }} />
               <div
-                onClick={() => router.push(`/tours/${id}/events/${upcomingEvents[0].id}`)}
+                onClick={() => {
+                  pushNav(buildNavEntry(`/tours/${id}/events/${upcomingEvents[0].id}`, upcomingEvents[0].city || 'Event', 'event'))
+                  router.push(`/tours/${id}/events/${upcomingEvents[0].id}`)
+                }}
                 style={{ cursor: 'pointer' }}
               >
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Next Event</div>
@@ -587,7 +592,10 @@ export default function TourPage() {
                     return (
                       <div
                         key={ev.id}
-                        onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                        onClick={() => {
+                          pushNav(buildNavEntry(`/tours/${id}/events/${ev.id}`, ev.city || 'Event', 'event'))
+                          router.push(`/tours/${id}/events/${ev.id}`)
+                        }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
                         style={{ ...GLASS, padding: '14px 20px', display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px 100px 1px 100px', alignItems: 'center', gap: 12, cursor: 'pointer' }}
@@ -641,7 +649,10 @@ export default function TourPage() {
                     return (
                       <div
                         key={ev.id}
-                        onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                        onClick={() => {
+                          pushNav(buildNavEntry(`/tours/${id}/events/${ev.id}`, ev.city || 'Event', 'event'))
+                          router.push(`/tours/${id}/events/${ev.id}`)
+                        }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                         style={{ ...GLASS, padding: '12px 20px', display: 'grid', gridTemplateColumns: '80px 1fr 140px 100px 140px 100px', alignItems: 'center', gap: 16, cursor: 'pointer' }}
@@ -708,7 +719,10 @@ export default function TourPage() {
                         return (
                           <div
                             key={`${item.event.id}-${i}`}
-                            onClick={() => router.push(`/tours/${id}/events/${item.event.id}`)}
+                            onClick={() => {
+                              pushNav(buildNavEntry(`/tours/${id}/events/${item.event.id}`, item.event.city || 'Event', 'event'))
+                              router.push(`/tours/${id}/events/${item.event.id}`)
+                            }}
                             style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
                           >
                             <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -733,7 +747,10 @@ export default function TourPage() {
                         return (
                           <div
                             key={ev.id}
-                            onClick={() => router.push(`/tours/${id}/events/${ev.id}`)}
+                            onClick={() => {
+                              pushNav(buildNavEntry(`/tours/${id}/events/${ev.id}`, ev.city || 'Event', 'event'))
+                              router.push(`/tours/${id}/events/${ev.id}`)
+                            }}
                             style={{ ...GLASS, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', cursor: 'pointer' }}
                           >
                             <div style={{ width: 26, height: 26, borderRadius: 6, flexShrink: 0, background: 'var(--status-1hold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -860,7 +877,10 @@ export default function TourPage() {
                   return (
                     <div
                       key={event.id}
-                      onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
+                      onClick={() => {
+                        pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
+                        router.push(`/tours/${id}/events/${event.id}`)
+                      }}
                       style={{
                         ...GLASS,
                         display: 'grid',
@@ -926,7 +946,10 @@ export default function TourPage() {
                       return (
                         <div
                           key={event.id}
-                          onClick={() => router.push(`/tours/${id}/events/${event.id}`)}
+                          onClick={() => {
+                            pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
+                            router.push(`/tours/${id}/events/${event.id}`)
+                          }}
                           style={{
                             ...GLASS,
                             display: 'grid',
@@ -1071,7 +1094,10 @@ export default function TourPage() {
                     return (
                       <div
                         key={event.id}
-                        onClick={() => router.push(`/tours/${id}/events/${event.id}?tab=travel`)}
+                        onClick={() => {
+                          pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
+                          router.push(`/tours/${id}/events/${event.id}?tab=travel`)
+                        }}
                         style={{ ...GLASS, padding: '12px 14px', cursor: 'pointer', transition: 'background 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}

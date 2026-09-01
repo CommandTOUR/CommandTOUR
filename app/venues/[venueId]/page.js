@@ -6,6 +6,7 @@ import { IconMapPin, IconPencil, IconLayoutDashboard, IconBuildingStadium } from
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { useNav } from '../../../context/NavContext'
+import { buildNavEntry } from '../../../lib/navigate'
 
 const STATUS_PILL = {
   confirmed:   { color: '#33FF99', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -122,7 +123,7 @@ function TextField({ label, value, editing, formKey, form, setForm, placeholder,
 export default function VenuePage() {
   const router = useRouter()
   const { venueId } = useParams()
-  const { setNav, clearNav } = useNav()
+  const { setNav, clearNav, pushNav } = useNav()
   const [venue, setVenue] = useState(null)
   const [pastEvents, setPastEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -178,6 +179,11 @@ export default function VenuePage() {
         { label: 'Overview', tab: 'overview', icon: IconLayoutDashboard },
       ],
     })
+    pushNav(buildNavEntry(
+      `/venues/${venueId}`,
+      venue.name,
+      'venue'
+    ))
     return () => clearNav()
   }, [venue])
 

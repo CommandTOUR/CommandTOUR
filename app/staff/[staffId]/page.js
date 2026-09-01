@@ -6,6 +6,7 @@ import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { IconPrinter, IconId, IconUserCircle, IconMail, IconPhone, IconUser } from '@tabler/icons-react'
 import { useNav } from '../../../context/NavContext'
+import { buildNavEntry } from '../../../lib/navigate'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -75,7 +76,7 @@ function UploadSlot({ label, url, icon: Icon, onPreview }) {
 export default function StaffProfile() {
   const router = useRouter()
   const { staffId } = useParams()
-  const { setNav, clearNav } = useNav()
+  const { setNav, clearNav, pushNav } = useNav()
   const [person, setPerson] = useState(null)
   const [staffAirports, setStaffAirports] = useState([])
   const [events, setEvents] = useState([])
@@ -154,6 +155,11 @@ export default function StaffProfile() {
         { label: 'Profile', tab: 'overview', icon: IconUser },
       ],
     })
+    pushNav(buildNavEntry(
+      `/staff/${staffId}`,
+      `${person.first_name || ''} ${person.last_name || ''}`.trim(),
+      'staff'
+    ))
     return () => clearNav()
   }, [person])
 

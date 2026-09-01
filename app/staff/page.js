@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '../../lib/supabase'
 import { IconSettings } from '@tabler/icons-react'
+import { useNav } from '../../context/NavContext'
+import { buildNavEntry } from '../../lib/navigate'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -15,6 +17,7 @@ const GLASS = {
 
 export default function StaffPage() {
   const router = useRouter()
+  const { pushNav } = useNav()
   const [allStaff, setAllStaff] = useState([])
   const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -200,7 +203,10 @@ export default function StaffPage() {
                 return (
                   <div
                     key={person.id}
-                    onClick={() => router.push(`/staff/${person.id}`)}
+                    onClick={() => {
+                      pushNav(buildNavEntry(`/staff/${person.id}`, name, 'staff'))
+                      router.push(`/staff/${person.id}`)
+                    }}
                     style={{ ...GLASS, padding: '10px 14px', cursor: 'pointer', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}

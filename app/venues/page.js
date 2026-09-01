@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconMapPin } from '@tabler/icons-react'
 import { getSupabase } from '../../lib/supabase'
+import { useNav } from '../../context/NavContext'
+import { buildNavEntry } from '../../lib/navigate'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -15,6 +17,7 @@ const GLASS = {
 
 export default function Venues() {
   const router = useRouter()
+  const { pushNav } = useNav()
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -123,7 +126,10 @@ export default function Venues() {
                 return (
                   <div
                     key={venue.id}
-                    onClick={() => router.push(`/venues/${venue.id}`)}
+                    onClick={() => {
+                      pushNav(buildNavEntry(`/venues/${venue.id}`, venue.name, 'venue'))
+                      router.push(`/venues/${venue.id}`)
+                    }}
                     style={{ ...GLASS, padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}

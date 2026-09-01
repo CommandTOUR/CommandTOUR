@@ -8,6 +8,8 @@ import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
 import { IconLock } from '@tabler/icons-react'
+import { useNav } from '../context/NavContext'
+import { buildNavEntry } from '../lib/navigate'
 
 // ── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -780,6 +782,7 @@ function BulkActionBar({ count, onSetStatus, onCopyToEvents, onClear }) {
 
 export default function StaffingGrid({ tourId, year, showPastEvents = false, searchQuery = '' }) {
   const router = useRouter()
+  const { pushNav } = useNav()
   const effectiveYear = year || new Date().getFullYear()
 
   const [departments, setDepartments] = useState([])
@@ -1605,7 +1608,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
               {filteredEvents.map((ev, i) => (
                 <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H4, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: ev.venue_name ? (isLightMode ? '#111111' : '#cccccc') : (isLightMode ? '#999999' : '#666666'), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px', cursor: ev.venue_id ? 'pointer' : 'default' }}
-                    onClick={() => { if (ev.venue_id) router.push(`/venues/${ev.venue_id}`) }}
+                    onClick={() => { if (ev.venue_id) { pushNav(buildNavEntry(`/venues/${ev.venue_id}`, ev.venue_name, 'venue')); router.push(`/venues/${ev.venue_id}`) } }}
                     onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
                     {ev.venue_name || '—'}

@@ -11,6 +11,7 @@ import NotesTab from '../../../../../components/NotesTab'
 import FilesTab from '../../../../../components/FilesTab'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 import { useNav } from '../../../../../context/NavContext'
+import { buildNavEntry } from '../../../../../lib/navigate'
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
@@ -220,10 +221,15 @@ export default function EventPage() {
   const [todayScheduleItems, setTodayScheduleItems] = useState([])
   const [travelToday, setTravelToday] = useState(0)
   const [travelDates, setTravelDates] = useState({ earliestArrival: null, latestDeparture: null })
-  const { setNav, clearNav } = useNav()
+  const { setNav, clearNav, pushNav } = useNav()
 
   useEffect(() => {
     if (!event && !tour) return
+    pushNav(buildNavEntry(
+      `/tours/${id}/events/${eventId}`,
+      event ? `${event.city || ''}${event.city && event.country ? ', ' : ''}${event.country || ''}` : 'Event',
+      'event'
+    ))
     setNav({
       backLabel: tour?.name || 'Tour',
       backHref: `/tours/${id}`,
@@ -631,7 +637,10 @@ export default function EventPage() {
                     value: event.venue_name || 'TBC',
                     sub: venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : null,
                     color: 'var(--text-primary)',
-                    onClick: venue ? () => router.push(`/venues/${venue.id}`) : null,
+                    onClick: venue ? () => {
+                      pushNav(buildNavEntry(`/venues/${venue.id}`, venue.name || 'Venue', 'venue'))
+                      router.push(`/venues/${venue.id}`)
+                    } : null,
                     small: true,
                   },
                   {

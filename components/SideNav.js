@@ -18,6 +18,7 @@ import {
   IconCornerUpLeft,
 } from '@tabler/icons-react'
 import { useNav } from '../context/NavContext'
+import { isRootPage } from '../lib/navigate'
 
 const NAV = [
   {
@@ -78,7 +79,7 @@ export default function SideNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [theme, setTheme] = useState('light')
-  const { navState } = useNav()
+  const { navState, popNav, clearStack } = useNav()
   const [expandedItems, setExpandedItems] = useState([])
 
   const toggleExpand = (label) => {
@@ -89,6 +90,12 @@ export default function SideNav() {
     const saved = localStorage.getItem('theme') || 'light'
     setTheme(saved)
   }, [])
+
+  useEffect(() => {
+    if (isRootPage(pathname)) {
+      clearStack()
+    }
+  }, [pathname])
 
   const handleThemeToggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -146,7 +153,10 @@ export default function SideNav() {
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           {/* Back button */}
           <div
-            onClick={() => router.push(navState.backHref)}
+            onClick={() => {
+              popNav()
+              router.push(navState.backHref)
+            }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               margin: '8px 8px 4px', padding: '7px 14px', borderRadius: 8,

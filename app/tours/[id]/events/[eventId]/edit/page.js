@@ -5,10 +5,14 @@ import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../../components/TopNav'
 import { getSupabase } from '../../../../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { useNav } from '../../../../../../context/NavContext'
+import { buildNavEntry } from '../../../../../../lib/navigate'
+import { IconLayoutDashboard } from '@tabler/icons-react'
 
 export default function EditEvent() {
   const router = useRouter()
   const { id, eventId } = useParams()
+  const { setNav, clearNav, pushNav } = useNav()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -76,6 +80,22 @@ export default function EditEvent() {
     }
     fetchData()
   }, [eventId])
+
+  useEffect(() => {
+    if (loading) return
+    setNav({
+      backLabel: form.city || 'Event',
+      backHref: `/tours/${id}/events/${eventId}`,
+      title: 'Edit Event',
+      activeTab: 'edit',
+      onTabChange: () => {},
+      items: [
+        { label: 'Edit Event', tab: 'edit', icon: IconLayoutDashboard },
+      ],
+    })
+    pushNav(buildNavEntry(`/tours/${id}/events/${eventId}/edit`, 'Edit Event', 'edit'))
+    return () => clearNav()
+  }, [loading])
 
   const handleCountryChange = (val) => {
     set('country', val)
@@ -174,14 +194,6 @@ export default function EditEvent() {
       <div style={{ marginTop: 62, padding: 28 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <button
-            onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-          >
-            ← Back
-          </button>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Edit Event</div>
         </div>
 

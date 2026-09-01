@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../../lib/supabase'
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconLayoutDashboard } from '@tabler/icons-react'
+import { useNav } from '../../../../context/NavContext'
+import { buildNavEntry } from '../../../../lib/navigate'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -149,6 +151,7 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
 export default function EditTour() {
   const router = useRouter()
   const { id } = useParams()
+  const { setNav, clearNav, pushNav } = useNav()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -237,6 +240,22 @@ export default function EditTour() {
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
+
+  useEffect(() => {
+    if (loading) return
+    setNav({
+      backLabel: form.name || 'Tour',
+      backHref: `/tours/${id}`,
+      title: 'Edit Tour',
+      activeTab: 'edit',
+      onTabChange: () => {},
+      items: [
+        { label: 'Edit Tour', tab: 'edit', icon: IconLayoutDashboard },
+      ],
+    })
+    pushNav(buildNavEntry(`/tours/${id}/edit`, 'Edit Tour', 'edit'))
+    return () => clearNav()
+  }, [loading])
 
   const handleSaveStaffing = async () => {
     const supabase = getSupabase()
