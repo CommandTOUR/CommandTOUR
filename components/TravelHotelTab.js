@@ -284,6 +284,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
   useEffect(() => { fetchAll() }, [eventId])
 
   const fetchAll = async () => {
+    try {
     const supabase = getSupabase()
     const [arrRes, depRes, hotelRes, roomsRes, staffRes, tourRes, rentalRes, staffTravelRes] = await Promise.all([
       supabase.from('event_travel_arrivals').select('*, staff(first_name, last_name)').eq('event_id', eventId),
@@ -424,7 +425,11 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       setRentalCars(rentalRes.data || [])
     }
 
-    setLoading(false)
+    } catch (e) {
+      console.error('fetchAll error:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const sortRows = (rows, sort) => [...rows].sort((a, b) => {
@@ -471,42 +476,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     }
   }
 
-  const syncTravelType = async (staffId) => {
-    const supabase = getSupabase()
-    const arrivalRow = arrivals.find(a => a.staff_id === staffId)
-    const departureRow = departures.find(d => d.staff_id === staffId)
-
-    const arrivalType = arrivalRow?.travel_type || null
-    const departureType = departureRow?.travel_type || null
-
-    let travelType = 'na'
-    let arrivalMode = null
-    let departureMode = null
-
-    if (arrivalType && departureType) {
-      if (arrivalType === departureType) {
-        travelType = arrivalType
-      } else {
-        travelType = 'multiple'
-        arrivalMode = arrivalType
-        departureMode = departureType
-      }
-    } else if (arrivalType) {
-      travelType = arrivalType
-    } else if (departureType) {
-      travelType = departureType
-    }
-
-    // TODO: ALTER TABLE event_staff_travel ADD COLUMN arrival_mode text; ADD COLUMN departure_mode text;
-    await supabase.from('event_staff_travel').upsert([{
-      event_id: eventId,
-      staff_id: staffId,
-      travel_type: travelType,
-      arrival_mode: arrivalMode,
-      departure_mode: departureMode,
-    }], { onConflict: 'event_id,staff_id', ignoreDuplicates: false })
-  }
-
   const handleUpdateArrival = async (row, field, value) => {
     const s = getSupabase()
     if (row.id == null) {
@@ -520,7 +489,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', row.id)
       if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
     }
-    if (field === 'travel_type') syncTravelType(row.staff_id)
     fetchAll()
   }
   const handleUpdateDeparture = async (row, field, value) => {
@@ -536,7 +504,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', row.id)
       if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
     }
-    if (field === 'travel_type') syncTravelType(row.staff_id)
     fetchAll()
   }
   const handleRemoveArrival = async (id) => {
