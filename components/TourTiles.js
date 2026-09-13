@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getSupabase } from '../lib/supabase'
 import { getEventCompletionDate } from '../lib/eventDates'
 import { formatLocation } from '@/lib/locationFormat'
+import { IconRoute } from '@tabler/icons-react'
 
 export default function TourTiles() {
   const [tours, setTours] = useState([])
@@ -112,9 +113,7 @@ export default function TourTiles() {
               {tour.region}
             </div>
           </div>
-          {tour.logo_url && (
-            <img src={tour.logo_url} alt={tour.name} style={{ height: 52, width: 'auto', maxWidth: 70, objectFit: 'contain', flexShrink: 0 }} />
-          )}
+          <IconRoute size={22} stroke={1.5} color={tour.color || 'var(--color-info)'} />
         </div>
 
         {/* Stats row */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { IconRoute } from '@tabler/icons-react'
 import { getSupabase } from '@/lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { useNav } from '../../context/NavContext'
@@ -24,16 +25,14 @@ const shortDate = (dateStr) => {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`
 }
 
-function initials(name) {
-  return (name || '')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('')
-}
-
 const STATUS_LABELS = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }
+
+const TOUR_TYPE_LABELS = {
+  'hwmt': 'Hot Wheels Monster Trucks Live',
+  'hwss': 'Hot Wheels Stunt Show',
+  'hwmtl': 'Hot Wheels Monster Trucks Live',
+}
+const getTourTypeLabel = (type) => TOUR_TYPE_LABELS[type?.toLowerCase()] || type || ''
 
 function statusPillStyle(status) {
   if (status === 'active') return { background: 'var(--accent-bg)', color: 'var(--accent-text)', border: '0.5px solid var(--accent-border)' }
@@ -231,30 +230,19 @@ export default function Tours() {
                   style={{
                     ...GLASS_CARD,
                     display: 'grid',
-                    gridTemplateColumns: '40px 4px 1fr 180px 76px',
+                    gridTemplateColumns: '44px 1fr 180px 76px',
                     alignItems: 'center',
                     gap: 0,
-                    padding: '10px 14px',
+                    padding: '14px 16px',
                     cursor: 'pointer',
                   }}
                 >
-                  {tour.logo_url ? (
-                    <img src={tour.logo_url} alt={tour.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'contain' }} />
-                  ) : (
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 8,
-                      background: `color-mix(in srgb, ${tour.color || 'var(--accent)'} 10%, transparent)`,
-                      color: tour.color || 'var(--accent)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 700,
-                    }}>
-                      {initials(tour.name)}
-                    </div>
-                  )}
-
-                  <div style={{ width: 4, borderRadius: 2, alignSelf: 'stretch', marginLeft: 14, background: tour.color || 'var(--accent)' }} />
+                  <IconRoute size={44} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
 
                   <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+                      {getTourTypeLabel(tour.tour_type)}
+                    </div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>

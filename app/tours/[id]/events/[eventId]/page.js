@@ -23,6 +23,7 @@ import {
   IconNotes,
   IconFolder,
   IconTicket,
+  IconMapPin,
 } from '@tabler/icons-react'
 
 const GLASS = {
@@ -106,14 +107,6 @@ function TravelTypeCell({ travelType, typeStyle, travelEntry, onChange }) {
   )
 }
 
-function initials(name) {
-  return (name || '')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('')
-}
 
 const STATUS_PILL = {
   confirmed:   { color: 'var(--status-confirmed-text)', background: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
@@ -123,6 +116,13 @@ const STATUS_PILL = {
   '3-hold':    { color: 'var(--status-3hold-text)',     background: 'var(--status-3hold-bg)',     border: 'var(--status-3hold-border)' },
   'date-hold': { color: 'var(--status-datehold-text)',  background: 'var(--status-datehold-bg)',  border: 'var(--status-datehold-border)' },
 }
+
+const TOUR_TYPE_LABELS = {
+  'hwmt': 'Hot Wheels Monster Trucks Live',
+  'hwss': 'Hot Wheels Stunt Show',
+  'hwmtl': 'Hot Wheels Monster Trucks Live',
+}
+const getTourTypeLabel = (type) => TOUR_TYPE_LABELS[type?.toLowerCase()] || type || ''
 
 const fmtStatus = (s) => {
   if (!s) return ''
@@ -716,21 +716,11 @@ export default function EventPage() {
 
           {/* Left: identity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {tour?.logo_url ? (
-              <img src={tour.logo_url} alt={tour.name} style={{ height: 48, width: 'auto', objectFit: 'contain', borderRadius: 8 }} />
-            ) : (
-              <div style={{
-                width: 48, height: 48, borderRadius: 8,
-                background: `color-mix(in srgb, ${color} 15%, transparent)`,
-                color: color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 700,
-              }}>
-                {initials(tour?.name)}
-              </div>
-            )}
-            <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, background: color }} />
+            <IconMapPin size={44} stroke={1.5} color={tour?.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+                {getTourTypeLabel(tour?.tour_type)}
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>
                   {formatLocation(event.city, event.state, event.country, 'full')}
