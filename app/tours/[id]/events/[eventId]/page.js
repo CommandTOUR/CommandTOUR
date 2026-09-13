@@ -284,7 +284,6 @@ export default function EventPage() {
   })
   const [staffingInternalTab, setStaffingInternalTab] = useState('roster')
   const [multipleModalStaff, setMultipleModalStaff] = useState(null) // { staffId, staffName }
-  const [multipleModalForm, setMultipleModalForm] = useState({ arrival_mode: 'flight', departure_mode: 'flight' })
   const [addingShow, setAddingShow] = useState(false)
   const [newShow, setNewShow] = useState({ show_date: '', notes: '' })
   const [newHour, setNewHour] = useState('7')
@@ -1201,8 +1200,8 @@ export default function EventPage() {
                         {/* Staff rows */}
                         {members.map((s) => {
                           const travelEntry = staffTravel.find(t => t.staff_id === s.staff_id)
-                          const travelType = travelEntry?.travel_type || 'flight'
-                          const typeStyle = TRAVEL_TYPE_COLORS[travelType] || TRAVEL_TYPE_COLORS.flight
+                          const travelType = travelEntry?.travel_type || 'na'
+                          const typeStyle = TRAVEL_TYPE_COLORS[travelType] || TRAVEL_TYPE_COLORS.na
                           const isDriving = travelType === 'driving'
                           const rowBg = isDriving ? 'rgba(168,85,247,0.04)' : 'transparent'
 
@@ -1255,10 +1254,6 @@ export default function EventPage() {
                                 onChange={e => {
                                   const val = e.target.value
                                   if (val === 'multiple') {
-                                    setMultipleModalForm({
-                                      arrival_mode: travelEntry?.arrival_mode || 'flight',
-                                      departure_mode: travelEntry?.departure_mode || 'flight',
-                                    })
                                     setMultipleModalStaff({ staffId: s.staff_id, staffName: `${s.staff?.first_name} ${s.staff?.last_name}` })
                                   } else {
                                     handleStaffTravelUpdate(s.staff_id, 'travel_type', val)
@@ -1358,7 +1353,7 @@ export default function EventPage() {
               </div>
               )}
 
-              {staffingInternalTab !== 'roster' && (
+              {staffingInternalTab !== 'roster' && event && (
                 <TravelHotelTab eventId={eventId} event={event} initialTab={staffingInternalTab} />
               )}
 
@@ -1372,37 +1367,7 @@ export default function EventPage() {
                     style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}
                   >
                     <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Multiple Transport — {multipleModalStaff.staffName}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Select separate transport modes for arrival and departure.</div>
-
-                    <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)', display: 'block', marginBottom: 6 }}>Arrival Transport</label>
-                      <select
-                        value={multipleModalForm.arrival_mode}
-                        onChange={e => setMultipleModalForm(p => ({ ...p, arrival_mode: e.target.value }))}
-                        style={{ fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
-                      >
-                        <option value="flight">Flight</option>
-                        <option value="train">Train</option>
-                        <option value="bus">Bus</option>
-                        <option value="driving">Driving</option>
-                        <option value="na">N/A</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)', display: 'block', marginBottom: 6 }}>Departure Transport</label>
-                      <select
-                        value={multipleModalForm.departure_mode}
-                        onChange={e => setMultipleModalForm(p => ({ ...p, departure_mode: e.target.value }))}
-                        style={{ fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%' }}
-                      >
-                        <option value="flight">Flight</option>
-                        <option value="train">Train</option>
-                        <option value="bus">Bus</option>
-                        <option value="driving">Driving</option>
-                        <option value="na">N/A</option>
-                      </select>
-                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set this staff member&apos;s travel type to Multiple.</div>
 
                     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                       <button
@@ -1411,29 +1376,11 @@ export default function EventPage() {
                       >Cancel</button>
                       <button
                         onClick={async () => {
-                          const supabase = getSupabase()
-                          const existing = staffTravel.find(t => t.staff_id === multipleModalStaff.staffId)
-                          if (existing) {
-                            await supabase.from('event_staff_travel').update({
-                              travel_type: 'multiple',
-                              arrival_mode: multipleModalForm.arrival_mode,
-                              departure_mode: multipleModalForm.departure_mode,
-                            }).eq('id', existing.id)
-                          } else {
-                            await supabase.from('event_staff_travel').insert([{
-                              event_id: eventId,
-                              staff_id: multipleModalStaff.staffId,
-                              travel_type: 'multiple',
-                              arrival_mode: multipleModalForm.arrival_mode,
-                              departure_mode: multipleModalForm.departure_mode,
-                            }])
-                          }
-                          const { data } = await supabase.from('event_staff_travel').select('*').eq('event_id', eventId)
-                          setStaffTravel(data || [])
+                          await handleStaffTravelUpdate(multipleModalStaff.staffId, 'travel_type', 'multiple')
                           setMultipleModalStaff(null)
                         }}
                         style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}
-                      >Save</button>
+                      >Set to Multiple</button>
                     </div>
                   </div>
                 </div>
