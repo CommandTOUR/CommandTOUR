@@ -10,15 +10,15 @@ const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
 const OVERLAY = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }
 
-const SECTION_LABEL = { fontSize: 15, fontWeight: 700, color: 'var(--color-info)' }
+const SECTION_LABEL = { fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }
 
-const ADD_BTN = { fontSize: 12, padding: '4px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
+const ADD_BTN = { fontSize: 14, padding: '4px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
 
-const CANCEL_BTN = { fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
+const CANCEL_BTN = { fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }
 
-const SYSTEM_INPUT = { fontSize: 14, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%' }
+const SYSTEM_INPUT = { fontSize: 16, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%' }
 
-const SYSTEM_SELECT = { fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-secondary)', outline: 'none', cursor: 'pointer', width: '100%', appearance: 'none', WebkitAppearance: 'none' }
+const SYSTEM_SELECT = { fontSize: 14, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-secondary)', outline: 'none', cursor: 'pointer', width: '100%', appearance: 'none', WebkitAppearance: 'none' }
 
 const TRAVEL_TYPE_STYLES = {
   flight:  { label: 'Flight',  bg: 'rgba(26,86,219,0.12)',  color: 'var(--color-info)',    border: '0.5px solid rgba(26,86,219,0.35)' },
@@ -29,7 +29,7 @@ const TRAVEL_TYPE_STYLES = {
 
 const TRAVEL_GRID = '1.2fr 0.7fr 0.7fr 1fr 0.8fr 0.7fr 1fr 1fr 60px'
 const TRAVEL_CELL = { display: 'flex', alignItems: 'center', overflow: 'hidden' }
-const TRAVEL_HEADER_CELL = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }
+const TRAVEL_HEADER_CELL = { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }
 
 const hoverBlue = e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }
 const unhoverBlue = e => { e.currentTarget.style.background = 'transparent' }
@@ -73,7 +73,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—', cente
   if (editing) {
     return (
       <input ref={inputRef} type={type}
-        style={{ fontSize: 13, padding: '6px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 15, padding: '6px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-info)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
         value={val}
         onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
@@ -83,7 +83,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—', cente
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 12, cursor: 'text', color: val ? 'var(--text-secondary)' : 'var(--text-muted)', minHeight: 18, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: centered ? 'center' : 'left' }}
+      style={{ fontSize: 14, cursor: 'text', color: val ? 'var(--text-secondary)' : 'var(--text-muted)', minHeight: 18, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: centered ? 'center' : 'left' }}
       onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'var(--border-default)' }}
       onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent' }}
     >
@@ -127,7 +127,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
   return (
     <div style={OVERLAY} onClick={onClose}>
       <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Select Staff</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>Select Staff</div>
         <input ref={inputRef}
           style={SYSTEM_INPUT}
           placeholder="Search by name..."
@@ -137,7 +137,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {results.map(s => (
             <div key={s.id} onClick={() => onSelect(s)}
-              style={{ padding: '9px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)' }}
+              style={{ padding: '9px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 16, color: 'var(--text-primary)' }}
               onMouseEnter={hoverRow}
               onMouseLeave={unhoverRow}
             >
@@ -175,7 +175,7 @@ function TravelTypeDropdown({ value, onChange }) {
       <div style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         padding: '3px 10px', borderRadius: 20,
-        fontSize: 11, fontWeight: 600, letterSpacing: '0.03em',
+        fontSize: 13, fontWeight: 600, letterSpacing: '0.03em',
         background: style.bg, color: style.color, border: style.border,
         userSelect: 'none', whiteSpace: 'nowrap', pointerEvents: 'none',
       }}>
@@ -213,7 +213,7 @@ function TravelTableHeader({ sortField, sortDir, onSort, type, onQuickSort }) {
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <button
           onClick={onQuickSort}
-          style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ fontSize: 13, fontWeight: 700, padding: '3px 8px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer', whiteSpace: 'nowrap' }}
         >Quick Sort</button>
       </div>
     </div>
@@ -223,8 +223,8 @@ function TravelTableHeader({ sortField, sortDir, onSort, type, onQuickSort }) {
 function RateField({ label, value }) {
   return (
     <div>
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtMoney(value)}</div>
+      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtMoney(value)}</div>
     </div>
   )
 }
@@ -289,11 +289,15 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     const fetchId = ++fetchIdRef.current
     const supabase = getSupabase()
     try {
-    const [arrRes, depRes, hotelRes, roomsRes, staffRes, tourRes, rentalRes] = await Promise.all([
+    const [arrRes, depRes, hotelRes, roomsRes] = await Promise.all([
       supabase.from('event_travel_arrivals').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_travel_departures').select('*, staff(first_name, last_name)').eq('event_id', eventId),
       supabase.from('event_hotel').select('*').eq('event_id', eventId).maybeSingle(),
       supabase.from('event_hotel_rooms').select('*, s1:staff_id_1(id, first_name, last_name), s2:staff_id_2(id, first_name, last_name)').eq('event_id', eventId),
+    ])
+    if (fetchId !== fetchIdRef.current) return
+
+    const [staffRes, tourRes, rentalRes] = await Promise.all([
       supabase.from('staff_assignments')
         .select(`
           staff_id,
@@ -696,7 +700,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     return total
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
 
   const ROOM_GRID = '1.2fr 1.2fr 0.8fr 0.7fr 0.7fr 1fr 24px'
   const eventDates = getEventDates()
@@ -710,7 +714,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', gap: 0 }}>
-      {saveError && <p style={{ color: 'var(--color-danger)', fontSize: 12, margin: 0 }}>{saveError}</p>}
+      {saveError && <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{saveError}</p>}
 
       {/* ARRIVALS */}
       {travelTab === 'arrivals' && (
@@ -735,7 +739,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {displayArrivals.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No arrivals yet. Confirm staff on the Staffing tab to auto-populate.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No arrivals yet. Confirm staff on the Staffing tab to auto-populate.</div>
               )}
               {displayArrivals.map((row, idx) => {
                 const isDriving = row.travel_type === 'driving'
@@ -751,7 +755,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                   >
                     <div style={{ ...TRAVEL_CELL, gap: 6 }}>
                       {showWarning && <WarningTriangle />}
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
+                      <span style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
                     </div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateArrival(row, 'travel_type', v)} /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateArrival(row, 'travel_date', v)} /></div>
@@ -761,7 +765,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateArrival(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
                     {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateArrival(row, 'transport', v)} placeholder="Transport" centered /></div>}
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveArrival(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                      <div onClick={() => handleRemoveArrival(row.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                     </div>
                   </div>
                 )
@@ -794,7 +798,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {displayDepartures.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No departures yet. Confirm staff on the Staffing tab to auto-populate.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No departures yet. Confirm staff on the Staffing tab to auto-populate.</div>
               )}
               {displayDepartures.map((row, idx) => {
                 const isDriving = row.travel_type === 'driving'
@@ -810,7 +814,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                   >
                     <div style={{ ...TRAVEL_CELL, gap: 6 }}>
                       {showWarning && <WarningTriangle />}
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
+                      <span style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
                     </div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateDeparture(row, 'travel_type', v)} /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateDeparture(row, 'travel_date', v)} /></div>
@@ -820,7 +824,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateDeparture(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
                     {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateDeparture(row, 'transport', v)} placeholder="Transport" centered /></div>}
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveDeparture(row.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                      <div onClick={() => handleRemoveDeparture(row.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                     </div>
                   </div>
                 )
@@ -857,7 +861,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {rentalCars.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rental cars added yet.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No rental cars added yet.</div>
               )}
               {rentalCars.map((car, idx) => {
                 const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -870,7 +874,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                   >
                     <div style={{ ...TRAVEL_CELL, gap: 6 }}>
                       {showWarning && <WarningTriangle />}
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {car.staff ? `${car.staff.first_name} ${car.staff.last_name}` : '—'}
                       </span>
                     </div>
@@ -882,7 +886,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.vendor} centered onSave={v => handleUpdateRental(car.id, 'vendor', v)} placeholder="Vendor" /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.confirmation_number} centered onSave={v => handleUpdateRental(car.id, 'confirmation_number', v)} placeholder="Conf #" /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveRental(car.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                      <div onClick={() => handleRemoveRental(car.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                     </div>
                   </div>
                 )
@@ -916,11 +920,11 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           {/* Hotel info strip — shows above the tile when hotel exists */}
           {hotel && (
             <div style={{ flexShrink: 0, display: 'flex', gap: 24, flexWrap: 'wrap', padding: '0 12px 8px' }}>
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Hotel</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.hotel_name || '—'}</div></div>
-              {hotel.address && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Address</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.address}</div></div>}
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check In</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_in_date)}</div></div>
-              <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check Out</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_out_date)}</div></div>
-              {hotel.notes && <div><div style={{ fontSize: 10, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.notes}</div></div>}
+              <div><div style={{ fontSize: 12, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Hotel</div><div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.hotel_name || '—'}</div></div>
+              {hotel.address && <div><div style={{ fontSize: 12, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Address</div><div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.address}</div></div>}
+              <div><div style={{ fontSize: 12, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check In</div><div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_in_date)}</div></div>
+              <div><div style={{ fontSize: 12, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Check Out</div><div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{fmtDate(hotel.check_out_date)}</div></div>
+              {hotel.notes && <div><div style={{ fontSize: 12, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Notes</div><div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{hotel.notes}</div></div>}
             </div>
           )}
 
@@ -928,7 +932,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {rooms.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 13, color: 'var(--text-muted)' }}>No rooms added yet.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No rooms added yet.</div>
               )}
               {rooms.map((room, idx) => {
                 const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -938,10 +942,10 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = rowBg }}
                   >
-                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_1' })} style={{ fontSize: 15, cursor: 'pointer', color: room.s1 ? 'var(--text-primary)' : 'var(--color-info)' }}>
                       {room.s1 ? `${room.s1.first_name} ${room.s1.last_name}` : '+ Assign'}
                     </div>
-                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 13, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--color-info)' }}>
+                    <div onClick={() => setRoomStaffPicker({ roomId: room.id, slot: 'staff_id_2' })} style={{ fontSize: 15, cursor: 'pointer', color: room.s2 ? 'var(--text-primary)' : 'var(--color-info)' }}>
                       {room.s2 ? `${room.s2.first_name} ${room.s2.last_name}` : '+ Assign'}
                     </div>
                     <select value={room.room_type || 'Double'} onChange={e => handleUpdateRoom(room.id, 'room_type', e.target.value)} style={SYSTEM_SELECT}>
@@ -950,23 +954,23 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     <EditableCell value={room.check_in_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
                     <EditableCell value={room.check_out_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
                     <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
-                    <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 16, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                    <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                   </div>
                 )
               })}
               <div style={{ padding: '8px 12px', borderTop: rooms.length > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
-                <span onClick={handleAddRoom} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add room</span>
+                <span onClick={handleAddRoom} style={{ fontSize: 15, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add room</span>
               </div>
 
               {/* Unroomed staff */}
               {unroomedStaff.length > 0 && (
                 <div style={{ padding: '12px 12px 16px', borderTop: '0.5px solid var(--border-default)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
                       Unroomed Staff ({unroomedStaff.length})
                     </div>
                     {selectedUnroomed.length > 0 && (
-                      <button onClick={handleAddSelectedToRooming} className="btn-primary" style={{ fontSize: 12, padding: '5px 12px' }}>
+                      <button onClick={handleAddSelectedToRooming} className="btn-primary" style={{ fontSize: 14, padding: '5px 12px' }}>
                         Add {selectedUnroomed.length} to Rooming List
                       </button>
                     )}
@@ -977,7 +981,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                       return (
                         <div key={s.id}
                           onClick={() => setSelectedUnroomed(prev => prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id])}
-                          style={{ ...GLASS, padding: '6px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, ...(selected ? { border: '0.5px solid var(--color-info)', background: 'rgba(26,86,219,0.10)' } : null), transition: 'all 0.15s' }}
+                          style={{ ...GLASS, padding: '6px 14px', fontSize: 15, cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, ...(selected ? { border: '0.5px solid var(--color-info)', background: 'rgba(26,86,219,0.10)' } : null), transition: 'all 0.15s' }}
                         >
                           <Checkbox checked={selected} onClick={() => {}} />
                           {s.first_name} {s.last_name}
@@ -998,7 +1002,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
 
           {!perDiemRates ? (
             <div style={{ ...GLASS, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set meal rates to get started.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set meal rates to get started.</div>
               <button onClick={() => setShowRatesModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
             </div>
           ) : (
@@ -1006,19 +1010,19 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
 
               {/* LEFT — Per Diem Breakout (scrollable) */}
               <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2, flexShrink: 0 }}>Per Diem Breakout</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2, flexShrink: 0 }}>Per Diem Breakout</div>
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', ...GLASS }}>
                   {/* Column headers */}
                   <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: '1.4fr 1fr 60px 80px', gap: '0 6px', padding: '12px 16px 6px', borderBottom: '0.5px solid var(--border-default)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Name</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Days on Site</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'center' }}>+1 Day</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right' }}>Total</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Name</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Days on Site</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'center' }}>+1 Day</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right' }}>Total</div>
                   </div>
                 {/* Scrollable rows */}
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                   {perDiemStaff.length === 0 && (
-                    <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-muted)' }}>No eligible staff yet.</div>
+                    <div style={{ padding: '16px', fontSize: 15, color: 'var(--text-muted)' }}>No eligible staff yet.</div>
                   )}
                   {perDiemStaff.map((entry, idx) => {
                     const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -1028,19 +1032,19 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = rowBg }}
                       >
-                        <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{entry.staff ? `${entry.staff.first_name} ${entry.staff.last_name}` : '—'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatStaffDays(entry.staff_id)}</div>
+                        <div style={{ fontSize: 15, color: 'var(--text-primary)' }}>{entry.staff ? `${entry.staff.first_name} ${entry.staff.last_name}` : '—'}</div>
+                        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{formatStaffDays(entry.staff_id)}</div>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                           <Checkbox checked={!!entry.extra_day} onClick={() => handleToggleExtraDay(entry.id, entry.extra_day)} />
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>{fmtMoney(calcStaffPerDiem(entry))}</div>
+                        <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>{fmtMoney(calcStaffPerDiem(entry))}</div>
                       </div>
                     )
                   })}
                 </div>
                 {/* Footer */}
                 <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderTop: '0.5px solid var(--border-default)' }}>
-                  <span onClick={() => setShowEligibleModal(true)} style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add staff</span>
+                  <span onClick={() => setShowEligibleModal(true)} style={{ fontSize: 15, color: 'var(--color-info)', cursor: 'pointer' }}>+ Add staff</span>
                 </div>
                 </div>
               </div>
@@ -1050,7 +1054,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
 
                 {/* TOP RIGHT — Per Diem Totals */}
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Per Diem Totals</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Per Diem Totals</div>
                   <div style={{ ...GLASS, padding: '16px', flexShrink: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     {[
@@ -1059,44 +1063,44 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                       { label: 'Dinner', value: perDiemRates.dinner_rate },
                     ].map(r => (
                       <div key={r.label} style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 3 }}>{r.label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{fmtMoney(r.value)}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 3 }}>{r.label}</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{fmtMoney(r.value)}</div>
                       </div>
                     ))}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
                     <button
                       onClick={() => setShowRatesModal(true)}
-                      style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
+                      style={{ fontSize: 13, fontWeight: 700, padding: '3px 10px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
                     >Adjust Rates</button>
                   </div>
                   <div style={{ borderTop: '0.5px solid var(--border-default)', paddingTop: 12, textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Grand Total</div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-info)' }}>{fmtMoney(grandTotal)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Grand Total</div>
+                    <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--color-info)' }}>{fmtMoney(grandTotal)}</div>
                   </div>
                   </div>
                 </div>
 
                 {/* BOTTOM RIGHT — Meals Provided */}
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Meals Provided</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Meals Provided</div>
                   <div style={{ ...GLASS, padding: '16px', flexShrink: 0 }}>
                   {eventDates.length === 0 ? (
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No event dates.</div>
+                    <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>No event dates.</div>
                   ) : (
                     <div>
                       {/* Date headers */}
                       <div style={{ display: 'grid', gridTemplateColumns: `1fr 1fr 1fr 1fr`, gap: '0 4px', marginBottom: 6 }}>
                         <div />
                         {['Breakfast', 'Lunch', 'Dinner'].map(l => (
-                          <div key={l} style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center' }}>{l}</div>
+                          <div key={l} style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center' }}>{l}</div>
                         ))}
                       </div>
                       {eventDates.map((d, di) => {
                         const m = perDiemMeals.find(pm => pm.meal_date === d)
                         return (
                           <div key={d} style={{ display: 'grid', gridTemplateColumns: `1fr 1fr 1fr 1fr`, gap: '0 4px', alignItems: 'center', padding: '6px 0', background: 'transparent', borderTop: di === 0 ? 'none' : '0.5px solid var(--border-default)' }}>
-                            <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fmtDateHeader(d)}</div>
+                            <div style={{ fontSize: 15, color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fmtDateHeader(d)}</div>
                             <div style={{ display: 'flex', justifyContent: 'center' }}>
                               <Checkbox checked={!!m?.breakfast_provided} onClick={() => handleToggleMeal(d, 'breakfast_provided')} />
                             </div>
@@ -1124,10 +1128,10 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {editingHotel && (
         <div style={OVERLAY} onClick={() => setEditingHotel(false)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
+            <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
             {[{ label: 'Hotel Name', key: 'hotel_name', type: 'text' }, { label: 'Address', key: 'address', type: 'text' }, { label: 'Check In', key: 'check_in_date', type: 'date' }, { label: 'Check Out', key: 'check_out_date', type: 'date' }, { label: 'Notes', key: 'notes', type: 'text' }].map(f => (
               <div key={f.key}>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
                 <input type={f.type} style={SYSTEM_INPUT} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
@@ -1148,10 +1152,10 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {showRatesModal && (
         <div style={OVERLAY} onClick={() => setShowRatesModal(false)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 360, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Set Meal Rates</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Set Meal Rates</div>
             {[{ label: 'Breakfast Rate', key: 'breakfast_rate' }, { label: 'Lunch Rate', key: 'lunch_rate' }, { label: 'Dinner Rate', key: 'dinner_rate' }].map(f => (
               <div key={f.key}>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
                 <input type="number" step="0.01" style={SYSTEM_INPUT} value={ratesForm[f.key]} onChange={e => setRatesForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
@@ -1162,7 +1166,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                 onMouseEnter={hoverBlue}
                 onMouseLeave={unhoverBlue}
               >Cancel</button>
-              <button onClick={handleSaveRates} style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Save</button>
+              <button onClick={handleSaveRates} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Save</button>
             </div>
           </div>
         </div>
@@ -1173,8 +1177,8 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
         <div style={OVERLAY} onClick={() => setShowEligibleModal(false)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 400, maxHeight: 480, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Per Diem Eligible Staff</div>
-              <div onClick={() => setShowEligibleModal(false)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer' }}>×</div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Per Diem Eligible Staff</div>
+              <div onClick={() => setShowEligibleModal(false)} style={{ fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer' }}>×</div>
             </div>
             <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {confirmedStaff.map(s => {
@@ -1188,7 +1192,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     onMouseLeave={unhoverRow}
                   >
                     <Checkbox checked={checked} onClick={() => {}} />
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{s.first_name} {s.last_name}</span>
+                    <span style={{ fontSize: 16, color: 'var(--text-primary)' }}>{s.first_name} {s.last_name}</span>
                   </div>
                 )
               })}
@@ -1203,51 +1207,51 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {editingRental === 'new' && (
         <div style={OVERLAY} onClick={() => setEditingRental(null)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 520, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Add Rental Car</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Add Rental Car</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Driver (Staff)</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Driver (Staff)</label>
                 <select style={SYSTEM_INPUT} value={rentalForm.staff_id} onChange={e => setRentalForm(p => ({ ...p, staff_id: e.target.value }))}>
                   <option value="">Unassigned</option>
                   {confirmedStaff.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Vendor</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Vendor</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.vendor} onChange={e => setRentalForm(p => ({ ...p, vendor: e.target.value }))} placeholder="Enterprise, Hertz, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Date</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Date</label>
                 <input type="date" style={SYSTEM_INPUT} value={rentalForm.pickup_date} onChange={e => setRentalForm(p => ({ ...p, pickup_date: e.target.value }))} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Date</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Date</label>
                 <input type="date" style={SYSTEM_INPUT} value={rentalForm.return_date} onChange={e => setRentalForm(p => ({ ...p, return_date: e.target.value }))} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Location</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Location</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.pickup_location} onChange={e => setRentalForm(p => ({ ...p, pickup_location: e.target.value }))} placeholder="Airport, hotel, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Location</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Location</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.return_location} onChange={e => setRentalForm(p => ({ ...p, return_location: e.target.value }))} placeholder="Airport, hotel, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Car Class</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Car Class</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.car_class} onChange={e => setRentalForm(p => ({ ...p, car_class: e.target.value }))} placeholder="Economy, SUV, Van, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Confirmation #</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Confirmation #</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.confirmation_number} onChange={e => setRentalForm(p => ({ ...p, confirmation_number: e.target.value }))} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Notes</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Notes</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.notes} onChange={e => setRentalForm(p => ({ ...p, notes: e.target.value }))} placeholder="Optional notes..." />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditingRental(null)} style={CANCEL_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Cancel</button>
-              <button onClick={handleAddRental} style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Add Rental Car</button>
+              <button onClick={handleAddRental} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Add Rental Car</button>
             </div>
           </div>
         </div>

@@ -72,7 +72,7 @@ function TravelTypeCell({ travelType, typeStyle, travelEntry, onChange }) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: typeStyle.bg, color: typeStyle.color, border: `0.5px solid ${typeStyle.border}`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 8px', borderRadius: 20, fontSize: 13, fontWeight: 600, background: typeStyle.bg, color: typeStyle.color, border: `0.5px solid ${typeStyle.border}`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           {typeStyle.label}
           <svg width="8" height="8" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3 }}>
             <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -91,7 +91,7 @@ function TravelTypeCell({ travelType, typeStyle, travelEntry, onChange }) {
           <option value="multiple">Multiple</option>
         </select>
         {travelType === 'multiple' && hovered && (
-          <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: 'var(--text-primary)', whiteSpace: 'nowrap', zIndex: 50, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', zIndex: 50, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
             <div style={{ marginBottom: 3 }}>
               <span style={{ color: 'var(--text-muted)' }}>Arrival: </span>
               <span>{travelEntry?.arrival_mode || 'Not set'}</span>
@@ -136,7 +136,7 @@ const timeSelectStyle = {
   border: '0.5px solid var(--border-strong)',
   borderRadius: 6,
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 15,
   padding: '4px 8px',
   cursor: 'pointer'
 }
@@ -147,7 +147,7 @@ const ampmActiveStyle = {
   border: '1px solid var(--accent-border)',
   borderRadius: 6,
   padding: '4px 10px',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 600,
   cursor: 'pointer'
 }
@@ -158,7 +158,7 @@ const ampmInactiveStyle = {
   border: '0.5px solid var(--border-default)',
   borderRadius: 6,
   padding: '4px 10px',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 600,
   cursor: 'pointer'
 }
@@ -217,7 +217,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
       {editing ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-            style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--accent)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
+            style={{ fontSize: 15, padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--accent)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
           <select value={editHour} onChange={e => setEditHour(e.target.value)} style={timeSelectStyle}>
             {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
           </select>
@@ -226,20 +226,20 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
           </select>
           <button onClick={() => setEditAmPm('AM')} style={editAmPm === 'AM' ? ampmActiveStyle : ampmInactiveStyle}>AM</button>
           <button onClick={() => setEditAmPm('PM')} style={editAmPm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
-          <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
+          <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: 14, padding: '4px 12px' }}>{saving ? '...' : 'Save'}</button>
           <button onClick={() => { setEditing(false); setEditDate(show.show_date || ''); initTimeFromShow() }}
-            style={{ fontSize: 12, padding: '4px 12px', borderRadius: 7, border: '0.5px solid var(--border-strong)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+            style={{ fontSize: 14, padding: '4px 12px', borderRadius: 7, border: '0.5px solid var(--border-strong)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
         </div>
       ) : (
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
-          <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 1 }}>Show {index + 1}</div>
+          <div style={{ fontSize: 17, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
             {fmtLong(show.show_date)}
             {fmtTime(show.show_time)
               ? <> · {fmtTime(show.show_time)}</>
               : <span
                   onClick={() => { setEditing(true); setEditDate(show.show_date || '') }}
-                  style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 6, cursor: 'pointer' }}
+                  style={{ fontSize: 15, color: 'var(--text-muted)', marginLeft: 6, cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
                 >· Set time</span>
@@ -258,7 +258,7 @@ function ShowRow({ show, index, fmtLong, fmtTime, onToggleComplete, onDelete, on
               <path d="M13.879 3.121a3 3 0 1 1 4.243 4.243l-9 9a2 2 0 0 1-.847.514l-4 1a1 1 0 0 1-1.23-1.23l1-4a2 2 0 0 1 .514-.847l9-9z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <div onClick={() => onDelete(show.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
+          <div onClick={() => onDelete(show.id)} style={{ fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
         </div>
@@ -564,18 +564,6 @@ export default function EventPage() {
     setStaffTravel(data || [])
   }
 
-  useEffect(() => {
-    if (!arrivals || !assignedStaff || !staffTravel) return
-    assignedStaff.forEach(s => {
-      const travelEntry = staffTravel.find(t => t.staff_id === s.staff_id)
-      const arrival = arrivals.find(a => a.staff_id === s.staff_id)
-      if (arrival?.travel_type && (!travelEntry || !travelEntry.travel_type || travelEntry.travel_type === 'na')) {
-        handleStaffTravelUpdate(s.staff_id, 'travel_type', arrival.travel_type)
-      }
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [arrivals, assignedStaff, staffTravel])
-
   const fetchAssignedStaff = async () => {
     const supabase = getSupabase()
     const { data } = await supabase
@@ -635,11 +623,11 @@ export default function EventPage() {
   }
 
   if (loading) return (
-    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 16 }}>Loading...</div>
   )
 
   if (!event) return (
-    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Event not found.</div>
+    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 16 }}>Event not found.</div>
   )
 
   const color = tour?.color || 'var(--accent)'
@@ -696,7 +684,7 @@ export default function EventPage() {
   const toMinutes = (t) => { if (!t) return null; const [h,m] = t.split(':').map(Number); return h*60+m }
 
   const inputStyle = {
-    fontSize: 14,
+    fontSize: 16,
     padding: '8px 12px',
     borderRadius: 7,
     border: '1px solid var(--border-strong)',
@@ -718,15 +706,15 @@ export default function EventPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <IconMapPin size={44} stroke={1.5} color={tour?.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
                 {getTourTypeLabel(tour?.tour_type)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
                   {formatLocation(event.city, event.state, event.country, 'full')}
                 </div>
                 <span style={{
-                  fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
+                  fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 999,
                   color: (STATUS_PILL[event.status] || STATUS_PILL.tentative).color,
                   background: (STATUS_PILL[event.status] || STATUS_PILL.tentative).background,
                   border: `1px solid ${(STATUS_PILL[event.status] || STATUS_PILL.tentative).border}`,
@@ -734,7 +722,7 @@ export default function EventPage() {
                   {event.status ? fmtStatus(event.status) : 'Tentative'}
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
                 {event.venue_name && `${event.venue_name} · `}
                 {fmt(event.load_in_date)}
                 {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
@@ -745,12 +733,12 @@ export default function EventPage() {
           {/* Right: actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleDeleteEvent} style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>
+              <button onClick={handleDeleteEvent} style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>
                 Delete Event
               </button>
               <button
                 onClick={() => router.push(`/tours/${id}/events/${eventId}/edit`)}
-                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -840,12 +828,12 @@ export default function EventPage() {
                     onClick={stat.onClick}
                     style={{ ...GLASS, padding: '11px 13px', cursor: stat.onClick ? 'pointer' : 'default' }}
                   >
-                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
                       {stat.label}
                     </div>
                     <div style={{ fontSize: stat.small ? 16 : 24, fontWeight: 700, lineHeight: stat.small ? 1.3 : 1, color: stat.color }}>{stat.value}</div>
                     {stat.sub && (
-                      <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>{stat.sub}</div>
+                      <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>{stat.sub}</div>
                     )}
                   </div>
                 ))}
@@ -856,15 +844,15 @@ export default function EventPage() {
 
                 {/* Left column — Show Times */}
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                     Show Times
                   </div>
                   <div style={{ ...GLASS, padding: '16px 18px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                       {fmtShort(event.load_in_date)} – {fmtShort(event.load_out_date)}
                     </div>
                     {shows.length === 0 ? (
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No shows added yet</div>
+                      <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>No shows added yet</div>
                     ) : (
                       shows.map((show, i) => (
                         <div key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i === shows.length - 1 ? 'none' : '0.5px solid var(--border-default)' }}>
@@ -876,8 +864,8 @@ export default function EventPage() {
                             <div onClick={() => handleToggleComplete(show)} style={{ width: 17, height: 17, borderRadius: '50%', border: '1.5px solid var(--border-stronger)', background: 'transparent', cursor: 'pointer', flexShrink: 0 }} />
                           )}
                           <div>
-                            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Show {i + 1}</div>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Show {i + 1}</div>
+                            <div style={{ fontSize: 15, fontWeight: 500, color: show.completed ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: show.completed ? 'line-through' : 'none' }}>
                               {fmtShortDay(show.show_date)}{fmtTime(show.show_time) ? ` · ${fmtTime(show.show_time)}` : ''}
                             </div>
                           </div>
@@ -889,12 +877,12 @@ export default function EventPage() {
 
                 {/* Middle column — Day at a Glance */}
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                     Day at a Glance
                   </div>
                   <div style={{ ...GLASS, padding: '16px 18px' }}>
                     {glanceDateLabel && (
-                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                         {glanceDateLabel}
                       </div>
                     )}
@@ -907,10 +895,10 @@ export default function EventPage() {
                             if (!isGlanceDay) return null
                             return (
                               <div key={show.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '0.5px solid var(--border-default)' }}>
-                                <div style={{ fontSize: 11, color: 'var(--text-muted)', width: 52, flexShrink: 0, paddingTop: 1 }}>
+                                <div style={{ fontSize: 13, color: 'var(--text-muted)', width: 52, flexShrink: 0, paddingTop: 1 }}>
                                   {fmtTime(show.show_time) || '—'}
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                                <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>
                                   Show {i + 1}
                                 </div>
                               </div>
@@ -918,7 +906,7 @@ export default function EventPage() {
                           }).filter(Boolean)
                         ) : null}
                         {(shows.filter(s => s.show_date === glanceDate).length === 0) && (
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                          <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
                             {daysUntil !== null && daysUntil > 0
                               ? `${daysUntil} day${daysUntil === 1 ? '' : 's'} until load-in`
                               : 'No schedule items for this day.'}
@@ -942,10 +930,10 @@ export default function EventPage() {
                               borderBottom: isLast ? 'none' : '0.5px solid var(--border-default)',
                             }}
                           >
-                            <div style={{ fontSize: 11, width: 52, flexShrink: 0, paddingTop: 1, color: isNow ? 'var(--color-info)' : 'var(--text-muted)', fontWeight: isNow ? 600 : 400 }}>
+                            <div style={{ fontSize: 13, width: 52, flexShrink: 0, paddingTop: 1, color: isNow ? 'var(--color-info)' : 'var(--text-muted)', fontWeight: isNow ? 600 : 400 }}>
                               {fmtScheduleTime(item.time_start) || '—'}
                             </div>
-                            <div style={{ fontSize: 13, color: isNow ? 'var(--color-info)' : 'var(--text-primary)', fontWeight: isNow ? 600 : 400 }}>
+                            <div style={{ fontSize: 15, color: isNow ? 'var(--color-info)' : 'var(--text-primary)', fontWeight: isNow ? 600 : 400 }}>
                               {item.what || '—'}
                             </div>
                           </div>
@@ -954,7 +942,7 @@ export default function EventPage() {
                     )}
                     <div
                       onClick={() => setActiveTab('schedule')}
-                      style={{ fontSize: 12, color: 'var(--color-info)', cursor: 'pointer', marginTop: 10, display: 'block' }}
+                      style={{ fontSize: 14, color: 'var(--color-info)', cursor: 'pointer', marginTop: 10, display: 'block' }}
                       onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                       onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                     >View all days →</div>
@@ -965,7 +953,7 @@ export default function EventPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', minHeight: 0 }}>
 
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                       <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
                         <IconAlertTriangleFilled size={16} color="#FFD60A" />
                         <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
@@ -975,28 +963,28 @@ export default function EventPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {incompleteTasks === null && (
-                        <div style={{ ...GLASS, padding: '20px 22px', fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
+                        <div style={{ ...GLASS, padding: '20px 22px', fontSize: 15, color: 'var(--text-muted)' }}>Loading...</div>
                       )}
                       {incompleteTasks !== null && incompleteTasks.length === 0 && (
                         <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 }}>
                           <IconCheck size={20} color="var(--color-success)" />
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
                         </div>
                       )}
                       {incompleteTasks !== null && incompleteTasks.length > 0 && (
                         <div style={{ ...GLASS, padding: '20px 22px' }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>{incompleteTasks.length} Items</div>
+                          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>{incompleteTasks.length} Items</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {incompleteTasks.slice(0, 3).map(task => (
-                              <div key={task.id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>· {task.task_name}</div>
+                              <div key={task.id} style={{ fontSize: 14, color: 'var(--text-secondary)' }}>· {task.task_name}</div>
                             ))}
                             {incompleteTasks.length > 3 && (
-                              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>+ {incompleteTasks.length - 3} more</div>
+                              <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>+ {incompleteTasks.length - 3} more</div>
                             )}
                           </div>
                           <div
                             onClick={() => setActiveTab('tasks')}
-                            style={{ fontSize: 12, color: 'var(--accent)', cursor: 'pointer', marginTop: 10 }}
+                            style={{ fontSize: 14, color: 'var(--accent)', cursor: 'pointer', marginTop: 10 }}
                             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                           >View All Tasks →</div>
@@ -1006,27 +994,27 @@ export default function EventPage() {
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
                       Budget Overview
                     </div>
                     <div style={{ ...GLASS, padding: '16px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Event Budget</span>
-                        <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>$—</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Event Budget</span>
+                        <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>$—</span>
                       </div>
                       <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '10px 0' }} />
                       {['Total Budget', 'Spent to Date', 'Remaining'].map(lbl => (
-                        <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', padding: '4px 0' }}>
+                        <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', padding: '4px 0' }}>
                           <span>{lbl}</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                         </div>
                       ))}
                     </div>
                     <div style={{ ...GLASS, padding: '16px 20px', marginTop: 8 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Flagged Items</div>
-                      <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', padding: 16 }}>No flags at this time</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Flagged Items</div>
+                      <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', padding: 16 }}>No flags at this time</div>
                     </div>
-                    <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 450, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 8 }}>
+                    <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 8 }}>
                       Finance module coming soon
                     </div>
                   </div>
@@ -1039,10 +1027,10 @@ export default function EventPage() {
           {activeTab === 'shows' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>
+                <div style={{ fontSize: 17, fontWeight: 600 }}>
                   Show Dates
                   {shows.length > 0 && (
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>
+                    <span style={{ fontSize: 15, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>
                       ({completedShows}/{shows.length} complete)
                     </span>
                   )}
@@ -1056,14 +1044,14 @@ export default function EventPage() {
                 <div className="glass-card" style={{ padding: '18px 20px', marginBottom: 16, maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                      <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Date *</label>
+                      <label style={{ fontSize: 14, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Date *</label>
                       <input type="date" style={{ ...inputStyle, width: '100%' }} value={newShow.show_date} min={event.load_in_date || ''} onChange={e => setNewShow(p => ({ ...p, show_date: e.target.value }))} />
                       {newShow.show_date && event.load_in_date && newShow.show_date < event.load_in_date && (
-                        <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 4 }}>Show date cannot be before load-in date</div>
+                        <div style={{ fontSize: 14, color: 'var(--color-danger)', marginTop: 4 }}>Show date cannot be before load-in date</div>
                       )}
                     </div>
                     <div>
-                      <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Time</label>
+                      <label style={{ fontSize: 14, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Show Time</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <select value={newHour} onChange={e => setNewHour(e.target.value)} style={timeSelectStyle}>
                           {['1','2','3','4','5','6','7','8','9','10','11','12'].map(h => <option key={h} value={h}>{h}</option>)}
@@ -1077,13 +1065,13 @@ export default function EventPage() {
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Notes</label>
+                    <label style={{ fontSize: 14, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>Notes</label>
                     <input type="text" style={{ ...inputStyle, width: '100%' }} placeholder="Optional notes..." value={newShow.notes} onChange={e => setNewShow(p => ({ ...p, notes: e.target.value }))} />
                   </div>
                   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                     <button
                       onClick={() => { setAddingShow(false); setNewShow({ show_date: '', notes: '' }); setNewHour('7'); setNewMinute('30'); setNewAmPm('PM') }}
-                      style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
+                      style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-bg)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >Cancel</button>
@@ -1094,8 +1082,8 @@ export default function EventPage() {
 
               {shows.length === 0 && !addingShow && (
                 <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                  <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 6 }}>No shows added yet</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>Add individual show dates to track performances</div>
+                  <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 6 }}>No shows added yet</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 16 }}>Add individual show dates to track performances</div>
                   <button className="btn-primary" onClick={() => setAddingShow(true)}>+ Add Show</button>
                 </div>
               )}
@@ -1138,7 +1126,7 @@ export default function EventPage() {
                       key={t.key}
                       onClick={() => setStaffingInternalTab(t.key)}
                       style={{
-                        fontSize: 14, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                        fontSize: 16, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
                         background: staffingInternalTab === t.key ? 'rgba(26,86,219,0.08)' : 'transparent',
                         color: staffingInternalTab === t.key ? 'var(--color-info)' : 'var(--text-secondary)',
                         fontWeight: staffingInternalTab === t.key ? 600 : 400,
@@ -1154,16 +1142,16 @@ export default function EventPage() {
               {/* Sticky column headers — outside and above the tile */}
               <div style={{ flexShrink: 0, background: 'var(--page-bg)', zIndex: 10 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: STAFFING_GRID, gap: '0 6px', padding: '12px 16px 6px', alignItems: 'center' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Position</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Staff Member</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel In</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Out</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Type</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Hotel</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Per Diem</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Rental</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Good to Book</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Booked</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Position</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Staff Member</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel In</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Out</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Type</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Hotel</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Per Diem</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Rental</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Good to Book</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Booked</div>
                 </div>
               </div>
 
@@ -1184,7 +1172,7 @@ export default function EventPage() {
                       <div key={dept}>
                         {/* Department header */}
                         <div style={{ padding: '6px 14px', background: 'rgba(26,86,219,0.05)', borderTop: deptIdx === 0 ? 'none' : '0.5px solid var(--border-default)' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)' }}>{dept}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)' }}>{dept}</span>
                         </div>
 
                         {/* Staff rows */}
@@ -1206,12 +1194,12 @@ export default function EventPage() {
                               style={{ display: 'grid', gridTemplateColumns: STAFFING_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 16px', borderTop: '0.5px solid var(--border-default)', background: rowBg }}
                             >
                               {/* Position */}
-                              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {s.position?.title || '—'}
                               </div>
 
                               {/* Staff name */}
-                              <div style={{ fontSize: 13, color: statusColor(s.status), display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 8 }}>
+                              <div style={{ fontSize: 15, color: statusColor(s.status), display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 8 }}>
                                 {hasMismatch && <WarningTriangle />}
                                 {s.staff ? `${s.staff.first_name} ${s.staff.last_name}` : '—'}
                               </div>
@@ -1222,7 +1210,7 @@ export default function EventPage() {
                                   type="date"
                                   value={travelEntry?.travel_in_date || ''}
                                   onChange={e => handleStaffTravelUpdate(s.staff_id, 'travel_in_date', e.target.value)}
-                                  style={{ fontSize: 12, border: 'none', background: 'transparent', color: hasMismatch ? '#f59e0b' : 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
+                                  style={{ fontSize: 14, border: 'none', background: 'transparent', color: hasMismatch ? '#f59e0b' : 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
                                 />
                               </div>
 
@@ -1232,7 +1220,7 @@ export default function EventPage() {
                                   type="date"
                                   value={travelEntry?.travel_out_date || ''}
                                   onChange={e => handleStaffTravelUpdate(s.staff_id, 'travel_out_date', e.target.value)}
-                                  style={{ fontSize: 12, border: 'none', background: 'transparent', color: 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
+                                  style={{ fontSize: 14, border: 'none', background: 'transparent', color: 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
                                 />
                               </div>
 
@@ -1331,7 +1319,7 @@ export default function EventPage() {
                     return (
                       <div style={{ padding: '8px 14px', borderTop: '0.5px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <WarningTriangle />
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                           {mismatches.length} date mismatch{mismatches.length > 1 ? 'es' : ''} — travel in date doesn&apos;t match flight arrival date
                         </span>
                       </div>
@@ -1356,20 +1344,20 @@ export default function EventPage() {
                     onClick={e => e.stopPropagation()}
                     style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}
                   >
-                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Multiple Transport — {multipleModalStaff.staffName}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set this staff member&apos;s travel type to Multiple.</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Multiple Transport — {multipleModalStaff.staffName}</div>
+                    <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set this staff member&apos;s travel type to Multiple.</div>
 
                     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                       <button
                         onClick={() => setMultipleModalStaff(null)}
-                        style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                        style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
                       >Cancel</button>
                       <button
                         onClick={async () => {
                           await handleStaffTravelUpdate(multipleModalStaff.staffId, 'travel_type', 'multiple')
                           setMultipleModalStaff(null)
                         }}
-                        style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}
+                        style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}
                       >Set to Multiple</button>
                     </div>
                   </div>
