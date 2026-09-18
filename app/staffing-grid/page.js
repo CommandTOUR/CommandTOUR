@@ -36,10 +36,10 @@ export default function AllToursStaffingGridPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => router.push('/staff')}
-            style={{ fontSize: 12, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
+            style={{ fontSize: 14, padding: '6px 14px', borderRadius: 7, border: '1px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer', flexShrink: 0, fontWeight: 600 }}>
             ← Back to Staff
           </button>
-          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>
             All Tours Staffing Grid
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function AllToursStaffingGridPage() {
             onChange={e => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              fontSize: 13,
+              fontSize: 15,
               padding: '7px 14px',
               borderRadius: 8,
               border: '0.5px solid var(--border-default)',
@@ -69,7 +69,7 @@ export default function AllToursStaffingGridPage() {
           <button
             onClick={() => setShowPast(p => !p)}
             style={{
-              fontSize: 13, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+              fontSize: 15, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
               border: showPast ? 'none' : '0.5px solid var(--border-default)',
               background: showPast ? 'var(--color-info)' : 'transparent',
               color: showPast ? '#ffffff' : 'var(--text-secondary)',
@@ -82,7 +82,7 @@ export default function AllToursStaffingGridPage() {
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(Number(e.target.value))}
-              style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none', height: 34 }}>
+              style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none', height: 34 }}>
               {availableYears.map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}

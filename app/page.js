@@ -219,7 +219,7 @@ export default function Dashboard() {
 
       {/* Topbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Dashboard</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Dashboard</div>
         {now && (
           <div>
             <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>{formatClockDate(now)} · </span>
@@ -235,17 +235,17 @@ export default function Dashboard() {
             ...GLASS_CARD,
             padding: '11px 13px',
           }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
               {stat.label}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
+            <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Row 2: this week events */}
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
         This Week
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8, flexShrink: 0 }}>
@@ -254,7 +254,7 @@ export default function Dashboard() {
             gridColumn: '1 / -1',
             ...GLASS_CARD, padding: '10px 12px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 450, color: 'var(--text-muted)',
+            fontSize: 13, fontWeight: 450, color: 'var(--text-muted)',
           }}>
             No events this week
           </div>
@@ -272,25 +272,25 @@ export default function Dashboard() {
                 ...GLASS_CARD, padding: '10px 12px', cursor: 'pointer',
               }}
             >
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
                 {formatLocation(ev.city, ev.state, ev.country, 'compact')}
               </div>
-              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
                 {ev.load_out_date && ev.load_out_date !== ev.load_in_date
                   ? `${shortDate(ev.load_in_date)} – ${shortDate(ev.load_out_date)}`
                   : shortDate(ev.load_in_date)}
               </div>
               {ev.venue_name && (
-                <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
                   {ev.venue_name}
                 </div>
               )}
               {ev.num_shows != null && (
-                <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-muted)', marginTop: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-muted)', marginTop: 1 }}>
                   {ev.num_shows} {ev.num_shows === 1 ? 'show' : 'shows'}
                 </div>
               )}
-              <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: tour?.color || 'var(--text-secondary)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: tour?.color || 'var(--text-secondary)' }}>
                 {tour?.name ?? '—'}
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function Dashboard() {
             style={{
               ...GLASS_CARD, padding: '10px 12px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 450, color: 'var(--color-info)', cursor: 'pointer', textAlign: 'center',
+              fontSize: 15, fontWeight: 450, color: 'var(--color-info)', cursor: 'pointer', textAlign: 'center',
             }}
           >
             See all →
@@ -316,14 +316,14 @@ export default function Dashboard() {
 
         {/* Left: active tours list */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
             Active Tours
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-            {loading && <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
+            {loading && <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
             {!loading && !activeTours.length && (
-              <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>No active or upcoming tours.</div>
+              <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>No active or upcoming tours.</div>
             )}
             {activeTours.map(tour => {
               const stats = tourEventStats[tour.id] || { total: 0, done: 0, left: 0 }
@@ -348,16 +348,16 @@ export default function Dashboard() {
                   <IconRoute size={44} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
 
                   <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
                       {getTourTypeLabel(tour.tour_type)}
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2 }}>
+                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2 }}>
                       {nextEvent
                         ? <>
                             <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>Next: </span>
@@ -379,8 +379,8 @@ export default function Dashboard() {
                       { val: stats.left, lbl: 'Left' },
                     ].map(item => (
                       <div key={item.lbl} style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
                   </div>
@@ -395,7 +395,7 @@ export default function Dashboard() {
 
           {/* Needs attention */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
               <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
                 <IconAlertTriangleFilled size={16} color="#FFD60A" />
                 <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
@@ -407,7 +407,7 @@ export default function Dashboard() {
               {alerts.length === 0 && (
                 <div style={{ ...GLASS_CARD, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 14px' }}>
                   <IconCheck size={20} color="var(--color-success)" />
-                  <div style={{ fontSize: 11, fontWeight: 450, color: 'var(--text-muted)' }}>All clear</div>
+                  <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-muted)' }}>All clear</div>
                 </div>
               )}
               {alerts.map((alert, i) => {
@@ -430,10 +430,10 @@ export default function Dashboard() {
                       <Icon size={13} color={alert.color} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
-                      <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{alert.title}</div>
+                      <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>{alert.body}</div>
                       {alert.action && (
-                        <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
+                        <div style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, marginTop: 3, cursor: 'pointer' }}>
                           {alert.action}
                         </div>
                       )}
@@ -446,7 +446,7 @@ export default function Dashboard() {
 
           {/* Budget placeholder */}
           <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
               Budget Overview
             </div>
 
@@ -454,15 +454,15 @@ export default function Dashboard() {
               {activeTours.slice(0, 3).map(tour => (
                 <div key={tour.id} style={{ ...GLASS_CARD, padding: '10px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>{tour.name}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
+                    <span style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-secondary)' }}>{tour.name}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                   </div>
                   <div style={{ height: 2, background: 'var(--border-default)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: '0%', background: tour.color || 'var(--accent)' }} />
                   </div>
                 </div>
               ))}
-              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 450, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>
+              <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>
                 Finance module coming soon
               </div>
             </div>

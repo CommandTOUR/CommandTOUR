@@ -173,16 +173,16 @@ export default function EditEvent() {
   }
 
   const inputStyle = {
-    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8,
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '10px 14px', borderRadius: 8,
     border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)',
     color: '#f1f5f9', caretColor: '#33FF99', outline: 'none', width: '100%',
   }
-  const labelStyle = { fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
+  const labelStyle = { fontSize: 14, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <TopNav />
-      <div style={{ marginTop: 62, padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading...</div>
+      <div style={{ marginTop: 62, padding: 28, color: 'rgba(255,255,255,0.45)', fontSize: 16, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Loading...</div>
     </div>
   )
 
@@ -192,7 +192,7 @@ export default function EditEvent() {
       <div style={{ marginTop: 62, padding: 28 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Edit Event</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Edit Event</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -203,10 +203,10 @@ export default function EditEvent() {
             {selectedVenue ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
+                <div onClick={handleClearVenue} style={{ fontSize: 15, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
                   onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                   x Clear
@@ -228,8 +228,8 @@ export default function EditEvent() {
                         onMouseEnter={() => setVenueActiveIndex(i)}
                         onMouseLeave={() => setVenueActiveIndex(-1)}
                         style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
+                        <div style={{ fontSize: 16, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
+                        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
                       </div>
                     ))}
                   </div>
@@ -262,7 +262,7 @@ export default function EditEvent() {
                     <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }}
                       onMouseEnter={() => setCountryActiveIndex(i)}
                       onMouseLeave={() => setCountryActiveIndex(-1)}
-                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 16, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
                       {c}
                     </div>
                   ))}
@@ -306,7 +306,7 @@ export default function EditEvent() {
               <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 15, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -322,12 +322,12 @@ export default function EditEvent() {
             <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this event..." value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
-          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
+          {error && <div style={{ fontSize: 15, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}/events/${eventId}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>

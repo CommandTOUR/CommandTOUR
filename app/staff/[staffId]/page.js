@@ -21,14 +21,14 @@ const OUTLINE_BTN = {
   border: '0.5px solid var(--color-info)',
   color: 'var(--color-info)',
   borderRadius: 8,
-  fontSize: 13,
+  fontSize: 15,
   fontWeight: 400,
   padding: '9px 16px',
   cursor: 'pointer',
 }
 
 const labelStyle = {
-  fontSize: 10,
+  fontSize: 12,
   textTransform: 'uppercase',
   letterSpacing: '0.07em',
   color: 'var(--color-info)',
@@ -36,7 +36,7 @@ const labelStyle = {
 }
 
 const valueStyle = {
-  fontSize: 13,
+  fontSize: 15,
   color: 'var(--text-primary)',
 }
 
@@ -68,7 +68,7 @@ function UploadSlot({ label, url, icon: Icon, onPreview }) {
       style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 0, cursor: url ? 'pointer' : 'default' }}
     >
       <Icon size={36} stroke={1.5} color={url ? 'var(--color-info)' : 'var(--text-muted)'} />
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: url ? 'var(--color-info)' : 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: url ? 'var(--color-info)' : 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>{label}</div>
     </div>
   )
 }
@@ -199,7 +199,7 @@ export default function StaffProfile() {
         <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
       </div>
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+        <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
       </div>
     </div>
   )
@@ -210,7 +210,7 @@ export default function StaffProfile() {
         <button onClick={() => router.push('/staff')} style={OUTLINE_BTN}>← Staff</button>
       </div>
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Staff member not found.</div>
+        <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Staff member not found.</div>
       </div>
     </div>
   )
@@ -252,22 +252,22 @@ export default function StaffProfile() {
 
           {/* Hero tile */}
           <div style={{ ...GLASS, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(26,86,219,0.10)', border: '1.5px solid var(--color-info)', color: 'var(--color-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 600, flexShrink: 0 }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(26,86,219,0.10)', border: '1.5px solid var(--color-info)', color: 'var(--color-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 600, flexShrink: 0 }}>
               {initials}
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' }}>{fullName}</div>
-              <div style={{ fontSize: 14, color: 'var(--color-info)' }}>{person.staff_departments?.name || '—'}</div>
+              <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-primary)' }}>{fullName}</div>
+              <div style={{ fontSize: 16, color: 'var(--color-info)' }}>{person.staff_departments?.name || '—'}</div>
               <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
                 {person.email && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, color: 'var(--text-secondary)' }}>
                     <IconMail size={14} stroke={1.5} />
                     {person.email}
                   </div>
                 )}
                 {person.phone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, color: 'var(--text-secondary)' }}>
                     <IconPhone size={14} stroke={1.5} />
                     {person.phone}
                   </div>
@@ -276,20 +276,20 @@ export default function StaffProfile() {
             </div>
 
             <div style={{ ...GLASS, borderRadius: 10, padding: '14px 20px', minWidth: 220, textAlign: 'left' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>
                 NEXT EVENT
               </div>
               {nextEvent ? (
                 <>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
                     {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {nextEvent.tours?.name || '—'}
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
                     {fmtDateRange(nextEvent.load_in_date, nextEvent.load_out_date || showMap[nextEvent.id] || null)}
                   </div>
                 </>
               ) : (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>None scheduled</div>
+                <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>None scheduled</div>
               )}
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function StaffProfile() {
 
             {/* Column 1 — Basic Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Basic Info</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Basic Info</div>
               <div style={{ ...GLASS, padding: '18px 20px' }}>
                 <Field label="Legal name" value={fullName} />
                 <Field label="Date of birth" value={fmt(person.dob)} />
@@ -307,7 +307,7 @@ export default function StaffProfile() {
                 <div style={{ marginBottom: 14 }}>
                   <div style={labelStyle}>Email</div>
                   {person.email ? (
-                    <a href={`mailto:${person.email}`} style={{ fontSize: 13, color: 'var(--color-info)', textDecoration: 'none' }}>{person.email}</a>
+                    <a href={`mailto:${person.email}`} style={{ fontSize: 15, color: 'var(--color-info)', textDecoration: 'none' }}>{person.email}</a>
                   ) : (
                     <div style={valueStyle}>—</div>
                   )}
@@ -325,7 +325,7 @@ export default function StaffProfile() {
 
             {/* Column 2 — Travel */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Travel</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Travel</div>
               <div style={{ ...GLASS, padding: '18px 20px' }}>
                 <div style={{ marginBottom: 14 }}>
                   <div style={labelStyle}>Home airports</div>
@@ -333,9 +333,9 @@ export default function StaffProfile() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
                       {sortedAirports.map(airport => (
                         <div key={airport.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 13, color: airport.is_primary ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{airport.iata_code}</span>
-                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{[airport.city, airport.state].filter(Boolean).join(', ')}</span>
+                          <span style={{ fontSize: 15, color: airport.is_primary ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{airport.iata_code}</span>
+                          <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{[airport.city, airport.state].filter(Boolean).join(', ')}</span>
                         </div>
                       ))}
                     </div>
@@ -347,9 +347,9 @@ export default function StaffProfile() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
                       {sortedAirlines.map(a => (
                         <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 13, color: a.preferred ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{a.airline}</span>
-                          {a.frequent_flyer_number && <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>#{a.frequent_flyer_number}</span>}
+                          <span style={{ fontSize: 15, color: a.preferred ? '#FFD60A' : 'transparent', width: 14, flexShrink: 0 }}>★</span>
+                          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{a.airline}</span>
+                          {a.frequent_flyer_number && <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>#{a.frequent_flyer_number}</span>}
                         </div>
                       ))}
                     </div>
@@ -364,7 +364,7 @@ export default function StaffProfile() {
 
             {/* Column 3 — Passport */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Passport</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', paddingLeft: 2 }}>Passport</div>
               <div style={{ ...GLASS, padding: '18px 20px' }}>
                 <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
                   <UploadSlot label="Passport page" url={person.passport_image_url} icon={IconId} onPreview={setPreviewUrl} />
@@ -372,13 +372,13 @@ export default function StaffProfile() {
                 </div>
                 <div style={{ marginBottom: 0 }}>
                   <div style={labelStyle}>Date of expiration</div>
-                  <div style={{ fontSize: 13, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
+                  <div style={{ fontSize: 15, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
                     {formatPassportDate(person.passport_expiry)}
                   </div>
                 </div>
                 <button
                   onClick={() => setPassportExpanded(true)}
-                  style={{ marginTop: 8, fontSize: 12, color: 'var(--color-info)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+                  style={{ marginTop: 8, fontSize: 14, color: 'var(--color-info)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
                 >
                   Show all passport info →
                 </button>
@@ -389,20 +389,20 @@ export default function StaffProfile() {
 
           {/* Upcoming events */}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
               Upcoming Events ({upcomingEvents.length})
             </div>
             <div style={{ ...GLASS, padding: '18px 20px' }}>
             {upcomingEvents.length === 0 ? (
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No upcoming events</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>No upcoming events</div>
             ) : (
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.5fr 1.2fr 100px', gap: 8, padding: '0 12px 8px' }}>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Location</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dates</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Tour</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Position</div>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'right' }}>Status</div>
+                  <div style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Location</div>
+                  <div style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dates</div>
+                  <div style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Tour</div>
+                  <div style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Position</div>
+                  <div style={{ fontSize: 12, textTransform: 'uppercase', color: 'var(--text-muted)', textAlign: 'right' }}>Status</div>
                 </div>
                 {upcomingEvents.map((es, i) => {
                   const ev = es.events
@@ -420,21 +420,21 @@ export default function StaffProfile() {
                       onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? 'color-mix(in srgb, var(--surface-card) 50%, transparent)' : 'transparent' }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {formatLocation(ev.city, ev.state, ev.country, 'full')}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {fmtDateRange(ev.load_in_date, ev.load_out_date || showMap[ev.id] || null)}
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: ev.tours?.color || 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 15, fontWeight: 500, color: ev.tours?.color || 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {ev.tours?.name || '—'}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {es.tour_positions?.positions?.title || '—'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 5 }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 11, color: st.color }}>{st.label}</span>
+                        <span style={{ fontSize: 13, color: st.color }}>{st.label}</span>
                       </div>
                     </div>
                   )
@@ -446,25 +446,25 @@ export default function StaffProfile() {
 
           {/* Notes and flags */}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
               Notes & Flags
             </div>
             <div style={{ ...GLASS, padding: '18px 20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Internal notes</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Internal notes</div>
                 {person.notes ? (
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>{person.notes}</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>{person.notes}</div>
                 ) : (
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>No notes yet.</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-muted)', fontStyle: 'italic' }}>No notes yet.</div>
                 )}
               </div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Attention flag</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Attention flag</div>
                 {person.attention_flag ? (
-                  <div style={{ fontSize: 13, color: '#d97706' }}>⚠ {person.attention_note}</div>
+                  <div style={{ fontSize: 15, color: '#d97706' }}>⚠ {person.attention_note}</div>
                 ) : (
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>—</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>—</div>
                 )}
               </div>
             </div>
@@ -483,7 +483,7 @@ export default function StaffProfile() {
             <img src={previewUrl} alt="Document" style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain', display: 'block' }} />
             <button
               onClick={() => setPreviewUrl(null)}
-              style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: '50%', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', color: 'var(--text-primary)', fontSize: 16, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: '50%', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', color: 'var(--text-primary)', fontSize: 18, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >×</button>
           </div>
         </div>
@@ -498,43 +498,43 @@ export default function StaffProfile() {
             onClick={e => e.stopPropagation()}
             style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 440, maxWidth: '90vw', position: 'relative' }}
           >
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Passport Details</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Passport Details</div>
             <button
               onClick={() => setPassportExpanded(false)}
-              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', fontSize: 20, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}
             >×</button>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <div style={labelStyle}>Passport Number</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_number || '—'}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{person.passport_number || '—'}</div>
               </div>
               <div>
                 <div style={labelStyle}>Surname</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_surname || '—'}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{person.passport_surname || '—'}</div>
               </div>
               <div>
                 <div style={labelStyle}>Given Names</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_given_names || '—'}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{person.passport_given_names || '—'}</div>
               </div>
               <div>
                 <div style={labelStyle}>Nationality</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.passport_nationality || '—'}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{person.passport_nationality || '—'}</div>
               </div>
               <div>
                 <div style={labelStyle}>Place of Birth</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{person.place_of_birth || '—'}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{person.place_of_birth || '—'}</div>
               </div>
               <div>
                 <div style={labelStyle}>Date of Birth</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{formatPassportDate(person.dob)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{formatPassportDate(person.dob)}</div>
               </div>
               <div>
                 <div style={labelStyle}>Date of Issue</div>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{formatPassportDate(person.date_of_issue)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>{formatPassportDate(person.date_of_issue)}</div>
               </div>
               <div>
                 <div style={labelStyle}>Date of Expiration</div>
-                <div style={{ fontSize: 14, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
+                <div style={{ fontSize: 16, color: isExpiringSoon(person.passport_expiry) ? 'var(--color-danger)' : 'var(--text-primary)' }}>
                   {formatPassportDate(person.passport_expiry)}
                 </div>
               </div>

@@ -36,7 +36,7 @@ function EventBar({ event, faded, onClick }) {
       onMouseLeave={e => e.currentTarget.style.background = `color-mix(in srgb, ${event.tour_color} 18%, var(--surface-card))`}
     >
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: event.tour_color, flexShrink: 0 }} />
-      <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {formatLocation(event.city, event.state, event.country, 'compact')}
       </span>
     </div>
@@ -165,13 +165,13 @@ export default function Calendar() {
       {/* Sticky controls */}
       <div style={{ flexShrink: 0, paddingBottom: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, padding: '4px 4px 0' }}>
-          <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Calendar</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Calendar</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* View toggle */}
             <div style={{ display: 'flex', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, overflow: 'hidden' }}>
               {['month', 'week'].map(v => (
                 <button key={v} onClick={() => setView(v)} style={{
-                  fontSize: 13, padding: '6px 16px',
+                  fontSize: 15, padding: '6px 16px',
                   border: 'none', cursor: 'pointer', transition: 'all 0.15s',
                   background: view === v ? 'var(--color-info)' : 'transparent',
                   color: view === v ? '#ffffff' : 'var(--text-secondary)',
@@ -189,7 +189,7 @@ export default function Calendar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
                 onClick={view === 'month' ? prevMonth : prevWeek}
-                style={{ fontSize: 20, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ fontSize: 22, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--color-info)'}
                 onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
               >‹</button>
@@ -198,14 +198,14 @@ export default function Calendar() {
               </div>
               <button
                 onClick={view === 'month' ? nextMonth : nextWeek}
-                style={{ fontSize: 20, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ fontSize: 22, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--color-info)'}
                 onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
               >›</button>
             </div>
             <button
               onClick={goToday}
-              style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'color-mix(in srgb, var(--color-info) 10%, transparent)', color: 'var(--color-info)', cursor: 'pointer' }}
+              style={{ fontSize: 15, padding: '6px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'color-mix(in srgb, var(--color-info) 10%, transparent)', color: 'var(--color-info)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--color-info) 18%, transparent)'}
               onMouseLeave={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--color-info) 10%, transparent)'}
             >Today</button>
@@ -215,7 +215,7 @@ export default function Calendar() {
         {/* Tour filters */}
         {tours.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginRight: 4 }}>Tours:</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', marginRight: 4 }}>Tours:</span>
             {tours.map(t => {
               const on = activeTours.includes(t.id)
               return (
@@ -227,7 +227,7 @@ export default function Calendar() {
                   transition: 'all 0.15s',
                 }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: on ? t.color : 'var(--text-muted)' }} />
-                  <span style={{ fontSize: 13, color: on ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: on ? 500 : 400 }}>{t.name}</span>
+                  <span style={{ fontSize: 15, color: on ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: on ? 500 : 400 }}>{t.name}</span>
                 </div>
               )
             })}
@@ -238,13 +238,13 @@ export default function Calendar() {
       {/* Scrollable calendar area */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', paddingTop: 12 }}>
         {loading ? (
-          <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 16 }}>Loading...</div>
         ) : (
           <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-card)', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Day headers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--color-info)', borderBottom: '1px solid var(--border-default)', flexShrink: 0 }}>
               {DAYS.map(d => (
-                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{d}</div>
+                <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{d}</div>
               ))}
             </div>
 
@@ -264,7 +264,7 @@ export default function Calendar() {
                       background: isToday ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : (cell.inMonth ? 'var(--surface-card)' : 'var(--surface-raised)'),
                     }}>
                       <div style={{
-                        fontSize: 13, fontWeight: isToday ? 700 : 400,
+                        fontSize: 15, fontWeight: isToday ? 700 : 400,
                         color: isToday ? 'var(--color-info)' : cell.inMonth ? 'var(--text-primary)' : 'var(--text-muted)',
                         marginBottom: 4, textAlign: 'right', paddingRight: 2,
                         opacity: cell.inMonth ? 1 : 0.5,
@@ -274,7 +274,7 @@ export default function Calendar() {
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={!cell.inMonth} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 12, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}
@@ -299,13 +299,13 @@ export default function Calendar() {
                       background: isToday ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--surface-card)',
                     }}>
                       <div style={{ marginBottom: 6, textAlign: 'right', paddingRight: 2 }}>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
-                        <div style={{ fontSize: 20, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--text-primary)' }}>{cell.date.getDate()}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{DAYS[cell.date.getDay()]}</div>
+                        <div style={{ fontSize: 22, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--text-primary)' }}>{cell.date.getDate()}</div>
                       </div>
                       {visible.map(ev => <EventBar key={ev.id} event={ev} faded={false} onClick={navigateEvent} />)}
                       {overflow > 0 && (
                         <div onClick={() => { setOverflowDay(cell.dateStr); setOverflowEvents(dayEvents) }}
-                          style={{ fontSize: 10, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
+                          style={{ fontSize: 12, color: 'var(--color-info)', cursor: 'pointer', padding: '2px 7px' }}>
                           +{overflow} more
                         </div>
                       )}
@@ -325,7 +325,7 @@ export default function Calendar() {
           <div ref={overflowRef}
             style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 24, width: 320, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--text-muted)' }}>{fmt(overflowDay)}</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--text-muted)' }}>{fmt(overflowDay)}</div>
             {overflowEvents.map(ev => (
               <div key={ev.id} onClick={() => navigateEvent(ev)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', background: `${ev.tour_color}18`, border: `0.5px solid ${ev.tour_color}44` }}
@@ -333,16 +333,16 @@ export default function Calendar() {
                 onMouseLeave={e => e.currentTarget.style.background = `${ev.tour_color}18`}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tour_color, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>
+                  <div style={{ fontSize: 15, fontWeight: 500 }}>
                     {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{ev.tour_name}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{ev.tour_name}</div>
                 </div>
               </div>
             ))}
             <button
               onClick={() => setOverflowDay(null)}
-              style={{ fontSize: 13, padding: '8px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: 8 }}
+              style={{ fontSize: 15, padding: '8px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: 8 }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
             >Close</button>

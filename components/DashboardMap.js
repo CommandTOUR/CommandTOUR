@@ -97,7 +97,7 @@ export default function DashboardMap() {
             backdropFilter: 'blur(8px)',
           }}>
             <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1 }}>{stat.value}</div>
-            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2 }}>{stat.label}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2 }}>{stat.label}</div>
           </div>
         ))}
       </div>

@@ -1,11 +1,11 @@
-import { Inter } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import SideNav from '../components/SideNav'
 import { NavProvider } from '../context/NavContext'
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-dm-sans',
   display: 'swap',
 })
 
@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
           __html: `try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}`
         }} />
       </head>
-      <body className={inter.variable} style={{ margin: 0, padding: 0 }}>
+      <body className={dmSans.variable} style={{ margin: 0, padding: 0 }}>
         <NavProvider>
         <div style={{
           display: 'flex',

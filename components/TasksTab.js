@@ -36,7 +36,7 @@ function dueDateColor(dateStr, today) {
 }
 
 const addRowBtnStyle = {
-  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 12, padding: '6px 14px', borderRadius: 7, marginTop: 8,
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '6px 14px', borderRadius: 7, marginTop: 8,
   border: '0.5px dashed rgba(255,255,255,0.20)', background: 'transparent', color: '#64748b',
   cursor: 'pointer', alignSelf: 'flex-start',
 }
@@ -114,21 +114,21 @@ function BucketSection({ bucket, tasks, expanded, onToggleExpand, onToggleTask, 
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
           <path d="M2 4l4 4 4-4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>{bucket}</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>{bucket}</div>
         {dueDate && (
-          <div style={{ fontSize: 12, fontWeight: 400, color: dueDateColor(dueDate, today) }}>
+          <div style={{ fontSize: 14, fontWeight: 400, color: dueDateColor(dueDate, today) }}>
             · Due {fmtDueLabel(dueDate)}
           </div>
         )}
         <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 12, color: '#94a3b8' }}>{completed}/{total} complete</div>
+        <div style={{ fontSize: 14, color: '#94a3b8' }}>{completed}/{total} complete</div>
       </div>
       {expanded && (
         <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column' }}>
           {tasks.map(task => (
             <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
               <Checkbox checked={task.completed} onChange={() => onToggleTask(task.id, !task.completed)} />
-              <div style={{ fontSize: 13, color: task.completed ? '#64748b' : '#f1f5f9', textDecoration: task.completed ? 'line-through' : 'none', minWidth: 220 }}>
+              <div style={{ fontSize: 15, color: task.completed ? '#64748b' : '#f1f5f9', textDecoration: task.completed ? 'line-through' : 'none', minWidth: 220 }}>
                 {task.task_name}
               </div>
               <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -237,12 +237,12 @@ export default function TasksTab({ eventId, event }) {
     if (!error) setTasks(prev => [...prev, data])
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: '#94a3b8' }}>Loading tasks...</div>
+  if (loading) return <div style={{ fontSize: 16, color: '#94a3b8' }}>Loading tasks...</div>
 
   if (needsTemplateChoice) {
     return (
       <div style={{ maxWidth: 600 }}>
-        <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 16 }}>
+        <div style={{ fontSize: 16, color: '#94a3b8', marginBottom: 16 }}>
           This event doesn&apos;t have a tour type set. Choose a checklist template to get started:
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -276,10 +276,10 @@ export default function TasksTab({ eventId, event }) {
 
   return (
     <div style={{ width: '100%' }}>
-      {saveError && <p style={{ color: '#f87171', fontSize: 12, margin: '0 0 12px' }}>{saveError}</p>}
+      {saveError && <p style={{ color: '#f87171', fontSize: 14, margin: '0 0 12px' }}>{saveError}</p>}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>Tasks</div>
-        <div style={{ fontSize: 13, color: '#94a3b8' }}>{pct}% complete ({completed}/{total})</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Tasks</div>
+        <div style={{ fontSize: 15, color: '#94a3b8' }}>{pct}% complete ({completed}/{total})</div>
       </div>
       {buckets.map(bucket => (
         <BucketSection

@@ -45,7 +45,7 @@ const GLASS = {
 }
 
 const INPUT = {
-  fontSize: 14,
+  fontSize: 16,
   padding: '10px 14px',
   borderRadius: 8,
   border: '0.5px solid var(--border-default)',
@@ -57,7 +57,7 @@ const INPUT = {
 }
 
 const LABEL = {
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
@@ -71,7 +71,7 @@ const BTN_PRIMARY = {
   color: '#ffffff',
   border: 'none',
   borderRadius: 8,
-  fontSize: 13,
+  fontSize: 15,
   padding: '9px 18px',
   cursor: 'pointer',
 }
@@ -81,7 +81,7 @@ const BTN_GHOST = {
   border: '0.5px solid var(--color-info)',
   color: 'var(--color-info)',
   borderRadius: 8,
-  fontSize: 13,
+  fontSize: 15,
   padding: '8px 16px',
   cursor: 'pointer',
 }
@@ -89,8 +89,8 @@ const BTN_GHOST = {
 function SectionCard({ title, description, children }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 4 }}>{title}</div>
-      {description && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>{description}</div>}
+      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 4 }}>{title}</div>
+      {description && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 12 }}>{description}</div>}
       <div style={{ background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 14, boxShadow: 'var(--glass-tile-shadow)', padding: '20px 24px' }}>
         {children}
       </div>
@@ -118,14 +118,14 @@ function ColorSwatchPicker({ color, presets, onChange }) {
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Custom:</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Custom:</span>
             <input
               type="color"
               value={color}
               onChange={e => onChange(e.target.value)}
               style={{ width: 28, height: 28, borderRadius: 6, border: '0.5px solid var(--border-default)', cursor: 'pointer', padding: 2, background: 'transparent' }}
             />
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{color}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{color}</span>
           </div>
         </div>
       )}
@@ -463,7 +463,7 @@ export default function SettingsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '4px 4px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Settings</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Settings</div>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: '12px 0 0' }}>
@@ -492,7 +492,7 @@ export default function SettingsPage() {
               <SectionCard title="Email Address">
                 <label style={LABEL}>Email</label>
                 <input style={{ ...INPUT, opacity: 0.5, cursor: 'not-allowed' }} value={user?.email || ''} readOnly />
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Email cannot be changed here.</div>
+                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 8 }}>Email cannot be changed here.</div>
               </SectionCard>
 
               <SectionCard title="Change Password">
@@ -506,7 +506,7 @@ export default function SettingsPage() {
                     <input style={INPUT} type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Re-enter password" />
                   </div>
                   {pwMsg && (
-                    <div style={{ fontSize: 12, color: pwMsg.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)' }}>
+                    <div style={{ fontSize: 14, color: pwMsg.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)' }}>
                       {pwMsg.type === 'success' ? '✓ ' : ''}{pwMsg.text}
                     </div>
                   )}
@@ -537,7 +537,7 @@ export default function SettingsPage() {
                         }}
                       >
                         <Icon size={20} stroke={1.5} color={active ? 'var(--color-info)' : 'var(--text-secondary)'} />
-                        <div style={{ fontSize: 14, fontWeight: active ? 600 : 400, color: active ? 'var(--color-info)' : 'var(--text-primary)' }}>{lbl}</div>
+                        <div style={{ fontSize: 16, fontWeight: active ? 600 : 400, color: active ? 'var(--color-info)' : 'var(--text-primary)' }}>{lbl}</div>
                       </div>
                     )
                   })}
@@ -556,7 +556,7 @@ export default function SettingsPage() {
                 <select value={defaultLanding} onChange={e => handleDefaultLanding(e.target.value)} style={{ ...INPUT, width: 'auto', cursor: 'pointer' }}>
                   {LANDING_PAGES.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Requires sign out and back in to take effect.</div>
+                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 8 }}>Requires sign out and back in to take effect.</div>
               </SectionCard>
             </>
           )}
@@ -579,14 +579,14 @@ export default function SettingsPage() {
                       />
                       <button
                         onClick={() => handleDeleteDepartment(dept.id)}
-                        style={{ background: 'transparent', border: '0.5px solid var(--color-danger)', color: 'var(--color-danger)', borderRadius: 8, fontSize: 12, padding: '6px 12px', cursor: 'pointer' }}
+                        style={{ background: 'transparent', border: '0.5px solid var(--color-danger)', color: 'var(--color-danger)', borderRadius: 8, fontSize: 14, padding: '6px 12px', cursor: 'pointer' }}
                       >
                         Delete
                       </button>
                     </div>
                   ))}
                   {departments.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No departments found.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No departments found.</div>
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                     <input
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                   {regions.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No regions found.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No regions found.</div>
                   )}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                     <input
@@ -672,7 +672,7 @@ export default function SettingsPage() {
                     />
                   ))}
                   {venueTypes.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No venue types found.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No venue types found.</div>
                   )}
                 </div>
               </SectionCard>
@@ -685,7 +685,7 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {TOUR_TYPES.map(type => (
                     <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ width: 120, fontSize: 13, color: 'var(--text-secondary)', flexShrink: 0 }}>{type}</div>
+                      <div style={{ width: 120, fontSize: 15, color: 'var(--text-secondary)', flexShrink: 0 }}>{type}</div>
                       <select
                         value={templateDefaults[type] || ''}
                         onChange={e => handleTemplateDefault(type, e.target.value)}
@@ -697,7 +697,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                   {taskTemplates.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No task templates found. Create templates to enable this feature.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No task templates found. Create templates to enable this feature.</div>
                   )}
                 </div>
               </SectionCard>
@@ -707,7 +707,7 @@ export default function SettingsPage() {
                   {tours.map(tour => (
                     <div key={tour.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 16, height: 16, borderRadius: '50%', background: tour.color || 'var(--accent)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{tour.name}</div>
+                      <div style={{ flex: 1, fontSize: 15, color: 'var(--text-primary)' }}>{tour.name}</div>
                       <input
                         type="number"
                         style={{ ...INPUT, width: 80 }}
@@ -717,7 +717,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                   {tours.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No tours found.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No tours found.</div>
                   )}
                   <button onClick={handleSaveTourOrder} style={{ ...BTN_PRIMARY, alignSelf: 'flex-start', marginTop: 4 }}>
                     {tourOrderSaved ? '✓ Saved' : 'Save Order'}
@@ -729,7 +729,7 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {tours.map(tour => (
                     <div key={tour.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{tour.name}</div>
+                      <div style={{ flex: 1, fontSize: 15, color: 'var(--text-primary)' }}>{tour.name}</div>
                       <input
                         type="color"
                         style={{ width: 40, height: 28, padding: 0, border: '0.5px solid var(--border-default)', borderRadius: 6, cursor: 'pointer', background: 'transparent' }}
@@ -739,7 +739,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                   {tours.length === 0 && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No tours found.</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No tours found.</div>
                   )}
                   <button onClick={handleSaveTourColors} style={{ ...BTN_PRIMARY, alignSelf: 'flex-start', marginTop: 4 }}>
                     {tourColorsSaved ? '✓ Saved' : 'Save Colors'}
@@ -773,13 +773,13 @@ export default function SettingsPage() {
 
           {activeSection === 'booking' && (
             <SectionCard title="Defaults">
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Booking &amp; Contracts settings coming soon.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Booking &amp; Contracts settings coming soon.</div>
             </SectionCard>
           )}
 
           {activeSection === 'notifications' && (
             <SectionCard title="Alerts">
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Notification preferences coming soon.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Notification preferences coming soon.</div>
             </SectionCard>
           )}
 
@@ -788,11 +788,11 @@ export default function SettingsPage() {
               <SectionCard title="Current Users">
                 <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 110px 100px 80px', gap: '0 12px', padding: '0 0 10px' }}>
                   {['Name', 'Email', 'Role', 'Joined', 'Actions'].map(h => (
-                    <div key={h} style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+                    <div key={h} style={{ fontSize: 12.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                   ))}
                 </div>
                 {staffList.length === 0 && (
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>No users found.</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-muted)', padding: '8px 0' }}>No users found.</div>
                 )}
                 {staffList.map((staff, i) => {
                   const role = getRoleForStaff(staff.id)
@@ -802,26 +802,26 @@ export default function SettingsPage() {
                       key={staff.id}
                       style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 110px 100px 80px', gap: '0 12px', padding: '10px 0', borderTop: i > 0 ? '0.5px solid var(--border-default)' : 'none', alignItems: 'center' }}
                     >
-                      <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
                         {staff.first_name} {staff.last_name}
                         {isCurrentUser && (
-                          <span style={{ fontSize: 10, color: 'var(--color-success)', background: 'var(--status-confirmed-bg)', border: '0.5px solid var(--status-confirmed-border)', borderRadius: 999, padding: '1px 6px' }}>You</span>
+                          <span style={{ fontSize: 12, color: 'var(--color-success)', background: 'var(--status-confirmed-bg)', border: '0.5px solid var(--status-confirmed-border)', borderRadius: 999, padding: '1px 6px' }}>You</span>
                         )}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.email || '—'}</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.email || '—'}</div>
                       <select
                         value={role}
                         onChange={e => handleRoleChange(staff, e.target.value)}
-                        style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: `0.5px solid ${ROLE_COLORS[role]}`, background: 'var(--surface-card)', color: ROLE_COLORS[role], outline: 'none', cursor: 'pointer' }}
+                        style={{ fontSize: 14, padding: '4px 8px', borderRadius: 6, border: `0.5px solid ${ROLE_COLORS[role]}`, background: 'var(--surface-card)', color: ROLE_COLORS[role], outline: 'none', cursor: 'pointer' }}
                       >
                         {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
                       </select>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(staff.created_at)}</div>
+                      <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>{fmtDate(staff.created_at)}</div>
                       <div>
                         {!isCurrentUser && (
                           <button
                             onClick={() => setRemoveModal(staff)}
-                            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                            style={{ fontSize: 14, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
                           >
                             Remove
                           </button>
@@ -836,11 +836,11 @@ export default function SettingsPage() {
                 <SectionCard title="Pending Invites">
                   {pendingInvites.map((invite, i) => (
                     <div key={invite.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
-                      <div style={{ flex: 1, fontSize: 13, color: 'var(--text-secondary)' }}>{invite.email}</div>
-                      <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: 'var(--surface-raised)', color: ROLE_COLORS[invite.role] || 'var(--text-secondary)', border: `0.5px solid ${ROLE_COLORS[invite.role] || 'var(--border-default)'}` }}>
+                      <div style={{ flex: 1, fontSize: 15, color: 'var(--text-secondary)' }}>{invite.email}</div>
+                      <span style={{ fontSize: 13, padding: '3px 9px', borderRadius: 999, background: 'var(--surface-raised)', color: ROLE_COLORS[invite.role] || 'var(--text-secondary)', border: `0.5px solid ${ROLE_COLORS[invite.role] || 'var(--border-default)'}` }}>
                         {invite.role}
                       </span>
-                      <span style={{ fontSize: 11, color: 'var(--color-warning)', padding: '2px 8px', borderRadius: 999, background: 'var(--status-1hold-bg)', border: '0.5px solid var(--status-1hold-border)' }}>
+                      <span style={{ fontSize: 13, color: 'var(--color-warning)', padding: '2px 8px', borderRadius: 999, background: 'var(--status-1hold-bg)', border: '0.5px solid var(--status-1hold-border)' }}>
                         Pending
                       </span>
                     </div>
@@ -875,7 +875,7 @@ export default function SettingsPage() {
 
           {activeSection === 'integrations' && (
             <SectionCard title="Connected Services">
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>API integrations coming soon.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>API integrations coming soon.</div>
             </SectionCard>
           )}
 
@@ -886,21 +886,21 @@ export default function SettingsPage() {
       {inviteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setInviteModal(null)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 32, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Invite Team Member</div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Invite Team Member</div>
+            <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               To invite <strong style={{ color: 'var(--text-primary)' }}>{inviteModal.email}</strong>, send them this signup link:
             </div>
-            <div style={{ background: 'var(--surface-raised)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '12px 14px', fontSize: 13, color: 'var(--color-info)', wordBreak: 'break-all' }}>
+            <div style={{ background: 'var(--surface-raised)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '12px 14px', fontSize: 15, color: 'var(--color-info)', wordBreak: 'break-all' }}>
               commandtour.vercel.app/signup
             </div>
             <button
               onClick={() => { navigator.clipboard.writeText('commandtour.vercel.app/signup'); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}
-              style={{ fontSize: 13, padding: '10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: linkCopied ? 'var(--status-confirmed-bg)' : 'var(--surface-raised)', color: linkCopied ? 'var(--color-success)' : 'var(--text-primary)', cursor: 'pointer' }}
+              style={{ fontSize: 15, padding: '10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: linkCopied ? 'var(--status-confirmed-bg)' : 'var(--surface-raised)', color: linkCopied ? 'var(--color-success)' : 'var(--text-primary)', cursor: 'pointer' }}
             >
               {linkCopied ? '✓ Copied!' : 'Copy Link'}
             </button>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setInviteModal(null)} style={{ fontSize: 13, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setInviteModal(null)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleConfirmInvite} style={BTN_PRIMARY}>Mark as Invited</button>
             </div>
           </div>
@@ -911,13 +911,13 @@ export default function SettingsPage() {
       {removeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setRemoveModal(null)}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 32, width: 400, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Remove User</div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Remove User</div>
+            <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               Remove <strong style={{ color: 'var(--text-primary)' }}>{removeModal.first_name} {removeModal.last_name}</strong> from CommandTOUR? This removes their role but does not delete their account.
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={() => setRemoveModal(null)} style={{ fontSize: 13, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => handleRemoveUser(removeModal)} style={{ fontSize: 13, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>Remove</button>
+              <button onClick={() => setRemoveModal(null)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => handleRemoveUser(removeModal)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>Remove</button>
             </div>
           </div>
         </div>

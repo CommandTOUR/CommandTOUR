@@ -129,11 +129,11 @@ function AlertIcon({ alerts }) {
           border: '1px solid var(--border-default)', borderRadius: 8, padding: '10px 14px', zIndex: 100,
           minWidth: 180, boxShadow: 'var(--glass-tile-shadow)',
         }}>
-          <div style={{ fontSize: 11, color: 'var(--color-warning)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, color: 'var(--color-warning)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
             Needs Attention
           </div>
           {alerts.map((a, i) => (
-            <div key={i} style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-primary)', marginBottom: i < alerts.length - 1 ? 5 : 0, whiteSpace: 'nowrap' }}>
+            <div key={i} style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-primary)', marginBottom: i < alerts.length - 1 ? 5 : 0, whiteSpace: 'nowrap' }}>
               · {a}
             </div>
           ))}
@@ -171,7 +171,7 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
       <div
         onClick={() => setOpen(!open)}
         style={{
-          fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6,
+          fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 6,
           color: s.color, background: s.background, border: `1px solid ${s.border}`,
           whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
           opacity: saving ? 0.5 : 1,
@@ -192,7 +192,7 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
             return (
               <div key={opt} onClick={() => handleSelect(opt)}
                 style={{
-                  padding: '9px 14px', cursor: 'pointer', fontSize: 13, color: os.color,
+                  padding: '9px 14px', cursor: 'pointer', fontSize: 15, color: os.color,
                   background: currentStatus === opt ? 'var(--surface-raised)' : 'transparent',
                   transition: 'background 0.1s',
                 }}
@@ -213,7 +213,7 @@ function StatusBadge({ status }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.tentative
   return (
     <span style={{
-      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6,
+      fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 6,
       color: s.color, background: s.background, border: `1px solid ${s.border}`,
       whiteSpace: 'nowrap',
     }}>
@@ -242,17 +242,17 @@ function LoadInPicker({ eventId, currentDate, onUpdate }) {
       >
         <input type="date" value={value} onChange={e => setValue(e.target.value)} autoFocus
           onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
-          style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', outline: 'none' }}
+          style={{ fontSize: 15, padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', outline: 'none' }}
         />
-        <div onClick={handleSave} style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer' }}>✓</div>
-        <div onClick={() => setEditing(false)} style={{ fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>✕</div>
+        <div onClick={handleSave} style={{ fontSize: 13, color: 'var(--accent)', cursor: 'pointer' }}>✓</div>
+        <div onClick={() => setEditing(false)} style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer' }}>✕</div>
       </div>
     )
   }
 
   return (
     <div onClick={e => { e.stopPropagation(); setEditing(true) }}
-      style={{ fontSize: 13, fontWeight: 450, color: currentDate ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: currentDate ? 1 : 0.3, cursor: 'pointer', textDecoration: 'underline dotted var(--border-strong)', textUnderlineOffset: 3 }}
+      style={{ fontSize: 15, fontWeight: 450, color: currentDate ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: currentDate ? 1 : 0.3, cursor: 'pointer', textDecoration: 'underline dotted var(--border-strong)', textUnderlineOffset: 3 }}
     >
       {fmt(currentDate)}
     </div>
@@ -427,13 +427,13 @@ export default function TourPage() {
   const remainingCount = attentionItems.length - ATTENTION_LIMIT
 
   if (loading) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 14, fontWeight: 450 }}>
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16, fontWeight: 450 }}>
       Loading...
     </div>
   )
 
   if (!tour) return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 14, fontWeight: 450 }}>
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 16, fontWeight: 450 }}>
       Tour not found.
     </div>
   )
@@ -451,11 +451,11 @@ export default function TourPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <IconRoute size={44} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
               {getTourTypeLabel(tour?.tour_type)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{tour.name}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{tour.name}</div>
               <span className="status-pill" style={{
                 color: tourStatusColor,
                 background: `color-mix(in srgb, ${tourStatusColor} 12%, transparent)`,
@@ -464,7 +464,7 @@ export default function TourPage() {
                 {tour.status ? tour.status.charAt(0).toUpperCase() + tour.status.slice(1) : 'Upcoming'}
               </span>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>
               {[tour.region, tour.director_name, tour.year].filter(Boolean).join(' · ')}
             </div>
           </div>
@@ -475,16 +475,16 @@ export default function TourPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
               <span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{events.length}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>TOTAL</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{events.length}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>TOTAL</span>
               </span>
               <span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent)' }}>{pastEvents.length}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>DONE</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>{pastEvents.length}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>DONE</span>
               </span>
               <span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{upcomingEvents.length}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>LEFT</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{upcomingEvents.length}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: 3 }}>LEFT</span>
               </span>
             </div>
             <div style={{ width: '100%', height: 8, borderRadius: 6, background: 'var(--border-default)', overflow: 'hidden' }}>
@@ -501,9 +501,9 @@ export default function TourPage() {
                 }}
                 style={{ cursor: 'pointer' }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Next Event</div>
+                <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Next Event</div>
                 <div
-                  style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', transition: 'color 0.15s' }}
+                  style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', transition: 'color 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
                   onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}
                 >
@@ -516,7 +516,7 @@ export default function TourPage() {
           <div style={{ display: 'flex', gap: 7 }}>
             <button
               onClick={() => router.push(`/tours/${id}/edit`)}
-              style={{ fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'var(--surface-card)', color: 'var(--color-info)', cursor: 'pointer' }}
+              style={{ fontSize: 15, fontWeight: 600, padding: '6px 14px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'var(--surface-card)', color: 'var(--color-info)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-card)'}
             >
@@ -524,7 +524,7 @@ export default function TourPage() {
             </button>
             <button
               onClick={() => router.push(`/tours/${id}/events/new`)}
-              style={{ fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 6, border: 'none', background: 'var(--color-info)', color: 'var(--btn-primary-text)', cursor: 'pointer' }}
+              style={{ fontSize: 15, fontWeight: 700, padding: '6px 14px', borderRadius: 6, border: 'none', background: 'var(--color-info)', color: 'var(--btn-primary-text)', cursor: 'pointer' }}
             >
               + Add Event
             </button>
@@ -551,12 +551,12 @@ export default function TourPage() {
                 { label: 'Budget', value: '$—', sub: 'coming soon', color: 'var(--text-muted)' },
               ].map((stat, i) => (
                 <div key={`${stat.label}-${i}`} style={{ ...GLASS, padding: '11px 13px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 3 }}>
                     {stat.label}
                   </div>
-                  <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
+                  <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: stat.color }}>{stat.value}</div>
                   {stat.sub && (
-                    <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>{stat.sub}</div>
+                    <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>{stat.sub}</div>
                   )}
                 </div>
               ))}
@@ -567,12 +567,12 @@ export default function TourPage() {
 
               {/* Left column */}
               <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                   This Week
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
                   {thisWeekEvents.length === 0 && (
-                    <div style={{ ...GLASS, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 450, color: 'var(--text-muted)' }}>
+                    <div style={{ ...GLASS, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 450, color: 'var(--text-muted)' }}>
                       No events this week
                     </div>
                   )}
@@ -590,48 +590,48 @@ export default function TourPage() {
                         style={{ ...GLASS, padding: '14px 20px', display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px 100px 1px 100px', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                       >
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {ev.venue_name || 'TBC'}
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>
+                          <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>
                             {dateRange(ev)}
                           </div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Arrival</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{travel?.arrival ? shortDate(travel.arrival) : '—'}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Arrival</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{travel?.arrival ? shortDate(travel.arrival) : '—'}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Load-In</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{shortDate(ev.load_in_date)}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Load-In</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{shortDate(ev.load_in_date)}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}># Shows</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{ev.num_shows || '—'}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}># Shows</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{ev.num_shows || '—'}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Departure</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{travel?.departure ? shortDate(travel.departure) : '—'}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Departure</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{travel?.departure ? shortDate(travel.departure) : '—'}</div>
                         </div>
                         <div style={{ width: 1, height: 40, background: 'var(--border-default)', alignSelf: 'center' }} />
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Budget</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>$—</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Budget</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>$—</div>
                         </div>
                       </div>
                     )
                   })}
                 </div>
 
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                   Upcoming Events
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
                   {upcomingBeyondWeek.length === 0 && (
-                    <div style={{ padding: 14, fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>No upcoming events beyond this week.</div>
+                    <div style={{ padding: 14, fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>No upcoming events beyond this week.</div>
                   )}
                   {visibleUpcoming.map(ev => {
                     const s = STATUS_STYLES[ev.status] || STATUS_STYLES.tentative
@@ -646,26 +646,26 @@ export default function TourPage() {
                         onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                         style={{ ...GLASS, padding: '12px 20px', display: 'grid', gridTemplateColumns: '80px 1fr 140px 100px 140px 100px', alignItems: 'center', gap: 16, cursor: 'pointer' }}
                       >
-                        <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>{dateRange(ev)}</div>
+                        <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>{dateRange(ev)}</div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {ev.venue_name || 'TBC'}
                           </div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Load-In</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{shortDate(ev.load_in_date)}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Load-In</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{shortDate(ev.load_in_date)}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}># Shows</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{ev.num_shows || '—'}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}># Shows</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center' }}>{ev.num_shows || '—'}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Budget</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>$—</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Budget</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', textAlign: 'center' }}>$—</div>
                         </div>
                         <span className="status-pill" style={{ color: s.color, background: s.background, borderColor: s.border, justifySelf: 'flex-end' }}>
                           {fmtStatus(ev.status)}
@@ -676,7 +676,7 @@ export default function TourPage() {
                   {remainingUpcomingCount > 0 && (
                     <div
                       onClick={() => setActiveTab('schedule')}
-                      style={{ fontSize: 13, color: 'var(--color-info)', fontWeight: 600, cursor: 'pointer', textAlign: 'center', padding: '8px 12px' }}
+                      style={{ fontSize: 15, color: 'var(--color-info)', fontWeight: 600, cursor: 'pointer', textAlign: 'center', padding: '8px 12px' }}
                     >
                       Show all {upcomingBeyondWeek.length} events →
                     </div>
@@ -688,7 +688,7 @@ export default function TourPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', minHeight: 0, position: 'sticky', top: 10, alignSelf: 'flex-start' }}>
 
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
                     <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
                       <IconAlertTriangleFilled size={16} color="#FFD60A" />
                       <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
@@ -700,7 +700,7 @@ export default function TourPage() {
                     {attentionItems.length === 0 && (
                       <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 24 }}>
                         <IconCheck size={20} color="var(--color-success)" />
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>All clear</div>
                       </div>
                     )}
                     {visibleItems.map((item, i) => {
@@ -721,10 +721,10 @@ export default function TourPage() {
                               </div>
                             </div>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                                 {formatLocation(item.event.city, item.event.state, item.event.country, 'compact')}
                               </div>
-                              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
                                 {item.message}
                               </div>
                             </div>
@@ -746,8 +746,8 @@ export default function TourPage() {
                               <IconClock size={13} color="var(--color-warning)" />
                             </div>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Hold expiring</div>
-                              <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
+                              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Hold expiring</div>
+                              <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>
                                 {formatLocation(ev.city, ev.state, ev.country, 'compact')} · {shortDate(ev.load_in_date)}
                               </div>
                             </div>
@@ -764,9 +764,9 @@ export default function TourPage() {
                             <IconUserQuestion size={13} color="var(--color-warning)" />
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{unconfirmedStaffCount} unconfirmed staff</div>
-                            <div style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>Pending on upcoming events</div>
-                            <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, marginTop: 3 }}>View staffing</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{unconfirmedStaffCount} unconfirmed staff</div>
+                            <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: 1 }}>Pending on upcoming events</div>
+                            <div style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, marginTop: 3 }}>View staffing</div>
                           </div>
                         </div>
                       )
@@ -776,7 +776,7 @@ export default function TourPage() {
                         onClick={() => router.push(`/tours/${id}/schedule`)}
                         style={{
                           padding: '8px 12px',
-                          fontSize: 13,
+                          fontSize: 15,
                           color: 'var(--color-info)',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -791,27 +791,27 @@ export default function TourPage() {
                 </div>
 
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
                     Budget Overview
                   </div>
                   <div style={{ ...GLASS, padding: '16px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Tour Budget</span>
-                      <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>$—</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Tour Budget</span>
+                      <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>$—</span>
                     </div>
                     <div style={{ height: '0.5px', background: 'var(--border-default)', margin: '10px 0' }} />
                     {['Total Budget', 'Spent to Date', 'Remaining'].map(lbl => (
-                      <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', padding: '4px 0' }}>
+                      <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', padding: '4px 0' }}>
                         <span>{lbl}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>$—</span>
                       </div>
                     ))}
                   </div>
                   <div style={{ ...GLASS, padding: '16px 20px', marginTop: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Flagged Items</div>
-                    <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 450, color: 'var(--text-secondary)', padding: 16 }}>No flags at this time</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Flagged Items</div>
+                    <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', padding: 16 }}>No flags at this time</div>
                   </div>
-                  <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 450, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 8 }}>
+                  <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 450, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 8 }}>
                     Finance module coming soon
                   </div>
                 </div>
@@ -825,8 +825,8 @@ export default function TourPage() {
             {/* Empty state */}
             {events.length === 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 14 }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>No events yet</div>
-                <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>Add your first event to this tour</div>
+                <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>No events yet</div>
+                <div style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-muted)' }}>Add your first event to this tour</div>
                 <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>+ Add Event</button>
               </div>
             )}
@@ -845,7 +845,7 @@ export default function TourPage() {
                 }}>
                   {['Load-In', 'City', 'Venue', 'Shows', 'First Show', 'Last Show', 'Status', ''].map((label, i) => (
                     <div key={i} style={{
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: 700,
                       color: 'var(--color-info)',
                       textTransform: 'uppercase',
@@ -885,19 +885,19 @@ export default function TourPage() {
                       onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                     >
                       <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
-                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {formatLocation(event.city, event.state, event.country, 'compact')}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {event.venue_name || 'TBC'}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-primary)', textAlign: 'center' }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
                         {shows.length > 0 ? shows.length : '—'}
                       </div>
-                      <div style={{ fontSize: 13, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
+                      <div style={{ fontSize: 15, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
                         {fmt(firstShow)}
                       </div>
-                      <div style={{ fontSize: 13, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
+                      <div style={{ fontSize: 15, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
                         {fmt(lastShow)}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -922,7 +922,7 @@ export default function TourPage() {
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: pastExpanded ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
                         <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-info)' }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-info)' }}>
                         Past Events ({pastEvents.length})
                       </span>
                     </div>
@@ -956,19 +956,19 @@ export default function TourPage() {
                           onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)'; e.currentTarget.style.opacity = '0.6' }}
                         >
                           <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
-                          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {formatLocation(event.city, event.state, event.country, 'compact')}
                           </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {event.venue_name || 'TBC'}
                           </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-primary)', textAlign: 'center' }}>
+                          <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
                             {shows.length > 0 ? shows.length : '—'}
                           </div>
-                          <div style={{ fontSize: 13, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
+                          <div style={{ fontSize: 15, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
                             {fmt(firstShow)}
                           </div>
-                          <div style={{ fontSize: 13, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
+                          <div style={{ fontSize: 15, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
                             {fmt(lastShow)}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -996,7 +996,7 @@ export default function TourPage() {
                 <button
                   onClick={() => setCalView('month')}
                   style={{
-                    padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                    padding: '5px 12px', fontSize: 14, fontWeight: 600,
                     background: calView === 'month' ? 'var(--color-info)' : 'transparent',
                     color: calView === 'month' ? 'var(--btn-primary-text)' : 'var(--text-muted)',
                     border: 'none', cursor: 'pointer',
@@ -1004,7 +1004,7 @@ export default function TourPage() {
                 <button
                   onClick={() => setCalView('week')}
                   style={{
-                    padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                    padding: '5px 12px', fontSize: 14, fontWeight: 600,
                     background: calView === 'week' ? 'var(--color-info)' : 'transparent',
                     color: calView === 'week' ? 'var(--btn-primary-text)' : 'var(--text-muted)',
                     border: 'none', cursor: 'pointer',
@@ -1021,10 +1021,10 @@ export default function TourPage() {
                 }}
                 style={{ background: 'transparent', border: '1px solid var(--border-default)',
                   borderRadius: 6, width: 28, height: 28, cursor: 'pointer',
-                  color: 'var(--text-secondary)', fontSize: 14 }}>‹</button>
+                  color: 'var(--text-secondary)', fontSize: 16 }}>‹</button>
 
               {/* Date label */}
-              <span style={{ fontSize: 13, fontWeight: 600,
+              <span style={{ fontSize: 15, fontWeight: 600,
                 color: 'var(--text-primary)', minWidth: 90, textAlign: 'center' }}>
                 {calDate.toLocaleDateString('en-US',
                   calView === 'month'
@@ -1042,12 +1042,12 @@ export default function TourPage() {
                 }}
                 style={{ background: 'transparent', border: '1px solid var(--border-default)',
                   borderRadius: 6, width: 28, height: 28, cursor: 'pointer',
-                  color: 'var(--text-secondary)', fontSize: 14 }}>›</button>
+                  color: 'var(--text-secondary)', fontSize: 16 }}>›</button>
 
               {/* Today button */}
               <button
                 onClick={() => setCalDate(new Date())}
-                style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                style={{ padding: '5px 12px', fontSize: 14, fontWeight: 600,
                   background: 'transparent', border: '1px solid var(--color-info)',
                   borderRadius: 6, color: 'var(--color-info)', cursor: 'pointer' }}>Today</button>
             </div>
@@ -1068,7 +1068,7 @@ export default function TourPage() {
               const fmtMD = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
               const upcomingEvents = events.filter(ev => (ev.load_out_date || ev.load_in_date) >= todayYMD)
               if (upcomingEvents.length === 0) return (
-                <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>No upcoming events on this tour.</div>
+                <div style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-secondary)' }}>No upcoming events on this tour.</div>
               )
               return (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -1092,7 +1092,7 @@ export default function TourPage() {
                         onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
                       >
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, minWidth: 0 }}>
+                          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, minWidth: 0 }}>
                             {formatLocation(event.city, event.state, event.country, 'compact')}
                           </div>
                           {missingTravel && (
@@ -1102,11 +1102,11 @@ export default function TourPage() {
                             </div>
                           )}
                         </div>
-                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 3 }}>
+                        <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 3 }}>
                           {event.venue_name || 'Venue TBC'}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{dateRange}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>{dateRange}</div>
                           <StatusBadge status={event.status} />
                         </div>
                       </div>
@@ -1121,7 +1121,7 @@ export default function TourPage() {
         {activeTab === 'venues' && (
           <div style={{ padding: '12px 0' }}>
             {venues.length === 0 ? (
-              <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)' }}>No venues linked to this tour yet.</div>
+              <div style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-secondary)' }}>No venues linked to this tour yet.</div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {venues.map(venue => (
@@ -1132,8 +1132,8 @@ export default function TourPage() {
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)' }}
                   >
-                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 2, color: 'var(--text-primary)' }}>{venue.name}</div>
-                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 2, color: 'var(--text-primary)' }}>{venue.name}</div>
+                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>
                       {formatLocation(venue.city, venue.state, venue.country, 'compact')}
                     </div>
                   </div>
@@ -1146,11 +1146,11 @@ export default function TourPage() {
         {activeTab === 'files' && (
           <div style={{ padding: '28px 32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Tour Files</div>
+              <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>Tour Files</div>
               <button
                 disabled
                 title="Coming soon"
-                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-default)', background: 'var(--surface-raised)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-default)', background: 'var(--surface-raised)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
               >
                 + Upload File
               </button>
@@ -1159,8 +1159,8 @@ export default function TourPage() {
               <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
                 <path d="M6 12a3 3 0 0 1 3-3h9l4 4h17a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V12Z" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinejoin="round"/>
               </svg>
-              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>No files uploaded yet</div>
-              <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)' }}>File uploads coming in a future update</div>
+              <div style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)' }}>No files uploaded yet</div>
+              <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>File uploads coming in a future update</div>
             </div>
           </div>
         )}
@@ -1170,7 +1170,7 @@ export default function TourPage() {
         )}
 
         {activeTab !== 'overview' && activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && activeTab !== 'staffing' && (
-          <div style={{ padding: '28px 32px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>
+          <div style={{ padding: '28px 32px', fontSize: 16, fontWeight: 450, color: 'var(--text-muted)' }}>
             {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon.
           </div>
         )}

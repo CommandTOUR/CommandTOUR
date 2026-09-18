@@ -30,7 +30,7 @@ export default function Login() {
   }
 
   const labelStyle = {
-    fontSize: 10.5,
+    fontSize: 12.5,
     fontWeight: 700,
     color: '#94a3b8',
     textTransform: 'uppercase',
@@ -47,7 +47,7 @@ export default function Login() {
     boxShadow: focused ? '0 0 0 3px rgba(255,255,255,0.10)' : 'none',
     borderRadius: 8,
     color: '#f1f5f9',
-    fontSize: 14,
+    fontSize: 16,
     padding: '12px 16px',
     outline: 'none',
     caretColor: 'rgba(255,255,255,0.4)',
@@ -96,10 +96,10 @@ export default function Login() {
         />
 
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ color: '#f1f5f9', fontSize: 22, fontWeight: 700, fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 6 }}>
+          <div style={{ color: '#f1f5f9', fontSize: 24, fontWeight: 700, fontFamily: 'Plus Jakarta Sans, sans-serif', marginBottom: 6 }}>
             Welcome Back
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 13, fontWeight: 400, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 400, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Sign in to CommandTOUR
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function Login() {
             height: 48,
             background: btnHover && !loading ? '#1648c4' : 'var(--color-info)',
             color: '#ffffff',
-            fontSize: 15,
+            fontSize: 17,
             fontWeight: 700,
             border: 'none',
             borderRadius: 8,
@@ -166,7 +166,7 @@ export default function Login() {
         </button>
 
         {error && (
-          <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', marginTop: 12, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          <div style={{ color: '#f87171', fontSize: 15, textAlign: 'center', marginTop: 12, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             {error}
           </div>
         )}

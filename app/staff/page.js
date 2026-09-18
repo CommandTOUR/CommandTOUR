@@ -91,7 +91,7 @@ export default function StaffPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Staff</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Staff</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             type="text"
@@ -102,7 +102,7 @@ export default function StaffPage() {
               background: 'var(--surface-card)',
               border: '0.5px solid var(--border-default)',
               color: 'var(--text-primary)',
-              fontSize: 14,
+              fontSize: 16,
               borderRadius: 8,
               padding: '10px 16px',
               width: 260,
@@ -112,13 +112,13 @@ export default function StaffPage() {
           />
           <button
             onClick={() => router.push('/staffing-grid')}
-            style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.02em', padding: '10px 20px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
+            style={{ fontSize: 15, fontWeight: 600, letterSpacing: '0.02em', padding: '10px 20px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}
           >
             All Tours Staffing Grid
           </button>
           <button
             onClick={() => router.push('/staff/new')}
-            style={{ background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 15, fontWeight: 400, cursor: 'pointer' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
@@ -126,7 +126,7 @@ export default function StaffPage() {
           </button>
           <button
             onClick={() => router.push('/staff/settings')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 15, fontWeight: 400, cursor: 'pointer' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
@@ -141,7 +141,7 @@ export default function StaffPage() {
         <button
           onClick={() => setActiveDept(null)}
           style={{
-            fontSize: 13, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
+            fontSize: 15, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
             borderColor: activeDept === null ? 'var(--color-info)' : 'var(--border-default)',
             background: activeDept === null ? 'rgba(26,86,219,0.10)' : 'transparent',
             color: activeDept === null ? 'var(--color-info)' : 'var(--text-secondary)',
@@ -156,13 +156,13 @@ export default function StaffPage() {
             key={dept.id}
             onClick={() => setActiveDept(dept.id)}
             style={activeDept === dept.id ? {
-              fontSize: 13, padding: '5px 14px', borderRadius: 20,
+              fontSize: 15, padding: '5px 14px', borderRadius: 20,
               border: `0.5px solid ${getDeptColor(dept.name).color}`,
               background: getDeptColor(dept.name).bg,
               color: getDeptColor(dept.name).color,
               fontWeight: 700, cursor: 'pointer', opacity: 1
             } : {
-              fontSize: 13, padding: '5px 14px', borderRadius: 20,
+              fontSize: 15, padding: '5px 14px', borderRadius: 20,
               border: `0.5px solid ${getDeptColor(dept.name).color}`,
               background: 'transparent',
               color: getDeptColor(dept.name).color,
@@ -174,7 +174,7 @@ export default function StaffPage() {
         <button
           onClick={() => setActiveDept('uncategorized')}
           style={{
-            fontSize: 13, padding: '5px 14px', borderRadius: 20,
+            fontSize: 15, padding: '5px 14px', borderRadius: 20,
             border: `0.5px solid ${getDeptColor('Uncategorized').color}`,
             background: activeDept === 'uncategorized' ? getDeptColor('Uncategorized').bg : 'transparent',
             color: getDeptColor('Uncategorized').color,
@@ -188,18 +188,18 @@ export default function StaffPage() {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
         <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-          {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>}
+          {loading && <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>}
 
           {!loading && allStaff.length === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
-              <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)' }}>No staff yet</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Add your first staff member to get started</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' }}>No staff yet</div>
+              <div style={{ fontSize: 16, color: 'var(--text-muted)', marginBottom: 8 }}>Add your first staff member to get started</div>
               <button className="btn-primary" onClick={() => router.push('/staff/new')}>+ Add Staff Member</button>
             </div>
           )}
 
           {!loading && filteredStaff.length === 0 && allStaff.length > 0 && (
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>No staff match &quot;{search}&quot;</div>
+            <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>No staff match &quot;{search}&quot;</div>
           )}
 
           {!loading && sortedStaff.length > 0 && (
@@ -226,24 +226,24 @@ export default function StaffPage() {
                       border: `1.5px solid ${dc.border}`,
                       color: dc.icon,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      fontSize: 13, fontWeight: 700
+                      fontSize: 15, fontWeight: 700
                     }}>
                       {initials}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {name}
                         {person.attention_flag && (
                           <span style={{ marginLeft: 6, color: '#d97706' }} title={person.attention_note || 'Needs attention'}>⚠</span>
                         )}
                       </div>
 
-                      <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 16, color: 'var(--text-secondary)', fontWeight: 600, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {deptName}
                       </div>
 
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ fontSize: 16, color: 'var(--text-primary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                         {person.email ? (
                           <a href={`mailto:${person.email}`} style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
                             {person.email}
@@ -251,7 +251,7 @@ export default function StaffPage() {
                         ) : '—'}
                       </div>
 
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 16, color: 'var(--text-primary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {person.phone || '—'}
                       </div>
                     </div>

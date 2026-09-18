@@ -223,19 +223,19 @@ function buildHolidayMap(year, saturdays) {
 }
 
 const inputStyle = {
-  fontSize: 13, padding: '7px 10px',
+  fontSize: 15, padding: '7px 10px',
   borderRadius: 6, border: '1px solid var(--border-default)',
   background: 'var(--surface-card)', color: 'var(--text-primary)', caretColor: 'var(--color-success)',
   outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 
 const labelStyle = {
-  fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase',
+  fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase',
   letterSpacing: '0.06em', marginBottom: 4, display: 'block',
 }
 
 const mintOutlineBtn = {
-  fontSize: 12, padding: '8px 14px', borderRadius: 6,
+  fontSize: 14, padding: '8px 14px', borderRadius: 6,
   border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer',
 }
 
@@ -264,7 +264,7 @@ const timeSelectStyle = {
   border: '0.5px solid var(--border-default)',
   borderRadius: 6,
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 15,
   padding: '4px 8px',
   cursor: 'pointer',
 }
@@ -275,7 +275,7 @@ const ampmActiveStyle = {
   border: '1px solid rgba(51,255,153,0.3)',
   borderRadius: 6,
   padding: '4px 10px',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 600,
   cursor: 'pointer',
 }
@@ -286,7 +286,7 @@ const ampmInactiveStyle = {
   border: '0.5px solid var(--border-default)',
   borderRadius: 6,
   padding: '4px 10px',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 600,
   cursor: 'pointer',
 }
@@ -361,7 +361,7 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
   if (mode === 'create') {
     return (
       <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, width: 280, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: 10, zIndex: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-info)', marginBottom: 8 }}>New Venue</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-info)', marginBottom: 8 }}>New Venue</div>
         <div style={{ marginBottom: 8 }}>
           <label style={labelStyle}>Venue Name *</label>
           <input autoFocus style={inputStyle} value={newVenue.name} onChange={e => setNewVenue(p => ({ ...p, name: e.target.value }))}
@@ -381,13 +381,13 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
           <label style={labelStyle}>Country</label>
           <input style={inputStyle} value={newVenue.country} onChange={e => setNewVenue(p => ({ ...p, country: e.target.value }))} />
         </div>
-        {error && <div style={{ fontSize: 11, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: 13, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
-            style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+            style={{ fontSize: 14, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
           >Cancel</button>
-          <button className="btn-primary" onClick={handleSaveNew} disabled={saving} style={{ fontSize: 12, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save & Select'}</button>
+          <button className="btn-primary" onClick={handleSaveNew} disabled={saving} style={{ fontSize: 14, padding: '6px 14px' }}>{saving ? 'Saving...' : 'Save & Select'}</button>
         </div>
       </div>
     )
@@ -413,16 +413,16 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
               onMouseDown={() => handleSelect(v)}
               onMouseEnter={() => setActiveIndex(i)}
               onMouseLeave={() => setActiveIndex(-1)}
-              style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, borderBottom: '0.5px solid var(--border-default)', background: i === activeIndex ? 'rgba(26,86,219,0.08)' : 'transparent', color: i === activeIndex ? 'var(--color-info)' : 'var(--text-primary)' }}>
+              style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--border-default)', background: i === activeIndex ? 'rgba(26,86,219,0.08)' : 'transparent', color: i === activeIndex ? 'var(--color-info)' : 'var(--text-primary)' }}>
               <div style={{ fontWeight: 500 }}>{v.name}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>{formatLocation(v.city, v.state, v.country, 'compact')}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>{formatLocation(v.city, v.state, v.country, 'compact')}</div>
             </div>
           ))}
           <div
             onMouseDown={handleOpenCreate}
             onMouseEnter={() => setActiveIndex(results.length)}
             onMouseLeave={() => setActiveIndex(-1)}
-            style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--color-info)', background: results.length === activeIndex ? 'rgba(26,86,219,0.08)' : 'transparent' }}>
+            style={{ padding: '8px 10px', cursor: 'pointer', fontSize: 14, color: 'var(--color-info)', background: results.length === activeIndex ? 'rgba(26,86,219,0.08)' : 'transparent' }}>
             + Create New Venue
           </div>
         </div>
@@ -488,13 +488,13 @@ function HolidayCell({ value, onSave }) {
           if (e.key === 'Enter') commit()
           else if (e.key === 'Escape') { setText(value); setEditing(false) }
         }}
-        style={{ ...inputStyle, fontSize: 12, padding: '4px 6px', textAlign: 'center' }}
+        style={{ ...inputStyle, fontSize: 14, padding: '4px 6px', textAlign: 'center' }}
       />
     )
   }
 
   return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 12, fontWeight: value ? 600 : 400, color: 'var(--text-muted)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
+    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 14, fontWeight: value ? 600 : 400, color: 'var(--text-muted)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
       {value || '—'}
     </div>
   )
@@ -539,7 +539,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
             onDragLeave={dragging ? () => onPillDragLeave(y) : undefined}
             style={{
               border, color, background, opacity, fontWeight,
-              borderRadius: 20, padding: '5px 14px', fontSize: 13, cursor: 'pointer',
+              borderRadius: 20, padding: '5px 14px', fontSize: 15, cursor: 'pointer',
               transition: 'border-color 0.15s, background 0.15s, color 0.15s',
             }}>
             {y}
@@ -701,15 +701,15 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
       <div style={{ padding: '18px 20px', borderBottom: '0.5px solid var(--border-default)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{formatCityState(event)}</div>
-            {event.country && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{event.country}</div>}
-            {event.venue_name && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{event.venue_name}</div>}
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{formatCityState(event)}</div>
+            {event.country && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{event.country}</div>}
+            {event.venue_name && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginTop: 4 }}>{event.venue_name}</div>}
           </div>
           <button
             onClick={() => { if (!dirty) handleClose() }}
             disabled={dirty}
             title="Close"
-            style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', fontSize: 16, cursor: dirty ? 'default' : 'pointer', opacity: dirty ? 0.3 : 1, flexShrink: 0, lineHeight: 1 }}>
+            style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', fontSize: 18, cursor: dirty ? 'default' : 'pointer', opacity: dirty ? 0.3 : 1, flexShrink: 0, lineHeight: 1 }}>
             ×
           </button>
         </div>
@@ -717,19 +717,19 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             {saveSuccess ? (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 7, background: 'rgba(51,255,153,0.12)', border: '0.5px solid rgba(51,255,153,0.35)' }}>
-                <span style={{ color: 'var(--color-success)', fontSize: 16 }}>✓</span>
-                <span style={{ fontSize: 13, color: 'var(--color-success)', fontWeight: 600 }}>Shows saved</span>
+                <span style={{ color: 'var(--color-success)', fontSize: 18 }}>✓</span>
+                <span style={{ fontSize: 15, color: 'var(--color-success)', fontWeight: 600 }}>Shows saved</span>
               </div>
             ) : (
               <>
-                <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 12, padding: '8px', justifyContent: 'center' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
+                <button className="btn-primary" onClick={handleSaveClose} disabled={saving} style={{ flex: 1, fontSize: 14, padding: '8px', justifyContent: 'center' }}>{saving ? 'Saving...' : 'Save & Close'}</button>
                 <button onClick={handleClose} style={{ flex: 1, ...mintOutlineBtn, padding: '8px' }}>Discard</button>
               </>
             )}
           </div>
         )}
         {saveError && (
-          <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 8 }}>{saveError}</div>
+          <div style={{ fontSize: 14, color: 'var(--color-danger)', marginTop: 8 }}>{saveError}</div>
         )}
       </div>
 
@@ -745,7 +745,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                   return (
                     <div key={opt} onClick={() => setStatus(opt)}
                       style={{
-                        padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                        padding: '5px 12px', borderRadius: 20, fontSize: 14, fontWeight: 500, cursor: 'pointer',
                         color: selected ? '#04140b' : s.color,
                         background: selected ? s.color : s.background,
                         border: `1px solid ${s.border}`,
@@ -767,7 +767,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
         <div>
           <label style={labelStyle}>Shows</label>
           {loadingShows ? (
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Loading...</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {shows.map((s, i) => {
@@ -785,11 +785,11 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                       <button onClick={() => handleShowChange(i, { show_ampm: 'AM' })} style={s.show_ampm === 'AM' ? ampmActiveStyle : ampmInactiveStyle}>AM</button>
                       <button onClick={() => handleShowChange(i, { show_ampm: 'PM' })} style={s.show_ampm === 'PM' ? ampmActiveStyle : ampmInactiveStyle}>PM</button>
                       <div onClick={() => handleDeleteShow(i)}
-                        style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
+                        style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}
                         onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
                         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>×</div>
                     </div>
-                    {showDateErr && <div style={{ fontSize: 11, color: 'var(--color-danger)' }}>Show date cannot be before load-in date</div>}
+                    {showDateErr && <div style={{ fontSize: 13, color: 'var(--color-danger)' }}>Show date cannot be before load-in date</div>}
                   </div>
                 )
               })}
@@ -805,7 +805,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
 
         <div>
           <div onClick={() => setMoveOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-block', transform: moveOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}>▾</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', display: 'inline-block', transform: moveOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}>▾</span>
             <span style={{ ...labelStyle, marginBottom: 0 }}>Move Event</span>
           </div>
           {moveOpen && (
@@ -820,7 +820,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
                 <label style={labelStyle}>Move to Weekend (Saturday)</label>
                 <input type="date" style={inputStyle} value={moveSaturday} onChange={e => setMoveSaturday(e.target.value)} />
               </div>
-              <button className="btn-primary" onClick={handleMove} disabled={moving} style={{ fontSize: 12, padding: '8px' }}>{moving ? 'Moving...' : 'Move'}</button>
+              <button className="btn-primary" onClick={handleMove} disabled={moving} style={{ fontSize: 14, padding: '8px' }}>{moving ? 'Moving...' : 'Move'}</button>
             </div>
           )}
         </div>
@@ -830,14 +830,14 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
         <button onClick={() => router.push(`/tours/${event.tour_id}/events/${event.id}`)} style={{ ...mintOutlineBtn, width: '100%', boxSizing: 'border-box' }}>→ Go to Event</button>
         {confirmingDelete ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>Delete this event? This cannot be undone.</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center' }}>Delete this event? This cannot be undone.</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setConfirmingDelete(false)} style={{ flex: 1, ...mintOutlineBtn }}>Cancel</button>
-              <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, fontSize: 12, padding: '8px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: 'var(--color-danger)', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
+              <button onClick={handleDelete} disabled={deleting} style={{ flex: 1, fontSize: 14, padding: '8px', borderRadius: 6, border: '0.5px solid rgba(255,51,51,0.4)', background: 'rgba(255,51,51,0.12)', color: 'var(--color-danger)', cursor: 'pointer' }}>{deleting ? 'Deleting...' : 'Confirm Delete'}</button>
             </div>
           </div>
         ) : (
-          <button onClick={() => setConfirmingDelete(true)} style={{ fontSize: 12, padding: '8px', border: 'none', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>Delete Event</button>
+          <button onClick={() => setConfirmingDelete(true)} style={{ fontSize: 14, padding: '8px', border: 'none', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>Delete Event</button>
         )}
       </div>
     </div>,
@@ -872,14 +872,14 @@ const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W }
 const leftThStyle = (left, width) => ({
   position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1 + H2,
   background: 'var(--surface-card)', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
-  fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em',
+  fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em',
   borderBottom: '4px solid #FFD60A', borderRight: '2px solid var(--border-default)',
 })
 
 const subHeaderStyle = (width, borderRight) => ({
   position: 'sticky', top: H1, zIndex: 30,
   height: H2, background: 'var(--surface-card)', borderBottom: '4px solid #FFD60A', borderRight,
-  padding: '0 8px', textAlign: 'center', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700,
+  padding: '0 8px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700,
   textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
 })
 
@@ -900,7 +900,7 @@ function GridCell({
   const cellBase = {
     height: rowHeight, padding: '0 8px',
     borderBottom: '0.5px solid var(--border-default)',
-    fontSize: 12, color: 'var(--text-primary)',
+    fontSize: 14, color: 'var(--text-primary)',
     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     verticalAlign: 'middle', textAlign: 'center', position: 'relative',
   }
@@ -1043,7 +1043,7 @@ function GridCell({
           <div
             ref={pillRef}
             onClick={handlePillClick}
-            style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
             {statusLabel(event.status)}
           </div>
         ) : null}
@@ -1058,10 +1058,10 @@ function GridCell({
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
                     {statusLabel(opt)}
                   </span>
-                  {isActive && <span style={{ color: s.color, fontSize: 12, fontWeight: 700, marginLeft: 8 }}>✓</span>}
+                  {isActive && <span style={{ color: s.color, fontSize: 14, fontWeight: 700, marginLeft: 8 }}>✓</span>}
                 </div>
               )
             })}
@@ -1098,14 +1098,14 @@ function YearGrid({
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || 'var(--text-secondary)'
                   return (
-                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
                       {tour.name}
                     </th>
                   )
                 })}
                 {yearTours.length === 0 && !showPlaceholder && <th />}
                 {showPlaceholder && (
-                  <th rowSpan={2} style={{ height: H1 + H2, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, background: 'rgba(26,86,219,0.06)', border: '1px dashed var(--color-info)', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--color-info)', padding: '0 8px', verticalAlign: 'middle' }}>
+                  <th rowSpan={2} style={{ height: H1 + H2, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, background: 'rgba(26,86,219,0.06)', border: '1px dashed var(--color-info)', textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--color-info)', padding: '0 8px', verticalAlign: 'middle' }}>
                     + Add {draggedTour.name} to {year}
                   </th>
                 )}
@@ -1129,16 +1129,16 @@ function YearGrid({
                 const rowBg = isCurrentWeek ? 'rgba(26,86,219,0.08)' : (row.weekNum % 2 === 0 ? 'var(--surface-card)' : 'transparent')
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: isCurrentWeek ? '3px solid var(--color-info)' : '3px solid transparent', padding: '0 8px', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: isCurrentWeek ? '3px solid var(--color-info)' : '3px solid transparent', padding: '0 8px', fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
                       {row.weekNum}
                     </td>
                     <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: row.holiday ? '3px solid var(--text-secondary)' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
                       <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.saturday, 'Sat')}
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       {fmtDay(row.sunday, 'Sun')}
                     </td>
                     {yearTours.map((tour, ti) => {
@@ -1459,7 +1459,7 @@ function DraftScheduleContent() {
   }
 
   if (loading) return (
-    <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading booking grid...</div>
+    <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Loading booking grid...</div>
   )
 
   const { rows, yearTours, eventMap } = buildYearData(selectedYear)
@@ -1480,7 +1480,7 @@ function DraftScheduleContent() {
           {pastWeekCount > 0 && (
             <button
               onClick={() => setShowPastWeeks(s => !s)}
-              style={{ background: '#FFD60A', color: '#0a1628', fontSize: 13, fontWeight: 700, padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', flexShrink: 0 }}
+              style={{ background: '#FFD60A', color: '#0a1628', fontSize: 15, fontWeight: 700, padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', flexShrink: 0 }}
             >
               {showPastWeeks ? 'Hide Past Weeks' : `Show Past Weeks (${pastWeekCount})`}
             </button>
@@ -1544,7 +1544,7 @@ const glassSelect = {
   borderRadius: 8,
   color: 'var(--text-primary)',
   padding: '8px 12px',
-  fontSize: 13,
+  fontSize: 15,
   outline: 'none',
   cursor: 'pointer',
 }
@@ -1564,7 +1564,7 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
     padding: '0 14px',
     height: 48,
     verticalAlign: 'middle',
-    fontSize: 13,
+    fontSize: 15,
     borderBottom: '0.5px solid var(--border-default)',
   }
 
@@ -1580,7 +1580,7 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
       <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.venue_name || '—'}</td>
       <td style={{ ...cell, fontWeight: 600, color: ev.tours?.color || 'var(--text-secondary)' }} onClick={onRowClick}>{ev.tours?.name || '—'}</td>
       <td style={{ ...cell }} onClick={onRowClick}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
           {statusLabel(ev.status)}
         </span>
       </td>
@@ -1599,7 +1599,7 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
               else if (e.key === 'Escape') setEditingBooker(null)
             }}
             onClick={e => e.stopPropagation()}
-            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--color-info)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 13, padding: '4px 8px', outline: 'none', width: '100%' }}
+            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--color-info)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 15, padding: '4px 8px', outline: 'none', width: '100%' }}
           />
         ) : (
           ev.booker || <span style={{ color: 'var(--text-secondary)' }}>—</span>
@@ -1686,7 +1686,7 @@ function ConfirmedScheduleTab() {
   }
 
   if (loading) return (
-    <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+    <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
       Loading confirmed events...
     </div>
   )
@@ -1696,7 +1696,7 @@ function ConfirmedScheduleTab() {
 
       {/* Top bar: count */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
           {sorted.length} confirmed event{sorted.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -1721,7 +1721,7 @@ function ConfirmedScheduleTab() {
           style={{ ...glassSelect, cursor: 'text', minWidth: 180 }}
         />
         {anyFilter && (
-          <button onClick={clearFilters} style={{ background: 'transparent', border: '0.5px solid var(--border-default)', borderRadius: 6, color: 'var(--text-secondary)', padding: '7px 12px', fontSize: 12, cursor: 'pointer' }}>
+          <button onClick={clearFilters} style={{ background: 'transparent', border: '0.5px solid var(--border-default)', borderRadius: 6, color: 'var(--text-secondary)', padding: '7px 12px', fontSize: 14, cursor: 'pointer' }}>
             Clear filters
           </button>
         )}
@@ -1731,7 +1731,7 @@ function ConfirmedScheduleTab() {
       {sorted.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12 }}>
           <IconCalendarOff size={32} color="var(--text-muted)" />
-          <p style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600, margin: 0 }}>No confirmed events match your filters</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 16, fontWeight: 600, margin: 0 }}>No confirmed events match your filters</p>
         </div>
       ) : (
         <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
@@ -1745,7 +1745,7 @@ function ConfirmedScheduleTab() {
                     style={{
                       padding: '10px 14px',
                       textAlign: col.key === 'num_shows' ? 'center' : 'left',
-                      fontSize: 11, fontWeight: 700,
+                      fontSize: 13, fontWeight: 700,
                       color: 'var(--text-secondary)',
                       textTransform: 'uppercase', letterSpacing: '0.08em',
                       borderBottom: '0.5px solid var(--border-default)',
@@ -1791,10 +1791,10 @@ function PlaceholderTab({ label }) {
       gap: 12,
     }}>
       <IconClock size={32} color="var(--text-muted)" />
-      <p style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600, margin: 0 }}>
+      <p style={{ color: 'var(--text-muted)', fontSize: 16, fontWeight: 600, margin: 0 }}>
         {label}
       </p>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 15, margin: 0 }}>
         Coming soon
       </p>
     </div>
@@ -1823,7 +1823,7 @@ function BCContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Booking & Contracts</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Booking & Contracts</div>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0', display: 'flex', flexDirection: 'column' }}>
@@ -1838,7 +1838,7 @@ function BCContent() {
                   background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
                   color: active ? 'var(--color-info)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
-                  fontSize: 14,
+                  fontSize: 16,
                   padding: '7px 14px',
                   borderRadius: 6,
                   border: 'none',
@@ -1873,7 +1873,7 @@ export default function BCPage() {
       <div style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'center', height: '100%',
-        color: 'var(--text-secondary)', fontSize: 14,
+        color: 'var(--text-secondary)', fontSize: 16,
         }}>
         Loading...
       </div>

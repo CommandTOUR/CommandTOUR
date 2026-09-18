@@ -34,13 +34,13 @@ const GLASS = {
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
-const SECTION_INPUT = { fontSize: 14, padding: '8px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }
+const SECTION_INPUT = { fontSize: 16, padding: '8px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
-const SECTION_LABEL = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
+const SECTION_LABEL = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4, display: 'block' }
 
-const FIELD_VALUE = { fontSize: 14, color: 'var(--text-primary)' }
+const FIELD_VALUE = { fontSize: 16, color: 'var(--text-primary)' }
 
-const FIELD_EMPTY = { fontSize: 14, color: 'var(--text-muted)', fontStyle: 'italic' }
+const FIELD_EMPTY = { fontSize: 16, color: 'var(--text-muted)', fontStyle: 'italic' }
 
 
 const hoverBlue = e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }
@@ -59,7 +59,7 @@ function SectionTile({ title, editing, onEdit, onSave, onCancel, children }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)' }}>{title}</div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }}>{title}</div>
         {!editing ? (
           <div
             onClick={onEdit}
@@ -71,9 +71,9 @@ function SectionTile({ title, editing, onEdit, onSave, onCancel, children }) {
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ background: '#FFD60A', color: '#0a1628', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>Editing</span>
-            <span onClick={onSave} style={{ background: '#00D084', color: '#0a1628', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, cursor: 'pointer' }}>Save Changes</span>
-            <span onClick={onCancel} style={{ fontSize: 15, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</span>
+            <span style={{ background: '#FFD60A', color: '#0a1628', fontSize: 13, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>Editing</span>
+            <span onClick={onSave} style={{ background: '#00D084', color: '#0a1628', fontSize: 13, fontWeight: 700, padding: '2px 8px', borderRadius: 10, cursor: 'pointer' }}>Save Changes</span>
+            <span onClick={onCancel} style={{ fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</span>
           </div>
         )}
       </div>
@@ -288,13 +288,13 @@ export default function VenuePage() {
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '4px 4px 0' }}>
-      <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+      <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
     </div>
   )
 
   if (!venue) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '4px 4px 0' }}>
-      <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Venue not found.</div>
+      <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Venue not found.</div>
     </div>
   )
 
@@ -309,10 +309,10 @@ export default function VenuePage() {
             <IconMapPin size={20} color="var(--color-info)" />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{venue.name}</div>
-                {venue.region && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 10, background: 'rgba(26,86,219,0.10)', color: 'var(--color-info)', border: '0.5px solid rgba(26,86,219,0.3)' }}>{venue.region}</span>}
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{venue.name}</div>
+                {venue.region && <span style={{ fontSize: 13, fontWeight: 600, padding: '2px 10px', borderRadius: 10, background: 'rgba(26,86,219,0.10)', color: 'var(--color-info)', border: '0.5px solid rgba(26,86,219,0.3)' }}>{venue.region}</span>}
               </div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: 16, color: 'var(--text-secondary)' }}>
                 {formatAddress(venue)}
               </div>
             </div>
@@ -399,7 +399,7 @@ export default function VenuePage() {
                       return (
                         <div key={role.key} style={rowStyle}>
                           <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 1fr 1fr', gap: 12, alignItems: 'center' }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{role.label}</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>{role.label}</div>
                             <input value={personnelForm[nameKey] || ''} onChange={e => setPersonnelForm(p => ({ ...p, [nameKey]: e.target.value }))} style={SECTION_INPUT} placeholder="Name" />
                             <input value={personnelForm[emailKey] || ''} onChange={e => setPersonnelForm(p => ({ ...p, [emailKey]: e.target.value }))} style={SECTION_INPUT} placeholder="Email" />
                             <input value={personnelForm[phoneKey] || ''} onChange={e => setPersonnelForm(p => ({ ...p, [phoneKey]: e.target.value }))} style={SECTION_INPUT} placeholder="Phone" />
@@ -413,12 +413,12 @@ export default function VenuePage() {
                     return (
                       <div key={role.key} style={rowStyle}>
                         <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 1fr 1fr', gap: 12, alignItems: 'center' }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{role.label}</div>
-                          <div style={{ fontSize: 13, color: name ? 'var(--text-primary)' : 'var(--text-muted)' }}>{name || '—'}</div>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>{role.label}</div>
+                          <div style={{ fontSize: 15, color: name ? 'var(--text-primary)' : 'var(--text-muted)' }}>{name || '—'}</div>
                           <div>
-                            {email ? <a href={`mailto:${email}`} style={{ fontSize: 13, color: 'var(--color-info)', textDecoration: 'none' }}>{email}</a> : <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>—</span>}
+                            {email ? <a href={`mailto:${email}`} style={{ fontSize: 15, color: 'var(--color-info)', textDecoration: 'none' }}>{email}</a> : <span style={{ fontSize: 15, color: 'var(--text-muted)' }}>—</span>}
                           </div>
-                          <div style={{ fontSize: 13, color: phone ? 'var(--text-primary)' : 'var(--text-muted)' }}>{phone || '—'}</div>
+                          <div style={{ fontSize: 15, color: phone ? 'var(--text-primary)' : 'var(--text-muted)' }}>{phone || '—'}</div>
                         </div>
                       </div>
                     )
@@ -428,19 +428,19 @@ export default function VenuePage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignSelf: 'stretch' }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Map</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Map</div>
               <div style={{ ...GLASS, flex: 1, overflow: 'hidden' }}>
                 {hasMap ? (
                   <>
                     <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
                     {!mapsLoaded && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: 13 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: 15 }}>
                         Loading map...
                       </div>
                     )}
                   </>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: 13 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: 15 }}>
                     No location set.
                   </div>
                 )}
@@ -614,7 +614,7 @@ export default function VenuePage() {
           {/* Event History */}
           {pastEvents.length > 0 && (
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>Event History ({pastEvents.length})</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>Event History ({pastEvents.length})</div>
               <div style={{ ...GLASS, padding: '18px 20px' }}>
                 {pastEvents.map((ev, i) => (
                   <div
@@ -627,13 +627,13 @@ export default function VenuePage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.tours?.color || 'var(--color-info)', flexShrink: 0 }} />
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{ev.tours?.name || '—'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</div>
+                        <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>{ev.tours?.name || '—'}</div>
+                        <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 1 }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{fmt(ev.load_in_date)}</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', color: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).color, background: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).background, border: `1px solid ${(STATUS_PILL[ev.status] || STATUS_PILL.tentative).border}` }}>
+                      <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{fmt(ev.load_in_date)}</div>
+                      <span style={{ fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', color: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).color, background: (STATUS_PILL[ev.status] || STATUS_PILL.tentative).background, border: `1px solid ${(STATUS_PILL[ev.status] || STATUS_PILL.tentative).border}` }}>
                         {fmtStatus(ev.status)}
                       </span>
                     </div>

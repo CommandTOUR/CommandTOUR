@@ -58,10 +58,10 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
     width: 28, height: 28, borderRadius: 6, border: '0.5px solid var(--border-default)',
     background: 'var(--surface-raised)', color: 'var(--text-primary)',
     cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
   })
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading staffing...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading staffing...</div>
 
   const totalRoles = departments.reduce((sum, d) => sum + d.positions.filter(p => (quantities[p.id] || 0) > 0).length, 0)
   const totalPositions = departments.reduce((sum, d) => sum + d.positions.reduce((s, p) => s + (quantities[p.id] || 0), 0), 0)
@@ -70,11 +70,11 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
     <div>
       {totalPositions > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 16px', background: 'color-mix(in srgb, var(--color-info) 8%, transparent)', border: '0.5px solid color-mix(in srgb, var(--color-info) 20%, transparent)', borderRadius: 10, marginBottom: 12 }}>
-          <div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--color-info) 70%, var(--text-secondary))' }}>
+          <div style={{ fontSize: 15, color: 'color-mix(in srgb, var(--color-info) 70%, var(--text-secondary))' }}>
             <span style={{ fontWeight: 600, color: 'var(--color-info)' }}>{totalRoles}</span> {totalRoles === 1 ? 'Role' : 'Roles'}
           </div>
           <div style={{ width: 1, height: 14, background: 'color-mix(in srgb, var(--color-info) 25%, transparent)' }} />
-          <div style={{ fontSize: 13, color: 'color-mix(in srgb, var(--color-info) 70%, var(--text-secondary))' }}>
+          <div style={{ fontSize: 15, color: 'color-mix(in srgb, var(--color-info) 70%, var(--text-secondary))' }}>
             <span style={{ fontWeight: 600, color: 'var(--color-info)' }}>{totalPositions}</span> Total {totalPositions === 1 ? 'Position' : 'Positions'}
           </div>
         </div>
@@ -93,17 +93,17 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
                 <span style={{ display: 'flex', color: 'var(--text-muted)' }}>
                   {expanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
                 </span>
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{dept.name}</span>
+                <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{dept.name}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {staffedCount > 0 && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />}
-                <span style={{ fontSize: 13, color: staffedCount > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>
+                <span style={{ fontSize: 15, color: staffedCount > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>
                   {staffedCount} {staffedCount === 1 ? 'Role' : 'Roles'}
                 </span>
                 {totalSlots > 0 && (
                   <>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>·</span>
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: 15, color: 'var(--text-muted)' }}>·</span>
+                    <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
                       {totalSlots} {totalSlots === 1 ? 'Position' : 'Positions'}
                     </span>
                   </>
@@ -116,7 +116,7 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
                   const qty = quantities[pos.id] || 0
                   return (
                     <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.title}</span>
+                      <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>{pos.title}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button onClick={() => onQuantityChange(pos.id, Math.max(0, qty - 1))} disabled={qty === 0} style={stepperBtnStyle(qty === 0)}>−</button>
                         <input
@@ -128,7 +128,7 @@ function StaffingSection({ departments, quantities, onQuantityChange, loading })
                             if (!isNaN(n)) onQuantityChange(pos.id, Math.max(0, Math.min(99, n)))
                           }}
                           style={{
-                            width: 40, height: 28, textAlign: 'center', fontSize: 16, fontWeight: 700,
+                            width: 40, height: 28, textAlign: 'center', fontSize: 18, fontWeight: 700,
                             borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)',
                             color: qty > 0 ? 'var(--accent)' : 'var(--text-muted)', outline: 'none',
                           }}
@@ -366,7 +366,7 @@ export default function EditTour() {
   }
 
   const inputStyle = {
-    fontSize: 14,
+    fontSize: 16,
     padding: '10px 14px',
     borderRadius: 8,
     border: '0.5px solid var(--border-default)',
@@ -378,7 +378,7 @@ export default function EditTour() {
   }
 
   const labelStyle = {
-    fontSize: 12,
+    fontSize: 14,
     color: 'var(--text-secondary)',
     letterSpacing: '0.05em',
     marginBottom: 6,
@@ -386,7 +386,7 @@ export default function EditTour() {
   }
 
   if (loading) return (
-    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+    <div style={{ padding: 28, color: 'var(--text-muted)', fontSize: 16 }}>Loading...</div>
   )
 
   return (
@@ -394,7 +394,7 @@ export default function EditTour() {
 
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', marginBottom: 12, flexShrink: 0 }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Tour</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Tour</div>
 
         <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
           {TABS.map(tab => {
@@ -402,7 +402,7 @@ export default function EditTour() {
             return (
               <button key={tab.key} onClick={() => handleTabSwitch(tab.key)}
                 style={{
-                  fontSize: 14, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
+                  fontSize: 16, fontWeight: active ? 600 : 400, padding: '7px 14px', borderRadius: 6, border: 'none',
                   background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
                   color: active ? 'var(--color-info)' : 'var(--text-secondary)',
                   cursor: 'pointer',
@@ -416,14 +416,14 @@ export default function EditTour() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={handleCancel}
-            style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+            style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--color-danger) 8%, transparent)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >Cancel</button>
           <button
             onClick={handleSave}
             disabled={saving}
-            style={{ fontSize: 13, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', fontWeight: 600, cursor: 'pointer' }}
+            style={{ fontSize: 15, padding: '7px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', fontWeight: 600, cursor: 'pointer' }}
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -510,7 +510,7 @@ export default function EditTour() {
                     title={c.label} />
                 ))}
                 <div onClick={() => setCustomColor(true)}
-                  style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'var(--surface-raised)', cursor: 'pointer', border: customColor ? '3px solid var(--text-primary)' : '3px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--text-secondary)', transition: 'border 0.15s', boxSizing: 'border-box' }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'var(--surface-raised)', cursor: 'pointer', border: customColor ? '3px solid var(--text-primary)' : '3px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: 'var(--text-secondary)', transition: 'border 0.15s', boxSizing: 'border-box' }}
                   title="Custom color">+</div>
                 {customColor && (
                   <input type="color" value={form.color} onChange={e => set('color', e.target.value)}
@@ -527,7 +527,7 @@ export default function EditTour() {
                 {form.logo_url ? (
                   <img src={form.logo_url} alt="Tour logo" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
                 ) : (
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No logo uploaded</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>No logo uploaded</div>
                 )}
                 <input
                   type="file"
@@ -540,7 +540,7 @@ export default function EditTour() {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: uploadingLogo ? 'default' : 'pointer', opacity: uploadingLogo ? 0.6 : 1 }}
+                  style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: uploadingLogo ? 'default' : 'pointer', opacity: uploadingLogo ? 0.6 : 1 }}
                   onMouseEnter={e => { if (!uploadingLogo) e.currentTarget.style.background = 'var(--surface-raised)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                 >
@@ -549,7 +549,7 @@ export default function EditTour() {
                 {form.logo_url && (
                   <span
                     onClick={handleRemoveLogo}
-                    style={{ fontSize: 12, color: 'var(--color-danger)', cursor: 'pointer' }}
+                    style={{ fontSize: 14, color: 'var(--color-danger)', cursor: 'pointer' }}
                   >Remove</span>
                 )}
               </div>
@@ -561,16 +561,16 @@ export default function EditTour() {
               <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this tour..." value={form.notes} onChange={e => set('notes', e.target.value)} />
             </div>
 
-            {error && <div style={{ fontSize: 13, color: 'var(--color-danger)' }}>{error}</div>}
+            {error && <div style={{ fontSize: 15, color: 'var(--color-danger)' }}>{error}</div>}
 
             <div style={{ borderTop: '0.5px solid var(--border-default)', marginTop: 8, paddingTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Delete this tour</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Permanently deletes the tour, all events, and all staffing data.</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Delete this tour</div>
+                <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 2 }}>Permanently deletes the tour, all events, and all staffing data.</div>
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#FF453A', color: '#FFD60A', fontWeight: 700, cursor: 'pointer', flexShrink: 0, marginLeft: 24 }}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: 'none', background: '#FF453A', color: '#FFD60A', fontWeight: 700, cursor: 'pointer', flexShrink: 0, marginLeft: 24 }}
               >
                 Delete Tour
               </button>
@@ -592,7 +592,7 @@ export default function EditTour() {
 
         {activeTab === 'settings' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Tour settings coming soon.</div>
+            <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Tour settings coming soon.</div>
           </div>
         )}
 
@@ -601,12 +601,12 @@ export default function EditTour() {
       {showUnsavedModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ ...GLASS, padding: 24, width: 380 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>Unsaved Changes</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>You have unsaved changes. Leave without saving?</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>Unsaved Changes</div>
+            <div style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 20 }}>You have unsaved changes. Leave without saving?</div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button
                 onClick={() => setShowUnsavedModal(false)}
-                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >Keep Editing</button>
               <button
                 onClick={() => {
@@ -618,7 +618,7 @@ export default function EditTour() {
                     router.push(`/tours/${id}`)
                   }
                 }}
-                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
               >Leave Without Saving</button>
             </div>
           </div>
@@ -631,30 +631,30 @@ export default function EditTour() {
           <div style={{ ...GLASS, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>Delete Tour</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               This will permanently delete <strong style={{ color: 'var(--text-primary)' }}>{form.name}</strong> and all of its events and staffing data. This cannot be undone.
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>Type <strong>DELETE</strong> to confirm:</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 6 }}>Type <strong>DELETE</strong> to confirm:</div>
               <input
                 value={deleteConfirmText}
                 onChange={e => setDeleteConfirmText(e.target.value)}
                 placeholder="DELETE"
                 autoFocus
-                style={{ width: '100%', fontSize: 14, padding: '9px 12px', borderRadius: 8, border: `0.5px solid ${deleteConfirmText === 'DELETE' ? 'var(--color-danger)' : 'var(--border-default)'}`, background: 'var(--surface-raised)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+                style={{ width: '100%', fontSize: 16, padding: '9px 12px', borderRadius: 8, border: `0.5px solid ${deleteConfirmText === 'DELETE' ? 'var(--color-danger)' : 'var(--border-default)'}`, background: 'var(--surface-raised)', color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}
-                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteTour}
                 disabled={deleteConfirmText !== 'DELETE' || deleting}
-                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: deleteConfirmText === 'DELETE' ? '#FF453A' : 'var(--surface-raised)', color: deleteConfirmText === 'DELETE' ? '#FFD60A' : 'var(--text-muted)', fontWeight: 700, cursor: deleteConfirmText === 'DELETE' && !deleting ? 'pointer' : 'default', transition: 'all 0.15s' }}
+                style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: deleteConfirmText === 'DELETE' ? '#FF453A' : 'var(--surface-raised)', color: deleteConfirmText === 'DELETE' ? '#FFD60A' : 'var(--text-muted)', fontWeight: 700, cursor: deleteConfirmText === 'DELETE' && !deleting ? 'pointer' : 'default', transition: 'all 0.15s' }}
               >
                 {deleting ? 'Deleting...' : 'Delete Tour'}
               </button>

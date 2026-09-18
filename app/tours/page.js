@@ -142,11 +142,11 @@ export default function Tours() {
 
       {/* Topbar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Tours</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Tours</div>
         <button
           onClick={() => router.push('/tours/new')}
           style={{
-            fontSize: 13, fontWeight: 600, padding: '7px 16px', borderRadius: 6,
+            fontSize: 15, fontWeight: 600, padding: '7px 16px', borderRadius: 6,
             border: 'none', background: 'var(--color-info)', color: '#ffffff',
             cursor: 'pointer', fontFamily: 'inherit',
           }}
@@ -163,7 +163,7 @@ export default function Tours() {
         style={{
           width: '100%',
           padding: '8px 14px',
-          fontSize: 12,
+          fontSize: 14,
           borderRadius: 8,
           border: '0.5px solid var(--border-default)',
           background: 'var(--surface-input)',
@@ -184,11 +184,11 @@ export default function Tours() {
               key={s}
               onClick={() => setActiveSection(s)}
               style={active ? {
-                fontSize: 13, fontWeight: 600, padding: '5px 14px', borderRadius: 6,
+                fontSize: 15, fontWeight: 600, padding: '5px 14px', borderRadius: 6,
                 border: 'none', background: 'var(--color-info)', color: '#ffffff',
                 cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
               } : {
-                fontSize: 13, fontWeight: 500, padding: '5px 14px', borderRadius: 6,
+                fontSize: 15, fontWeight: 500, padding: '5px 14px', borderRadius: 6,
                 border: '0.5px solid var(--border-strong)', background: 'transparent', color: 'var(--text-secondary)',
                 cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
               }}
@@ -204,14 +204,14 @@ export default function Tours() {
 
         {/* Left: tours list */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
             Tours
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-            {loading && <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
+            {loading && <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
             {!loading && !filtered.length && (
-              <div style={{ padding: '14px', fontSize: 12, fontWeight: 450, color: 'var(--text-muted)' }}>No tours found.</div>
+              <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>No tours found.</div>
             )}
             {filtered.map(tour => {
               const stats = tourEventStats[tour.id] || { total: 0, done: 0, left: 0 }
@@ -240,19 +240,19 @@ export default function Tours() {
                   <IconRoute size={44} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
 
                   <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
                       {getTourTypeLabel(tour.tour_type)}
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {tour.name}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
                     </div>
                     <div style={{ height: 6, borderRadius: 2, background: 'var(--border-default)', marginTop: 4, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: tour.color || 'var(--accent)' }} />
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 450, color: 'var(--text-muted)', marginTop: 3 }}>
+                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-muted)', marginTop: 3 }}>
                       {nextEvent
                         ? <>
                             <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>Next: </span>
@@ -274,14 +274,14 @@ export default function Tours() {
                       { val: stats.left, lbl: 'Left' },
                     ].map(item => (
                       <div key={item.lbl} style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
                       </div>
                     ))}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ ...statusPillStyle(tour.status), fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize', display: 'inline-block' }}>
+                    <span style={{ ...statusPillStyle(tour.status), fontSize: 13, fontWeight: 600, padding: '2px 6px', borderRadius: 4, textTransform: 'capitalize', display: 'inline-block' }}>
                       {STATUS_LABELS[tour.status] || tour.status}
                     </span>
                   </div>
@@ -296,15 +296,15 @@ export default function Tours() {
 
           {/* Quick stats */}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
               Quick Stats
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
               {QUICK_STATS.map(stat => (
                 <div key={stat.label} style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 14px' }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1, color: stat.valueColor, marginBottom: 4 }}>{stat.value}</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>{stat.label}</div>
+                  <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: stat.valueColor, marginBottom: 4 }}>{stat.value}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>{stat.label}</div>
                 </div>
               ))}
             </div>

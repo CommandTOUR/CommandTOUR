@@ -100,20 +100,20 @@ export default function ThisWeek({ showAll = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
           This Week
         </div>
-        <div style={{ fontSize: 13, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/calendar')}>
+        <div style={{ fontSize: 15, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/calendar')}>
           Calendar →
         </div>
       </div>
 
       {loading && (
-        <div style={{ color: 'var(--text-muted)', fontSize: 14, padding: '10px 0' }}>Loading...</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 16, padding: '10px 0' }}>Loading...</div>
       )}
 
       {!loading && !events.length && (
-        <div className="glass-card" style={{ padding: '16px', color: 'var(--text-muted)', fontSize: 14 }}>
+        <div className="glass-card" style={{ padding: '16px', color: 'var(--text-muted)', fontSize: 16 }}>
           No events this week.
         </div>
       )}
@@ -135,9 +135,9 @@ export default function ThisWeek({ showAll = false }) {
           >
             <IconMapPin size={16} color={ev.tourColor} style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{cityCountry || ev.city}</div>
-              <div style={{ fontSize: 13, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
-              {ev.venue_name && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{ev.venue_name}</div>}
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{cityCountry || ev.city}</div>
+              <div style={{ fontSize: 15, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
+              {ev.venue_name && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>{ev.venue_name}</div>}
             </div>
           </div>
         )

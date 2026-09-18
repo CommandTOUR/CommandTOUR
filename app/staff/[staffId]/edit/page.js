@@ -18,7 +18,7 @@ const GLASS = {
 }
 
 const sectionLabelStyle = {
-  fontSize: 15,
+  fontSize: 17,
   fontWeight: 700,
   color: 'var(--color-info)',
   marginBottom: 6,
@@ -26,7 +26,7 @@ const sectionLabelStyle = {
 }
 
 const labelStyle = {
-  fontSize: 10,
+  fontSize: 12,
   fontWeight: 700,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
@@ -36,7 +36,7 @@ const labelStyle = {
 }
 
 const inputStyle = {
-  fontSize: 14,
+  fontSize: 16,
   padding: '10px 14px',
   borderRadius: 8,
   border: '0.5px solid var(--border-default)',
@@ -49,7 +49,7 @@ const inputStyle = {
 }
 
 const OUTLINE_BTN = {
-  fontSize: 13,
+  fontSize: 15,
   fontWeight: 400,
   padding: '9px 18px',
   borderRadius: 8,
@@ -84,12 +84,12 @@ function EditUploadSlot({ label, url, uploading, onFile, icon: Icon }) {
         }}
       />
       <Icon size={36} stroke={1.5} color={url ? 'var(--color-info)' : 'var(--text-muted)'} />
-      <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: url ? 'var(--color-info)' : 'var(--text-muted)', textAlign: 'center' }}>{label}</div>
+      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: url ? 'var(--color-info)' : 'var(--text-muted)', textAlign: 'center' }}>{label}</div>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.6 : 1 }}
+        style={{ fontSize: 13, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.6 : 1 }}
       >
         {uploading ? 'Uploading...' : url ? 'Replace' : 'Upload'}
       </button>
@@ -329,7 +329,7 @@ export default function EditStaff() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
       <div style={{ padding: '4px 4px 0' }} />
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+        <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
       </div>
     </div>
   )
@@ -342,12 +342,12 @@ export default function EditStaff() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(26,86,219,0.10)', border: '1.5px solid var(--color-info)', color: 'var(--color-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(26,86,219,0.10)', border: '1.5px solid var(--color-info)', color: 'var(--color-info)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 600, flexShrink: 0 }}>
             {initials}
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' }}>{fullName}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Editing Profile</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-primary)' }}>{fullName}</div>
+            <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Editing Profile</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -366,7 +366,7 @@ export default function EditStaff() {
           <button
             onClick={handleSaveClick}
             disabled={saving}
-            style={{ fontSize: 13, fontWeight: 400, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}
+            style={{ fontSize: 15, fontWeight: 400, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
@@ -375,7 +375,7 @@ export default function EditStaff() {
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
 
-        {error && <div style={{ fontSize: 13, color: 'var(--color-danger)', marginBottom: 16 }}>{error}</div>}
+        {error && <div style={{ fontSize: 15, color: 'var(--color-danger)', marginBottom: 16 }}>{error}</div>}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
@@ -437,14 +437,14 @@ export default function EditStaff() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <div style={labelStyle}>Home Airport(s)</div>
-                  {localAirports.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>No airports added yet.</div>}
+                  {localAirports.length === 0 && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 10 }}>No airports added yet.</div>}
                   {localAirports.map((airport, i) => (
                     <div key={airport.id || `new-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                       <button
                         type="button"
                         onClick={() => togglePrimary(i)}
                         title="Set as primary"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18, color: airport.is_primary ? '#FFD60A' : 'var(--text-muted)', padding: '4px', flexShrink: 0, width: 28 }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: airport.is_primary ? '#FFD60A' : 'var(--text-muted)', padding: '4px', flexShrink: 0, width: 28 }}
                       >★</button>
                       <input
                         value={airport.iata_code}
@@ -474,14 +474,14 @@ export default function EditStaff() {
                       <button
                         type="button"
                         onClick={() => removeAirport(i)}
-                        style={{ color: 'var(--color-danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18, padding: '4px' }}
+                        style={{ color: 'var(--color-danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px' }}
                       >×</button>
                     </div>
                   ))}
                   <button
                     type="button"
                     onClick={addAirport}
-                    style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                    style={{ fontSize: 14, padding: '5px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
                   >
                     + Add Airport
                   </button>
@@ -493,26 +493,26 @@ export default function EditStaff() {
                     <button
                       type="button"
                       onClick={addAirline}
-                      style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                      style={{ fontSize: 14, padding: '5px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
                     >
                       + Add Airline
                     </button>
                   </div>
-                  {airlines.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No airlines added yet.</div>}
+                  {airlines.length === 0 && <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>No airlines added yet.</div>}
                   {airlines.map((a, i) => (
                     <div key={a.id || `new-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                       <button
                         type="button"
                         onClick={() => togglePreferred(i)}
                         title="Set as preferred"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18, color: a.preferred ? '#FFD60A' : 'var(--text-muted)', padding: '4px', flexShrink: 0, width: 28 }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: a.preferred ? '#FFD60A' : 'var(--text-muted)', padding: '4px', flexShrink: 0, width: 28 }}
                       >★</button>
                       <input style={{ ...inputStyle, flex: 1 }} placeholder="Airline" value={a.airline} onChange={e => setAirlineField(i, 'airline', e.target.value)} />
                       <input style={{ ...inputStyle, flex: 1 }} placeholder="FF Number" value={a.frequent_flyer_number || ''} onChange={e => setAirlineField(i, 'frequent_flyer_number', e.target.value)} />
                       <button
                         type="button"
                         onClick={() => removeAirline(i)}
-                        style={{ color: 'var(--color-danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18, padding: '4px' }}
+                        style={{ color: 'var(--color-danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px' }}
                       >×</button>
                     </div>
                   ))}
@@ -562,15 +562,15 @@ export default function EditStaff() {
                 </FormField>
                 <FormField label="Date of Birth">
                   <input type="date" style={inputStyle} value={form.dob} onChange={e => set('dob', e.target.value)} />
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
                 </FormField>
                 <FormField label="Date of Issue">
                   <input type="date" style={inputStyle} value={form.date_of_issue} onChange={e => set('date_of_issue', e.target.value)} />
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
                 </FormField>
                 <FormField label="Date of Expiration">
                   <input type="date" style={inputStyle} value={form.passport_expiry} onChange={e => set('passport_expiry', e.target.value)} />
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Displayed as DD MONTH YYYY</div>
                 </FormField>
               </div>
             </div>
@@ -584,19 +584,19 @@ export default function EditStaff() {
       {deleteConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, maxWidth: 400, width: '90%' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Delete Staff Member</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Delete Staff Member</div>
+            <div style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
               Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>{fullName}</strong>? This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setDeleteConfirm(false)}
-                style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '8px 18px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
               >Cancel</button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}
+                style={{ fontSize: 15, padding: '8px 18px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}
               >{deleting ? 'Deleting...' : 'Delete permanently'}</button>
             </div>
           </div>
@@ -605,7 +605,7 @@ export default function EditStaff() {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '10px 20px', fontSize: 14, color: 'var(--text-primary)', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '10px 20px', fontSize: 16, color: 'var(--text-primary)', zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>
           {toast}
         </div>
       )}

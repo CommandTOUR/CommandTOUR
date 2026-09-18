@@ -257,14 +257,14 @@ export default function NewEvent() {
   }
 
   const inputStyle = {
-    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px',
+    fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '10px 14px',
     borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)',
     background: 'rgba(255,255,255,0.08)', color: '#f1f5f9', caretColor: '#33FF99',
     outline: 'none', width: '100%',
   }
 
   const labelStyle = {
-    fontSize: 12, color: '#94a3b8', letterSpacing: '0.05em',
+    fontSize: 14, color: '#94a3b8', letterSpacing: '0.05em',
     marginBottom: 6, display: 'block',
   }
 
@@ -276,13 +276,13 @@ export default function NewEvent() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
             onClick={() => router.push(`/tours/${id}`)}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Add Event</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Add Event</div>
         </div>
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -293,10 +293,10 @@ export default function NewEvent() {
             {selectedVenue ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
+                  <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
                 </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 13, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
+                <div onClick={handleClearVenue} style={{ fontSize: 15, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
                   onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                   × Clear
@@ -305,7 +305,7 @@ export default function NewEvent() {
             ) : creatingVenue ? (
               /* Inline Create Venue Form */
               <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#33FF99', marginBottom: 16 }}>New Venue</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#33FF99', marginBottom: 16 }}>New Venue</div>
 
                 {/* Google Places name search */}
                 <div style={{ position: 'relative', marginBottom: 14 }}>
@@ -327,9 +327,9 @@ export default function NewEvent() {
                           onMouseDown={() => handlePlaceSelect(p)}
                           onMouseEnter={() => setPlaceActiveIndex(i)}
                           onMouseLeave={() => setPlaceActiveIndex(-1)}
-                          style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '0.5px solid var(--glass-border)', background: i === placeActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
+                          style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 15, borderBottom: '0.5px solid var(--glass-border)', background: i === placeActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
                           <div style={{ color: i === placeActiveIndex ? 'var(--mint)' : 'var(--text-primary)', fontWeight: 500 }}>{p.structured_formatting?.main_text}</div>
-                          <div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
+                          <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 2 }}>{p.structured_formatting?.secondary_text}</div>
                         </div>
                       ))}
                     </div>
@@ -356,17 +356,17 @@ export default function NewEvent() {
                   </div>
                 </div>
 
-                {venueError && <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 12 }}>{venueError}</div>}
+                {venueError && <div style={{ fontSize: 14, color: '#dc2626', marginBottom: 12 }}>{venueError}</div>}
 
                 <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => { setCreatingVenue(false); setNewVenue({ name: '', address: '', city: '', state: '', country: '', full_address: '', place_id: '', latitude: null, longitude: null, zip: '', region: '' }); setVenueError('') }}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     Cancel
                   </button>
-                  <button className="btn-primary" onClick={handleSaveNewVenue} disabled={savingVenue} style={{ fontSize: 13, padding: '7px 16px' }}>
+                  <button className="btn-primary" onClick={handleSaveNewVenue} disabled={savingVenue} style={{ fontSize: 15, padding: '7px 16px' }}>
                     {savingVenue ? 'Saving...' : 'Save & Select Venue'}
                   </button>
                 </div>
@@ -387,8 +387,8 @@ export default function NewEvent() {
                         onMouseEnter={() => setVenueActiveIndex(i)}
                         onMouseLeave={() => setVenueActiveIndex(-1)}
                         style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
+                        <div style={{ fontSize: 16, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
+                        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
                       </div>
                     ))}
                     {/* Create new venue option */}
@@ -397,8 +397,8 @@ export default function NewEvent() {
                       onMouseEnter={() => setVenueActiveIndex(filteredVenues.length)}
                       onMouseLeave={() => setVenueActiveIndex(-1)}
                       style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: filteredVenues.length === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
-                      <span style={{ color: 'var(--mint)', fontSize: 16, lineHeight: 1 }}>+</span>
-                      <span style={{ fontSize: 14, color: 'var(--mint)' }}>Create New Venue</span>
+                      <span style={{ color: 'var(--mint)', fontSize: 18, lineHeight: 1 }}>+</span>
+                      <span style={{ fontSize: 16, color: 'var(--mint)' }}>Create New Venue</span>
                     </div>
                   </div>
                 )}
@@ -430,7 +430,7 @@ export default function NewEvent() {
                     <div key={c} onMouseDown={() => { set('country', c); setShowCountrySuggestions(false); setCountryActiveIndex(-1) }}
                       onMouseEnter={() => setCountryActiveIndex(i)}
                       onMouseLeave={() => setCountryActiveIndex(-1)}
-                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 14, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
+                      style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 16, borderBottom: '0.5px solid var(--glass-border)', background: i === countryActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent', color: i === countryActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>
                       {c}
                     </div>
                   ))}
@@ -475,7 +475,7 @@ export default function NewEvent() {
               <div style={{ width: 36, height: 20, borderRadius: 10, background: extendedLoadOut ? 'var(--mint)' : 'rgba(255,255,255,0.15)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: 2, left: extendedLoadOut ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: extendedLoadOut ? '#0a1628' : '#ffffff', transition: 'left 0.2s' }} />
               </div>
-              <span style={{ fontSize: 13, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
+              <span style={{ fontSize: 15, color: extendedLoadOut ? '#f1f5f9' : '#94a3b8' }}>Extended Load-Out</span>
             </div>
             {extendedLoadOut && (
               <div style={{ marginTop: 12 }}>
@@ -493,7 +493,7 @@ export default function NewEvent() {
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <input style={{ ...inputStyle, flex: 2 }} type="date" value={show.show_date} onChange={e => updateShow(i, 'show_date', e.target.value)} />
                   <input style={{ ...inputStyle, flex: 1 }} type="time" value={show.show_time} onChange={e => updateShow(i, 'show_time', e.target.value)} />
-                  <div onClick={() => removeShow(i)} style={{ fontSize: 16, color: '#94a3b8', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
+                  <div onClick={() => removeShow(i)} style={{ fontSize: 18, color: '#94a3b8', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}
                     onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
                     onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
                     ×
@@ -501,7 +501,7 @@ export default function NewEvent() {
                 </div>
               ))}
             </div>
-            <button onClick={addShow} type="button" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#33FF99', cursor: 'pointer', marginTop: 10 }}>
+            <button onClick={addShow} type="button" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#33FF99', cursor: 'pointer', marginTop: 10 }}>
               + Add Show
             </button>
           </div>
@@ -512,12 +512,12 @@ export default function NewEvent() {
             <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this event..." value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
-          {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
+          {error && <div style={{ fontSize: 15, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
             <button
               onClick={() => router.push(`/tours/${id}`)}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>

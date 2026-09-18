@@ -61,15 +61,15 @@ export default function TourTiles() {
 
   if (loading) return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
-      <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
+      <div style={{ color: 'var(--text-muted)', fontSize: 16 }}>Loading...</div>
     </div>
   )
 
   if (!tours.length) return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
-      <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 14 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
+      <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 16 }}>
         No active tours. <span style={{ color: 'var(--color-mint)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/tours/new')}>Create one</span>
       </div>
     </div>
@@ -106,10 +106,10 @@ export default function TourTiles() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</div>
-            <div className="tile-sub1" style={{ fontSize: 13, marginTop: 3 }}>
+            <div className="tile-sub1" style={{ fontSize: 15, marginTop: 3 }}>
               {tour.year}{hasDirector ? ` · ${tour.director_name}` : ''}
             </div>
-            <div className="tile-sub2" style={{ fontSize: 12, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="tile-sub2" style={{ fontSize: 14, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {tour.region}
             </div>
           </div>
@@ -124,8 +124,8 @@ export default function TourTiles() {
             { val: remaining, lbl: 'Left', color: 'var(--text-primary)' },
           ].map(item => (
             <div key={item.lbl}>
-              <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: item.color }}>{item.val}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, color: item.color }}>{item.val}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{item.lbl}</div>
             </div>
           ))}
         </div>
@@ -137,7 +137,7 @@ export default function TourTiles() {
 
         {/* Status pill */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 9px', borderRadius: 6, textTransform: 'capitalize', background: 'var(--color-mint-bg)', color: 'var(--color-mint)', border: '1px solid var(--color-mint-border)' }}>Active</span>
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 9px', borderRadius: 6, textTransform: 'capitalize', background: 'var(--color-mint-bg)', color: 'var(--color-mint)', border: '1px solid var(--color-mint-border)' }}>Active</span>
         </div>
 
         {/* Next event mini-tile */}
@@ -152,13 +152,13 @@ export default function TourTiles() {
         >
           {tour.nextEvent ? (
             <>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8B96A8', marginBottom: 2 }}>Next Event</div>
-              <div className="tile-next-event-text" style={{ fontSize: 13, fontWeight: 600 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8B96A8', marginBottom: 2 }}>Next Event</div>
+              <div className="tile-next-event-text" style={{ fontSize: 15, fontWeight: 600 }}>
                 {formatLocation(tour.nextEvent.city, tour.nextEvent.state, tour.nextEvent.country, 'compact')} · {new Date(tour.nextEvent.load_in_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>No upcoming events</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No upcoming events</div>
           )}
         </div>
       </div>
@@ -168,8 +168,8 @@ export default function TourTiles() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active Tours</div>
-        <div style={{ fontSize: 13, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/tours')}>All Tours →</div>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active Tours</div>
+        <div style={{ fontSize: 15, color: 'var(--color-mint)', cursor: 'pointer', fontWeight: 500 }} onClick={() => router.push('/tours')}>All Tours →</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
         {tours.map(renderTile)}

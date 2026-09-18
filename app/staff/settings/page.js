@@ -46,12 +46,12 @@ function PositionRow({
               if (escapingRef.current) { escapingRef.current = false; return }
               onSaveEditPos(dept.id)
             }}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 180 }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 180 }}
           />
         ) : (
           <span
             onClick={() => onStartEditPos(pos)}
-            style={{ fontSize: 14, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            style={{ fontSize: 16, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
           >
             {pos.title}
           </span>
@@ -107,19 +107,19 @@ function StaffDeptRow({
                   if (escapingRef.current) { escapingRef.current = false; return }
                   onSaveEditStaffDept()
                 }}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 220 }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 220 }}
               />
             ) : (
               <span
                 onClick={() => onStartEditStaffDept(dept)}
-                style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
               >
                 {dept.name}
               </span>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: 15, color: 'var(--text-muted)' }}>
               {staffCount} {staffCount === 1 ? 'staff member' : 'staff members'}
             </span>
             <button
@@ -191,19 +191,19 @@ function DepartmentRow({
                   if (escapingRef.current) { escapingRef.current = false; return }
                   onSaveEditDept()
                 }}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 220 }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 6, padding: '4px 8px', outline: 'none', minWidth: 220 }}
               />
             ) : (
               <span
                 onClick={e => { e.stopPropagation(); onStartEditDept(dept) }}
-                style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', cursor: 'text', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
               >
                 {dept.name}
               </span>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: 15, color: 'var(--text-muted)' }}>
               {dept.positions.length} {dept.positions.length === 1 ? 'position' : 'positions'}
             </span>
             <button
@@ -251,7 +251,7 @@ function DepartmentRow({
                 value={isNewPosOwner ? newPosName : ''}
                 onChange={e => onChangeNewPosName(dept.id, e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAddPosition(dept.id) } }}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', flex: 1, maxWidth: 260 }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', flex: 1, maxWidth: 260 }}
               />
               <button
                 onClick={() => onAddPosition(dept.id)}
@@ -559,7 +559,7 @@ export default function StaffingSettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button
               onClick={() => router.push('/staff')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, fontWeight: 600, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border-card)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
             >
@@ -567,8 +567,8 @@ export default function StaffingSettingsPage() {
               Staff
             </button>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Staffing Settings</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 3 }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>Staffing Settings</div>
+              <div style={{ fontSize: 16, color: 'var(--text-muted)', marginTop: 3 }}>
                 {activeTab === 'grid'
                   ? <>{departments.length} {departments.length === 1 ? 'department' : 'departments'} · {totalPositions} {totalPositions === 1 ? 'position' : 'positions'}</>
                   : <>{staffDepts.length} {staffDepts.length === 1 ? 'department' : 'departments'} · {totalStaffAssigned} {totalStaffAssigned === 1 ? 'staff member' : 'staff members'}</>
@@ -584,7 +584,7 @@ export default function StaffingSettingsPage() {
                 const active = activeTab === tab.key
                 return (
                   <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, fontWeight: active ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: active ? 'var(--bg-card-hover)' : 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: active ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s' }}>
+                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, fontWeight: active ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: active ? 'var(--bg-card-hover)' : 'transparent', color: active ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: active ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s' }}>
                     {tab.label}
                   </button>
                 )
@@ -595,7 +595,7 @@ export default function StaffingSettingsPage() {
 
         <div style={{ padding: 28 }}>
 
-          {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>}
+          {loading && <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>}
 
           {!loading && activeTab === 'grid' && (
             <>
@@ -641,7 +641,7 @@ export default function StaffingSettingsPage() {
                   value={newDeptName}
                   onChange={e => setNewDeptName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addDepartment() } }}
-                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: 320 }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: 320 }}
                 />
                 <button
                   className="btn-primary"
@@ -683,7 +683,7 @@ export default function StaffingSettingsPage() {
                   value={newStaffDeptName}
                   onChange={e => setNewStaffDeptName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addStaffDept() } }}
-                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: 320 }}
+                  style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', width: 320 }}
                 />
                 <button
                   className="btn-primary"

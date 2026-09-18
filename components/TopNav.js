@@ -107,7 +107,7 @@ export default function TopNav() {
 
           return (
             <Link key={link.href} href={link.href} style={{
-              fontSize: 15,
+              fontSize: 17,
               padding: '7px 14px',
               borderRadius: 7,
               textDecoration: 'none',
@@ -174,13 +174,13 @@ export default function TopNav() {
               background: theme === 'light' ? 'var(--text-primary)' : 'rgba(255,255,255,0.08)',
               border: '1px solid var(--border-card)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 600,
+              fontSize: 13, fontWeight: 600,
               color: theme === 'light' ? '#FFFFFF' : 'var(--text-primary)',
               transition: 'background 0.2s',
             }}>
               MA
             </div>
-            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Mark A.</span>
+            <span style={{ fontSize: 16, color: 'var(--text-secondary)' }}>Mark A.</span>
           </div>
 
           {dropdownOpen && (
@@ -200,7 +200,7 @@ export default function TopNav() {
             }}>
               <div
                 onClick={() => { setDropdownOpen(false); router.push('/settings') }}
-                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}
+                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--text-primary)', fontSize: 15, cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -208,7 +208,7 @@ export default function TopNav() {
               </div>
               <div
                 onClick={handleSignOut}
-                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--color-red)', fontSize: 13, cursor: 'pointer' }}
+                style={{ padding: '10px 14px', borderRadius: 6, color: 'var(--color-red)', fontSize: 15, cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card-hover)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >

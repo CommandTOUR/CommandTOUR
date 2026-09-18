@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { getSupabase } from '../lib/supabase'
 
 const TOOLBAR_BTN = {
-  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, fontWeight: 600, minWidth: 32, height: 32, padding: '0 8px', borderRadius: 6,
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, fontWeight: 600, minWidth: 32, height: 32, padding: '0 8px', borderRadius: 6,
   border: '0.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
 }
 
 const SELECT_STYLE = {
-  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '6px 10px', borderRadius: 6,
+  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '6px 10px', borderRadius: 6,
   border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: '#f1f5f9',
   outline: 'none', cursor: 'pointer',
 }
@@ -103,11 +103,11 @@ export default function NotesTab({ eventId }) {
     queueSave()
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: '#94a3b8' }}>Loading notes...</div>
+  if (loading) return <div style={{ fontSize: 16, color: '#94a3b8' }}>Loading notes...</div>
 
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#f1f5f9' }}>Notes</div>
+      <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 16, color: '#f1f5f9' }}>Notes</div>
 
       <div className="glass-card" style={{ padding: 12, marginBottom: 10, display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 4, overflowX: 'auto' }}>
         {/* Text style */}
@@ -167,14 +167,14 @@ export default function NotesTab({ eventId }) {
         onBlur={handleBlur}
         data-placeholder="Add notes about this event..."
         style={{
-          fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '14px 16px', borderRadius: 10,
+          fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '14px 16px', borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#f1f5f9', caretColor: '#33FF99',
           outline: 'none', width: '100%', minHeight: 400, lineHeight: 1.6,
         }}
       />
 
       {updatedAt && (
-        <div style={{ fontSize: 12, color: '#64748b', marginTop: 8 }}>
+        <div style={{ fontSize: 14, color: '#64748b', marginTop: 8 }}>
           Last updated {new Date(updatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
         </div>
       )}

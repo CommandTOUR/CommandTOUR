@@ -79,17 +79,17 @@ function StaffPicker({ onSelect, onClose }) {
         onChange={e => setQuery(e.target.value)}
         onKeyDown={e => { if (e.key === 'Escape') onClose() }}
         placeholder="Search staff..."
-        style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 15, padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
       {query.trim() && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, marginTop: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
-          {loading && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>Searching...</div>}
-          {!loading && results.length === 0 && <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-muted)' }}>No results</div>}
+          {loading && <div style={{ padding: '8px 12px', fontSize: 14, color: 'var(--text-muted)' }}>Searching...</div>}
+          {!loading && results.length === 0 && <div style={{ padding: '8px 12px', fontSize: 14, color: 'var(--text-muted)' }}>No results</div>}
           {results.map(s => (
             <div
               key={s.id}
               onClick={() => onSelect(s)}
-              style={{ padding: '8px 12px', fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}
+              style={{ padding: '8px 12px', fontSize: 15, color: 'var(--text-primary)', cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
@@ -106,7 +106,7 @@ function InlineDateCell({ value, disabled, onSave }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value || '')
 
-  if (disabled) return <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
+  if (disabled) return <span style={{ fontSize: 15, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
 
   if (editing) {
     return (
@@ -120,12 +120,12 @@ function InlineDateCell({ value, disabled, onSave }) {
           if (e.key === 'Enter') { setEditing(false); onSave(val || null) }
           if (e.key === 'Escape') { setEditing(false); setVal(value || '') }
         }}
-        style={{ fontSize: 12, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: 108 }}
+        style={{ fontSize: 14, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: 108 }}
       />
     )
   }
   return (
-    <span onClick={() => { setVal(value || ''); setEditing(true) }} style={{ fontSize: 13, color: value ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}>
+    <span onClick={() => { setVal(value || ''); setEditing(true) }} style={{ fontSize: 15, color: value ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}>
       {fmtDate(value) || '+ date'}
     </span>
   )
@@ -135,7 +135,7 @@ function InlineTextCell({ value, disabled, onSave }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value || '')
 
-  if (disabled) return <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
+  if (disabled) return <span style={{ fontSize: 15, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
 
   if (editing) {
     return (
@@ -148,12 +148,12 @@ function InlineTextCell({ value, disabled, onSave }) {
           if (e.key === 'Enter') { setEditing(false); onSave(val) }
           if (e.key === 'Escape') { setEditing(false); setVal(value || '') }
         }}
-        style={{ fontSize: 13, padding: '3px 8px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+        style={{ fontSize: 15, padding: '3px 8px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
       />
     )
   }
   return (
-    <span onClick={() => { setVal(value || ''); setEditing(true) }} style={{ fontSize: 13, color: value ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    <span onClick={() => { setVal(value || ''); setEditing(true) }} style={{ fontSize: 15, color: value ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
       {value || '+ add note'}
     </span>
   )
@@ -179,7 +179,7 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
+        <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
       </div>
 
       <div style={{ position: 'relative' }}>
@@ -189,12 +189,12 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
             onClose={() => setPicking(false)}
           />
         ) : hasStaff ? (
-          <span onClick={() => setPicking(true)} style={{ fontSize: 13, color: 'var(--text-primary)', cursor: 'pointer' }}>
-            {hasConflict && <span style={{ color: 'var(--color-warning)', fontSize: 10, marginRight: 3 }}>⚠</span>}
+          <span onClick={() => setPicking(true)} style={{ fontSize: 15, color: 'var(--text-primary)', cursor: 'pointer' }}>
+            {hasConflict && <span style={{ color: 'var(--color-warning)', fontSize: 12, marginRight: 3 }}>⚠</span>}
             {staffDisplayName(assignment.staff)}
           </span>
         ) : (
-          <span onClick={() => setPicking(true)} style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent)', cursor: 'pointer' }}>+ Assign</span>
+          <span onClick={() => setPicking(true)} style={{ fontSize: 14, fontWeight: 500, color: 'var(--accent)', cursor: 'pointer' }}>+ Assign</span>
         )}
       </div>
 
@@ -205,7 +205,7 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
             <span
               onClick={() => onSetStatus(assignment, assignment.status === 'confirmed' ? 'pending' : 'confirmed')}
               style={{
-                display: 'inline-block', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, cursor: 'pointer',
+                display: 'inline-block', fontSize: 13, fontWeight: 600, padding: '2px 8px', borderRadius: 20, cursor: 'pointer',
                 background: pill.background, color: pill.color, border: `0.5px solid ${pill.border}`,
               }}
               onMouseEnter={e => { e.currentTarget.style.opacity = '0.8' }}
@@ -213,7 +213,7 @@ function PositionSlotRow({ tourPositionId, slotIndex, title, assignment, onAssig
             >{formatStatusLabel(assignment.status)}</span>
           )
         })() : (
-          <span style={{ fontSize: 13, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
+          <span style={{ fontSize: 15, color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
         )}
       </div>
 
@@ -243,8 +243,8 @@ function DepartmentSection({ dept, expanded, onToggle, filledCount, totalCount, 
         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', cursor: 'pointer', background: 'var(--border-default)', borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-default)', userSelect: 'none' }}
       >
         {expanded ? <IconChevronDown size={14} color="var(--text-muted)" /> : <IconChevronRight size={14} color="var(--text-muted)" />}
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>{dept.name}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>({filledCount}/{totalCount})</span>
+        <span style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>{dept.name}</span>
+        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 6 }}>({filledCount}/{totalCount})</span>
       </div>
       {expanded && dept.positions.map(pos => (
         Array.from({ length: pos.quantityNeeded }, (_, i) => i + 1).map(slotIndex => renderSlot(pos, slotIndex))
@@ -301,17 +301,17 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ ...GLASS, padding: 24, width: 420 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Add Position for This Event</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>This won&rsquo;t affect the tour&rsquo;s baseline staffing.</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Add Position for This Event</div>
+        <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 20 }}>This won&rsquo;t affect the tour&rsquo;s baseline staffing.</div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>Loading positions...</div>
+          <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 20 }}>Loading positions...</div>
         ) : (
           <>
             <select
               value={selectedPositionId}
               onChange={e => setSelectedPositionId(e.target.value)}
-              style={{ fontSize: 14, padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', marginBottom: 16, cursor: 'pointer' }}
+              style={{ fontSize: 16, padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', marginBottom: 16, cursor: 'pointer' }}
             >
               <option value="">Select a position...</option>
               {allDepartments.map(dept => (
@@ -325,14 +325,14 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
 
             {selectedPositionId && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Quantity</span>
+                <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Quantity</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
                     style={{ width: 28, height: 28, borderRadius: 6, border: '0.5px solid var(--border-default)', background: 'var(--surface-raised)', color: 'var(--text-primary)', cursor: quantity <= 1 ? 'default' : 'pointer', opacity: quantity <= 1 ? 0.4 : 1 }}
                   >−</button>
-                  <span style={{ width: 30, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{quantity}</span>
+                  <span style={{ width: 30, textAlign: 'center', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{quantity}</span>
                   <button
                     onClick={() => setQuantity(q => Math.min(10, q + 1))}
                     disabled={quantity >= 10}
@@ -347,7 +347,7 @@ function AddPositionExceptionModal({ tourId, eventId, existingTourPositions, onC
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
+            style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
           >
             Cancel
           </button>
@@ -586,7 +586,7 @@ export default function StaffingTab({ tourId, eventId, event, tourColor }) {
     }
   }
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
 
   const isEmpty = departments.length === 0
 
@@ -612,23 +612,23 @@ export default function StaffingTab({ tourId, eventId, event, tourColor }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>
           Staffing
-          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>({totals.filled}/{totals.total} filled)</span>
+          <span style={{ fontSize: 15, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>({totals.filled}/{totals.total} filled)</span>
         </div>
-        <button className="btn-primary" onClick={() => setShowAddException(true)} style={{ fontSize: 12, padding: '6px 14px' }}>+ Add Position</button>
+        <button className="btn-primary" onClick={() => setShowAddException(true)} style={{ fontSize: 14, padding: '6px 14px' }}>+ Add Position</button>
       </div>
 
       {assignError && (
-        <div style={{ fontSize: 13, color: 'var(--color-danger)', background: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+        <div style={{ fontSize: 15, color: 'var(--color-danger)', background: 'color-mix(in srgb, var(--color-danger) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--color-danger) 30%, transparent)', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
           {assignError}
         </div>
       )}
 
       {isEmpty ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 14, textAlign: 'center' }}>
-          <div style={{ fontSize: 15, color: 'var(--text-primary)' }}>No positions configured for this tour.</div>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Set up staffing in Edit Tour → Tour Staffing.</div>
+          <div style={{ fontSize: 17, color: 'var(--text-primary)' }}>No positions configured for this tour.</div>
+          <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set up staffing in Edit Tour → Tour Staffing.</div>
           <button className="btn-primary" onClick={() => router.push(`/tours/${effectiveTourId}/edit`)}>Go to Edit Tour</button>
         </div>
       ) : (
@@ -636,7 +636,7 @@ export default function StaffingTab({ tourId, eventId, event, tourColor }) {
           <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 12px', padding: '10px 16px', background: tableColor, borderBottom: '0.5px solid var(--border-default)' }}>
             <div />
             {['Position', 'Assigned', 'Status', 'Travel In', 'Travel Out', 'Notes', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
+              <div key={i} style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{h}</div>
             ))}
           </div>
 
@@ -687,21 +687,21 @@ export default function StaffingTab({ tourId, eventId, event, tourColor }) {
       {pendingConflict && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ ...GLASS, padding: 24, borderRadius: 12, maxWidth: 400, width: '90%' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Scheduling Conflict</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Scheduling Conflict</div>
+            <div style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 20 }}>
               {staffDisplayName(pendingConflict.staffMember)} is already assigned at {pendingConflict.conflictingEvent?.city}
               {pendingConflict.conflictingEvent?.tours?.name ? ` (${pendingConflict.conflictingEvent.tours.name})` : ''} that weekend. Both assignments are pending.
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setPendingConflict(null)}
-                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConflictConfirm}
-                style={{ fontSize: 13, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-warning)', color: 'var(--surface-card)', fontWeight: 600, cursor: 'pointer' }}
+                style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-warning)', color: 'var(--surface-card)', fontWeight: 600, cursor: 'pointer' }}
               >
                 Assign Anyway
               </button>

@@ -105,11 +105,11 @@ function StaffingSection({ tourId, onSaved }) {
     width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-card)',
     background: 'var(--bg-card-hover)', color: 'var(--text-primary)',
     cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
     fontFamily: 'Plus Jakarta Sans, sans-serif',
   })
 
-  if (loading) return <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading staffing...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading staffing...</div>
 
   return (
     <div>
@@ -126,11 +126,11 @@ function StaffingSection({ tourId, onSaved }) {
                 <span style={{ display: 'flex', color: 'var(--text-muted)' }}>
                   {expanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
                 </span>
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{dept.name}</span>
+                <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{dept.name}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {staffedCount > 0 && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-mint)' }} />}
-                <span style={{ fontSize: 13, color: staffedCount > 0 ? 'var(--color-mint)' : 'var(--text-muted)' }}>
+                <span style={{ fontSize: 15, color: staffedCount > 0 ? 'var(--color-mint)' : 'var(--text-muted)' }}>
                   {staffedCount} {staffedCount === 1 ? 'position' : 'positions'}
                 </span>
               </div>
@@ -141,7 +141,7 @@ function StaffingSection({ tourId, onSaved }) {
                   const qty = quantities[pos.id] || 0
                   return (
                     <div key={pos.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{pos.title}</span>
+                      <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>{pos.title}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button onClick={() => setQuantity(pos.id, Math.max(0, qty - 1))} disabled={qty === 0} style={stepperBtnStyle(qty === 0)}>−</button>
                         <input
@@ -153,7 +153,7 @@ function StaffingSection({ tourId, onSaved }) {
                             if (!isNaN(n)) setQuantity(pos.id, Math.max(0, Math.min(99, n)))
                           }}
                           style={{
-                            width: 40, height: 28, textAlign: 'center', fontSize: 16, fontWeight: 700,
+                            width: 40, height: 28, textAlign: 'center', fontSize: 18, fontWeight: 700,
                             borderRadius: 6, border: '1px solid var(--border-card)', background: 'var(--bg-card)',
                             color: qty > 0 ? 'var(--color-mint)' : 'var(--text-muted)', outline: 'none',
                             fontFamily: 'Plus Jakarta Sans, sans-serif',
@@ -228,7 +228,7 @@ export default function NewTour() {
 
   const inputStyle = {
     fontFamily: 'Plus Jakarta Sans, sans-serif',
-    fontSize: 14,
+    fontSize: 16,
     padding: '10px 14px',
     borderRadius: 8,
     border: '1px solid rgba(255,255,255,0.15)',
@@ -240,7 +240,7 @@ export default function NewTour() {
   }
 
   const labelStyle = {
-    fontSize: 12,
+    fontSize: 14,
     color: '#94a3b8',
     letterSpacing: '0.05em',
     marginBottom: 6,
@@ -255,13 +255,13 @@ export default function NewTour() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button
             onClick={() => router.push('/tours')}
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 13, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
+            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>New Tour</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#ffffff', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>New Tour</div>
         </div>
 
         {/* Tab bar */}
@@ -269,14 +269,14 @@ export default function NewTour() {
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-card)', border: '1px solid var(--border-card)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
             <button
               onClick={() => setActiveTab('info')}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, fontWeight: activeTab === 'info' ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: activeTab === 'info' ? 'var(--bg-card-hover)' : 'transparent', color: activeTab === 'info' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: activeTab === 'info' ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, fontWeight: activeTab === 'info' ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: activeTab === 'info' ? 'var(--bg-card-hover)' : 'transparent', color: activeTab === 'info' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: activeTab === 'info' ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s', display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
               Tour Info
               {infoComplete && <IconCircleCheck size={16} color="var(--color-mint)" />}
             </button>
             <button
               onClick={() => { if (tourId) setActiveTab('staffing') }}
-              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, fontWeight: activeTab === 'staffing' ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: activeTab === 'staffing' ? 'var(--bg-card-hover)' : 'transparent', color: activeTab === 'staffing' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: tourId ? 'pointer' : 'default', boxShadow: activeTab === 'staffing' ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s', opacity: tourId ? 1 : 0.5 }}
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, fontWeight: activeTab === 'staffing' ? 700 : 500, padding: '8px 18px', borderRadius: 7, border: 'none', background: activeTab === 'staffing' ? 'var(--bg-card-hover)' : 'transparent', color: activeTab === 'staffing' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: tourId ? 'pointer' : 'default', boxShadow: activeTab === 'staffing' ? '0 1px 3px rgba(26,36,34,0.08)' : 'none', transition: 'all 0.15s', opacity: tourId ? 1 : 0.5 }}
             >
               Staffing
             </button>
@@ -362,7 +362,7 @@ export default function NewTour() {
                 ))}
                 <div style={{ position: 'relative' }}>
                   <div onClick={() => setCustomColor(true)}
-                    style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'rgba(255,255,255,0.10)', cursor: 'pointer', border: customColor ? '3px solid #f1f5f9' : '3px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#94a3b8', transition: 'border 0.15s' }}
+                    style={{ width: 32, height: 32, borderRadius: '50%', background: customColor ? form.color : 'rgba(255,255,255,0.10)', cursor: 'pointer', border: customColor ? '3px solid #f1f5f9' : '3px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#94a3b8', transition: 'border 0.15s' }}
                     title="Custom color">+</div>
                 </div>
                 {customColor && (
@@ -373,12 +373,12 @@ export default function NewTour() {
               <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: form.color, width: '100%', transition: 'background 0.2s' }} />
             </div>
 
-            {error && <div style={{ fontSize: 13, color: '#dc2626' }}>{error}</div>}
+            {error && <div style={{ fontSize: 15, color: '#dc2626' }}>{error}</div>}
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
               <button
                 onClick={() => router.push('/tours')}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
+                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#f1f5f9', cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >Cancel</button>

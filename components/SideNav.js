@@ -49,7 +49,7 @@ const NAV = [
 const NAV_ITEM = {
   display: 'flex', alignItems: 'center', gap: 10,
   padding: '6px 8px', borderRadius: 8, cursor: 'pointer',
-  fontSize: 13, fontWeight: 400, marginBottom: 1,
+  fontSize: 15, fontWeight: 400, marginBottom: 1,
   transition: 'all 0.12s',
 }
 const NAV_ITEM_ACTIVE = {
@@ -64,14 +64,14 @@ const NAV_ITEM_INACTIVE = {
   color: 'var(--text-primary)',
 }
 const SECTION_LABEL_STYLE = {
-  fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+  fontSize: 13, fontWeight: 700, textTransform: 'uppercase',
   letterSpacing: '0.1em', color: 'var(--text-secondary)',
   padding: '10px 10px 4px',
 }
 const SUB_ITEM = {
   display: 'flex', alignItems: 'center',
   padding: '6px 10px 6px 32px', borderRadius: 8, cursor: 'pointer',
-  fontSize: 12, fontWeight: 400, marginBottom: 1,
+  fontSize: 14, fontWeight: 400, marginBottom: 1,
   transition: 'all 0.12s',
 }
 
@@ -207,7 +207,7 @@ export default function SideNav() {
                     {Icon && <Icon size={16} stroke={isActive ? 2 : 1.5} />}
                     <span style={{ flex: 1 }}>{item.label}</span>
                     {item.count !== undefined && (
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>{item.count}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 'auto' }}>{item.count}</span>
                     )}
                   </div>
 
@@ -267,7 +267,7 @@ export default function SideNav() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             letterSpacing: '0.02em',
           }}>MA</div>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
+          <span style={{ fontSize: 15, color: 'var(--text-secondary)', fontWeight: 500 }}>
             Mark A.
           </span>
           <button

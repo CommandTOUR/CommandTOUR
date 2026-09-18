@@ -52,7 +52,7 @@ export default function Venues() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0' }}>
-        <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Venues</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Venues</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <input
             type="text"
@@ -63,7 +63,7 @@ export default function Venues() {
               background: 'var(--surface-card)',
               border: '0.5px solid var(--border-default)',
               color: 'var(--text-primary)',
-              fontSize: 14,
+              fontSize: 16,
               borderRadius: 8,
               padding: '10px 16px',
               width: 260,
@@ -72,7 +72,7 @@ export default function Venues() {
           />
           <button
             onClick={() => router.push('/venues/new')}
-            style={{ background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 400, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: '0.5px solid var(--color-info)', color: 'var(--color-info)', borderRadius: 8, padding: '9px 16px', fontSize: 15, fontWeight: 400, cursor: 'pointer' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
@@ -85,7 +85,7 @@ export default function Venues() {
         <button
           onClick={() => setActiveRegion(null)}
           style={{
-            fontSize: 13, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
+            fontSize: 15, padding: '5px 14px', borderRadius: 20, border: '0.5px solid',
             borderColor: activeRegion === null ? 'var(--color-info)' : 'var(--border-default)',
             background: activeRegion === null ? 'rgba(26,86,219,0.10)' : 'transparent',
             color: activeRegion === null ? 'var(--color-info)' : 'var(--text-secondary)',
@@ -99,13 +99,13 @@ export default function Venues() {
             key={region}
             onClick={() => setActiveRegion(region)}
             style={activeRegion === region ? {
-              fontSize: 13, padding: '5px 14px', borderRadius: 20,
+              fontSize: 15, padding: '5px 14px', borderRadius: 20,
               border: `0.5px solid ${getRegionColor(region).color}`,
               background: getRegionColor(region).bg,
               color: getRegionColor(region).color,
               fontWeight: 700, cursor: 'pointer', opacity: 1
             } : {
-              fontSize: 13, padding: '5px 14px', borderRadius: 20,
+              fontSize: 15, padding: '5px 14px', borderRadius: 20,
               border: `0.5px solid ${getRegionColor(region).color}`,
               background: 'transparent',
               color: getRegionColor(region).color,
@@ -118,11 +118,11 @@ export default function Venues() {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0' }}>
         <div style={{ padding: '0 4px' }}>
 
-          {loading && <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading...</div>}
+          {loading && <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>}
 
           {!loading && displayedVenues.length === 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No venues found.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>No venues found.</div>
             </div>
           )}
 
@@ -153,21 +153,21 @@ export default function Venues() {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {venue.name}
                       </div>
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {location || '—'}
                       </div>
-                      <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>
+                      <div style={{ fontSize: 16, color: 'var(--text-primary)' }}>
                         {venue.country || '—'}
                       </div>
                       {venue.region ? (
-                        <div style={{ fontSize: 13, color: getRegionColor(venue.region).color, fontWeight: 400 }}>
+                        <div style={{ fontSize: 15, color: getRegionColor(venue.region).color, fontWeight: 400 }}>
                           {venue.region}
                         </div>
                       ) : (
-                        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>—</div>
+                        <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>—</div>
                       )}
                     </div>
                   </div>
