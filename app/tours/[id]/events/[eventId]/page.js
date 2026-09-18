@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../../../../lib/supabase'
 import TravelHotelTab from '../../../../../components/TravelHotelTab'
@@ -34,7 +34,7 @@ const GLASS = {
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
-const STAFFING_GRID = '1.6fr 1.6fr 130px 130px 110px 70px 90px 80px 100px 90px'
+const STAFFING_GRID = '1.2fr 1.4fr 1fr 1fr 0.8fr 0.5fr 0.65fr 0.6fr 0.8fr 0.65fr'
 
 const TRAVEL_TYPE_COLORS = {
   flight:  { label: 'Flight',  bg: 'rgba(26,86,219,0.12)',  color: '#1a56db',  border: 'rgba(26,86,219,0.35)' },
@@ -299,6 +299,25 @@ export default function EventPage() {
   const [staffTravel, setStaffTravel] = useState([])
   const { setNav, clearNav, pushNav } = useNav()
 
+  const groupedStaff = useMemo(() => {
+    const groups = {}
+    const deptOrder = {}
+    ;(assignedStaff || []).forEach(s => {
+      const dept = s.position?.department || 'Other'
+      const deptSort = s.position?.deptSortOrder ?? 999
+      if (!groups[dept]) { groups[dept] = []; deptOrder[dept] = deptSort }
+      groups[dept].push(s)
+    })
+    // Sort each department's members by position sort_order
+    Object.keys(groups).forEach(dept => {
+      groups[dept].sort((a, b) =>
+        (a.position?.sortOrder ?? 999) - (b.position?.sortOrder ?? 999)
+      )
+    })
+    // Return as sorted array of [dept, members] pairs
+    return Object.entries(groups).sort(([a], [b]) => (deptOrder[a] ?? 999) - (deptOrder[b] ?? 999))
+  }, [assignedStaff])
+
   useEffect(() => {
     if (!event && !tour) return
     pushNav(buildNavEntry(
@@ -347,6 +366,7 @@ export default function EventPage() {
             tour_position:tour_position_id(
               position:position_id(
                 title,
+                sort_order,
                 department:department_id(name, sort_order)
               )
             )
@@ -380,6 +400,7 @@ export default function EventPage() {
           booked: r.booked,
           position: {
             title: r.tour_position?.position?.title || null,
+            sortOrder: r.tour_position?.position?.sort_order ?? 999,
             department: r.tour_position?.position?.department?.name || 'Other',
             deptSortOrder: r.tour_position?.position?.department?.sort_order ?? 0,
           },
@@ -579,6 +600,7 @@ export default function EventPage() {
         tour_position:tour_position_id(
           position:position_id(
             title,
+            sort_order,
             department:department_id(name, sort_order)
           )
         )
@@ -595,6 +617,7 @@ export default function EventPage() {
         booked: r.booked,
         position: {
           title: r.tour_position?.position?.title || null,
+          sortOrder: r.tour_position?.position?.sort_order ?? 999,
           department: r.tour_position?.position?.department?.name || 'Other',
           deptSortOrder: r.tour_position?.position?.department?.sort_order ?? 0,
         },
@@ -749,7 +772,7 @@ export default function EventPage() {
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '8px 0 0' }}>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
@@ -1143,10 +1166,10 @@ export default function EventPage() {
               <div style={{ flexShrink: 0, background: 'var(--page-bg)', zIndex: 10 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: STAFFING_GRID, gap: '0 6px', padding: '12px 16px 6px', alignItems: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Position</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Staff Member</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', paddingLeft: 16 }}>Staff Member</div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel In</div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Out</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Type</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Type</div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Hotel</div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Per Diem</div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Rental</div>
@@ -1160,14 +1183,7 @@ export default function EventPage() {
                 <div style={{ height: '100%', overflowY: 'auto' }}>
 
                   {/* Group by department */}
-                  {Object.entries(
-                    (assignedStaff || []).reduce((acc, s) => {
-                      const dept = s.position?.department || 'Other'
-                      if (!acc[dept]) acc[dept] = []
-                      acc[dept].push(s)
-                      return acc
-                    }, {})
-                  ).map(([dept, members], deptIdx) => {
+                  {groupedStaff.map(([dept, members], deptIdx) => {
                     return (
                       <div key={dept}>
                         {/* Department header */}
@@ -1199,7 +1215,7 @@ export default function EventPage() {
                               </div>
 
                               {/* Staff name */}
-                              <div style={{ fontSize: 15, color: statusColor(s.status), display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 8 }}>
+                              <div style={{ fontSize: 15, color: statusColor(s.status), display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 16 }}>
                                 {hasMismatch && <WarningTriangle />}
                                 {s.staff ? `${s.staff.first_name} ${s.staff.last_name}` : '—'}
                               </div>
