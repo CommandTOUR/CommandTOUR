@@ -845,67 +845,52 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   )
 }
 
-const WEEK_W = 44
+const WEEK_W = 72
 const HOLIDAY_W = 120
-const SAT_W = 100
-const SUN_W = 100
-
-const CITY_W = 130
-const VENUE_W = 160
-const STATUS_W = 110
+const EVENT_W = 240
 const PLACEHOLDER_W = 180
 
 const H1 = 40
-const H2 = 34
-const ROW_H = 36
+const ROW_H = 44
 
 const HDR_BG = 'var(--surface-card)'
 const STICKY_BG = 'var(--surface-card)'
 const B_INNER = '0.5px solid var(--border-default)'
 const B_HEADER_BOTTOM = '0.5px solid var(--border-default)'
 const B_LEFT_COL = '2px solid var(--border-default)'
-const B_TOUR_GROUP = '5px solid var(--border-default)'
 const B_TOUR_DIVIDER = '5px solid var(--border-default)'
 
-const widths = { city: CITY_W, venue: VENUE_W, status: STATUS_W }
-
 const leftThStyle = (left, width) => ({
-  position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1 + H2,
+  position: 'sticky', left, top: 0, zIndex: 40, width, minWidth: width, height: H1,
   background: 'var(--surface-card)', padding: '0 10px', textAlign: 'center', verticalAlign: 'middle',
   fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em',
   borderBottom: '4px solid #FFD60A', borderRight: '2px solid var(--border-default)',
 })
 
-const subHeaderStyle = (width, borderRight) => ({
-  position: 'sticky', top: H1, zIndex: 30,
-  height: H2, background: 'var(--surface-card)', borderBottom: '4px solid #FFD60A', borderRight,
-  padding: '0 8px', textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700,
-  textTransform: 'uppercase', letterSpacing: '0.06em', width, minWidth: width,
-})
+function WarningTriangle() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M12 3L22 20H2L12 3Z" fill="var(--color-warning)" />
+      <rect x="11" y="9" width="2" height="6" fill="#0a1628" />
+      <rect x="11" y="16" width="2" height="2" fill="#0a1628" />
+    </svg>
+  )
+}
 
 function GridCell({
-  row, tour, event, isCityActive, isVenueActive, activeCellRef, isLast, rowHeight,
-  venues, setVenues, onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
-  onStartCityText, onSubmitCityText, onCancelCityText,
+  row, tour, event, isActive, activeCellRef, isLast, rowHeight,
+  onStartCityText, onSubmitCityText, onCancelCityText, onOpenPanel,
   onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent, draggedEventId, onUpdateStatus,
 }) {
-  const [cityHovered, setCityHovered] = useState(false)
   const [dropOpen, setDropOpen] = useState(false)
   const [dropPos, setDropPos] = useState(null)
   const pillRef = useRef(null)
   const dropRef = useRef(null)
   const statusStyle = event?.status ? (STATUS_PILL_LIGHT[event.status] || STATUS_PILL_LIGHT.tentative) : null
   const isDragOver = dragOverKey === cellKey
-  const cellBase = {
-    height: rowHeight, padding: '0 8px',
-    borderBottom: '0.5px solid var(--border-default)',
-    fontSize: 14, color: 'var(--text-primary)',
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    verticalAlign: 'middle', textAlign: 'center', position: 'relative',
-  }
-  const innerBorder = '0.5px solid var(--border-default)'
-  const groupBorder = isLast ? innerBorder : B_TOUR_DIVIDER
+  const borderRight = isLast ? B_INNER : B_TOUR_DIVIDER
+  const showWarning = !!event && (!event.venue_name || !event.load_in_date)
 
   useEffect(() => {
     if (!dropOpen) return
@@ -936,14 +921,9 @@ function GridCell({
     await onUpdateStatus(event.id, newStatus)
   }
 
-  const handleCityClick = () => {
+  const handleTileClick = () => {
     if (event) onOpenPanel(event, row, tour)
     else onStartCityText(row, tour)
-  }
-
-  const handleVenueClick = () => {
-    if (event) onOpenPanel(event, row, tour)
-    else onStartSearch(row, tour)
   }
 
   const handleDragStart = (e) => {
@@ -983,101 +963,77 @@ function GridCell({
   } : {}
 
   return (
-    <>
-      <td
-        ref={isCityActive ? activeCellRef : null}
-        draggable={!!event}
-        onDragStart={event ? handleDragStart : undefined}
-        onDragEnd={event ? onDragEndEvent : undefined}
-        onClick={handleCityClick}
-        onMouseEnter={() => setCityHovered(true)}
-        onMouseLeave={() => setCityHovered(false)}
-        {...dropHandlers}
-        style={{
-          ...cellBase, width: widths.city, minWidth: widths.city, borderRight: innerBorder,
-          cursor: event ? 'grab' : 'pointer',
-          zIndex: isCityActive ? 300 : 1, overflow: isCityActive ? 'visible' : 'hidden',
-          opacity: draggedEventId === event?.id ? 0.5 : 1,
-          ...dropHighlight,
-        }}>
-        {isCityActive ? (
-          <InlineCityInput
-            onSubmit={(text) => onSubmitCityText(text, row, tour)}
-            onCancel={onCancelCityText}
-          />
-        ) : event ? (
-          <>
-            {event && (
-              <div style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', opacity: cityHovered ? 1 : 0, transition: 'opacity 0.12s ease', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/>
-                  <polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/>
-                  <line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
-                </svg>
+    <td
+      ref={isActive ? activeCellRef : null}
+      draggable={!!event}
+      onDragStart={event ? handleDragStart : undefined}
+      onDragEnd={event ? onDragEndEvent : undefined}
+      onClick={handleTileClick}
+      {...dropHandlers}
+      style={{
+        height: rowHeight, width: EVENT_W, minWidth: EVENT_W, padding: '0 8px',
+        borderBottom: '0.5px solid var(--border-default)', borderRight,
+        verticalAlign: 'middle', position: 'relative',
+        cursor: event ? 'grab' : 'pointer',
+        zIndex: isActive ? 300 : 1, overflow: isActive ? 'visible' : 'hidden',
+        opacity: draggedEventId === event?.id ? 0.5 : 1,
+        ...dropHighlight,
+      }}>
+      {isActive ? (
+        <InlineCityInput
+          onSubmit={(text) => onSubmitCityText(text, row, tour)}
+          onCancel={onCancelCityText}
+        />
+      ) : event ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {showWarning && <WarningTriangle />}
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>
+            {formatCityState(event)}
+          </span>
+          {statusStyle && (
+            <div
+              ref={pillRef}
+              onClick={handlePillClick}
+              style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
+              {statusLabel(event.status)}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', border: '1.5px dashed var(--border-strong)', borderRadius: 6, color: 'var(--text-muted)', fontSize: 16, fontWeight: 600 }}>
+          +
+        </div>
+      )}
+      {dropOpen && dropPos && createPortal(
+        <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
+          {ALL_STATUSES.map(opt => {
+            const s = STATUS_STYLES[opt] || STATUS_STYLES.tentative
+            const isActiveOpt = event.status === opt
+            return (
+              <div key={opt} onClick={() => handleSelectStatus(opt)}
+                style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+                  {statusLabel(opt)}
+                </span>
+                {isActiveOpt && <span style={{ color: s.color, fontSize: 14, fontWeight: 700, marginLeft: 8 }}>✓</span>}
               </div>
-            )}
-            <span style={{ fontWeight: 500 }}>{formatCityState(event)}</span>
-          </>
-        ) : ''}
-      </td>
-      <td
-        ref={isVenueActive ? activeCellRef : null}
-        onClick={handleVenueClick}
-        {...dropHandlers}
-        style={{
-          ...cellBase, width: widths.venue, minWidth: widths.venue, borderRight: innerBorder,
-          cursor: 'pointer', zIndex: isVenueActive ? 300 : 1, overflow: isVenueActive ? 'visible' : 'hidden',
-          color: 'var(--text-primary)',
-          ...dropHighlight,
-        }}>
-        {isVenueActive ? (
-          <InlineVenueSearch
-            venues={venues} setVenues={setVenues}
-            onSelect={(venue) => onSelectVenue(venue, row, tour)}
-            onCancel={onCancelSearch}
-          />
-        ) : (event?.venue_name || '')}
-      </td>
-      <td style={{ ...cellBase, width: widths.status, minWidth: widths.status, borderRight: groupBorder }}>
-        {statusStyle ? (
-          <div
-            ref={pillRef}
-            onClick={handlePillClick}
-            style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
-            {statusLabel(event.status)}
-          </div>
-        ) : null}
-        {dropOpen && dropPos && createPortal(
-          <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
-            {ALL_STATUSES.map(opt => {
-              const s = STATUS_STYLES[opt] || STATUS_STYLES.tentative
-              const isActive = event.status === opt
-              return (
-                <div key={opt} onClick={() => handleSelectStatus(opt)}
-                  style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
-                    {statusLabel(opt)}
-                  </span>
-                  {isActive && <span style={{ color: s.color, fontSize: 14, fontWeight: 700, marginLeft: 8 }}>✓</span>}
-                </div>
-              )
-            })}
-          </div>,
-          document.body
-        )}
-      </td>
-    </>
+            )
+          })}
+        </div>,
+        document.body
+      )}
+    </td>
   )
 }
 
 function YearGrid({
   year, rows, yearTours, eventMap, currentWeekendSaturday,
   onSaveHoliday,
-  activeCell, activeCellRef, venues, setVenues,
-  onStartSearch, onSelectVenue, onCancelSearch, onOpenPanel,
+  activeCell, activeCellRef,
+  onOpenPanel,
   onStartCityText, onSubmitCityText, onCancelCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
@@ -1091,73 +1047,49 @@ function YearGrid({
           <table style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th rowSpan={2} style={leftThStyle(0, WEEK_W)}>Wk</th>
-                <th rowSpan={2} style={leftThStyle(WEEK_W, HOLIDAY_W)}>Holiday</th>
-                <th rowSpan={2} style={leftThStyle(WEEK_W + HOLIDAY_W, SAT_W)}>Sat</th>
-                <th rowSpan={2} style={{ ...leftThStyle(WEEK_W + HOLIDAY_W + SAT_W, SUN_W), borderRight: B_LEFT_COL }}>Sun</th>
+                <th style={leftThStyle(0, WEEK_W)}>Week</th>
+                <th style={{ ...leftThStyle(WEEK_W, HOLIDAY_W), borderRight: B_LEFT_COL }}>Holiday</th>
                 {yearTours.map((tour, ti) => {
                   const tourColor = tour.color || 'var(--text-secondary)'
                   return (
-                    <th key={tour.id} colSpan={3} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor }}>
+                    <th key={tour.id} style={{ position: 'sticky', top: 0, zIndex: 30, height: H1, background: 'var(--surface-card)', borderBottom: B_HEADER_BOTTOM, borderRight: ti < yearTours.length - 1 ? B_TOUR_DIVIDER : (showPlaceholder ? B_TOUR_DIVIDER : B_INNER), textAlign: 'center', fontSize: 15, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: tourColor, width: EVENT_W, minWidth: EVENT_W }}>
                       {tour.name}
                     </th>
                   )
                 })}
                 {yearTours.length === 0 && !showPlaceholder && <th />}
                 {showPlaceholder && (
-                  <th rowSpan={2} style={{ height: H1 + H2, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, background: 'rgba(26,86,219,0.06)', border: '1px dashed var(--color-info)', textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--color-info)', padding: '0 8px', verticalAlign: 'middle' }}>
+                  <th style={{ height: H1, width: PLACEHOLDER_W, minWidth: PLACEHOLDER_W, background: 'rgba(26,86,219,0.06)', border: '1px dashed var(--color-info)', textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--color-info)', padding: '0 8px', verticalAlign: 'middle' }}>
                     + Add {draggedTour.name} to {year}
                   </th>
                 )}
-              </tr>
-              <tr>
-                {yearTours.map((tour, ti) => {
-                  const isLastTour = ti === yearTours.length - 1
-                  return (
-                    <React.Fragment key={tour.id}>
-                      <th style={subHeaderStyle(CITY_W, B_INNER)}>City</th>
-                      <th style={subHeaderStyle(VENUE_W, B_INNER)}>Venue</th>
-                      <th style={subHeaderStyle(STATUS_W, isLastTour ? B_INNER : B_TOUR_GROUP)}>Status</th>
-                    </React.Fragment>
-                  )
-                })}
               </tr>
             </thead>
             <tbody>
               {rows.map(row => {
                 const isCurrentWeek = row.saturday === currentWeekendSaturday
                 const rowBg = isCurrentWeek ? 'rgba(26,86,219,0.08)' : (row.weekNum % 2 === 0 ? 'var(--surface-card)' : 'transparent')
+                const satLabel = new Date(row.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 return (
                   <tr key={row.saturday} style={{ background: rowBg }}>
-                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: isCurrentWeek ? '3px solid var(--color-info)' : '3px solid transparent', padding: '0 8px', fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', textTransform: 'uppercase' }}>
-                      {row.weekNum}
+                    <td style={{ position: 'sticky', left: 0, zIndex: 20, width: WEEK_W, minWidth: WEEK_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: isCurrentWeek ? '3px solid var(--color-info)' : '3px solid transparent', padding: '4px 8px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>Wk {row.weekNum}</div>
+                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.2, marginTop: 2 }}>{satLabel}</div>
                     </td>
                     <td style={{ position: 'sticky', left: WEEK_W, zIndex: 20, width: HOLIDAY_W, minWidth: HOLIDAY_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', borderLeft: row.holiday ? '3px solid var(--text-secondary)' : 'none', padding: '0 10px', verticalAlign: 'middle' }}>
                       <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
                     </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W, zIndex: 20, width: SAT_W, minWidth: SAT_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                      {fmtDay(row.saturday, 'Sat')}
-                    </td>
-                    <td style={{ position: 'sticky', left: WEEK_W + HOLIDAY_W + SAT_W, zIndex: 20, width: SUN_W, minWidth: SUN_W, height: ROW_H, background: STICKY_BG, borderRight: B_LEFT_COL, borderBottom: '0.5px solid var(--border-default)', padding: '0 10px', fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                      {fmtDay(row.sunday, 'Sun')}
-                    </td>
                     {yearTours.map((tour, ti) => {
                       const event = eventMap[tour.id + '__' + row.saturday]
                       const cellKey = row.saturday + '__' + tour.id
-                      const isCityActive = !!(activeCell && activeCell.type === 'cityText' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
-                      const isVenueActive = !!(activeCell && activeCell.type === 'search' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
+                      const isActive = !!(activeCell && activeCell.type === 'cityText' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
                       return (
                         <GridCell
                           key={tour.id}
                           row={row} tour={tour} event={event}
-                          isCityActive={isCityActive}
-                          isVenueActive={isVenueActive}
+                          isActive={isActive}
                           activeCellRef={activeCellRef}
                           isLast={ti === yearTours.length - 1} rowHeight={ROW_H}
-                          venues={venues} setVenues={setVenues}
-                          onStartSearch={onStartSearch}
-                          onSelectVenue={onSelectVenue}
-                          onCancelSearch={onCancelSearch}
                           onOpenPanel={onOpenPanel}
                           onStartCityText={onStartCityText}
                           onSubmitCityText={onSubmitCityText}
