@@ -1804,13 +1804,8 @@ function PlaceholderTab({ label }) {
 // ── TAB CONFIG ────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { label: 'Draft Schedule',    slug: 'draft-schedule' },
-  { label: 'Confirmed Schedule', slug: 'confirmed-schedule' },
-  { label: 'Contracts',         slug: 'contracts' },
-  { label: 'Contract Pipeline', slug: 'contract-pipeline' },
-  { label: 'Sponsorships',      slug: 'sponsorships' },
-  { label: 'Competitive',       slug: 'competitive' },
-  { label: 'Multi-Year Planning', slug: 'multi-year-planning' },
+  { label: 'Schedule', slug: 'schedule' },
+  { label: 'Bullpen',  slug: 'bullpen' },
 ]
 
 // ── BC PAGE ───────────────────────────────────────────────────────────────────
@@ -1818,12 +1813,12 @@ const TABS = [
 function BCContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const activeTab = searchParams.get('tab') || 'draft-schedule'
+  const activeTab = searchParams.get('tab') || 'schedule'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Booking & Contracts</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Master Schedule</div>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0', display: 'flex', flexDirection: 'column' }}>
@@ -1854,12 +1849,27 @@ function BCContent() {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          {activeTab === 'draft-schedule' ? (
+          {activeTab === 'schedule' ? (
             <DraftScheduleContent />
-          ) : activeTab === 'confirmed-schedule' ? (
-            <ConfirmedScheduleTab />
+          ) : activeTab === 'bullpen' ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 400,
+            }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 16, fontWeight: 600, margin: 0 }}>
+                Bullpen coming soon
+              </p>
+            </div>
           ) : (
-            <PlaceholderTab label={TABS.find(t => t.slug === activeTab)?.label || ''} />
+            // ConfirmedScheduleTab and PlaceholderTab routes disabled for now; kept for later reference.
+            // ) : activeTab === 'confirmed-schedule' ? (
+            //   <ConfirmedScheduleTab />
+            // ) : (
+            //   <PlaceholderTab label={TABS.find(t => t.slug === activeTab)?.label || ''} />
+            null
           )}
         </div>
       </div>
