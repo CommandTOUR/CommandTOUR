@@ -37,35 +37,6 @@ const statusLabel = (s) => {
   return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
 }
 
-const TOUR_ORDER = ['HWMTL Orange', 'HWMTL Blue', 'HWSS North America', 'HWMTL Purple', 'HWMTL Yellow', 'HWSS Gold']
-
-const COLOR_NAME_HEX = {
-  orange: '#FF8C00',
-  blue: '#0061FF',
-  red: '#FF3333',
-  purple: '#A855F7',
-  yellow: '#FFCC00',
-  gold: '#C9A84C',
-}
-
-function matchesTourLabel(tour, label) {
-  const words = label.toLowerCase().split(' ')
-  const colorWord = words.find(w => COLOR_NAME_HEX[w])
-  const nameWords = colorWord ? words.filter(w => w !== colorWord) : words
-  const nameLower = (tour.name || '').toLowerCase()
-  if (!nameWords.every(w => nameLower.includes(w))) return false
-  if (!colorWord) return true
-  const tourHex = (tour.color || '').toLowerCase()
-  return tourHex === COLOR_NAME_HEX[colorWord].toLowerCase() || nameLower.includes(colorWord)
-}
-
-function tourOrderIndex(tour) {
-  for (let i = 0; i < TOUR_ORDER.length; i++) {
-    if (matchesTourLabel(tour, TOUR_ORDER[i])) return i
-  }
-  return TOUR_ORDER.length
-}
-
 function hexToRgba(hex, alpha) {
   const r = parseInt((hex || '#ffffff').slice(1, 3), 16) || 255
   const g = parseInt((hex || '#ffffff').slice(3, 5), 16) || 255
@@ -74,9 +45,9 @@ function hexToRgba(hex, alpha) {
 }
 
 function tourSort(a, b) {
-  const ai = tourOrderIndex(a)
-  const bi = tourOrderIndex(b)
-  if (ai !== bi) return ai - bi
+  const ao = a.sort_order ?? 999
+  const bo = b.sort_order ?? 999
+  if (ao !== bo) return ao - bo
   const at = a.created_at ? new Date(a.created_at).getTime() : 0
   const bt = b.created_at ? new Date(b.created_at).getTime() : 0
   return at - bt
@@ -115,6 +86,16 @@ function getCurrentWeekendSaturday() {
   if (day === 6) return toYMD(d)
   d.setDate(d.getDate() + (6 - day))
   return toYMD(d)
+}
+
+const getCurrentWeekSaturday = () => {
+  const today = new Date()
+  const day = today.getDay()
+  const daysUntilSat = (6 - day + 7) % 7
+  const thisSaturday = new Date(today)
+  thisSaturday.setDate(today.getDate() + daysUntilSat)
+  thisSaturday.setHours(0, 0, 0, 0)
+  return thisSaturday
 }
 
 function fmtDay(dateStr, prefix) {
@@ -431,41 +412,94 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
   )
 }
 
-function InlineCityInput({ onSubmit, onCancel }) {
-  const [text, setText] = useState('')
-  const inputRef = useRef(null)
-  const blurTimeout = useRef(null)
+function NewEventModal({ target, form, setForm, weekNum, onClose, onCreate }) {
+  const venueInputRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const [mapsLoaded, setMapsLoaded] = useState(typeof window !== 'undefined' && !!window.google?.maps?.places)
 
   useEffect(() => {
-    inputRef.current?.focus()
-    return () => clearTimeout(blurTimeout.current)
+    if (window.google?.maps?.places) return
+    const onLoad = () => setMapsLoaded(true)
+    const existing = document.querySelector('script[data-gmaps]')
+    if (existing) { existing.addEventListener('load', onLoad); return () => existing.removeEventListener('load', onLoad) }
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+    script.async = true
+    script.dataset.gmaps = 'true'
+    script.onload = onLoad
+    document.head.appendChild(script)
   }, [])
 
-  const commit = () => {
-    clearTimeout(blurTimeout.current)
-    if (text.trim()) onSubmit(text.trim())
-    else onCancel()
-  }
+  useEffect(() => {
+    if (!mapsLoaded || !venueInputRef.current || autocompleteRef.current) return
+    const ac = new window.google.maps.places.Autocomplete(venueInputRef.current, { types: ['establishment'] })
+    autocompleteRef.current = ac
+    ac.addListener('place_changed', () => {
+      const place = ac.getPlace()
+      if (!place) return
+      const getComponent = (type) => place.address_components?.find(c => c.types.includes(type))?.long_name || ''
+      setForm(p => ({
+        ...p,
+        venue_name: place.name || '',
+        place_id: place.place_id || '',
+        city: getComponent('locality') || getComponent('postal_town') || '',
+        state: getComponent('administrative_area_level_1') || '',
+        country: getComponent('country') || '',
+      }))
+    })
+    return () => { autocompleteRef.current = null }
+  }, [mapsLoaded, setForm])
 
-  const handleBlur = () => {
-    blurTimeout.current = setTimeout(commit, 150)
-  }
+  const labelStyle = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', display: 'block', marginBottom: 6 }
+  const fieldStyle = { fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }
+  const disabled = !form.venue_name || !form.city
+  const satLabel = new Date(target.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
-    <input
-      ref={inputRef}
-      style={inputStyle}
-      placeholder="City..."
-      value={text}
-      onChange={e => setText(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={e => {
-        if (e.key === 'Enter') { e.preventDefault(); commit() }
-        else if (e.key === 'Escape') { e.stopPropagation(); onCancel() }
-      }}
-      onMouseDown={e => e.stopPropagation()}
-      autoComplete="off"
-    />
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div id="new-event-modal" style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 24, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>Add Event — Wk {weekNum} · {satLabel}</div>
+
+        <div>
+          <label style={labelStyle}>Venue</label>
+          <input
+            ref={venueInputRef}
+            type="text"
+            autoFocus
+            placeholder="Search for a venue..."
+            defaultValue={form.venue_name}
+            onChange={e => setForm(p => ({ ...p, venue_name: e.target.value, place_id: '' }))}
+            style={fieldStyle}
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>City</label>
+          <input
+            type="text"
+            value={form.city}
+            onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+            placeholder="City will auto-fill from venue"
+            style={{ ...fieldStyle, color: form.city ? 'var(--text-primary)' : 'var(--text-muted)' }}
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Status</label>
+          <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} style={fieldStyle}>
+            {ALL_STATUSES.map(st => <option key={st} value={st}>{statusLabel(st)}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+          <button onClick={onClose} style={{ fontSize: 14, padding: '9px 18px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onCreate} disabled={disabled} style={{ fontSize: 14, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>Create Event</button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -862,8 +896,8 @@ function WarningTriangle() {
 }
 
 function GridCell({
-  row, tour, event, isActive, activeCellRef, editMode,
-  onStartCityText, onSubmitCityText, onCancelCityText, onOpenPanel,
+  row, tour, event, editMode,
+  onStartCityText, onOpenPanel,
   onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent, draggedEventId, onUpdateStatus,
 }) {
@@ -956,29 +990,21 @@ function GridCell({
 
   return (
     <div
-      ref={isActive ? activeCellRef : null}
       draggable={editMode && !!event}
       onDragStart={editMode && event ? handleDragStart : undefined}
       onDragEnd={editMode && event ? onDragEndEvent : undefined}
       onClick={handleTileClick}
       {...dropHandlers}
       style={{
-        height: '100%', minHeight: ROW_H, position: 'relative',
+        minHeight: ROW_H, position: 'relative', boxSizing: 'border-box',
         cursor: event ? (editMode ? 'grab' : 'pointer') : (editMode ? 'pointer' : 'default'),
-        zIndex: isActive ? 300 : 1, overflow: isActive ? 'visible' : 'hidden',
+        zIndex: 1, overflow: 'visible',
         opacity: draggedEventId === event?.id ? 0.5 : 1,
         borderRadius: 8,
         ...dropHighlight,
       }}>
-      {isActive ? (
-        <div style={{ padding: '0 4px' }}>
-          <InlineCityInput
-            onSubmit={(text) => onSubmitCityText(text, row, tour)}
-            onCancel={onCancelCityText}
-          />
-        </div>
-      ) : event ? (
-        <div style={{ height: '100%', background: 'var(--surface-card)', border: `1.5px solid ${tour.color || 'var(--border-default)'}`, borderRadius: 8, padding: '6px 10px', margin: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {event ? (
+        <div style={{ height: '100%', boxSizing: 'border-box', background: 'var(--surface-card)', border: `1.5px solid ${tour.color || 'var(--border-default)'}`, borderRadius: 8, padding: '6px 10px', margin: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden' }}>
               {showWarning && <WarningTriangle />}
@@ -1034,11 +1060,15 @@ function YearGrid({
   onSaveHoliday,
   activeCell, activeCellRef, editMode,
   onOpenPanel,
-  onStartCityText, onSubmitCityText, onCancelCityText,
+  onStartCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
   draggedTour, onPlaceholderDrop, draggedEventId, onUpdateStatus,
 }) {
+  const [isLightMode] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return document.documentElement.getAttribute('data-theme') !== 'dark'
+  })
   const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
 
   const minTotalWidth = WEEK_COL_W + HOLIDAY_COL_W + yearTours.length * 180 + (showPlaceholder ? PLACEHOLDER_W : 0)
@@ -1049,8 +1079,15 @@ function YearGrid({
         <div style={{ width: WEEK_COL_W, flexShrink: 0 }} />
         <div style={{ width: HOLIDAY_COL_W, flexShrink: 0 }} />
         {yearTours.map(tour => (
-          <div key={tour.id} style={{ flex: 1, minWidth: 180, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: tour.color || 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-            {tour.name}
+          <div key={tour.id} style={{ flex: 1, minWidth: 180, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+            <span style={{
+              fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+              color: tour.color || 'var(--text-secondary)', textAlign: 'center',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              background: isLightMode ? 'rgba(0,0,0,0.04)' : 'transparent',
+              padding: isLightMode ? '3px 10px' : '0',
+              borderRadius: isLightMode ? 6 : 0,
+            }}>{tour.name}</span>
           </div>
         ))}
         {showPlaceholder && (
@@ -1078,18 +1115,13 @@ function YearGrid({
                 {yearTours.map(tour => {
                   const event = eventMap[tour.id + '__' + row.saturday]
                   const cellKey = row.saturday + '__' + tour.id
-                  const isActive = !!(activeCell && activeCell.type === 'cityText' && activeCell.saturday === row.saturday && activeCell.tourId === tour.id)
                   return (
-                    <div key={tour.id} style={{ flex: 1, minWidth: 180 }}>
+                    <div key={tour.id} style={{ flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column' }}>
                       <GridCell
                         row={row} tour={tour} event={event}
-                        isActive={isActive}
-                        activeCellRef={activeCellRef}
                         editMode={editMode}
                         onOpenPanel={onOpenPanel}
                         onStartCityText={onStartCityText}
-                        onSubmitCityText={onSubmitCityText}
-                        onCancelCityText={onCancelCityText}
                         onCityDrop={onCityDrop}
                         dragOverKey={dragOverKey}
                         cellKey={cellKey}
@@ -1125,7 +1157,47 @@ function YearGrid({
   )
 }
 
+function YearSection({
+  year, yearData, allTours, currentWeekendSaturday, onSaveHoliday,
+  activeCell, activeCellRef, editMode,
+  onOpenPanel, onStartCityText,
+  onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
+  onDragStartEvent, onDragEndEvent,
+  draggedTour, onPlaceholderDrop, draggedEventId, onUpdateStatus,
+}) {
+  const { rows, eventMap } = yearData
+  const rowsToRender = year === new Date().getFullYear()
+    ? rows.filter(row => new Date(row.saturday) >= getCurrentWeekSaturday())
+    : rows
+
+  return (
+    <div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-info)', marginBottom: 10 }}>{year}</div>
+      <YearGrid
+        year={year}
+        rows={rowsToRender}
+        yearTours={allTours}
+        eventMap={eventMap}
+        currentWeekendSaturday={currentWeekendSaturday}
+        onSaveHoliday={onSaveHoliday}
+        activeCell={activeCell} activeCellRef={activeCellRef} editMode={editMode}
+        onOpenPanel={onOpenPanel}
+        onStartCityText={onStartCityText}
+        onCityDrop={onCityDrop} dragOverKey={dragOverKey} onDragEnterCell={onDragEnterCell} onDragLeaveCell={onDragLeaveCell}
+        onDragStartEvent={onDragStartEvent} onDragEndEvent={onDragEndEvent}
+        draggedTour={draggedTour} onPlaceholderDrop={onPlaceholderDrop}
+        draggedEventId={draggedEventId}
+        onUpdateStatus={onUpdateStatus}
+      />
+    </div>
+  )
+}
+
+const SCHEDULE_YEARS = [2026, 2027, 2028, 2029, 2030]
+
 // ── DRAFT SCHEDULE TAB CONTENT ────────────────────────────────────────────────
+
+const EMPTY_NEW_EVENT_FORM = { venue_name: '', place_id: '', city: '', state: '', country: '', status: 'confirmed' }
 
 function DraftScheduleContent() {
   const [tours, setTours] = useState([])
@@ -1138,15 +1210,13 @@ function DraftScheduleContent() {
   const [dragOverKey, setDragOverKey] = useState(null)
   const [draggedEvent, setDraggedEvent] = useState(null)
   const [draggedTour, setDraggedTour] = useState(null)
-  const [hoveredPillYear, setHoveredPillYear] = useState(null)
 
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
-  const [showPastWeeks, setShowPastWeeks] = useState(false)
   const [editMode, setEditMode] = useState(false)
+  const [newEventModal, setNewEventModal] = useState(null)
+  const [newEventForm, setNewEventForm] = useState({ ...EMPTY_NEW_EVENT_FORM })
 
   const linkedEventsRef = useRef(false)
   const activeCellElRef = useRef(null)
-  const pillHoverTimerRef = useRef(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -1156,15 +1226,6 @@ function DraftScheduleContent() {
       setEvents(data.events || [])
       setVenues(data.venues || [])
       setLoading(false)
-
-      const todayStr = toYMD(new Date())
-      const upcomingSaturdays = (data.events || [])
-        .map(ev => getEventSaturday(ev))
-        .filter(sat => sat && sat >= todayStr)
-        .sort()
-      if (upcomingSaturdays.length > 0) {
-        setSelectedYear(new Date(upcomingSaturdays[0] + 'T00:00:00').getFullYear())
-      }
 
       if (!linkedEventsRef.current) {
         linkedEventsRef.current = true
@@ -1181,28 +1242,22 @@ function DraftScheduleContent() {
     fetchAll()
   }, [])
 
-  const currentYear = new Date().getFullYear()
   const currentWeekendSaturday = getCurrentWeekendSaturday()
-
-  const yearsSet = new Set([currentYear])
-  tours.forEach(t => {
-    const ty = parseInt(t.year, 10)
-    if (!isNaN(ty)) yearsSet.add(ty)
-  })
-  events.forEach(ev => {
-    if (ev.saturday_date) yearsSet.add(new Date(ev.saturday_date + 'T00:00:00').getFullYear())
-    if (ev.load_in_date) yearsSet.add(new Date(ev.load_in_date + 'T00:00:00').getFullYear())
-  })
-  const allYears = [...yearsSet].sort((a, b) => a - b)
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('booking_holidays_' + selectedYear)
-      setHolidayOverrides(raw ? JSON.parse(raw) : {})
+      const merged = {}
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('booking_holidays_')) {
+          try { Object.assign(merged, JSON.parse(localStorage.getItem(key))) } catch {}
+        }
+      }
+      setHolidayOverrides(merged)
     } catch {
       setHolidayOverrides({})
     }
-  }, [selectedYear])
+  }, [])
 
   const saveHolidayOverride = (saturday, text) => {
     const y = saturday.slice(0, 4)
@@ -1229,20 +1284,13 @@ function DraftScheduleContent() {
       holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
     }))
 
-    const tourIdsWithEvents = new Set(
-      events.filter(ev => satSet.has(getEventSaturday(ev))).map(ev => ev.tour_id)
-    )
-    const yearTours = tours
-      .filter(t => parseInt(t.year, 10) === year || tourIdsWithEvents.has(t.id))
-      .sort(tourSort)
-
     const eventMap = {}
     events.forEach(ev => {
       const sat = getEventSaturday(ev)
       if (sat && satSet.has(sat)) eventMap[ev.tour_id + '__' + sat] = ev
     })
 
-    return { rows, yearTours, eventMap }
+    return { rows, eventMap }
   }
 
   useEffect(() => {
@@ -1281,27 +1329,26 @@ function DraftScheduleContent() {
   }
 
   const handleStartCityText = (row, tour) => {
-    setActiveCell({ type: 'cityText', saturday: row.saturday, sunday: row.sunday, tourId: tour.id })
+    setNewEventForm({ ...EMPTY_NEW_EVENT_FORM })
+    setNewEventModal({ tourId: tour.id, saturday: row.saturday, sunday: row.sunday, weekNum: row.weekNum, year: Number(row.saturday.slice(0, 4)) })
   }
 
-  const handleCancelCityText = () => setActiveCell(null)
-
-  const handleSubmitCityText = async (cityText, row, tour) => {
+  const handleCreateNewEvent = async () => {
     const supabase = getSupabase()
     const { data, error } = await supabase.from('events').insert([{
-      tour_id: tour.id,
-      city: cityText,
-      state: '',
-      country: null,
-      venue_name: '',
-      venue_id: null,
-      status: 'tentative',
-      saturday_date: row.saturday,
-      sunday_date: row.sunday,
-      load_in_date: row.saturday,
+      tour_id: newEventModal.tourId,
+      venue_name: newEventForm.venue_name,
+      city: newEventForm.city,
+      state: newEventForm.state,
+      country: newEventForm.country || null,
+      status: newEventForm.status,
+      saturday_date: newEventModal.saturday,
+      sunday_date: newEventModal.sunday,
+      load_in_date: newEventModal.saturday,
     }]).select().single()
-    if (!error && data) setEvents(prev => [...prev, data])
-    setActiveCell(null)
+    if (error) { console.error('Failed to create event:', error); return }
+    setEvents(prev => [...prev, data])
+    setNewEventModal(null)
   }
 
   const handleOpenPanel = (event, row, tour) => {
@@ -1337,8 +1384,6 @@ function DraftScheduleContent() {
     setDraggedEvent(null)
     setDraggedTour(null)
     setDragOverKey(null)
-    setHoveredPillYear(null)
-    clearTimeout(pillHoverTimerRef.current)
   }
 
   useEffect(() => {
@@ -1377,21 +1422,6 @@ function DraftScheduleContent() {
     if (!error && updatedEvent) setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
   }
 
-  const handlePillDragOver = (year) => {
-    if (hoveredPillYear !== year) {
-      setHoveredPillYear(year)
-      clearTimeout(pillHoverTimerRef.current)
-      pillHoverTimerRef.current = setTimeout(() => setSelectedYear(year), 600)
-    }
-  }
-
-  const handlePillDragLeave = (year) => {
-    if (hoveredPillYear === year) {
-      setHoveredPillYear(null)
-      clearTimeout(pillHoverTimerRef.current)
-    }
-  }
-
   const handleUpdateStatus = async (eventId, newStatus) => {
     const supabase = getSupabase()
     const { error } = await supabase.from('events').update({ status: newStatus }).eq('id', eventId)
@@ -1402,31 +1432,12 @@ function DraftScheduleContent() {
     <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Loading booking grid...</div>
   )
 
-  const { rows, yearTours, eventMap } = buildYearData(selectedYear)
-
-  const today = toYMD(new Date())
-  const pastWeekCount = rows.filter(row => row.sunday < today).length
-  const visibleRows = showPastWeeks ? rows : rows.filter(row => row.sunday >= today)
+  const allTours = [...tours].sort(tourSort)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <div style={{ flexShrink: 0, paddingBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <YearPills
-              years={allYears} selectedYear={selectedYear} currentYear={currentYear} onSelect={setSelectedYear}
-              dragging={!!draggedEvent} hoveredPillYear={hoveredPillYear}
-              onPillDragOver={handlePillDragOver} onPillDragLeave={handlePillDragLeave}
-            />
-            {pastWeekCount > 0 && (
-              <button
-                onClick={() => setShowPastWeeks(s => !s)}
-                style={{ background: '#FFD60A', color: '#0a1628', fontSize: 15, fontWeight: 700, padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', flexShrink: 0 }}
-              >
-                {showPastWeeks ? 'Hide Past Weeks' : `Show Past Weeks (${pastWeekCount})`}
-              </button>
-            )}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 10 }}>
           <button
             onClick={() => setEditMode(v => !v)}
             style={{
@@ -1439,24 +1450,27 @@ function DraftScheduleContent() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <YearGrid
-          year={selectedYear}
-          rows={visibleRows}
-          yearTours={yearTours}
-          eventMap={eventMap}
-          currentWeekendSaturday={currentWeekendSaturday}
-          onSaveHoliday={saveHolidayOverride}
-          activeCell={activeCell} activeCellRef={activeCellElRef} editMode={editMode} venues={venues} setVenues={setVenues}
-          onStartSearch={handleStartSearch} onSelectVenue={handleSelectVenue} onCancelSearch={handleCancelSearch}
-          onOpenPanel={handleOpenPanel}
-          onStartCityText={handleStartCityText} onSubmitCityText={handleSubmitCityText} onCancelCityText={handleCancelCityText}
-          onCityDrop={handleCityDrop} dragOverKey={dragOverKey} onDragEnterCell={handleDragEnterCell} onDragLeaveCell={handleDragLeaveCell}
-          onDragStartEvent={handleDragStartEvent} onDragEndEvent={resetDragState}
-          draggedTour={draggedTour} onPlaceholderDrop={handlePlaceholderDrop}
-          draggedEventId={draggedEvent?.id}
-          onUpdateStatus={handleUpdateStatus}
-        />
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {SCHEDULE_YEARS.map(year => (
+            <YearSection
+              key={year}
+              year={year}
+              yearData={buildYearData(year)}
+              allTours={allTours}
+              currentWeekendSaturday={currentWeekendSaturday}
+              onSaveHoliday={saveHolidayOverride}
+              activeCell={activeCell} activeCellRef={activeCellElRef} editMode={editMode}
+              onOpenPanel={handleOpenPanel}
+              onStartCityText={handleStartCityText}
+              onCityDrop={handleCityDrop} dragOverKey={dragOverKey} onDragEnterCell={handleDragEnterCell} onDragLeaveCell={handleDragLeaveCell}
+              onDragStartEvent={handleDragStartEvent} onDragEndEvent={resetDragState}
+              draggedTour={draggedTour} onPlaceholderDrop={handlePlaceholderDrop}
+              draggedEventId={draggedEvent?.id}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          ))}
+        </div>
       </div>
 
       {activeCell && activeCell.type === 'panel' && (
@@ -1470,6 +1484,17 @@ function DraftScheduleContent() {
           onSaved={handlePanelSaved}
           onDeleted={deleteEvent}
           onMoved={handlePanelMoved}
+        />
+      )}
+
+      {newEventModal && (
+        <NewEventModal
+          target={newEventModal}
+          form={newEventForm}
+          setForm={setNewEventForm}
+          weekNum={newEventModal.weekNum}
+          onClose={() => setNewEventModal(null)}
+          onCreate={handleCreateNewEvent}
         />
       )}
     </div>

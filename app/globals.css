@@ -353,3 +353,7 @@ html, body {
 
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { scrollbar-width: none; }
+
+.pac-container {
+  z-index: 100000 !important;
+}
