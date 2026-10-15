@@ -142,7 +142,7 @@ export default function SideNav() {
       <div style={{ padding: '16px 14px 12px' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <img
-            src={theme === 'dark' ? '/images/V1_CommandTOUR_Dark1.png' : '/images/V1_CommandTOUR_Light1.png'}
+            src={'/command-tour-navigation-logo.png'}
             alt="CommandTOUR"
             style={{ width: '100%', maxWidth: 200, height: 'auto', display: 'block' }}
           />

@@ -90,7 +90,7 @@ export default function Login() {
         boxSizing: 'border-box',
       }}>
         <img
-          src="/images/V1_CommandTOUR_Dark1.png"
+          src="/command-tour-navigation-logo.png"
           alt="CommandTOUR"
           style={{ width: 220, height: 'auto', display: 'block', margin: '0 auto' }}
         />

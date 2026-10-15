@@ -88,12 +88,9 @@ export default function TopNav() {
       {/* Logo */}
       <div style={{ marginRight: 8, flexShrink: 0 }}>
         <img
-          src={theme === 'light'
-            ? '/images/CommandTOUR_Branding-2-LightMode.png'
-            : '/images/CommandTOUR_Branding-1-DarkMode.png'
-          }
+          src="/command-tour-navigation-logo.png"
           alt="CommandTOUR"
-          style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block', filter: theme === 'light' ? 'drop-shadow(0 1px 2px rgba(26,36,34,0.45))' : 'none' }}
+          style={{ height: 48, width: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </div>
 
