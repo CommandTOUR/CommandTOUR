@@ -52,13 +52,6 @@ const shortDate = (dateStr) => {
 function formatClockDate(d) {
   return `${DAYS[d.getDay()].toUpperCase()}, ${MONTHS[d.getMonth()].toUpperCase()} ${d.getDate()}, ${d.getFullYear()}`
 }
-function formatClockTime(d) {
-  const h = d.getHours()
-  const hour = h % 12 || 12
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  return `${hour}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${ampm}`
-}
-
 export default function Dashboard() {
   const router = useRouter()
 
@@ -71,12 +64,10 @@ export default function Dashboard() {
   const [holdEvents, setHoldEvents] = useState([])
   const [now, setNow] = useState(null)
 
-  // Live clock
+  // Date shown top-right (set once on mount)
   useEffect(() => {
-    const tick = () => setNow(new Date())
-    tick()
-    const t = setInterval(tick, 1000)
-    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(new Date())
   }, [])
 
   // Data fetch (once on mount)
@@ -222,8 +213,7 @@ export default function Dashboard() {
         <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Dashboard</div>
         {now && (
           <div>
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>{formatClockDate(now)} · </span>
-            <span style={{ color: 'var(--color-info)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{formatClockTime(now)}</span>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>{formatClockDate(now)}</span>
           </div>
         )}
       </div>

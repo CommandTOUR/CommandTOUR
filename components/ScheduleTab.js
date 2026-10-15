@@ -3,14 +3,34 @@
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { IconGripVertical, IconChevronDown, IconX, IconPlus, IconCopy, IconAlertTriangle } from '@tabler/icons-react'
 
 const ROW_GRID = '28px 100px 100px 1.2fr 1.2fr 1.6fr 28px'
 
 const DAY_TYPE_STYLES = {
-  'Load In': { color: '#FFD60A', background: 'rgba(255,214,10,0.15)', border: 'rgba(255,214,10,0.30)' },
-  'Show Day': { color: '#33FF99', background: 'rgba(51,255,153,0.15)', border: 'rgba(51,255,153,0.30)' },
-  'Load Out': { color: '#f87171', background: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.30)' },
-  'Day Off': { color: '#64748b', background: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)' },
+  'Load In': { color: 'var(--status-1hold-text)', background: 'var(--status-1hold-bg)', border: 'var(--status-1hold-border)' },
+  'Show Day': { color: 'var(--status-confirmed-text)', background: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
+  'Load Out': { color: 'var(--status-3hold-text)', background: 'var(--status-3hold-bg)', border: 'var(--status-3hold-border)' },
+  'Day Off': { color: 'var(--status-datehold-text)', background: 'var(--status-datehold-bg)', border: 'var(--status-datehold-border)' },
+}
+
+const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
+
+const GLASS = {
+  background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+  border: '0.5px solid var(--glass-tile-border)', boxShadow: 'var(--glass-tile-shadow)', borderRadius: 14,
+  color: 'var(--text-primary)',
+}
+
+const secondaryBtnStyle = {
+  fontFamily: FONT, fontSize: 14, fontWeight: 600, padding: '8px 14px', borderRadius: 8,
+  border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)',
+  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+}
+
+const primaryBtnStyle = {
+  fontFamily: FONT, fontSize: 14, fontWeight: 700, padding: '8px 16px', borderRadius: 8,
+  border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer',
 }
 
 const addDays = (dateStr, n) => {
@@ -26,12 +46,10 @@ const todayStr = () => {
 
 const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000)
 
-const headerLabelStyle = { fontSize: 12.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 8px' }
+const headerLabelStyle = { fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0 8px' }
 
 const addRowBtnStyle = {
-  fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 14, padding: '6px 14px', borderRadius: 7, marginTop: 8,
-  border: '0.5px dashed rgba(255,255,255,0.20)', background: 'transparent', color: '#64748b',
-  cursor: 'pointer', alignSelf: 'flex-start',
+  ...secondaryBtnStyle, padding: '6px 12px', marginTop: 8, border: '0.5px dashed var(--color-info)', alignSelf: 'flex-start',
 }
 
 function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop }) {
@@ -55,14 +73,10 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}
+      style={{ display: 'grid', gridTemplateColumns: ROW_GRID, alignItems: 'center', borderBottom: '0.5px solid var(--border-default)' }}
     >
-      <div style={{ cursor: 'grab', color: '#64748b', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
-        <svg width="10" height="14" viewBox="0 0 10 16" fill="none">
-          <circle cx="2" cy="2" r="1.4" fill="currentColor"/><circle cx="8" cy="2" r="1.4" fill="currentColor"/>
-          <circle cx="2" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/>
-          <circle cx="2" cy="14" r="1.4" fill="currentColor"/><circle cx="8" cy="14" r="1.4" fill="currentColor"/>
-        </svg>
+      <div style={{ cursor: 'grab', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center' }} title="Drag to reorder">
+        <IconGripVertical size={16} />
       </div>
       <input className="sched-input" type="time" value={vals.time_start} onChange={e => setVals(p => ({ ...p, time_start: e.target.value }))} onBlur={() => handleBlur('time_start')} onKeyDown={handleKeyDown} />
       <input className="sched-input" type="time" value={vals.time_end} onChange={e => setVals(p => ({ ...p, time_end: e.target.value }))} onBlur={() => handleBlur('time_end')} onKeyDown={handleKeyDown} />
@@ -72,10 +86,12 @@ function ScheduleRow({ item, onUpdate, onDelete, onDragStart, onDragOver, onDrop
       <div
         className="schedule-row-delete"
         onClick={() => onDelete(item.id)}
-        style={{ cursor: 'pointer', color: '#64748b', textAlign: 'center', fontSize: 18, lineHeight: 1 }}
-        onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-        onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
-      >×</div>
+        style={{ cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+        title="Delete row"
+        aria-label="Delete row"
+      ><IconX size={16} /></div>
     </div>
   )
 }
@@ -86,15 +102,13 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
   const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
-    <div className="glass-card" style={{ marginBottom: 12, borderLeft: '4px solid rgba(255,255,255,0.15)', overflow: 'hidden', width: '100%' }}>
+    <div style={{ ...GLASS, marginBottom: 12, borderLeft: '4px solid var(--color-info)', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
       <div onClick={onToggleExpand} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', cursor: 'pointer' }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M2 4l4 4 4-4" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>{dayName}</div>
-        <div style={{ fontSize: 15, color: '#94a3b8' }}>{dateLabel}</div>
+        <IconChevronDown size={16} color="var(--text-secondary)" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }} />
+        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>{dayName}</div>
+        <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>{dateLabel}</div>
         <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {dayTypes.map(dayType => {
             const pill = DAY_TYPE_STYLES[dayType] || DAY_TYPE_STYLES['Show Day']
             const clickable = toggleable && (dayType === 'Show Day' || dayType === 'Day Off')
@@ -103,7 +117,7 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
                 key={dayType}
                 onClick={clickable ? (e) => { e.stopPropagation(); onToggleDayType() } : undefined}
                 title={clickable ? 'Click to toggle Show Day / Day Off' : undefined}
-                style={{ fontSize: 13, fontWeight: 500, padding: '3px 10px', borderRadius: 20, color: pill.color, background: pill.background, border: `0.5px solid ${pill.border}`, cursor: clickable ? 'pointer' : 'default' }}
+                style={{ fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 20, color: pill.color, background: pill.background, border: `0.5px solid ${pill.border}`, cursor: clickable ? 'pointer' : 'default' }}
               >
                 {dayType}
               </span>
@@ -112,7 +126,8 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
         </div>
       </div>
       {expanded && (
-        <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '0 18px 16px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 720 }}>
           <div style={{ display: 'grid', gridTemplateColumns: ROW_GRID, padding: '0 0 8px' }}>
             <div />
             <div style={headerLabelStyle}>Time Start</div>
@@ -133,7 +148,8 @@ function DayCard({ dateStr, dayTypes, toggleable, expanded, onToggleExpand, onTo
               onDrop={() => onDrop(dateStr, i)}
             />
           ))}
-          <button onClick={onAddRow} style={addRowBtnStyle}>+ Add Row</button>
+          <button onClick={onAddRow} style={addRowBtnStyle}><IconPlus size={14} /> Add Row</button>
+        </div>
         </div>
       )}
     </div>
@@ -332,25 +348,24 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
     setCopyDone(true)
   }
 
-  if (loading) return <div style={{ fontSize: 16, color: '#94a3b8' }}>Loading schedule...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-secondary)', fontFamily: FONT }}>Loading schedule...</div>
 
   return (
-    <div style={{ width: '100%' }}>
-      {saveError && <p style={{ color: '#f87171', fontSize: 14, margin: '0 0 12px' }}>{saveError}</p>}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ fontSize: 17, fontWeight: 600, color: '#f1f5f9' }}>Schedule</div>
-        <button
-          onClick={openCopyModal}
-          style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          Copy Schedule to Another Event
+    <div style={{ width: '100%', fontFamily: FONT }}>
+      {saveError && (
+        <p role="alert" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-danger)', fontSize: 14, fontWeight: 600, margin: '0 0 12px' }}>
+          <IconAlertTriangle size={16} /> {saveError}
+        </p>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Schedule</div>
+        <button onClick={openCopyModal} style={secondaryBtnStyle}>
+          <IconCopy size={16} /> Copy Schedule to Another Event
         </button>
       </div>
 
       {days.length === 0 && (
-        <div style={{ fontSize: 15, color: '#94a3b8' }}>Set a load-in date on this event to build a schedule.</div>
+        <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Set a load-in date on this event to build a schedule.</div>
       )}
 
       {days.map((dateStr, idx) => {
@@ -377,17 +392,17 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
       })}
 
       {showCopyModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowCopyModal(false)}>
-          <div style={{ background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 12, padding: 24, width: 380, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 17, fontWeight: 600 }}>Copy Schedule to Another Event</div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: FONT }} onClick={() => setShowCopyModal(false)}>
+          <div style={{ ...GLASS, padding: 24, width: 380, maxWidth: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>Copy Schedule to Another Event</div>
             {copyDone ? (
-              <div style={{ fontSize: 15, color: 'var(--mint)' }}>Schedule copied successfully.</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--status-confirmed-text)' }}>Schedule copied successfully.</div>
             ) : (
               <>
                 <div>
-                  <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Target Event</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', display: 'block', marginBottom: 6 }}>Target Event</label>
                   <select
-                    style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 16, padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)', color: '#ffffff', outline: 'none', width: '100%', cursor: 'pointer' }}
+                    style={{ fontFamily: FONT, fontSize: 15, padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-input)', color: 'var(--text-primary)', outline: 'none', width: '100%', cursor: 'pointer' }}
                     value={copyTarget}
                     onChange={e => setCopyTarget(e.target.value)}
                   >
@@ -400,21 +415,19 @@ export default function ScheduleTab({ eventId, event, tourId, hasShows }) {
                   </select>
                 </div>
                 {items.length === 0 && (
-                  <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>This event has no schedule items yet.</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>This event has no schedule items yet.</div>
                 )}
               </>
             )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowCopyModal(false)}
-                style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--mint)', background: 'transparent', color: 'var(--mint)', cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,255,153,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={secondaryBtnStyle}
               >
                 {copyDone ? 'Close' : 'Cancel'}
               </button>
               {!copyDone && (
-                <button className="btn-primary" onClick={handleCopy} disabled={!copyTarget || items.length === 0 || copying}>
+                <button style={{ ...primaryBtnStyle, opacity: (!copyTarget || items.length === 0 || copying) ? 0.5 : 1, cursor: (!copyTarget || items.length === 0 || copying) ? 'default' : 'pointer' }} onClick={handleCopy} disabled={!copyTarget || items.length === 0 || copying}>
                   {copying ? 'Copying...' : 'Copy'}
                 </button>
               )}
