@@ -137,7 +137,7 @@ export default function ThisWeek({ showAll = false }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{cityCountry || ev.city}</div>
               <div style={{ fontSize: 15, color: ev.tourColor, fontWeight: 500, marginTop: 3 }}>{ev.tourName}</div>
-              {ev.venue_name && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>{ev.venue_name}</div>}
+              <div style={{ fontSize: 14, color: ev.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', marginTop: 2 }}>{ev.venue_name || 'Venue TBD'}</div>
             </div>
           </div>
         )

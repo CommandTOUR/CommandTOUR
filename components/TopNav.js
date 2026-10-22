@@ -12,7 +12,7 @@ const navLinks = [
   { label: 'Staff', href: '/staff' },
   { label: 'Calendar', href: '/calendar' },
   { label: 'Venues', href: '/venues' },
-  { label: 'Booking & Contracts', href: '/bc' },
+  { label: 'Master Schedule', href: '/bc' },
   { label: 'Reports', href: '/reports' },
 ]
 

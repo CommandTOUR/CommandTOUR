@@ -1,5 +1,8 @@
 'use client'
 
+import { placeState } from '@/lib/placesState'
+import VenueDuplicateWarning from '../../../components/VenueDuplicateWarning'
+import { findDuplicateVenues, renameVenue, supportsFormerNames } from '../../../lib/venueGuard'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../../../components/TopNav'
@@ -120,7 +123,7 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelect, inputStyle, labelS
         const streetNum = get('street_number')?.long_name || ''
         const route = get('route')?.long_name || ''
         const city = get('locality')?.long_name || get('postal_town')?.long_name || get('sublocality')?.long_name || ''
-        const state = get('administrative_area_level_1')?.short_name || ''
+        const state = placeState(place.address_components)
         const country = get('country')?.long_name || ''
         const zip = get('postal_code')?.long_name || ''
         const streetAddress = [streetNum, route].filter(Boolean).join(' ')
@@ -265,18 +268,39 @@ export default function NewVenue() {
     fetchSuggestions()
   }, [])
 
-  const handlePlaceSelect = (placeData) => {
+  const [dupes, setDupes] = useState([])
+
+  const handlePlaceSelect = async (placeData) => {
     setForm(prev => ({ ...prev, ...placeData }))
+    setDupes([])
+    // Check for an existing venue as soon as a Google place is picked
+    setDupes(await findDuplicateVenues(placeData))
   }
 
-  const handleSave = async () => {
+  const handleSave = async (force = false) => {
     if (!form.name.trim()) { setError('Venue name is required'); return }
     setSaving(true)
     setError('')
+    // Duplicate guard runs before any insert (Google pick or manual entry)
+    if (force !== true) {
+      const matches = await findDuplicateVenues(form)
+      if (matches.length) { setDupes(matches); setSaving(false); return }
+    }
     const supabase = getSupabase()
     const { error } = await supabase.from('venues').insert([form])
     if (error) { setError(error.message); setSaving(false) }
     else router.push('/venues')
+  }
+
+  const useExistingVenue = (venue) => router.push(`/venues/${venue.id}`)
+
+  const renameExistingVenue = async (match) => {
+    if (!window.confirm(`Rename "${match.venue.name}" to "${form.name}"? The old name is kept as a former name.`)) return
+    setSaving(true)
+    const { venue, error } = await renameVenue(match.venue, form.name.trim())
+    if (error || !venue) { setError(error?.message || 'Could not rename the venue'); setSaving(false); return }
+    if (!(await supportsFormerNames())) window.alert('Venue renamed. The old name was not saved because the former_names column does not exist yet.')
+    router.push(`/venues/${venue.id}`)
   }
 
   const inputStyle = {
@@ -497,6 +521,15 @@ export default function NewVenue() {
               value={form.notes} onChange={e => set('notes', e.target.value)} />
           </div>
 
+          <VenueDuplicateWarning
+            dupes={dupes}
+            newName={form.name}
+            busy={saving}
+            onUse={useExistingVenue}
+            onRename={renameExistingVenue}
+            onForce={() => handleSave(true)}
+          />
+
           {error && <div style={{ fontSize: 15, color: '#dc2626' }}>{error}</div>}
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingBottom: 40 }}>
@@ -506,7 +539,7 @@ export default function NewVenue() {
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >Cancel</button>
-            <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Add Venue'}</button>
+            <button className="btn-primary" onClick={() => handleSave()} disabled={saving}>{saving ? 'Saving...' : 'Add Venue'}</button>
           </div>
 
         </div>

@@ -7,6 +7,7 @@ import { getSupabase } from '../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
+import { quickToast } from '@/lib/quickToast'
 import { IconLock } from '@tabler/icons-react'
 import { useNav } from '../context/NavContext'
 import { buildNavEntry } from '../lib/navigate'
@@ -80,6 +81,7 @@ const STATUS_OPTIONS = [
   { value: 'confirmed', label: 'Confirmed', color: 'var(--color-success)', pill: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
   { value: 'pending', label: 'Pending', color: 'var(--color-warning)', pill: 'var(--status-1hold-bg)', border: 'var(--status-1hold-border)' },
   { value: 'needs_attention', label: 'Needs Attention', color: 'var(--color-danger)', pill: 'var(--status-3hold-bg)', border: 'var(--status-3hold-border)' },
+  { value: 'variant', label: 'Variant', color: 'var(--color-info)', pill: 'rgba(26,86,219,0.10)', border: 'rgba(26,86,219,0.35)' },
 ]
 
 const STAFF_NAME_WEIGHTS = { confirmed: 400 }
@@ -96,7 +98,7 @@ const CELL_COLOR_SWATCHES = [
 
 // ── INLINE STAFF SEARCH ────────────────────────────────────────────────────
 
-function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, allBookings }) {
+function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, allBookings, checkAndAssign, tourPositionId, slotIndex, eventCity, positionTitle }) {
   const [query, setQuery] = useState(initialValue || '')
   const [results, setResults] = useState([])
   const [availability, setAvailability] = useState({})
@@ -184,18 +186,37 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   const showDropdown = query.trim().length >= 1
   const optionCount = results.length + (showDropdown ? 1 : 0)
 
+  const handleSelect = async (s) => {
+    setQuery('')
+    setResults([])
+    if (checkAndAssign) {
+      await checkAndAssign(
+        s,
+        tourPositionId,
+        slotIndex,
+        eventId,
+        eventCity,
+        positionTitle,
+        null
+      )
+    } else {
+      onAssign(s)
+    }
+    onClose()
+  }
+
   const handleCreate = async () => {
     const parts = query.trim().split(' ')
     const firstName = parts[0]
     const lastName = parts.length > 1 ? parts.slice(1).join(' ') : ''
     const supabase = getSupabase()
     const { data, error } = await supabase.from('staff').insert([{ first_name: firstName, last_name: lastName }]).select().single()
-    if (!error && data) onAssign(data, { status: 'free' })
+    if (!error && data) await handleSelect(data)
   }
 
   const selectIndex = (idx) => {
     if (idx < 0 || idx >= optionCount) return
-    if (idx < results.length) onAssign(results[idx], availability[results[idx].id])
+    if (idx < results.length) handleSelect(results[idx])
     else handleCreate()
   }
 
@@ -267,9 +288,11 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
 
 // ── INLINE STATUS MENU ─────────────────────────────────────────────────────
 
-function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
+function InlineStatusMenu({ assignment, onSetStatus, onRemove, sameWeekendEvents, toursById, getAssignment, tp, slotIndex, onMove, onSwap, onReplace }) {
+  const [showMove, setShowMove] = useState(false)
+  const canMove = !!(tp && sameWeekendEvents && sameWeekendEvents.length > 0)
   return (
-    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: 150, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: showMove ? 260 : 150, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
       {STATUS_OPTIONS.map(opt => (
         <div key={opt.value}
           onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value) }}
@@ -281,6 +304,59 @@ function InlineStatusMenu({ assignment, onSetStatus, onRemove }) {
         </div>
       ))}
       <div style={{ height: '1px', background: 'var(--border-default)' }} />
+      {canMove && (
+        <>
+          <button
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => setShowMove(v => !v)}
+            style={{ fontFamily: 'inherit', fontSize: 13, color: 'var(--color-info)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 12px', textAlign: 'left', width: '100%' }}
+          >
+            {showMove ? 'Hide move options ↑' : 'Move to another event this weekend ↓'}
+          </button>
+          {showMove && (
+            <div style={{ padding: '4px 8px 8px' }}>
+              {sameWeekendEvents.map(ev => {
+                const otherAssignment = getAssignment(tp.id, slotIndex, ev.id)
+                return (
+                  <div key={ev.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{ev.city}, {ev.state || ev.country}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{fmtDate(ev.load_in_date)} · {toursById[ev.tour_id]?.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {otherAssignment ? `${otherAssignment.staff?.first_name} ${otherAssignment.staff?.last_name} is here` : 'Currently empty'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {!otherAssignment && (
+                        <button
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => onMove(ev)}
+                          style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                        >Move</button>
+                      )}
+                      {otherAssignment && (
+                        <>
+                          <button
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => onSwap(ev, otherAssignment)}
+                            style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                          >Swap</button>
+                          <button
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => onReplace(ev, otherAssignment)}
+                            style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                          >Replace</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <div style={{ height: '1px', background: 'var(--border-default)' }} />
+        </>
+      )}
       <div
         onMouseDown={e => { e.preventDefault(); onRemove() }}
         style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, color: '#FF3333' }}
@@ -335,12 +411,20 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
 
 // ── GRID CELL ──────────────────────────────────────────────────────────────
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, isSelected, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode }) {
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, selectedAssignments, setSelectedAssignments, checkAndAssign, positionTitle }) {
   const [hovered, setHovered] = useState(false)
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
   const [hardBlockMessage, setHardBlockMessage] = useState(null)
+  const [showMove, setShowMove] = useState(false)
   const eventId = event.id
+
+  const STATUS_OPTIONS = [
+    { value: 'confirmed', label: 'Confirmed', color: 'var(--color-success)', bg: 'rgba(0,208,132,0.10)', border: 'rgba(0,208,132,0.35)' },
+    { value: 'pending', label: 'Pending', color: 'var(--color-warning)', bg: 'rgba(255,184,0,0.10)', border: 'rgba(255,184,0,0.35)' },
+    { value: 'needs_attention', label: 'Needs Attention', color: 'var(--color-danger)', bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.35)' },
+    { value: 'variant', label: 'Variant', color: 'var(--color-info)', bg: 'rgba(26,86,219,0.10)', border: 'rgba(26,86,219,0.35)' },
+  ]
   const hasStaff = !!(assignment && assignment.staff_id && assignment.staff)
   const staffName = hasStaff ? staffDisplayName(assignment.staff) : null
 
@@ -409,14 +493,55 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
 
   const handleSetStatus = async (newStatus) => {
     if (!assignment) return
-    await onSetStatus(newStatus)
     onCloseActive()
+    await onSetStatus(newStatus)
   }
 
   const handleRemove = async () => {
     if (!assignment) return
     await onRemove()
     onCloseActive()
+  }
+
+  const handleMove = async (targetEv) => {
+    await checkAndAssign(
+      assignment.staff,
+      tp?.id,
+      slotIndex,
+      targetEv.id,
+      targetEv.city,
+      positionTitle || '',
+      assignment.id
+    )
+    onCloseActive()
+  }
+
+  const handleSwap = async (targetEvent, targetAssignment) => {
+    if (!assignment) return
+    const supabase = getSupabase()
+    await supabase.from('staff_assignments')
+      .update({ event_id: targetEvent.id })
+      .eq('id', assignment.id)
+    await supabase.from('staff_assignments')
+      .update({ event_id: event.id })
+      .eq('id', targetAssignment.id)
+    onCloseActive()
+    fetchAll && fetchAll()
+  }
+
+  const handleReplace = async (targetEvent, targetAssignment) => {
+    if (!assignment) return
+    const confirmed = window.confirm(`Replace ${targetAssignment.staff?.first_name} ${targetAssignment.staff?.last_name} at ${targetEvent.city}? They will be removed from this event.`)
+    if (!confirmed) return
+    const supabase = getSupabase()
+    await supabase.from('staff_assignments')
+      .update({ event_id: targetEvent.id })
+      .eq('id', assignment.id)
+    await supabase.from('staff_assignments')
+      .delete()
+      .eq('id', targetAssignment.id)
+    onCloseActive()
+    fetchAll && fetchAll()
   }
 
   const nameColor = cellColor?.text || (STAFF_NAME_COLORS[assignment?.status] || 'var(--text-primary)')
@@ -436,8 +561,15 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
   const isFilled = cellState === 'FILLED'
   const isConflicted = isFilled && !!existingConflict
 
+  const isSelectedForBulk = selectMode && !!assignment && selectedAssignments.includes(assignment.id)
+
   const handleCellClick = (e) => {
     if (isActive) return
+    if (selectMode && isFilled && assignment) {
+      e.stopPropagation()
+      setSelectedAssignments(prev => prev.includes(assignment.id) ? prev.filter(id => id !== assignment.id) : [...prev, assignment.id])
+      return
+    }
     if (isFilled && isConflicted) {
       e.stopPropagation()
       onConflictClick && onConflictClick(existingConflict)
@@ -486,6 +618,8 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           borderBottomRightRadius: (isLastRow && isLastCol) ? 10 : undefined,
           boxShadow: assignError
             ? 'inset 0 0 0 1px var(--color-danger)'
+            : isSelectedForBulk
+            ? 'inset 0 0 0 2px var(--color-info)'
             : isDragTarget
             ? 'inset 0 0 0 1.5px var(--color-success)'
             : (!isLightMode && (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED'))
@@ -512,7 +646,19 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
         }}>
 
         {isActive && activeType === 'edit' ? (
-          <InlineStaffSearch eventId={eventId} event={event} initialValue={initialValue} onAssign={handleAssign} onClose={onCloseActive} allBookings={allBookings} />
+          <InlineStaffSearch
+            eventId={eventId}
+            event={event}
+            initialValue={initialValue}
+            onAssign={handleAssign}
+            onClose={onCloseActive}
+            allBookings={allBookings}
+            checkAndAssign={checkAndAssign}
+            tourPositionId={tp?.id}
+            slotIndex={slotIndex}
+            eventCity={event?.city}
+            positionTitle={positionTitle}
+          />
 
         ) : isFilled ? (
           <React.Fragment>
@@ -524,16 +670,6 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               {isConflicted && <span style={{ color: '#FF9500', fontSize: 12, marginRight: 3 }}>⚠</span>}
               {staffName}
             </span>
-            <div
-              onClick={e => { e.stopPropagation(); onToggleSelect() }}
-              style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (hovered || isSelected) ? 1 : 0, transition: 'opacity 0.15s ease', cursor: 'pointer', zIndex: 2 }}
-            >
-              {isSelected ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#33FF99"/><path d="M7 12l3 3 7-7" stroke="#0a1628" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#94a3b8" strokeWidth="1.5"/></svg>
-              )}
-            </div>
           </React.Fragment>
 
         ) : (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? (
@@ -564,8 +700,115 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           </React.Fragment>
         )}
 
-        {isActive && activeType === 'menu' && assignment && (
-          <InlineStatusMenu assignment={assignment} onSetStatus={handleSetStatus} onRemove={handleRemove} />
+        {isActive && activeType === 'menu' && assignment && typeof document !== 'undefined' && ReactDOM.createPortal(
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)' }}
+            onMouseDown={(e) => { if (e.target === e.currentTarget) onCloseActive() }}
+          >
+            <div
+              id="staffing-cell-modal"
+              style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 20, width: 400, display: 'flex', flexDirection: 'column', gap: 0 }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>
+                    {tourName}{event?.city ? ` · ${event.city}` : ''}
+                  </div>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {assignment?.staff?.first_name} {assignment?.staff?.last_name}
+                  </div>
+                </div>
+                <div onClick={() => onCloseActive()} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1, padding: 2 }}>×</div>
+              </div>
+
+              {/* Status pills */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                {STATUS_OPTIONS.map(opt => {
+                  const isOptActive = (assignment?.status || 'confirmed') === opt.value
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSetStatus(opt.value)}
+                      style={{
+                        flex: 1, fontSize: 12, padding: '6px 4px', borderRadius: 6, cursor: 'pointer',
+                        border: `0.5px solid ${isOptActive ? opt.border : 'var(--border-default)'}`,
+                        background: isOptActive ? opt.bg : 'transparent',
+                        color: isOptActive ? opt.color : 'var(--text-secondary)',
+                        fontWeight: isOptActive ? 600 : 400,
+                      }}
+                    >{opt.label}</button>
+                  )
+                })}
+              </div>
+
+              {/* Move section */}
+              <div style={{ borderTop: '0.5px solid var(--border-default)', paddingTop: 12, marginBottom: 4 }}>
+                <div
+                  onClick={(e) => { e.stopPropagation(); setShowMove(v => !v) }}
+                  style={{ fontSize: 13, color: 'var(--color-info)', cursor: 'pointer', marginBottom: showMove ? 10 : 0, display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  Move to another event this weekend
+                  <span style={{ fontSize: 11 }}>{showMove ? '↑' : '↓'}</span>
+                </div>
+
+                {showMove && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {(!sameWeekendEvents || sameWeekendEvents.length === 0) && (
+                      <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>No other events this weekend.</div>
+                    )}
+                    {sameWeekendEvents?.map(targetEvent => {
+                      const targetAssignment = getAssignment && getAssignment(tp?.id, slotIndex, targetEvent.id)
+                      return (
+                        <div
+                          key={targetEvent.id}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--glass-tile-bg)' }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{targetEvent.city}{targetEvent.state ? `, ${targetEvent.state}` : targetEvent.country ? `, ${targetEvent.country}` : ''}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{toursById?.[targetEvent.tour_id]?.name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              {targetAssignment ? `${targetAssignment.staff?.first_name} ${targetAssignment.staff?.last_name} is here` : 'Currently empty'}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                            {!targetAssignment && (
+                              <button
+                                onClick={() => handleMove(targetEvent)}
+                                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                              >Move</button>
+                            )}
+                            {targetAssignment && (
+                              <>
+                                <button
+                                  onClick={() => handleSwap(targetEvent, targetAssignment)}
+                                  style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                                >Swap</button>
+                                <button
+                                  onClick={() => handleReplace(targetEvent, targetAssignment)}
+                                  style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                                >Replace</button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Remove button */}
+              <div style={{ borderTop: '0.5px solid var(--border-default)', paddingTop: 12, marginTop: 8 }}>
+                <button
+                  onClick={handleRemove}
+                  style={{ width: '100%', fontSize: 14, padding: '8px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
+                >Remove from this event</button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
       </td>
       {confirmOverride && (
@@ -778,6 +1021,130 @@ function BulkActionBar({ count, onSetStatus, onCopyToEvents, onClear }) {
   )
 }
 
+// ── CONFLICT WIZARD MODAL ───────────────────────────────────────────────────
+
+function ConflictWizardModal({ wizard, onClose }) {
+  if (!wizard) return null
+  const { incomingStaff, incomingFrom, targetSlot, existingAtTarget, onResolve } = wizard
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div id="conflict-wizard-modal" style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 22, width: 440, display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>
+              Assigning to {targetSlot.positionTitle} · {targetSlot.city}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {incomingStaff.first_name} {incomingStaff.last_name}
+            </div>
+          </div>
+          <div onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>×</div>
+        </div>
+
+        {/* Warning banner */}
+        <div style={{ background: 'rgba(255,184,0,0.10)', border: '0.5px solid rgba(255,184,0,0.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#FFB800" strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 7V10" stroke="#FFB800" strokeWidth="1.5" strokeLinecap="round"/><circle cx="9" cy="13" r="0.75" fill="#FFB800"/></svg>
+          <span style={{ fontSize: 13, color: 'var(--color-warning)' }}>Conflict detected — review before continuing</span>
+        </div>
+
+        {/* Conflict info cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+          {incomingFrom && (
+            <div style={{ background: 'var(--glass-tile-bg)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                {incomingStaff.first_name} is currently assigned to
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{incomingFrom.positionTitle}, Slot {incomingFrom.slotIndex}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{incomingFrom.city}</div>
+            </div>
+          )}
+          {existingAtTarget && (
+            <div style={{ background: 'var(--glass-tile-bg)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 8, padding: '10px 14px' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                This slot is currently filled by
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{existingAtTarget.first_name} {existingAtTarget.last_name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{targetSlot.positionTitle}, Slot {targetSlot.slotIndex} · {targetSlot.city}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Action options */}
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>How would you like to proceed?</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
+
+          {incomingFrom && existingAtTarget && (
+            <div
+              onClick={() => onResolve('swap')}
+              style={{ border: '0.5px solid rgba(26,86,219,0.4)', borderRadius: 8, padding: '11px 14px', cursor: 'pointer', background: 'rgba(26,86,219,0.04)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,86,219,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(26,86,219,0.04)'}
+            >
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-info)', marginBottom: 3 }}>Swap</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {incomingStaff.first_name} → {targetSlot.city} · {existingAtTarget.first_name} → {incomingFrom.city}
+              </div>
+            </div>
+          )}
+
+          {existingAtTarget && (
+            <div
+              onClick={() => onResolve('replace')}
+              style={{ border: '0.5px solid rgba(239,68,68,0.4)', borderRadius: 8, padding: '11px 14px', cursor: 'pointer', background: 'rgba(239,68,68,0.04)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.04)'}
+            >
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-danger)', marginBottom: 3 }}>Replace</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {incomingStaff.first_name} → {targetSlot.city} · {existingAtTarget.first_name} removed from this event
+              </div>
+            </div>
+          )}
+
+          {(incomingFrom || existingAtTarget) && (
+            <div
+              onClick={() => onResolve('extra')}
+              style={{ border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '11px 14px', cursor: 'pointer', background: 'transparent' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-success)', marginBottom: 3 }}>Add as extra</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {incomingStaff.first_name} added as an additional slot · {existingAtTarget ? `${existingAtTarget.first_name} stays` : 'No conflicts at target'}
+              </div>
+            </div>
+          )}
+
+          {incomingFrom && !existingAtTarget && (
+            <div
+              onClick={() => onResolve('move')}
+              style={{ border: '0.5px solid rgba(26,86,219,0.4)', borderRadius: 8, padding: '11px 14px', cursor: 'pointer', background: 'rgba(26,86,219,0.04)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,86,219,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(26,86,219,0.04)'}
+            >
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-info)', marginBottom: 3 }}>Move</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {incomingStaff.first_name} moved from {incomingFrom.city} to {targetSlot.city} · {incomingFrom.city} slot opens up
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{ width: '100%', fontSize: 13, padding: 8, borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
+        >Cancel</button>
+      </div>
+    </div>
+  )
+}
+
 // ── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 export default function StaffingGrid({ tourId, year, showPastEvents = false, searchQuery = '' }) {
@@ -795,6 +1162,17 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const [activeCell, setActiveCell] = useState(null) // { positionId, slotIndex, eventId, type: 'edit'|'menu', initialValue? } | null
   const [focusedCell, setFocusedCell] = useState(null) // { positionId, slotIndex, eventId } | null
   const [selectedKeys, setSelectedKeys] = useState(new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedAssignments, setSelectedAssignments] = useState([])
+  const [bulkStatusPickerOpen, setBulkStatusPickerOpen] = useState(false)
+  const [conflictWizard, setConflictWizard] = useState(null)
+  // Shape: {
+  //   incomingStaff: { id, first_name, last_name },
+  //   incomingFrom: { assignmentId, eventId, city, positionTitle, slotIndex } | null,
+  //   targetSlot: { eventId, city, tourPositionId, slotIndex },
+  //   existingAtTarget: { assignmentId, staffId, first_name, last_name } | null,
+  //   onResolve: async (action) => void  // 'swap' | 'replace' | 'extra' | 'cancel'
+  // }
   const [cellColors, setCellColors] = useState({})
   const [rightClickMenu, setRightClickMenu] = useState(null)
   const [copyModalOpen, setCopyModalOpen] = useState(false)
@@ -853,6 +1231,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     confirmed: isLightMode ? 'var(--text-primary)' : '#e8e8e8',
     pending: 'var(--color-warning)',
     needs_attention: 'var(--color-danger)',
+    variant: 'var(--color-info)',
   }
 
   const showToast = (msg) => {
@@ -1210,13 +1589,22 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     const supabase = getSupabase()
     const confirmed = status === 'confirmed'
     if (resolvedAssignment.event_id === event.id) {
-      await supabase.from('staff_assignments').update({ status, confirmed }).eq('id', resolvedAssignment.id)
+      // Optimistic: show the new status now, revert if the save fails
+      const prevStatus = resolvedAssignment.status
+      const prevConfirmed = resolvedAssignment.confirmed
       setAssignments(prev => prev.map(a => a.id === resolvedAssignment.id ? { ...a, status, confirmed } : a))
+      const { error } = await supabase.from('staff_assignments').update({ status, confirmed }).eq('id', resolvedAssignment.id)
+      if (error) {
+        setAssignments(prev => prev.map(a => a.id === resolvedAssignment.id ? { ...a, status: prevStatus, confirmed: prevConfirmed } : a))
+        quickToast('Could not save status. Reverted.')
+        return
+      }
     } else {
       const { data, error } = await supabase.from('staff_assignments')
         .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: resolvedAssignment.staff_id, event_id: event.id, status, confirmed }])
         .select().single()
-      if (!error && data) setAssignments(prev => [...prev, { ...data, staff: resolvedAssignment.staff }])
+      if (error) { quickToast('Could not save status. Reverted.'); return }
+      if (data) setAssignments(prev => [...prev, { ...data, staff: resolvedAssignment.staff }])
     }
     const staffId = resolvedAssignment.staff_id
     if (staffId) {
@@ -1227,6 +1615,119 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         confirm: status === 'confirmed'
       })
     }
+  }
+
+  const checkAndAssign = async (incomingStaff, targetTourPositionId, targetSlotIndex, targetEventId, targetCity, positionTitleArg, currentAssignmentId = null) => {
+    const supabase = getSupabase()
+
+    // Find if incoming staff is already assigned this weekend
+    const targetEvent = orderedEvents.find(e => e.id === targetEventId)
+    const weekendKey = targetEvent ? getWeekendGroup(targetEvent.load_in_date) : null
+    const weekendEventIds = weekendKey
+      ? orderedEvents.filter(e => getWeekendGroup(e.load_in_date) === weekendKey).map(e => e.id)
+      : []
+
+    const { data: incomingConflict } = await supabase
+      .from('staff_assignments')
+      .select('id, event_id, tour_position_id, slot_index, tour_positions(positions(title))')
+      .eq('staff_id', incomingStaff.id)
+      .in('event_id', weekendEventIds)
+      .neq('event_id', targetEventId)
+      .maybeSingle()
+
+    // Find if target slot already has someone
+    const { data: existingAtTarget } = await supabase
+      .from('staff_assignments')
+      .select('id, staff_id, staff:staff_id(id, first_name, last_name)')
+      .eq('tour_position_id', targetTourPositionId)
+      .eq('slot_index', targetSlotIndex)
+      .eq('event_id', targetEventId)
+      .maybeSingle()
+
+    const hasConflict = incomingConflict || existingAtTarget
+
+    if (!hasConflict) {
+      // Clean assign — no conflicts
+      if (currentAssignmentId) {
+        await supabase.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
+      } else {
+        await supabase.from('staff_assignments').insert([{
+          event_id: targetEventId,
+          staff_id: incomingStaff.id,
+          tour_position_id: targetTourPositionId,
+          slot_index: targetSlotIndex,
+          confirmed: false,
+          status: 'pending',
+        }])
+      }
+      reload()
+      return
+    }
+
+    // Has conflict — show wizard
+    const incomingFromEvent = incomingConflict
+      ? orderedEvents.find(e => e.id === incomingConflict.event_id)
+      : null
+
+    setConflictWizard({
+      incomingStaff,
+      incomingFrom: incomingConflict ? {
+        assignmentId: incomingConflict.id,
+        eventId: incomingConflict.event_id,
+        city: incomingFromEvent?.city || 'Unknown',
+        positionTitle: incomingConflict.tour_positions?.positions?.title || positionTitleArg,
+        slotIndex: incomingConflict.slot_index,
+      } : null,
+      targetSlot: {
+        eventId: targetEventId,
+        city: targetCity,
+        tourPositionId: targetTourPositionId,
+        slotIndex: targetSlotIndex,
+        positionTitle: positionTitleArg,
+      },
+      existingAtTarget: existingAtTarget ? {
+        assignmentId: existingAtTarget.id,
+        staffId: existingAtTarget.staff_id,
+        first_name: existingAtTarget.staff?.first_name,
+        last_name: existingAtTarget.staff?.last_name,
+      } : null,
+      onResolve: async (action) => {
+        const supabase2 = getSupabase()
+        if (action === 'swap') {
+          // Move incoming to target, move existing to incoming's old event
+          if (currentAssignmentId) {
+            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
+          } else {
+            await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: targetSlotIndex, confirmed: false, status: 'pending' }])
+          }
+          if (existingAtTarget && incomingConflict) {
+            await supabase2.from('staff_assignments').update({ event_id: incomingConflict.event_id }).eq('id', existingAtTarget.id)
+          } else if (existingAtTarget) {
+            await supabase2.from('staff_assignments').delete().eq('id', existingAtTarget.id)
+          }
+        } else if (action === 'replace') {
+          if (existingAtTarget) await supabase2.from('staff_assignments').delete().eq('id', existingAtTarget.id)
+          if (currentAssignmentId) {
+            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
+          } else {
+            await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: targetSlotIndex, confirmed: false, status: 'pending' }])
+          }
+        } else if (action === 'extra') {
+          // Find max slot_index for this position at target event
+          const { data: existingSlots } = await supabase2.from('staff_assignments').select('slot_index').eq('tour_position_id', targetTourPositionId).eq('event_id', targetEventId)
+          const maxSlot = existingSlots?.length ? Math.max(...existingSlots.map(s => s.slot_index)) : 0
+          await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: maxSlot + 1, confirmed: false, status: 'pending' }])
+        } else if (action === 'move') {
+          if (currentAssignmentId) {
+            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
+          } else if (incomingConflict) {
+            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', incomingConflict.id)
+          }
+        }
+        setConflictWizard(null)
+        reload()
+      }
+    })
   }
 
   const handleUnlockHatched = async (tp, slotIndex, event) => {
@@ -1321,6 +1822,16 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     setSelectedKeys(new Set())
   }
 
+  const applyBulkAssignmentStatus = async (status) => {
+    if (selectedAssignments.length === 0) return
+    const supabase = getSupabase()
+    const confirmed = status === 'confirmed'
+    await supabase.from('staff_assignments').update({ status, confirmed }).in('id', selectedAssignments)
+    setAssignments(prev => prev.map(a => selectedAssignments.includes(a.id) ? { ...a, status, confirmed } : a))
+    setSelectedAssignments([])
+    setBulkStatusPickerOpen(false)
+  }
+
   const toggleSelectKey = (key) => {
     setSelectedKeys(prev => {
       const next = new Set(prev)
@@ -1408,6 +1919,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     if (!activeCell) return
     const handleMouseDown = (e) => {
       if (activeCellElRef.current && !activeCellElRef.current.contains(e.target)) {
+        const modalEl = document.getElementById('staffing-cell-modal')
+        const wizardEl = document.getElementById('conflict-wizard-modal')
+        if ((modalEl && modalEl.contains(e.target)) || (wizardEl && wizardEl.contains(e.target))) return
         setActiveCell(null)
         setFocusedCell(null)
       }
@@ -1529,6 +2043,46 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       {selectedKeys.size > 0 && (
         <BulkActionBar count={selectedKeys.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedKeys(new Set())} />
       )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 0 10px', flexShrink: 0 }}>
+        <button
+          onClick={() => { setSelectMode(v => !v); setSelectedAssignments([]); setBulkStatusPickerOpen(false) }}
+          style={{
+            fontFamily: 'inherit', fontSize: 13, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+            border: selectMode ? 'none' : '0.5px solid var(--border-default)',
+            background: selectMode ? '#FFD60A' : 'transparent',
+            color: selectMode ? '#0a1628' : 'var(--text-secondary)',
+            fontWeight: selectMode ? 700 : 400,
+          }}
+        >{selectMode ? 'Exit Select' : 'Select Multiple'}</button>
+
+        {selectMode && (
+          <>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedAssignments.length} selected</span>
+            {selectedAssignments.length > 0 && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setBulkStatusPickerOpen(v => !v)}
+                  style={{ fontFamily: 'inherit', fontSize: 13, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                >Update Status →</button>
+                {bulkStatusPickerOpen && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 400, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden', minWidth: 150 }}>
+                    {STATUS_OPTIONS.map(opt => (
+                      <div key={opt.value}
+                        onClick={() => applyBulkAssignmentStatus(opt.value)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, color: opt.color }}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
       {orderedEvents.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>No events yet</div>
@@ -1611,7 +2165,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                     onClick={() => { if (ev.venue_id) { pushNav(buildNavEntry(`/venues/${ev.venue_id}`, ev.venue_name, 'venue')); router.push(`/venues/${ev.venue_id}`) } }}
                     onMouseEnter={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { if (ev.venue_id) e.currentTarget.style.textDecoration = 'none' }}>
-                    {ev.venue_name || '—'}
+                    {ev.venue_name || 'Venue TBD'}
                   </span>
                 </div>
               ))}
@@ -1692,10 +2246,18 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                             const isDragTargetCell = !!(draggedCell && dragOverCell && tp && dragOverCell.tpId === tp.id && dragOverCell.slotIndex === slotIndex && dragOverCell.eventId === ev.id)
                             const isSelectedCell = key ? selectedKeys.has(key) : false
                             const isLastCol = i === filteredEvents.length - 1
+                            const wk = getWeekendGroup(ev.load_in_date) || ev.load_in_date
+                            const sameWeekendEvents = (weekendMap[wk] || []).filter(e => e.id !== ev.id)
                             return (
                               <GridCell
                                 key={ev.id}
                                 event={ev}
+                                sameWeekendEvents={sameWeekendEvents}
+                                getAssignment={resolveAssignment}
+                                toursById={toursById}
+                                fetchAll={reload}
+                                checkAndAssign={checkAndAssign}
+                                positionTitle={position.title}
                                 tourName={toursById[ev.tour_id]?.name}
                                 tourColor={toursById[ev.tour_id]?.color}
                                 tp={tp}
@@ -1722,6 +2284,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                                 onCloseActive={() => setActiveCell(null)}
                                 isSelected={isSelectedCell}
                                 onToggleSelect={() => key && toggleSelectKey(key)}
+                                selectMode={selectMode}
+                                selectedAssignments={selectedAssignments}
+                                setSelectedAssignments={setSelectedAssignments}
                                 onRightClick={(x, y) => key && setRightClickMenu({ x, y, key })}
                                 cellColor={key ? cellColors[key] : null}
                                 allBookings={bookingsByStaff}
@@ -1886,6 +2451,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         </div>,
         document.body
       )}
+
+      <ConflictWizardModal
+        wizard={conflictWizard}
+        onClose={() => setConflictWizard(null)}
+      />
     </div>
   )
 }

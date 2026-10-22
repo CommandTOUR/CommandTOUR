@@ -30,7 +30,7 @@ const DEFAULT_COLUMNS = [
   { id: 'date',     label: '#',        defaultOn: true,  render: (_, i) => i + 1 },
   { id: 'date_val', label: 'Date',     defaultOn: true,  render: (e) => e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—' },
   { id: 'location', label: 'Location', defaultOn: true,  render: (e) => formatLocationCompact(e.city, e.state, e.country) },
-  { id: 'venue',    label: 'Venue',    defaultOn: true,  render: (e) => e.venue_name || '—' },
+  { id: 'venue',    label: 'Venue',    defaultOn: true,  render: (e) => e.venue_name || 'Venue TBD' },
   { id: 'status',   label: 'Status',   defaultOn: true,  render: (e) => e.status || '—' },
   { id: 'shows',    label: 'Shows',    defaultOn: false, render: (e) => e.show_count ?? '—' },
   { id: 'notes',    label: 'Notes',    defaultOn: false, render: (e) => e.notes || '' },
@@ -50,7 +50,7 @@ function SortableColItem({ col, enabled, onToggle }) {
   )
 }
 
-export default function PrintClient({ tour, events }) {
+export default function PrintClient({ tour, events: allEvents, initialYear }) {
   const [columnOrder, setColumnOrder] = useState(() => DEFAULT_COLUMNS.map(c => c.id))
   const [enabledCols, setEnabledCols] = useState(
     () => DEFAULT_COLUMNS.reduce((acc, c) => ({ ...acc, [c.id]: c.defaultOn }), {})
@@ -59,6 +59,16 @@ export default function PrintClient({ tour, events }) {
   const [orientation, setOrientation] = useState('portrait')
   const [scale, setScale] = useState(90)
   const iframeRef = useRef(null)
+
+  // One year prints at a time; the year comes from the event dates
+  const eventYears = [...new Set(allEvents.map(e => (e.date || '').slice(0, 4)).filter(Boolean))].sort((a, b) => b - a)
+  const currentYear = String(new Date().getFullYear())
+  const [selectedYear, setSelectedYear] = useState(() => (
+    eventYears.includes(initialYear) ? initialYear
+      : eventYears.includes(currentYear) || eventYears.length === 0 ? currentYear
+      : eventYears[0]
+  ))
+  const events = allEvents.filter(e => (e.date || '').startsWith(selectedYear))
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -111,6 +121,15 @@ export default function PrintClient({ tour, events }) {
           </DndContext>
         </div>
 
+        {eventYears.length > 1 && (
+          <div className="sidebar-section">
+            <h3>Year</h3>
+            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} style={{ width: '100%', padding: '6px 8px', fontSize: 14 }}>
+              {eventYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+        )}
+
         <div className="sidebar-section">
           <h3>Row Density</h3>
           <div className="toggle-group">
@@ -152,7 +171,7 @@ export default function PrintClient({ tour, events }) {
               <div className="doc-tour-name">{tour?.name || 'Tour'}</div>
               <div className="doc-show-type">{tour?.tour_type || ''}</div>
               <div className="doc-region-year">
-                {[tour?.region, tour?.year].filter(Boolean).join(' · ')}
+                {[tour?.region, selectedYear].filter(Boolean).join(' · ')}
               </div>
             </div>
             <div className="doc-header-right">

@@ -6,8 +6,12 @@ import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../lib/supabase'
-import { IconClock, IconCalendarOff } from '@tabler/icons-react'
+import { IconClock, IconCalendarOff, IconFlag, IconLayoutGrid, IconLayoutList, IconAdjustmentsHorizontal } from '@tabler/icons-react'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
+import QuickStatusPill from '../../components/QuickStatusPill'
+import { getTourForLine, NO_TOUR_MSG } from '../../lib/tourLines'
+import { quickToast } from '../../lib/quickToast'
+import NewEventModal, { ALL_STATUSES, statusLabel, EMPTY_NEW_EVENT_FORM } from '../../components/NewEventModal'
 
 const STATUS_STYLES = {
   confirmed:   { color: 'var(--color-success)', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -17,6 +21,8 @@ const STATUS_STYLES = {
   '3-hold':    { color: 'var(--color-danger)', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
   'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
 }
+
+const STATUS_OPTIONS = ALL_STATUSES.map(v => ({ value: v, label: statusLabel(v) }))
 
 const STATUS_PILL_LIGHT = {
   confirmed:   { color: 'var(--color-success)', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
@@ -29,13 +35,6 @@ const STATUS_PILL_LIGHT = {
 
 const PANEL_STATUSES_ROW1 = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative']
 const PANEL_STATUSES_ROW2 = ['date-hold']
-const ALL_STATUSES = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative', 'date-hold']
-
-const statusLabel = (s) => {
-  if (s === '3-hold') return '3+ Hold'
-  if (s === 'date-hold') return 'Date Hold'
-  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-')
-}
 
 function hexToRgba(hex, alpha) {
   const r = parseInt((hex || '#ffffff').slice(1, 3), 16) || 255
@@ -412,128 +411,6 @@ function InlineVenueSearch({ venues, setVenues, onSelect, onCancel }) {
   )
 }
 
-function NewEventModal({ target, form, setForm, weekNum, onClose, onCreate }) {
-  const venueInputRef = useRef(null)
-  const autocompleteRef = useRef(null)
-  const [mapsLoaded, setMapsLoaded] = useState(typeof window !== 'undefined' && !!window.google?.maps?.places)
-
-  useEffect(() => {
-    if (window.google?.maps?.places) return
-    const onLoad = () => setMapsLoaded(true)
-    const existing = document.querySelector('script[data-gmaps]')
-    if (existing) { existing.addEventListener('load', onLoad); return () => existing.removeEventListener('load', onLoad) }
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
-    script.async = true
-    script.dataset.gmaps = 'true'
-    script.onload = onLoad
-    document.head.appendChild(script)
-  }, [])
-
-  useEffect(() => {
-    if (!mapsLoaded || !venueInputRef.current || autocompleteRef.current) return
-    const ac = new window.google.maps.places.Autocomplete(venueInputRef.current, { types: ['establishment'] })
-    autocompleteRef.current = ac
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace()
-      if (!place) return
-      const getComponent = (type) => place.address_components?.find(c => c.types.includes(type))?.long_name || ''
-      setForm(p => ({
-        ...p,
-        venue_name: place.name || '',
-        place_id: place.place_id || '',
-        city: getComponent('locality') || getComponent('postal_town') || '',
-        state: getComponent('administrative_area_level_1') || '',
-        country: getComponent('country') || '',
-      }))
-    })
-    return () => { autocompleteRef.current = null }
-  }, [mapsLoaded, setForm])
-
-  const labelStyle = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', display: 'block', marginBottom: 6 }
-  const fieldStyle = { fontSize: 14, padding: '10px 14px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' }
-  const disabled = !form.venue_name || !form.city
-  const satLabel = new Date(target.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div id="new-event-modal" style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 24, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>Add Event — Wk {weekNum} · {satLabel}</div>
-
-        <div>
-          <label style={labelStyle}>Venue</label>
-          <input
-            ref={venueInputRef}
-            type="text"
-            autoFocus
-            placeholder="Search for a venue..."
-            defaultValue={form.venue_name}
-            onChange={e => setForm(p => ({ ...p, venue_name: e.target.value, place_id: '' }))}
-            style={fieldStyle}
-          />
-        </div>
-
-        <div>
-          <label style={labelStyle}>City</label>
-          <input
-            type="text"
-            value={form.city}
-            onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-            placeholder="City will auto-fill from venue"
-            style={{ ...fieldStyle, color: form.city ? 'var(--text-primary)' : 'var(--text-muted)' }}
-          />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Status</label>
-          <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} style={fieldStyle}>
-            {ALL_STATUSES.map(st => <option key={st} value={st}>{statusLabel(st)}</option>)}
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-          <button onClick={onClose} style={{ fontSize: 14, padding: '9px 18px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onCreate} disabled={disabled} style={{ fontSize: 14, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1 }}>Create Event</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function HolidayCell({ value, onSave }) {
-  const [editing, setEditing] = useState(false)
-  const [text, setText] = useState(value)
-
-  useEffect(() => { setText(value) }, [value])
-
-  const commit = () => { setEditing(false); if (text !== value) onSave(text) }
-
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        value={text}
-        onChange={e => setText(e.target.value)}
-        onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') commit()
-          else if (e.key === 'Escape') { setText(value); setEditing(false) }
-        }}
-        style={{ ...inputStyle, fontSize: 14, padding: '4px 6px', textAlign: 'center' }}
-      />
-    )
-  }
-
-  return (
-    <div onClick={() => setEditing(true)} style={{ cursor: 'pointer', minHeight: 16, fontSize: 14, fontWeight: value ? 600 : 400, color: 'var(--text-secondary)', whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', textAlign: 'center' }}>
-      {value || '—'}
-    </div>
-  )
-}
-
 function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hoveredPillYear, onPillDragOver, onPillDragLeave }) {
   const [hovered, setHovered] = useState(null)
   if (years.length === 0) return null
@@ -584,7 +461,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
   )
 }
 
-function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, onMoved }) {
+function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, onMoved }) {
   const router = useRouter()
   const [status, setStatus] = useState(event.status || 'tentative')
   const [loadInDate, setLoadInDate] = useState(event.load_in_date || '')
@@ -598,7 +475,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moveOpen, setMoveOpen] = useState(false)
-  const [moveTourId, setMoveTourId] = useState(event.tour_id)
+  const [moveLine, setMoveLine] = useState(tour?.sortOrder ?? null)
   const [moveSaturday, setMoveSaturday] = useState(row?.saturday || getEventSaturday(event) || '')
   const [moving, setMoving] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -713,17 +590,29 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
     const supabase = getSupabase()
     const saturday = nextSaturdayOnOrAfter(moveSaturday)
     const sunday = addDays(saturday, 1)
-    const { data, error } = await supabase.from('events').update({
-      tour_id: moveTourId, saturday_date: saturday, sunday_date: sunday, load_in_date: saturday,
-    }).eq('id', event.id).select().single()
+    // Same column keeps its tour (only the date moves); a different column switches tour_id.
+    const changingLine = Number(moveLine) !== tour?.sortOrder
+    const update = { saturday_date: saturday, sunday_date: sunday, load_in_date: saturday }
+    if (changingLine) {
+      let target = null
+      try { target = await getTourForLine(Number(moveLine)) } catch (err) { console.error(err) }
+      if (!target) {
+        quickToast(NO_TOUR_MSG + '. Event not moved.')
+        setMoving(false)
+        return
+      }
+      // TODO(cross-tour staff): the event is changing tours, so its staff_assignments
+      // (tour_position_id points at the OLD tour's positions) must be removed or re-mapped, behind
+      // the pending confirmation modal. Hook in here, before this update.
+      update.tour_id = target.id
+    }
+    const { data, error } = await supabase.from('events').update(update).eq('id', event.id).select().single()
     setMoving(false)
     if (!error && data) {
       onMoved(data)
       handleClose()
     }
   }
-
-  const sortedTours = [...tours].sort((a, b) => (b.year || 0) - (a.year || 0) || (a.name || '').localeCompare(b.name || ''))
 
   return createPortal(
     <div style={{
@@ -737,7 +626,7 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
           <div>
             <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{formatCityState(event)}</div>
             {event.country && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{event.country}</div>}
-            {event.venue_name && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginTop: 4 }}>{event.venue_name}</div>}
+            <div style={{ fontSize: 15, color: 'var(--text-muted)', marginTop: 4 }}>{event.venue_name || 'Venue TBD'}</div>
           </div>
           <button
             onClick={() => { if (!dirty) handleClose() }}
@@ -846,8 +735,8 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div>
                 <label style={labelStyle}>Move to Tour</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={moveTourId} onChange={e => setMoveTourId(e.target.value)}>
-                  {sortedTours.map(t => <option key={t.id} value={t.id}>{t.name} ({t.year})</option>)}
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={moveLine ?? ''} onChange={e => setMoveLine(e.target.value)}>
+                  {lines.map(l => <option key={l.sortOrder} value={l.sortOrder}>{l.name} (line {l.sortOrder})</option>)}
                 </select>
               </div>
               <div>
@@ -879,15 +768,26 @@ function EventSidePanel({ event, tour, tours, row, onClose, onSaved, onDeleted, 
   )
 }
 
-const WEEK_COL_W = 70
-const HOLIDAY_COL_W = 90
-const PLACEHOLDER_W = 180
+// Density: "comfortable" (original look) or "compact". Tour columns are equal flexible columns
+// (minmax(0, 1fr)); minCol only sets the width below which the tile scrolls sideways (phone fallback).
+const DENSITY_CFG = {
+  comfortable: { weekW: 104, minCol: 150, gap: 10, inset: 15, rowPad: '10px 4px', rowH: 58 },
+  compact:     { weekW: 84,  minCol: 100, gap: 6,  inset: 11, rowPad: '4px 4px',  rowH: 40 },
+}
+const COMPACT_BELOW = 1500 // compact when the schedule tile is narrower than this (px)
+const ABBREV_BELOW = 1000 // header tour names abbreviate only when the tile is this narrow (about half screen)
+const DENSITY_KEY = 'masterScheduleDensity'
 
-const ROW_H = 58
+// One-character status codes for compact circles (C, 1, 2, 3+, T, H); others fall back to the first letter
+const STATUS_CHARS = { confirmed: 'C', '1-hold': '1', '2-hold': '2', '3-hold': '3+', tentative: 'T', 'date-hold': 'H' }
 
-function WarningTriangle() {
+const COMPACT_NAME_PARTS = [[/hwmtl/gi, 'MTL'], [/hwss/gi, 'SS'], [/international/gi, 'INTL'], [/domestic/gi, 'DOM']]
+const compactLineName = (name) => COMPACT_NAME_PARTS.reduce((n, [re, to]) => n.replace(re, to), name || '').replace(/\s+/g, ' ').trim()
+
+
+function WarningTriangle({ size = 14 }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
       <path d="M12 3L22 20H2L12 3Z" fill="var(--color-warning)" />
       <rect x="11" y="9" width="2" height="6" fill="#0a1628" />
       <rect x="11" y="16" width="2" height="2" fill="#0a1628" />
@@ -899,50 +799,17 @@ function GridCell({
   row, tour, event, editMode,
   onStartCityText, onOpenPanel,
   onCityDrop, dragOverKey, cellKey, onDragEnterCell, onDragLeaveCell,
-  onDragStartEvent, onDragEndEvent, draggedEventId, onUpdateStatus,
+  onDragStartEvent, onDragEndEvent, draggedEventId, onUpdateStatus, compact = false,
 }) {
   const router = useRouter()
-  const [dropOpen, setDropOpen] = useState(false)
-  const [dropPos, setDropPos] = useState(null)
-  const pillRef = useRef(null)
-  const dropRef = useRef(null)
   const statusStyle = event?.status ? (STATUS_PILL_LIGHT[event.status] || STATUS_PILL_LIGHT.tentative) : null
   const isDragOver = dragOverKey === cellKey
   const showWarning = !!event && (!event.venue_name || !event.load_in_date)
 
-  useEffect(() => {
-    if (!dropOpen) return
-    const handleDown = (e) => {
-      if (pillRef.current?.contains(e.target)) return
-      if (dropRef.current?.contains(e.target)) return
-      setDropOpen(false)
-    }
-    const handleKey = (e) => { if (e.key === 'Escape') setDropOpen(false) }
-    document.addEventListener('mousedown', handleDown)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handleDown)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [dropOpen])
-
-  const handlePillClick = (e) => {
-    e.stopPropagation()
-    if (!event || !pillRef.current) return
-    const rect = pillRef.current.getBoundingClientRect()
-    setDropPos({ top: rect.bottom + 4, left: rect.left })
-    setDropOpen(v => !v)
-  }
-
-  const handleSelectStatus = async (newStatus) => {
-    setDropOpen(false)
-    await onUpdateStatus(event.id, newStatus)
-  }
-
   const handleTileClick = () => {
     if (event) {
       if (editMode) onOpenPanel(event, row, tour)
-      else router.push(`/tours/${tour.id}/events/${event.id}`)
+      else router.push(`/tours/${event.tour_id}/events/${event.id}`)
     } else if (editMode) {
       onStartCityText(row, tour)
     }
@@ -996,174 +863,180 @@ function GridCell({
       onClick={handleTileClick}
       {...dropHandlers}
       style={{
-        minHeight: ROW_H, position: 'relative', boxSizing: 'border-box',
+        minHeight: DENSITY_CFG[compact ? "compact" : "comfortable"].rowH, position: 'relative', boxSizing: 'border-box',
         cursor: event ? (editMode ? 'grab' : 'pointer') : (editMode ? 'pointer' : 'default'),
         zIndex: 1, overflow: 'visible',
         opacity: draggedEventId === event?.id ? 0.5 : 1,
         borderRadius: 8,
         ...dropHighlight,
       }}>
-      {event ? (
-        <div style={{ height: '100%', boxSizing: 'border-box', background: 'var(--surface-card)', border: `1.5px solid ${tour.color || 'var(--border-default)'}`, borderRadius: 8, padding: '6px 10px', margin: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden' }}>
-              {showWarning && <WarningTriangle />}
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {formatCityState(event)}
-              </span>
+      {event ? (() => {
+        const cityLine = formatCityState(event)
+        const cut = cityLine.lastIndexOf(', ')
+        const cityPart = compact && cut > 0 ? cityLine.slice(0, cut) : cityLine
+        const restPart = compact && cut > 0 ? cityLine.slice(cut) : ''
+        const tip = `${cityLine}${event.venue_name ? ' — ' + event.venue_name : ' — Venue TBD'}`
+        return (
+        <div title={compact ? tip : undefined} style={{ height: '100%', boxSizing: 'border-box', background: 'var(--surface-card)', border: `1.5px solid ${tour.color || 'var(--border-default)'}`, borderRadius: 8, padding: compact ? '3px 6px' : '6px 10px', margin: compact ? 1 : 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: compact ? 0 : 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: compact ? 4 : 6, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 3 : 5, overflow: 'hidden', minWidth: 0 }}>
+              {showWarning && <WarningTriangle size={compact ? 12 : 14} />}
+              {compact ? (
+                // State/country shrinks away first (flexShrink 100), then the city truncates
+                <span style={{ display: 'flex', minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flexShrink: 1 }}>{cityPart}</span>
+                  {restPart && <span style={{ overflow: 'hidden', flexShrink: 100, minWidth: 0 }}>{restPart}</span>}
+                </span>
+              ) : (
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {cityLine}
+                </span>
+              )}
             </div>
             {statusStyle && (
-              <div
-                ref={pillRef}
-                onClick={handlePillClick}
-                style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, color: statusStyle.color, background: statusStyle.background, border: `1px solid ${statusStyle.border}`, cursor: 'pointer', userSelect: 'none' }}>
-                {statusLabel(event.status)}
-              </div>
+              <QuickStatusPill
+                value={event.status}
+                options={STATUS_OPTIONS}
+                styles={STATUS_PILL_LIGHT}
+                optionStyles={STATUS_STYLES}
+                chars={compact ? STATUS_CHARS : undefined}
+                onSelect={(next) => onUpdateStatus(event.id, next)}
+              />
             )}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {event.venue_name || '—'}
+          <div style={{ fontSize: compact ? 11 : 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
           </div>
         </div>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', border: '1.5px dashed var(--border-strong)', borderRadius: 8, color: 'var(--text-muted)', fontSize: 16, fontWeight: 600 }}>
+        )
+      })() : (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', border: '1.5px dashed var(--border-strong)', borderRadius: 8, color: 'var(--text-muted)', fontSize: compact ? 12 : 16, fontWeight: 600, margin: compact ? 1 : 0 }}>
           +
         </div>
-      )}
-      {dropOpen && dropPos && createPortal(
-        <div ref={dropRef} style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', padding: 6, minWidth: 140, zIndex: 1000 }}>
-          {ALL_STATUSES.map(opt => {
-            const s = STATUS_STYLES[opt] || STATUS_STYLES.tentative
-            const isActiveOpt = event.status === opt
-            return (
-              <div key={opt} onClick={() => handleSelectStatus(opt)}
-                style={{ padding: '6px 10px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
-                  {statusLabel(opt)}
-                </span>
-                {isActiveOpt && <span style={{ color: s.color, fontSize: 14, fontWeight: 700, marginLeft: 8 }}>✓</span>}
-              </div>
-            )
-          })}
-        </div>,
-        document.body
       )}
     </div>
   )
 }
 
+// Black or white text, whichever contrasts more with the chip color (WCAG relative luminance)
+function textOnColor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec((hex || '').trim())
+  if (!m) return '#ffffff'
+  const [r, g, b] = [0, 2, 4].map(i => {
+    const c = parseInt(m[1].slice(i, i + 2), 16) / 255
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  })
+  const L = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return (L + 0.05) / 0.05 > 1.05 / (L + 0.05) ? '#000000' : '#ffffff'
+}
+
+function LineHeader({ lines, minWidth, year, cfg, compact, abbreviate }) {
+  const template = `${cfg.weekW}px repeat(${lines.length}, minmax(0, 1fr))`
+  return (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 20, minWidth,
+      padding: `${compact ? 5 : 8}px ${cfg.inset}px`, boxSizing: 'border-box',
+      background: 'color-mix(in srgb, var(--surface-card) 92%, transparent)',
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '0.5px solid var(--border-default)',
+    }}>
+      <div style={{ display: 'grid', gridTemplateColumns: template, columnGap: cfg.gap, alignItems: 'center' }}>
+        <div style={{ fontSize: compact ? 15 : 18, fontWeight: 700, color: 'var(--color-info)', lineHeight: 1 }}>{year}</div>
+        {lines.map(line => (
+          <div key={line.sortOrder} style={{ minWidth: 0, display: 'flex' }}>
+            <span title={line.name} style={{
+              width: '100%', boxSizing: 'border-box', textAlign: 'center',
+              fontSize: compact ? 11 : 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: compact ? '0.03em' : '0.06em',
+              color: textOnColor(line.color), background: line.color || 'var(--text-secondary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              padding: compact ? '4px 4px' : '5px 10px', borderRadius: 6,
+            }}>{abbreviate ? compactLineName(line.name) : line.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function YearGrid({
-  year, rows, yearTours, eventMap, currentWeekendSaturday,
-  onSaveHoliday,
-  activeCell, activeCellRef, editMode,
+  rows, lines, eventMap, currentWeekendSaturday,
+  editMode,
   onOpenPanel,
   onStartCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
-  draggedTour, onPlaceholderDrop, draggedEventId, onUpdateStatus,
+  draggedEventId, onUpdateStatus, cfg, compact,
 }) {
-  const [isLightMode] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return document.documentElement.getAttribute('data-theme') !== 'dark'
-  })
-  const showPlaceholder = !!draggedTour && !yearTours.some(t => t.id === draggedTour.id)
-
-  const minTotalWidth = WEEK_COL_W + HOLIDAY_COL_W + yearTours.length * 180 + (showPlaceholder ? PLACEHOLDER_W : 0)
-
+  const template = `${cfg.weekW}px repeat(${lines.length}, minmax(0, 1fr))`
   return (
-    <div style={{ borderRadius: 12, border: '1px solid var(--border-default)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '10px 10px 0', overflowX: 'auto' }}>
-      <div style={{ display: 'flex', gap: 10, padding: '0 4px', marginBottom: 6, flexShrink: 0, minWidth: minTotalWidth }}>
-        <div style={{ width: WEEK_COL_W, flexShrink: 0 }} />
-        <div style={{ width: HOLIDAY_COL_W, flexShrink: 0 }} />
-        {yearTours.map(tour => (
-          <div key={tour.id} style={{ flex: 1, minWidth: 180, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-            <span style={{
-              fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-              color: tour.color || 'var(--text-secondary)', textAlign: 'center',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              background: isLightMode ? 'rgba(0,0,0,0.04)' : 'transparent',
-              padding: isLightMode ? '3px 10px' : '0',
-              borderRadius: isLightMode ? 6 : 0,
-            }}>{tour.name}</span>
-          </div>
-        ))}
-        {showPlaceholder && (
-          <div style={{ flex: `0 0 ${PLACEHOLDER_W}px`, fontSize: 12, fontWeight: 700, color: 'var(--color-info)' }}>
-            + {draggedTour.name} ({year})
-          </div>
-        )}
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: minTotalWidth }}>
-          {rows.map((row, idx) => {
-            const isCurrentWeek = row.saturday === currentWeekendSaturday
-            const rowBg = isCurrentWeek ? 'rgba(26,86,219,0.08)' : (idx % 2 === 0 ? 'transparent' : 'var(--surface-card)')
-            const satLabel = new Date(row.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            return (
-              <div key={row.saturday} style={{ display: 'flex', alignItems: 'stretch', gap: 10, padding: '10px 4px', background: rowBg, borderRadius: 8 }}>
-                <div style={{ width: WEEK_COL_W, flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>Wk {row.weekNum}</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', lineHeight: 1.2, marginTop: 2 }}>{satLabel}</div>
-                </div>
-                <div style={{ width: HOLIDAY_COL_W, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                  <HolidayCell value={row.holiday} onSave={(text) => onSaveHoliday(row.saturday, text)} />
-                </div>
-                {yearTours.map(tour => {
-                  const event = eventMap[tour.id + '__' + row.saturday]
-                  const cellKey = row.saturday + '__' + tour.id
+    <div style={{ padding: `0 ${cfg.inset - 4}px` }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {rows.map((row, idx) => {
+          const isCurrentWeek = row.saturday === currentWeekendSaturday
+          const rowBg = isCurrentWeek ? 'rgba(26,86,219,0.08)' : (idx % 2 === 0 ? 'transparent' : 'var(--surface-card)')
+          const satLabel = new Date(row.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          return (
+            <div key={row.saturday} style={{ display: 'grid', gridTemplateColumns: template, columnGap: cfg.gap, alignItems: 'stretch', padding: cfg.rowPad, background: rowBg, borderRadius: 8 }}>
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                {compact ? (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Wk {row.weekNum}</span>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>{satLabel}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>Wk {row.weekNum}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', lineHeight: 1.2, marginTop: 2 }}>{satLabel}</div>
+                  </>
+                )}
+                {row.holiday && (() => {
+                  const note = row.holiday.split(' / ').join(' · ')
                   return (
-                    <div key={tour.id} style={{ flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column' }}>
-                      <GridCell
-                        row={row} tour={tour} event={event}
-                        editMode={editMode}
-                        onOpenPanel={onOpenPanel}
-                        onStartCityText={onStartCityText}
-                        onCityDrop={onCityDrop}
-                        dragOverKey={dragOverKey}
-                        cellKey={cellKey}
-                        onDragEnterCell={onDragEnterCell}
-                        onDragLeaveCell={onDragLeaveCell}
-                        onDragStartEvent={onDragStartEvent}
-                        onDragEndEvent={onDragEndEvent}
-                        draggedEventId={draggedEventId}
-                        onUpdateStatus={onUpdateStatus}
-                      />
+                    <div title={note} style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: compact ? 0 : 2, fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.2, minWidth: 0 }}>
+                      <IconFlag size={12} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>
                     </div>
                   )
-                })}
-                {showPlaceholder && (
-                  <div
-                    onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
-                    onDrop={e => {
-                      e.preventDefault()
-                      const idStr = e.dataTransfer.getData('text/plain')
-                      if (idStr) onPlaceholderDrop(idStr, row, year)
-                    }}
-                    style={{ flex: `0 0 ${PLACEHOLDER_W}px` }}
-                  >
-                    <div style={{ height: '100%', minHeight: ROW_H, border: '1px dashed rgba(26,86,219,0.3)', background: 'rgba(26,86,219,0.04)', borderRadius: 8 }} />
-                  </div>
-                )}
+                })()}
               </div>
-            )
-          })}
-        </div>
+              {lines.map(line => {
+                const event = eventMap[line.sortOrder + '__' + row.saturday]
+                const cellKey = row.saturday + '__' + line.sortOrder
+                return (
+                  <div key={line.sortOrder} style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                    <GridCell
+                      row={row} tour={line} event={event}
+                      editMode={editMode}
+                      onOpenPanel={onOpenPanel}
+                      onStartCityText={onStartCityText}
+                      onCityDrop={onCityDrop}
+                      dragOverKey={dragOverKey}
+                      cellKey={cellKey}
+                      onDragEnterCell={onDragEnterCell}
+                      onDragLeaveCell={onDragLeaveCell}
+                      onDragStartEvent={onDragStartEvent}
+                      onDragEndEvent={onDragEndEvent}
+                      draggedEventId={draggedEventId}
+                      onUpdateStatus={onUpdateStatus}
+                      compact={compact}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
 function YearSection({
-  year, yearData, allTours, currentWeekendSaturday, onSaveHoliday,
-  activeCell, activeCellRef, editMode,
+  year, first, sectionRef, yearData, lines, currentWeekendSaturday, editMode,
   onOpenPanel, onStartCityText,
   onCityDrop, dragOverKey, onDragEnterCell, onDragLeaveCell,
   onDragStartEvent, onDragEndEvent,
-  draggedTour, onPlaceholderDrop, draggedEventId, onUpdateStatus,
+  draggedEventId, onUpdateStatus, cfg, compact,
 }) {
   const { rows, eventMap } = yearData
   const rowsToRender = year === new Date().getFullYear()
@@ -1171,35 +1044,37 @@ function YearSection({
     : rows
 
   return (
-    <div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-info)', marginBottom: 10 }}>{year}</div>
+    <div
+      ref={sectionRef}
+      data-year={year}
+      style={first ? { paddingTop: 8 } : { borderTop: '1px solid var(--border-strong)', marginTop: 8, paddingTop: 12 }}
+    >
       <YearGrid
-        year={year}
         rows={rowsToRender}
-        yearTours={allTours}
+        lines={lines}
         eventMap={eventMap}
         currentWeekendSaturday={currentWeekendSaturday}
-        onSaveHoliday={onSaveHoliday}
-        activeCell={activeCell} activeCellRef={activeCellRef} editMode={editMode}
+        editMode={editMode}
         onOpenPanel={onOpenPanel}
         onStartCityText={onStartCityText}
         onCityDrop={onCityDrop} dragOverKey={dragOverKey} onDragEnterCell={onDragEnterCell} onDragLeaveCell={onDragLeaveCell}
         onDragStartEvent={onDragStartEvent} onDragEndEvent={onDragEndEvent}
-        draggedTour={draggedTour} onPlaceholderDrop={onPlaceholderDrop}
         draggedEventId={draggedEventId}
         onUpdateStatus={onUpdateStatus}
+        cfg={cfg}
+        compact={compact}
       />
     </div>
   )
 }
 
 const SCHEDULE_YEARS = [2026, 2027, 2028, 2029, 2030]
+const HEADER_H = 48 // approx sticky header height, for year tracking
 
 // ── DRAFT SCHEDULE TAB CONTENT ────────────────────────────────────────────────
 
-const EMPTY_NEW_EVENT_FORM = { venue_name: '', place_id: '', city: '', state: '', country: '', status: 'confirmed' }
 
-function DraftScheduleContent() {
+function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
   const [tours, setTours] = useState([])
   const [events, setEvents] = useState([])
   const [venues, setVenues] = useState([])
@@ -1209,11 +1084,24 @@ function DraftScheduleContent() {
   const [activeCell, setActiveCell] = useState(null)
   const [dragOverKey, setDragOverKey] = useState(null)
   const [draggedEvent, setDraggedEvent] = useState(null)
-  const [draggedTour, setDraggedTour] = useState(null)
 
-  const [editMode, setEditMode] = useState(false)
+  const scrollRef = useRef(null)
+  const sectionRefs = useRef({})
+  const [visibleYear, setVisibleYear] = useState(SCHEDULE_YEARS[0])
+  const [tileWidth, setTileWidth] = useState(0)
+
+  // Auto density follows the width of the schedule tile itself (not the window)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(entries => setTileWidth(entries[0].contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [loading]) // the tile only exists once loading finishes
   const [newEventModal, setNewEventModal] = useState(null)
   const [newEventForm, setNewEventForm] = useState({ ...EMPTY_NEW_EVENT_FORM })
+  const [newEventSaving, setNewEventSaving] = useState(false)
+  const [newEventError, setNewEventError] = useState('')
 
   const linkedEventsRef = useRef(false)
   const activeCellElRef = useRef(null)
@@ -1244,6 +1132,19 @@ function DraftScheduleContent() {
 
   const currentWeekendSaturday = getCurrentWeekendSaturday()
 
+  // Year shown in the sticky header = year of the section at the top of the scroll area
+  const updateVisibleYear = () => {
+    const box = scrollRef.current
+    if (!box) return
+    const top = box.getBoundingClientRect().top + HEADER_H
+    let current = SCHEDULE_YEARS[0]
+    for (const y of SCHEDULE_YEARS) {
+      const el = sectionRefs.current[y]
+      if (el && el.getBoundingClientRect().top <= top) current = y
+    }
+    setVisibleYear(current)
+  }
+
   useEffect(() => {
     try {
       const merged = {}
@@ -1259,20 +1160,6 @@ function DraftScheduleContent() {
     }
   }, [])
 
-  const saveHolidayOverride = (saturday, text) => {
-    const y = saturday.slice(0, 4)
-    setHolidayOverrides(prev => {
-      const next = { ...prev, [saturday]: text }
-      try {
-        const raw = localStorage.getItem('booking_holidays_' + y)
-        const yearObj = raw ? JSON.parse(raw) : {}
-        yearObj[saturday] = text
-        localStorage.setItem('booking_holidays_' + y, JSON.stringify(yearObj))
-      } catch {}
-      return next
-    })
-  }
-
   const buildYearData = (year) => {
     const saturdays = getSaturdaysOfYear(year)
     const satSet = new Set(saturdays)
@@ -1284,10 +1171,14 @@ function DraftScheduleContent() {
       holiday: holidayOverrides[sat] !== undefined ? holidayOverrides[sat] : (autoHolidays[sat] || ''),
     }))
 
+    // Columns are tour LINES (tours.sort_order); each line has one persistent tour and events sit by date.
+    const lineOfTour = {}
+    tours.forEach(t => { lineOfTour[t.id] = t.sort_order })
     const eventMap = {}
     events.forEach(ev => {
       const sat = getEventSaturday(ev)
-      if (sat && satSet.has(sat)) eventMap[ev.tour_id + '__' + sat] = ev
+      const line = lineOfTour[ev.tour_id]
+      if (line != null && sat && satSet.has(sat)) eventMap[line + '__' + sat] = ev
     })
 
     return { rows, eventMap }
@@ -1304,40 +1195,27 @@ function DraftScheduleContent() {
     return () => document.removeEventListener('mousedown', handleMouseDown)
   }, [activeCell])
 
-  const handleStartSearch = (row, tour) => {
-    setActiveCell({ type: 'search', saturday: row.saturday, sunday: row.sunday, tourId: tour.id })
-  }
-
-  const handleCancelSearch = () => setActiveCell(null)
-
-  const handleSelectVenue = async (venue, row, tour) => {
-    const supabase = getSupabase()
-    const { data, error } = await supabase.from('events').insert([{
-      tour_id: tour.id,
-      city: venue.city || '',
-      state: venue.state || '',
-      country: venue.country || null,
-      venue_name: venue.name,
-      venue_id: venue.id,
-      status: 'tentative',
-      saturday_date: row.saturday,
-      sunday_date: row.sunday,
-      load_in_date: row.saturday,
-    }]).select().single()
-    if (!error && data) setEvents(prev => [...prev, data])
-    setActiveCell(null)
-  }
-
   const handleStartCityText = (row, tour) => {
     setNewEventForm({ ...EMPTY_NEW_EVENT_FORM })
-    setNewEventModal({ tourId: tour.id, saturday: row.saturday, sunday: row.sunday, weekNum: row.weekNum, year: Number(row.saturday.slice(0, 4)) })
+    setNewEventError('')
+    setNewEventModal({ sortOrder: tour.sortOrder, saturday: row.saturday, sunday: row.sunday, weekNum: row.weekNum, year: Number(row.saturday.slice(0, 4)) })
   }
 
   const handleCreateNewEvent = async () => {
+    setNewEventSaving(true)
+    setNewEventError('')
     const supabase = getSupabase()
+    let eventTour = null
+    try { eventTour = await getTourForLine(newEventModal.sortOrder) } catch (err) { console.error(err) }
+    if (!eventTour) {
+      setNewEventSaving(false)
+      setNewEventError(NO_TOUR_MSG)
+      return
+    }
     const { data, error } = await supabase.from('events').insert([{
-      tour_id: newEventModal.tourId,
-      venue_name: newEventForm.venue_name,
+      tour_id: eventTour.id,
+      venue_name: newEventForm.no_venue ? null : newEventForm.venue_name,
+      venue_id: newEventForm.no_venue ? null : (newEventForm.venue_id || null),
       city: newEventForm.city,
       state: newEventForm.state,
       country: newEventForm.country || null,
@@ -1346,7 +1224,8 @@ function DraftScheduleContent() {
       sunday_date: newEventModal.sunday,
       load_in_date: newEventModal.saturday,
     }]).select().single()
-    if (error) { console.error('Failed to create event:', error); return }
+    setNewEventSaving(false)
+    if (error) { console.error('Failed to create event:', error); setNewEventError(error.message); return }
     setEvents(prev => [...prev, data])
     setNewEventModal(null)
   }
@@ -1375,14 +1254,12 @@ function DraftScheduleContent() {
   const handleDragEnterCell = (key) => setDragOverKey(key)
   const handleDragLeaveCell = (key) => setDragOverKey(prev => (prev === key ? null : prev))
 
-  const handleDragStartEvent = (event, tour) => {
+  const handleDragStartEvent = (event) => {
     setDraggedEvent(event)
-    setDraggedTour(tour)
   }
 
   const resetDragState = () => {
     setDraggedEvent(null)
-    setDraggedTour(null)
     setDragOverKey(null)
   }
 
@@ -1391,85 +1268,88 @@ function DraftScheduleContent() {
     return () => document.removeEventListener('dragend', resetDragState)
   }, [])
 
-  const handleCityDrop = async (eventIdStr, row, tour) => {
+  const handleCityDrop = async (eventIdStr, row, line) => {
     const dragged = events.find(e => String(e.id) === eventIdStr)
     if (!dragged) return
     const currentSat = getEventSaturday(dragged)
-    if (dragged.tour_id === tour.id && currentSat === row.saturday) return
+    const draggedLine = tours.find(t => t.id === dragged.tour_id)?.sort_order
+    if (draggedLine === line.sortOrder && currentSat === row.saturday) return
+    // Dragging within a column (other week/year) keeps tour_id; only a different column switches it.
+    const update = { saturday_date: row.saturday, sunday_date: row.sunday, load_in_date: row.saturday }
+    if (draggedLine !== line.sortOrder) {
+      let target = null
+      try { target = await getTourForLine(line.sortOrder) } catch (err) { console.error(err) }
+      if (!target) { quickToast(NO_TOUR_MSG + '. Event not moved.'); return }
+      // TODO(cross-tour staff): the event is changing tours, so its staff_assignments
+      // (tour_position_id points at the OLD tour's positions) must be removed or re-mapped, behind
+      // the pending confirmation modal. Hook in here, before this update.
+      update.tour_id = target.id
+    }
     const supabase = getSupabase()
-    const { data, error } = await supabase.from('events').update({
-      saturday_date: row.saturday,
-      sunday_date: row.sunday,
-      load_in_date: row.saturday,
-      tour_id: tour.id,
-    }).eq('id', dragged.id).select().single()
+    const { data, error } = await supabase.from('events').update(update).eq('id', dragged.id).select().single()
     if (!error && data) setEvents(prev => prev.map(e => e.id === data.id ? data : e))
-  }
-
-  const handlePlaceholderDrop = async (eventIdStr, row, year) => {
-    const dragged = events.find(e => String(e.id) === eventIdStr)
-    if (!dragged) return
-    const supabase = getSupabase()
-    const { data: fullTour } = await supabase.from('tours').select('*').eq('id', dragged.tour_id).single()
-    if (!fullTour) return
-    const { id: _id, created_at: _createdAt, ...rest } = fullTour
-    const { data: newTour, error: tourError } = await supabase.from('tours').insert([{ ...rest, year, status: 'upcoming' }]).select('id, name, color, status, tour_type, year, created_at').single()
-    if (tourError || !newTour) return
-    setTours(prev => [...prev, newTour])
-    const { data: updatedEvent, error } = await supabase.from('events').update({
-      tour_id: newTour.id, saturday_date: row.saturday, sunday_date: row.sunday, load_in_date: row.saturday,
-    }).eq('id', dragged.id).select().single()
-    if (!error && updatedEvent) setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
   }
 
   const handleUpdateStatus = async (eventId, newStatus) => {
     const supabase = getSupabase()
     const { error } = await supabase.from('events').update({ status: newStatus }).eq('id', eventId)
-    if (!error) setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: newStatus } : e))
+    if (error) return { error }
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: newStatus } : e))
   }
 
   if (loading) return (
-    <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Loading booking grid...</div>
+    <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Loading master schedule...</div>
   )
 
-  const allTours = [...tours].sort(tourSort)
+  // One column per tour line (sort_order); each line has a single persistent tour
+  const lineTours = {}
+  tours.forEach(t => {
+    if (t.sort_order == null || t.deleted_at) return
+    if (!lineTours[t.sort_order]) lineTours[t.sort_order] = t
+  })
+  const lines = Object.values(lineTours).sort(tourSort).map(t => ({
+    sortOrder: t.sort_order,
+    name: t.name,
+    color: t.color,
+  }))
+  const density = densityPref === 'auto' ? (tileWidth > 0 && tileWidth < COMPACT_BELOW ? 'compact' : 'comfortable') : densityPref
+  const compact = density === 'compact'
+  const cfg = DENSITY_CFG[density]
+  // Only a last resort: below this width the tile scrolls sideways (phones)
+  const gridMinWidth = cfg.weekW + lines.length * (cfg.minCol + cfg.gap) + 8 + cfg.inset * 2
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{ flexShrink: 0, paddingBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 10 }}>
-          <button
-            onClick={() => setEditMode(v => !v)}
-            style={{
-              fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
-              border: editMode ? 'none' : '0.5px solid var(--border-default)',
-              background: editMode ? '#FFD60A' : 'transparent',
-              color: editMode ? '#0a1628' : 'var(--text-secondary)',
-            }}
-          >{editMode ? 'Save & Exit Edit' : 'Enter Edit Mode'}</button>
-        </div>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Single scroll container for both axes so the sticky line header scrolls sideways with the columns */}
+      <div
+        ref={scrollRef}
+        onScroll={updateVisibleYear}
+        style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid var(--border-default)', borderRadius: 12 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: gridMinWidth }}>
+          <LineHeader lines={lines} minWidth={gridMinWidth} year={visibleYear} cfg={cfg} compact={compact} abbreviate={tileWidth > 0 && tileWidth < ABBREV_BELOW} />
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 12 }}>
           {SCHEDULE_YEARS.map(year => (
             <YearSection
               key={year}
               year={year}
+              first={year === SCHEDULE_YEARS[0]}
+              sectionRef={el => { sectionRefs.current[year] = el }}
               yearData={buildYearData(year)}
-              allTours={allTours}
+              lines={lines}
               currentWeekendSaturday={currentWeekendSaturday}
-              onSaveHoliday={saveHolidayOverride}
-              activeCell={activeCell} activeCellRef={activeCellElRef} editMode={editMode}
+              editMode={editMode}
               onOpenPanel={handleOpenPanel}
               onStartCityText={handleStartCityText}
               onCityDrop={handleCityDrop} dragOverKey={dragOverKey} onDragEnterCell={handleDragEnterCell} onDragLeaveCell={handleDragLeaveCell}
               onDragStartEvent={handleDragStartEvent} onDragEndEvent={resetDragState}
-              draggedTour={draggedTour} onPlaceholderDrop={handlePlaceholderDrop}
               draggedEventId={draggedEvent?.id}
               onUpdateStatus={handleUpdateStatus}
+              cfg={cfg}
+              compact={compact}
             />
           ))}
+          </div>
         </div>
       </div>
 
@@ -1478,7 +1358,7 @@ function DraftScheduleContent() {
           key={activeCell.event.id}
           event={activeCell.event}
           tour={activeCell.tour}
-          tours={tours}
+          lines={lines}
           row={activeCell.row}
           onClose={handleClosePanel}
           onSaved={handlePanelSaved}
@@ -1489,12 +1369,13 @@ function DraftScheduleContent() {
 
       {newEventModal && (
         <NewEventModal
-          target={newEventModal}
+          title={`Add Event — Wk ${newEventModal.weekNum} · ${new Date(newEventModal.saturday + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
           form={newEventForm}
           setForm={setNewEventForm}
-          weekNum={newEventModal.weekNum}
+          submitting={newEventSaving}
+          error={newEventError}
           onClose={() => setNewEventModal(null)}
-          onCreate={handleCreateNewEvent}
+          onSubmit={handleCreateNewEvent}
         />
       )}
     </div>
@@ -1553,7 +1434,7 @@ function ConfirmedRow({ ev, editingBookerId, setEditingBooker, saveBooker, onRow
       <td style={{ ...cell, color: 'var(--text-primary)', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={onRowClick}>{fmtLoadIn(ev.load_in_date)}</td>
       <td style={{ ...cell, color: 'var(--text-primary)', fontWeight: 500 }} onClick={onRowClick}>{ev.city || '—'}</td>
       <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.country || '—'}</td>
-      <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.venue_name || '—'}</td>
+      <td style={{ ...cell, color: 'var(--text-secondary)' }} onClick={onRowClick}>{ev.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}</td>
       <td style={{ ...cell, fontWeight: 600, color: ev.tours?.color || 'var(--text-secondary)' }} onClick={onRowClick}>{ev.tours?.name || '—'}</td>
       <td style={{ ...cell }} onClick={onRowClick}>
         <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
@@ -1790,15 +1671,28 @@ function BCContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'schedule'
+  const [editMode, setEditMode] = useState(false)
+  const [densityPref, setDensityPref] = useState(() => {
+    try { const v = localStorage.getItem(DENSITY_KEY); return v === 'comfortable' || v === 'compact' ? v : 'auto' } catch { return 'auto' }
+  })
+  const cycleDensity = () => {
+    const next = densityPref === 'auto' ? 'comfortable' : densityPref === 'comfortable' ? 'compact' : 'auto'
+    setDensityPref(next)
+    try { localStorage.setItem(DENSITY_KEY, next) } catch {}
+  }
+  const densityLabel = { auto: 'Auto', comfortable: 'Comfortable', compact: 'Compact' }[densityPref]
+  const DensityIcon = densityPref === 'compact' ? IconLayoutList : densityPref === 'comfortable' ? IconLayoutGrid : IconAdjustmentsHorizontal
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Master Schedule</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: '100%', overflow: 'hidden' }}>
+      <div style={{ padding: '0 4px', flexShrink: 0 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>Master Schedule</div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 0', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 12, flexShrink: 0, overflowX: 'auto' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* One row: tabs on the left, edit button on the right */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 3, width: 'fit-content', flexShrink: 0, overflowX: 'auto' }}>
           {TABS.map(tab => {
             const active = activeTab === tab.slug
             return (
@@ -1810,7 +1704,7 @@ function BCContent() {
                   color: active ? 'var(--color-info)' : 'var(--text-secondary)',
                   fontWeight: active ? 600 : 400,
                   fontSize: 16,
-                  padding: '7px 14px',
+                  padding: '5px 14px',
                   borderRadius: 6,
                   border: 'none',
                   cursor: 'pointer',
@@ -1823,10 +1717,32 @@ function BCContent() {
             )
           })}
         </div>
+          {activeTab === 'schedule' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={cycleDensity}
+              title={`Density: ${densityLabel} (click to change)`}
+              aria-label={`Density: ${densityLabel}. Click to change.`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', fontFamily: 'inherit' }}
+            >
+              <DensityIcon size={16} /> {densityLabel}
+            </button>
+            <button
+              onClick={() => setEditMode(v => !v)}
+              style={{
+                fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                border: editMode ? 'none' : '0.5px solid var(--border-default)',
+                background: editMode ? '#FFD60A' : 'transparent',
+                color: editMode ? '#0a1628' : 'var(--text-secondary)',
+              }}
+            >{editMode ? 'Save & Exit Edit' : 'Enter Edit Mode'}</button>
+          </div>
+          )}
+        </div>
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {activeTab === 'schedule' ? (
-            <DraftScheduleContent />
+            <DraftScheduleContent editMode={editMode} densityPref={densityPref} />
           ) : activeTab === 'bullpen' ? (
             <div style={{
               display: 'flex',

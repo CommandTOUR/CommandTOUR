@@ -34,7 +34,7 @@ const NAV = [
     section: 'Logistics',
     items: [
       { label: 'Venues', href: '/venues', Icon: IconBuilding },
-      { label: 'Booking', href: '/bc', Icon: IconFileInvoice },
+      { label: 'Master Schedule', href: '/bc', Icon: IconFileInvoice },
     ]
   },
   {
@@ -139,12 +139,12 @@ export default function SideNav() {
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '16px 14px 12px' }}>
-        <Link href="/" style={{ textDecoration: 'none' }}>
+      <div style={{ padding: '16px 14px 14px', flexShrink: 0, borderBottom: '0.5px solid var(--border-default)', marginBottom: 8 }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'block', lineHeight: 0 }}>
           <img
             src={'/command-tour-navigation-logo.png'}
             alt="CommandTOUR"
-            style={{ width: '100%', maxWidth: 200, height: 'auto', display: 'block' }}
+            style={{ width: '100%', maxWidth: 172, height: 'auto', aspectRatio: '1631 / 600', objectFit: 'contain', display: 'block', margin: '0 auto', flexShrink: 0 }}
           />
         </Link>
       </div>

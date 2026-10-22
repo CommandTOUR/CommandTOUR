@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { label: 'Venues', tab: 'venues', icon: IconBuildingStadium },
   { label: 'Tours', tab: 'tours', icon: IconRoute },
   { label: 'Per Diem', tab: 'perdiem', icon: IconCoin },
-  { label: 'Booking & Contracts', tab: 'booking', icon: IconFileText },
+  { label: 'Master Schedule', tab: 'booking', icon: IconFileText },
   { label: 'Notifications', tab: 'notifications', icon: IconBell },
   { label: 'User Management', tab: 'users', icon: IconUsersGroup },
   { label: 'Integrations', tab: 'integrations', icon: IconPlug },
@@ -773,7 +773,7 @@ export default function SettingsPage() {
 
           {activeSection === 'booking' && (
             <SectionCard title="Defaults">
-              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Booking &amp; Contracts settings coming soon.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Master Schedule settings coming soon.</div>
             </SectionCard>
           )}
 

@@ -6,11 +6,13 @@ import { getSupabase } from '../lib/supabase'
 import { getEventCompletionDate } from '../lib/eventDates'
 import { formatLocation } from '@/lib/locationFormat'
 import { IconRoute } from '@tabler/icons-react'
+import NewTourModal from './NewTourModal'
 
 export default function TourTiles() {
   const [tours, setTours] = useState([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const [newTourOpen, setNewTourOpen] = useState(false)
 
   useEffect(() => { fetchTours() }, [])
 
@@ -18,9 +20,9 @@ export default function TourTiles() {
     const supabase = getSupabase()
     const { data: toursData, error } = await supabase
       .from('tours')
-      .select('id, name, region, year, color, status, director_name, logo_url')
+      .select('id, name, region, color, status, logo_url, sort_order')
       .eq('status', 'active')
-      .order('year', { ascending: true })
+      .order('sort_order', { ascending: true, nullsFirst: false })
 
     if (error || !toursData) { setLoading(false); return }
 
@@ -70,8 +72,9 @@ export default function TourTiles() {
     <div>
       <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>Active Tours</div>
       <div className="glass-card" style={{ padding: '20px 22px', color: 'var(--text-muted)', fontSize: 16 }}>
-        No active tours. <span style={{ color: 'var(--color-mint)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => router.push('/tours/new')}>Create one</span>
+        No active tours. <span style={{ color: 'var(--color-mint)', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setNewTourOpen(true)}>Create one</span>
       </div>
+      {newTourOpen && <NewTourModal onClose={() => setNewTourOpen(false)} />}
     </div>
   )
 
@@ -79,7 +82,6 @@ export default function TourTiles() {
     const pct = tour.total > 0 ? Math.round((tour.completed / tour.total) * 100) : 0
     const remaining = tour.total - tour.completed
     const tileColor = tour.color || '#33FF99'
-    const hasDirector = tour.director_name && tour.director_name.trim() && tour.director_name.trim() !== 'N/A'
 
     return (
       <div
@@ -106,10 +108,7 @@ export default function TourTiles() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</div>
-            <div className="tile-sub1" style={{ fontSize: 15, marginTop: 3 }}>
-              {tour.year}{hasDirector ? ` · ${tour.director_name}` : ''}
-            </div>
-            <div className="tile-sub2" style={{ fontSize: 14, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="tile-sub2" style={{ fontSize: 14, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {tour.region}
             </div>
           </div>

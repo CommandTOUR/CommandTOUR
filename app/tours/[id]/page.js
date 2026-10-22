@@ -8,6 +8,8 @@ import StaffingGrid from '../../../components/StaffingGrid'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 import { useNav } from '../../../context/NavContext'
 import { buildNavEntry } from '../../../lib/navigate'
+import QuickStatusPill from '../../../components/QuickStatusPill'
+import NewEventModal from '../../../components/NewEventModal'
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
@@ -22,6 +24,7 @@ import {
   IconFolder,
   IconList,
   IconRoute,
+  IconUserStar,
 } from '@tabler/icons-react'
 
 // Determine the date that decides whether an event is "past": latest show date,
@@ -143,68 +146,39 @@ function AlertIcon({ alerts }) {
   )
 }
 
+const staffName = (st) => st?.display_name?.trim() || `${st?.first_name || ''} ${st?.last_name || ''}`.trim()
+
+// Who is serving as Tour Director on an event (resolved like the staffing grid)
+function TDLine({ names }) {
+  const has = !!(names && names.length)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 14, fontWeight: 450, color: has ? 'var(--text-secondary)' : 'var(--text-muted)', minWidth: 0 }}>
+      <IconUserStar size={14} style={{ flexShrink: 0 }} />
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{has ? `TD: ${names.join(' / ')}` : 'TD: unassigned'}</span>
+    </div>
+  )
+}
+
+const STATUS_PILL_OPTIONS = STATUS_OPTIONS.map(v => ({ value: v, label: fmtStatus(v) }))
+
 function StatusDropdown({ eventId, currentStatus, onUpdate }) {
-  const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const ref = useRef(null)
-  const s = STATUS_STYLES[currentStatus] || STATUS_STYLES.tentative
-
-  useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
   const handleSelect = async (status) => {
-    setSaving(true)
-    const supabase = getSupabase()
-    await supabase.from('events').update({ status }).eq('id', eventId)
+    const { error } = await getSupabase().from('events').update({ status }).eq('id', eventId)
+    if (error) return { error }
     onUpdate(eventId, status)
-    setOpen(false)
-    setSaving(false)
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', justifyContent: 'center' }}
-      onClick={e => e.stopPropagation()}
-    >
-      <div
-        onClick={() => setOpen(!open)}
-        style={{
-          fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 6,
-          color: s.color, background: s.background, border: `1px solid ${s.border}`,
-          whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
-          opacity: saving ? 0.5 : 1,
-        }}
-      >
-        {currentStatus ? fmtStatus(currentStatus) : 'Tentative'} ▾
-      </div>
-      {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-          marginTop: 6, background: 'var(--surface-card)', backdropFilter: 'blur(14px) saturate(1.3)', WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 8, zIndex: 100, overflow: 'hidden',
-          boxShadow: 'var(--glass-tile-shadow)', minWidth: 140,
-        }}>
-          {STATUS_OPTIONS.map(opt => {
-            const os = STATUS_STYLES[opt] || STATUS_STYLES.tentative
-            return (
-              <div key={opt} onClick={() => handleSelect(opt)}
-                style={{
-                  padding: '9px 14px', cursor: 'pointer', fontSize: 15, color: os.color,
-                  background: currentStatus === opt ? 'var(--surface-raised)' : 'transparent',
-                  transition: 'background 0.1s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
-                onMouseLeave={e => e.currentTarget.style.background = currentStatus === opt ? 'var(--surface-raised)' : 'transparent'}
-              >
-                {fmtStatus(opt)}
-              </div>
-            )
-          })}
-        </div>
-      )}
+    <div style={{ display: 'inline-flex', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
+      <QuickStatusPill
+        value={currentStatus}
+        fallbackValue="tentative"
+        options={STATUS_PILL_OPTIONS}
+        styles={STATUS_STYLES}
+        onSelect={handleSelect}
+        caret
+        triggerStyle={{ fontSize: 13, padding: '3px 10px', borderRadius: 6 }}
+      />
     </div>
   )
 }
@@ -265,7 +239,9 @@ export default function TourPage() {
   const searchParams = useSearchParams()
   const { setNav, clearNav, pushNav } = useNav()
   const [tour, setTour] = useState(null)
-  const [events, setEvents] = useState([])
+  const [allEvents, setEvents] = useState([])
+  const [selectedYear, setSelectedYear] = useState(null)
+  const [tdByEvent, setTdByEvent] = useState({})
   const [eventShows, setEventShows] = useState({})
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
@@ -274,8 +250,22 @@ export default function TourPage() {
   const [calView, setCalView] = useState('month')
   const [calDate, setCalDate] = useState(new Date())
   const [unconfirmedStaffCount, setUnconfirmedStaffCount] = useState(0)
-  const [thisWeekEvents, setThisWeekEvents] = useState([])
+  const [allThisWeekEvents, setThisWeekEvents] = useState([])
   const [eventTravelMap, setEventTravelMap] = useState({})
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [eventModalOpen, setEventModalOpen] = useState(false)
+  const [eventForm, setEventForm] = useState(null)
+  const [eventSaving, setEventSaving] = useState(false)
+  const [eventError, setEventError] = useState('')
+  const [countryOptions, setCountryOptions] = useState([])
+
+  // Year scoping: years come from event dates. Default = current year if it has events, else All.
+  const eventYears = [...new Set(allEvents.map(e => (e.load_in_date || '').slice(0, 4)).filter(Boolean))].sort((a, b) => b - a)
+  const currentYearStr = String(new Date().getFullYear())
+  const yearSel = selectedYear ?? (eventYears.includes(currentYearStr) ? currentYearStr : 'all')
+  const inYear = (e) => yearSel === 'all' || (e.load_in_date || '').startsWith(yearSel)
+  const events = allEvents.filter(inYear)
+  const thisWeekEvents = allThisWeekEvents.filter(inYear)
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -329,6 +319,32 @@ export default function TourPage() {
         setEvents(eventsRes.data)
         setThisWeekEvents((eventsRes.data || []).filter(e => e.load_in_date >= weekStart && e.load_in_date <= weekEnd))
 
+        // Tour Director per event: same resolution as the staffing grid (event-specific row, else the
+        // tour-wide default row for slots within quantity_needed). Two queries for the whole list.
+        const { data: tdTps } = await supabase.from('tour_positions')
+          .select('id, quantity_needed, positions!inner(title)')
+          .eq('tour_id', id).eq('positions.title', 'Tour Director')
+        const tdMap = {}
+        if (tdTps?.length) {
+          const tdTp = tdTps[0]
+          const { data: tdRows } = await supabase.from('staff_assignments')
+            .select('slot_index, event_id, staff_id, staff:staff(id, first_name, last_name, display_name)')
+            .eq('tour_position_id', tdTp.id)
+          const byKey = {}
+          const slots = new Set()
+          for (let i = 1; i <= tdTp.quantity_needed; i++) slots.add(i)
+          ;(tdRows || []).forEach(a => { slots.add(a.slot_index); byKey[a.slot_index + '__' + (a.event_id || 'default')] = a })
+          for (const ev of (eventsRes.data || [])) {
+            const names = []
+            for (const slot of [...slots].sort((a, b) => a - b)) {
+              const a = byKey[slot + '__' + ev.id] || (slot <= tdTp.quantity_needed ? byKey[slot + '__default'] : null)
+              if (a?.staff_id && a.staff) names.push(staffName(a.staff))
+            }
+            tdMap[ev.id] = names
+          }
+        }
+        setTdByEvent(tdMap)
+
         const showMap = {}
         await Promise.all(eventsRes.data.map(async (ev) => {
           const { data } = await supabase
@@ -378,7 +394,48 @@ export default function TourPage() {
       setLoading(false)
     }
     fetchData()
-  }, [id])
+  }, [id, refreshKey])
+
+  const openEventModal = async () => {
+    setEventForm({
+      venue_name: '', place_id: '', no_venue: false, city: '', state: '', country: '', status: 'tentative',
+      event_type: tour?.tour_type || '', load_in_date: '', load_out_date: '', extended_load_out: false,
+      notes: '', shows: [{ show_date: '', show_time: '' }],
+    })
+    setEventError('')
+    setEventModalOpen(true)
+    const { data } = await getSupabase().from('events').select('country').not('country', 'is', null)
+    if (data) setCountryOptions([...new Set(data.map(r => r.country).filter(Boolean))].sort())
+  }
+
+  const handleCreateEvent = async () => {
+    const f = eventForm
+    if (!f.city.trim()) { setEventError('City is required'); return }
+    if (!f.load_in_date) { setEventError('Load-in date is required'); return }
+    setEventSaving(true)
+    setEventError('')
+    const supabase = getSupabase()
+
+    const payload = {
+      city: f.city, country: f.country, venue_name: f.no_venue ? null : f.venue_name, venue_id: f.no_venue ? null : (f.venue_id || null), state: f.state,
+      event_type: f.event_type || null, status: f.status, load_in_date: f.load_in_date, notes: f.notes, tour_id: id,
+    }
+    if (f.extended_load_out && f.load_out_date) payload.load_out_date = f.load_out_date
+    const { data, error } = await supabase.from('events').insert([payload]).select().single()
+    if (error) { setEventError(error.message); setEventSaving(false); return }
+
+    const showRows = f.shows
+      .filter(s => s.show_date)
+      .map(s => ({ event_id: data.id, show_date: s.show_date, show_time: s.show_time || null, completed: false }))
+    if (showRows.length > 0) {
+      const { error: showError } = await supabase.from('show_list').insert(showRows)
+      if (showError) { setEventError(showError.message); setEventSaving(false); setRefreshKey(k => k + 1); return }
+    }
+
+    setEventSaving(false)
+    setEventModalOpen(false)
+    setRefreshKey(k => k + 1)
+  }
 
   const handleStatusUpdate = (eventId, newStatus) => {
     setEvents(prev => prev.map(e => e.id === eventId ? { ...e, status: newStatus } : e))
@@ -465,13 +522,22 @@ export default function TourPage() {
               </span>
             </div>
             <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)' }}>
-              {[tour.region, tour.director_name, tour.year].filter(Boolean).join(' · ')}
+              {tour.region}
             </div>
           </div>
         </div>
 
         {/* Right: stats + actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <select
+            aria-label="Year"
+            value={yearSel}
+            onChange={e => setSelectedYear(e.target.value)}
+            style={{ fontSize: 15, fontWeight: 600, padding: '6px 12px', borderRadius: 6, border: '0.5px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <option value="all">All Years</option>
+            {eventYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
               <span>
@@ -523,7 +589,7 @@ export default function TourPage() {
               Edit Tour
             </button>
             <button
-              onClick={() => router.push(`/tours/${id}/events/new`)}
+              onClick={openEventModal}
               style={{ fontSize: 15, fontWeight: 700, padding: '6px 14px', borderRadius: 6, border: 'none', background: 'var(--color-info)', color: 'var(--btn-primary-text)', cursor: 'pointer' }}
             >
               + Add Event
@@ -594,8 +660,9 @@ export default function TourPage() {
                             {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                           </div>
                           <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {ev.venue_name || 'TBC'}
+                            {ev.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
                           </div>
+                          <TDLine names={tdByEvent[ev.id]} />
                           <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 2 }}>
                             {dateRange(ev)}
                           </div>
@@ -652,8 +719,9 @@ export default function TourPage() {
                             {formatLocation(ev.city, ev.state, ev.country, 'compact')}
                           </div>
                           <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {ev.venue_name || 'TBC'}
+                            {ev.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
                           </div>
+                          <TDLine names={tdByEvent[ev.id]} />
                         </div>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 3, textAlign: 'center' }}>Load-In</div>
@@ -827,7 +895,7 @@ export default function TourPage() {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 14 }}>
                 <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>No events yet</div>
                 <div style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-muted)' }}>Add your first event to this tour</div>
-                <button className="btn-primary" onClick={() => router.push(`/tours/${id}/events/new`)}>+ Add Event</button>
+                <button className="btn-primary" onClick={openEventModal}>+ Add Event</button>
               </div>
             )}
 
@@ -889,8 +957,9 @@ export default function TourPage() {
                         {formatLocation(event.city, event.state, event.country, 'compact')}
                       </div>
                       <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {event.venue_name || 'TBC'}
+                        {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
                       </div>
+                      <TDLine names={tdByEvent[event.id]} />
                       <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
                         {shows.length > 0 ? shows.length : '—'}
                       </div>
@@ -960,8 +1029,9 @@ export default function TourPage() {
                             {formatLocation(event.city, event.state, event.country, 'compact')}
                           </div>
                           <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {event.venue_name || 'TBC'}
+                            {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
                           </div>
+                          <TDLine names={tdByEvent[event.id]} />
                           <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
                             {shows.length > 0 ? shows.length : '—'}
                           </div>
@@ -1103,7 +1173,7 @@ export default function TourPage() {
                           )}
                         </div>
                         <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 3 }}>
-                          {event.venue_name || 'Venue TBC'}
+                          {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>{dateRange}</div>
@@ -1175,6 +1245,21 @@ export default function TourPage() {
           </div>
         )}
       </div>
+
+      {eventModalOpen && eventForm && (
+        <NewEventModal
+          extended
+          title="Add Event"
+          tour={{ name: tour.name, color: tour.color }}
+          form={eventForm}
+          setForm={setEventForm}
+          countries={countryOptions}
+          submitting={eventSaving}
+          error={eventError}
+          onClose={() => setEventModalOpen(false)}
+          onSubmit={handleCreateEvent}
+        />
+      )}
     </div>
   )
 }

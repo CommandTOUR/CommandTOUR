@@ -99,7 +99,7 @@ export default function Dashboard() {
       ] = await Promise.all([
         supabase
           .from('tours')
-          .select('id, name, color, status, region, year, logo_url, tour_type, director_name, tour_category')
+          .select('id, name, color, status, region, logo_url, tour_type, tour_category')
           .in('status', ['active', 'upcoming'])
           .order('name'),
 
@@ -270,11 +270,9 @@ export default function Dashboard() {
                   ? `${shortDate(ev.load_in_date)} – ${shortDate(ev.load_out_date)}`
                   : shortDate(ev.load_in_date)}
               </div>
-              {ev.venue_name && (
-                <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1 }}>
-                  {ev.venue_name}
-                </div>
-              )}
+              <div style={{ fontSize: 14, fontWeight: 450, color: ev.venue_name ? 'var(--text-secondary)' : 'var(--text-muted)', marginTop: 1 }}>
+                {ev.venue_name || 'Venue TBD'}
+              </div>
               {ev.num_shows != null && (
                 <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-muted)', marginTop: 1 }}>
                   {ev.num_shows} {ev.num_shows === 1 ? 'show' : 'shows'}
@@ -345,7 +343,7 @@ export default function Dashboard() {
                       {tour.name}
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {[tour.region, tour.director_name || '—'].filter(Boolean).join(' · ')}
+                      {tour.region || '—'}
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2 }}>
                       {nextEvent

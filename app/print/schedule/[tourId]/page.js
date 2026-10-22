@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import PrintClient from './PrintClient'
 
-export default async function PrintSchedulePage({ params }) {
-  console.log('SERVICE_ROLE_KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+export default async function PrintSchedulePage({ params, searchParams }) {
+  const { tourId } = await params
+  const { year } = await searchParams
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -11,15 +12,17 @@ export default async function PrintSchedulePage({ params }) {
 
   const { data: tour } = await supabase
     .from('tours')
-    .select('id, name, tour_type, region, color, logo_url, year')
-    .eq('id', params.tourId)
+    .select('id, name, tour_type, region, color, logo_url')
+    .eq('id', tourId)
     .single()
 
+  // The page reads event.date / event.show_count; events store these as load_in_date / num_shows
   const { data: events } = await supabase
     .from('events')
-    .select('id, date, city, state, country, venue_name, status, show_count, notes')
-    .eq('tour_id', params.tourId)
-    .order('date', { ascending: true })
+    .select('id, date:load_in_date, city, state, country, venue_name, status, show_count:num_shows, notes')
+    .eq('tour_id', tourId)
+    .order('load_in_date', { ascending: true })
 
-  return <PrintClient tour={tour} events={events || []} />
+  // ?year=YYYY pre-selects a year (e.g. the tour page's selected year)
+  return <PrintClient tour={tour} events={events || []} initialYear={typeof year === 'string' ? year : null} />
 }

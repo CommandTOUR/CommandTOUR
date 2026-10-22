@@ -69,7 +69,7 @@ export default function Calendar() {
     const { data: toursData, error: toursError } = await supabase
       .from('tours')
       .select('id, name, color, status')
-      .order('year', { ascending: true })
+      .order('sort_order', { ascending: true, nullsFirst: false })
 
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')

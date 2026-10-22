@@ -746,7 +746,7 @@ export default function EventPage() {
                 </span>
               </div>
               <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
-                {event.venue_name && `${event.venue_name} · `}
+                {event.venue_name ? `${event.venue_name} · ` : <span style={{ color: 'var(--text-muted)' }}>Venue TBD · </span>}
                 {fmt(event.load_in_date)}
                 {shows.length > 0 && ` · ${shows.length} ${shows.length === 1 ? 'show' : 'shows'}`}
               </div>
@@ -824,9 +824,9 @@ export default function EventPage() {
                   },
                   {
                     label: 'Venue',
-                    value: event.venue_name || 'TBC',
+                    value: event.venue_name || 'Venue TBD',
                     sub: venue ? formatLocation(venue.city, venue.state, venue.country, 'full') : null,
-                    color: 'var(--text-primary)',
+                    color: event.venue_name ? 'var(--text-primary)' : 'var(--text-muted)',
                     onClick: venue ? () => {
                       pushNav(buildNavEntry(`/venues/${venue.id}`, venue.name || 'Venue', 'venue'))
                       router.push(`/venues/${venue.id}`)

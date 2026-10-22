@@ -162,10 +162,8 @@ export default function EditTour() {
     tour_type: '',
     type: '',
     tour_category: 'uncategorized',
-    year: new Date().getFullYear(),
     status: 'upcoming',
     color: '#C9A84C',
-    director_name: '',
     notes: '',
     logo_url: null,
   })
@@ -205,10 +203,8 @@ export default function EditTour() {
           tour_type: data.tour_type || '',
           type: data.type || '',
           tour_category: data.tour_category || 'uncategorized',
-          year: data.year || new Date().getFullYear(),
           status: data.status || 'upcoming',
           color: data.color || '#C9A84C',
-          director_name: data.director_name || '',
           notes: data.notes || '',
           logo_url: data.logo_url || null,
         })
@@ -467,12 +463,8 @@ export default function EditTour() {
               </div>
             </div>
 
-            {/* Year + Status */}
+            {/* Status */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Year</label>
-                <input style={inputStyle} type="number" value={form.year} onChange={e => set('year', parseInt(e.target.value))} />
-              </div>
               <div>
                 <label style={labelStyle}>Status</label>
                 <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
@@ -493,10 +485,6 @@ export default function EditTour() {
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Tour Director</label>
-                <input style={inputStyle} placeholder="e.g. Anna Nyman" value={form.director_name} onChange={e => set('director_name', e.target.value)} />
               </div>
             </div>
 
