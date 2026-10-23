@@ -93,8 +93,8 @@ export default function NewEventModal({
         aria-modal="true"
         style={{
           background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '0.5px solid var(--glass-tile-border)', boxShadow: 'var(--glass-tile-shadow)',
-          borderRadius: 14, padding: 24, width: extended ? 560 : 440, maxWidth: '100%', maxHeight: '100%',
+          border: 'var(--tile-border)', boxShadow: 'var(--glass-tile-shadow)',
+          borderRadius: 'var(--tile-radius)', padding: 24, width: extended ? 560 : 440, maxWidth: '100%', maxHeight: '100%',
           overflowY: 'auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 16, color: 'var(--text-primary)',
         }}
       >

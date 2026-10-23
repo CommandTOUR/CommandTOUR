@@ -5,12 +5,13 @@ import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../../lib/supabase'
 import { IconChevronDown, IconChevronRight, IconLayoutDashboard } from '@tabler/icons-react'
 import { useNav } from '../../../../context/NavContext'
+import { fetchTakenLines, lineOptions, NONE_LINE, lineToSortOrder } from '../../../../lib/scheduleLines'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -166,7 +167,11 @@ export default function EditTour() {
     color: '#C9A84C',
     notes: '',
     logo_url: null,
+    line: NONE_LINE,
   })
+  const [origLine, setOrigLine] = useState(null)
+  const [takenLines, setTakenLines] = useState([])
+  const [lineNote, setLineNote] = useState('')
 
   const [activeTab, setActiveTab] = useState('general')
   const [isDirty, setIsDirty] = useState(false)
@@ -207,7 +212,10 @@ export default function EditTour() {
           color: data.color || '#C9A84C',
           notes: data.notes || '',
           logo_url: data.logo_url || null,
+          line: data.sort_order == null ? NONE_LINE : String(data.sort_order),
         })
+        setOrigLine(data.sort_order ?? null)
+        fetchTakenLines(id).then(setTakenLines)
         // Check if color is a custom one not in the presets
         const isPreset = COLORS.some(c => c.value === (data.color || '#C9A84C'))
         if (!isPreset) setCustomColor(true)
@@ -272,9 +280,27 @@ export default function EditTour() {
     if (!form.name.trim()) { setError('Tour name is required'); return }
     setSaving(true)
     setError('')
+    const newLine = lineToSortOrder(form.line)
+    if (origLine != null && newLine == null &&
+        !window.confirm('Remove this tour from the Master Schedule? It will no longer appear as a column there.')) {
+      setSaving(false)
+      return
+    }
     const supabase = getSupabase()
-    const { error: tourError } = await supabase.from('tours').update(form).eq('id', id)
-    if (tourError) { setError(tourError.message); setSaving(false); return }
+    const { line: _line, ...tourFields } = form
+    const { error: tourError } = await supabase.from('tours').update({ ...tourFields, sort_order: newLine }).eq('id', id)
+    if (tourError) {
+      if (tourError.code === '23505') {
+        setTakenLines(await fetchTakenLines(id))
+        setLineNote('That line was just taken. Pick another.')
+        setSaving(false)
+        return
+      }
+      setError(tourError.message)
+      setSaving(false)
+      return
+    }
+    setOrigLine(newLine)
     await handleSaveStaffing()
     setSaving(false)
     setIsDirty(false)
@@ -439,7 +465,7 @@ export default function EditTour() {
             </div>
 
             {/* Tour Type dropdown + Show Type text */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Tour Type</label>
                 <select
@@ -463,8 +489,26 @@ export default function EditTour() {
               </div>
             </div>
 
-            {/* Status */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {/* Schedule line */}
+            <div>
+              <label style={labelStyle}>Schedule line</label>
+              {(() => {
+                const { options, allStandardTaken } = lineOptions(takenLines, origLine)
+                return (
+                  <>
+                    <select className="field-ring" style={{ ...inputStyle, cursor: 'pointer', border: '1px solid var(--border-strong)', background: 'var(--surface-input)' }}
+                      value={form.line} onChange={e => { set('line', e.target.value); setLineNote('') }}>
+                      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    {allStandardTaken && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>All six standard lines are in use.</div>}
+                  </>
+                )
+              })()}
+              {lineNote && <div role="alert" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-danger)', marginTop: 4 }}>{lineNote}</div>}
+            </div>
+
+            {/* Status + Tour Category */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Status</label>
                 <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
@@ -474,10 +518,6 @@ export default function EditTour() {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-            </div>
-
-            {/* Tour Category + Director */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Tour Category</label>
                 <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.tour_category} onChange={e => set('tour_category', e.target.value)}>

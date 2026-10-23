@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { IconX, IconPlus, IconAlertTriangle, IconLoader2 } from '@tabler/icons-react'
 import { getSupabase } from '../lib/supabase'
+import { fetchTakenLines, lineOptions, defaultLine, lineToSortOrder } from '../lib/scheduleLines'
 
 const TOUR_COLORS = [
   { label: 'Gold', value: '#C9A84C' },
@@ -46,6 +47,9 @@ export default function NewTourModal({ onClose }) {
   const [customColor, setCustomColor] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [line, setLine] = useState('')
+  const [lineOpts, setLineOpts] = useState({ options: [], allStandardTaken: false })
+  const [lineNote, setLineNote] = useState('')
 
   const dirty = JSON.stringify(form) !== initialForm
   const requestClose = () => {
@@ -62,6 +66,25 @@ export default function NewTourModal({ onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  // Free Master Schedule lines (sort_order values not used by non-deleted tours)
+  const loadLines = async (keepChoice = false) => {
+    const taken = await fetchTakenLines()
+    const opts = lineOptions(taken)
+    setLineOpts(opts)
+    setLine(prev => (keepChoice && opts.options.some(o => o.value === prev)) ? prev : defaultLine(opts.options))
+    return opts
+  }
+  useEffect(() => {
+    let cancelled = false
+    fetchTakenLines().then(taken => {
+      if (cancelled) return
+      const opts = lineOptions(taken)
+      setLineOpts(opts)
+      setLine(defaultLine(opts.options))
+    })
+    return () => { cancelled = true }
+  }, [])
+
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }))
 
   const handleSave = async () => {
@@ -71,8 +94,19 @@ export default function NewTourModal({ onClose }) {
     }
     setSaving(true)
     setError('')
-    const { data, error: insertError } = await getSupabase().from('tours').insert([form]).select().single()
-    if (insertError) { setError(insertError.message); setSaving(false); return }
+    const { data, error: insertError } = await getSupabase().from('tours').insert([{ ...form, sort_order: lineToSortOrder(line) }]).select().single()
+    if (insertError) {
+      if (insertError.code === '23505') {
+        // Someone else took this line: refresh the options, keep everything else
+        await loadLines()
+        setLineNote('That line was just taken. Pick another.')
+        setSaving(false)
+        return
+      }
+      setError(insertError.message)
+      setSaving(false)
+      return
+    }
     onClose()
     router.push(`/tours/${data.id}`)
   }
@@ -98,8 +132,8 @@ export default function NewTourModal({ onClose }) {
         aria-modal="true"
         style={{
           background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          border: '0.5px solid var(--glass-tile-border)', boxShadow: 'var(--glass-tile-shadow)',
-          borderRadius: 14, padding: 24, width: 600, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto',
+          border: 'var(--tile-border)', boxShadow: 'var(--glass-tile-shadow)',
+          borderRadius: 'var(--tile-radius)', padding: 24, width: 600, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto',
           boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 16, color: 'var(--text-primary)',
         }}
       >
@@ -152,15 +186,21 @@ export default function NewTourModal({ onClose }) {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-        </div>
-
-        <div style={grid}>
           <div>
             <label style={labelStyle} htmlFor="nt-category">Tour Category</label>
             <select id="nt-category" className={fieldClass} style={{ cursor: 'pointer' }} value={form.tour_category} onChange={e => set('tour_category', e.target.value)}>
               {TOUR_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
+        </div>
+
+        <div>
+          <label style={labelStyle} htmlFor="nt-line">Schedule line</label>
+          <select id="nt-line" className={fieldClass} style={{ cursor: 'pointer' }} value={line} onChange={e => { setLine(e.target.value); setLineNote('') }}>
+            {lineOpts.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          {lineOpts.allStandardTaken && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>All six standard lines are in use.</div>}
+          {lineNote && <div role="alert" style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-danger)', marginTop: 4 }}>{lineNote}</div>}
         </div>
 
         <div>
