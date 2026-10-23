@@ -375,7 +375,7 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
   if (typeof document === 'undefined') return null
   return ReactDOM.createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
-      <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 440 }}>
+      <div style={{ background: 'var(--surface-card)', border: '1.5px solid rgba(255,204,0,0.4)', borderRadius: 'var(--tile-radius)', padding: 28, width: 440 }}>
         <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>
           {isSame ? 'Already On This Event' : 'Double Booking Warning'}
         </div>
@@ -707,7 +707,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           >
             <div
               id="staffing-cell-modal"
-              style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 20, width: 400, display: 'flex', flexDirection: 'column', gap: 0 }}
+              style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 20, width: 400, display: 'flex', flexDirection: 'column', gap: 0 }}
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
@@ -939,7 +939,7 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-stronger)', borderRadius: 16, padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.2)', fontFamily: 'inherit' }}>
+      <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.2)', fontFamily: 'inherit' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginBottom: 16 }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Copy to Events</div>
           <div onClick={onClose} style={{ fontSize: 24, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</div>
@@ -1031,7 +1031,7 @@ function ConflictWizardModal({ wizard, onClose }) {
       style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div id="conflict-wizard-modal" style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 22, width: 440, display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <div id="conflict-wizard-modal" style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 22, width: 440, display: 'flex', flexDirection: 'column', gap: 0 }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -1055,7 +1055,7 @@ function ConflictWizardModal({ wizard, onClose }) {
         {/* Conflict info cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
           {incomingFrom && (
-            <div style={{ background: 'var(--glass-tile-bg)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 8, padding: '10px 14px' }}>
+            <div style={{ background: 'var(--glass-tile-bg)', border: 'var(--tile-border)', borderRadius: 8, padding: '10px 14px' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                 {incomingStaff.first_name} is currently assigned to
               </div>
@@ -1064,7 +1064,7 @@ function ConflictWizardModal({ wizard, onClose }) {
             </div>
           )}
           {existingAtTarget && (
-            <div style={{ background: 'var(--glass-tile-bg)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 8, padding: '10px 14px' }}>
+            <div style={{ background: 'var(--glass-tile-bg)', border: 'var(--tile-border)', borderRadius: 8, padding: '10px 14px' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                 This slot is currently filled by
               </div>
@@ -2363,7 +2363,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
       {dragLockedModal && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(224,82,82,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+          <div style={{ background: 'var(--surface-card)', border: '1.5px solid rgba(224,82,82,0.4)', borderRadius: 'var(--tile-radius)', padding: 28, width: 420 }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 12, color: '#e05252' }}>Position Is Locked</div>
             <div style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
               Unlock <strong style={{ color: 'var(--text-primary)' }}>{positionsById[dragLockedModal.tp.position_id]?.title}</strong> to assign staff here.
@@ -2393,7 +2393,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
       {conflictModal && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,214,10,0.35)', borderRadius: 14, padding: 32, width: 560, maxWidth: '95vw' }}>
+          <div style={{ background: 'var(--surface-card)', border: '1.5px solid rgba(255,214,10,0.35)', borderRadius: 'var(--tile-radius)', padding: 32, width: 560, maxWidth: '95vw' }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#FFD60A', marginBottom: 6 }}>
               Scheduling Conflict — {conflictModal.staffName}
             </div>
@@ -2434,7 +2434,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
       {dragConflict && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid rgba(255,204,0,0.4)', borderRadius: 12, padding: 28, width: 420 }}>
+          <div style={{ background: 'var(--surface-card)', border: '1.5px solid rgba(255,204,0,0.4)', borderRadius: 'var(--tile-radius)', padding: 28, width: 420 }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 12, color: '#FFCC00' }}>Position Already Filled</div>
             <div style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
               {staffDisplayName(dragConflict.target.assignment.staff)} is already in this position. Move {staffDisplayName(dragConflict.source.assignment.staff)} here anyway?

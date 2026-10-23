@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
 import { IconAlertTriangle, IconAlertTriangleFilled } from '@tabler/icons-react'
 
-const GLASS = { background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 14, boxShadow: 'var(--glass-tile-shadow)' }
+const GLASS = { background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)' }
 
 const ROOM_TYPES = ['Single', 'Double', 'Suite', 'Twin']
 
@@ -126,7 +126,7 @@ function StaffPicker({ onSelect, onClose, excludeIds = [] }) {
   }, [search])
   return (
     <div style={OVERLAY} onClick={onClose}>
-      <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 24, width: 380, maxHeight: 440, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
         <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>Select Staff</div>
         <input ref={inputRef}
           style={SYSTEM_INPUT}
@@ -1137,7 +1137,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {/* HOTEL EDIT MODAL */}
       {editingHotel && (
         <div style={OVERLAY} onClick={() => setEditingHotel(false)}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 28, width: 500, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
             {[{ label: 'Hotel Name', key: 'hotel_name', type: 'text' }, { label: 'Address', key: 'address', type: 'text' }, { label: 'Check In', key: 'check_in_date', type: 'date' }, { label: 'Check Out', key: 'check_out_date', type: 'date' }, { label: 'Notes', key: 'notes', type: 'text' }].map(f => (
               <div key={f.key}>
@@ -1161,7 +1161,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {/* SET RATES MODAL */}
       {showRatesModal && (
         <div style={OVERLAY} onClick={() => setShowRatesModal(false)}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 24, width: 360, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 24, width: 360, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Set Meal Rates</div>
             {[{ label: 'Breakfast Rate', key: 'breakfast_rate' }, { label: 'Lunch Rate', key: 'lunch_rate' }, { label: 'Dinner Rate', key: 'dinner_rate' }].map(f => (
               <div key={f.key}>
@@ -1187,7 +1187,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
       {/* RENTAL CAR NEW ENTRY MODAL */}
       {editingRental === 'new' && (
         <div style={OVERLAY} onClick={() => setEditingRental(null)}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, width: 520, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 28, width: 520, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Add Rental Car</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>

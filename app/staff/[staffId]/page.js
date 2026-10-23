@@ -11,8 +11,8 @@ import { buildNavEntry } from '../../../lib/navigate'
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -275,7 +275,7 @@ export default function StaffProfile() {
               </div>
             </div>
 
-            <div style={{ ...GLASS, borderRadius: 10, padding: '14px 20px', minWidth: 220, textAlign: 'left' }}>
+            <div style={{ ...GLASS, padding: '14px 20px', minWidth: 220, textAlign: 'left' }}>
               <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>
                 NEXT EVENT
               </div>
@@ -496,7 +496,7 @@ export default function StaffProfile() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 440, maxWidth: '90vw', position: 'relative' }}
+            style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '24px 28px', width: 440, maxWidth: '90vw', position: 'relative' }}
           >
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>Passport Details</div>
             <button

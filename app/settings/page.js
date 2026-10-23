@@ -39,8 +39,8 @@ const NAV_ITEMS = [
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -91,7 +91,7 @@ function SectionCard({ title, description, children }) {
     <div style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 4 }}>{title}</div>
       {description && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 12 }}>{description}</div>}
-      <div style={{ background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: '0.5px solid var(--glass-tile-border)', borderRadius: 14, boxShadow: 'var(--glass-tile-shadow)', padding: '20px 24px' }}>
+      <div style={{ background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)', padding: '20px 24px' }}>
         {children}
       </div>
     </div>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                         key={val}
                         onClick={() => applyTheme(val)}
                         style={{
-                          ...GLASS, flex: 1, padding: '16px 20px', cursor: 'pointer', borderRadius: 12,
+                          ...GLASS, flex: 1, padding: '16px 20px', cursor: 'pointer', borderRadius: 'var(--tile-radius)',
                           display: 'flex', alignItems: 'center', gap: 10,
                           border: active ? '1.5px solid var(--color-info)' : '0.5px solid var(--border-default)',
                           background: active ? 'rgba(26,86,219,0.08)' : GLASS.background,
@@ -885,7 +885,7 @@ export default function SettingsPage() {
       {/* Invite modal */}
       {inviteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setInviteModal(null)}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 32, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 32, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Invite Team Member</div>
             <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               To invite <strong style={{ color: 'var(--text-primary)' }}>{inviteModal.email}</strong>, send them this signup link:
@@ -910,7 +910,7 @@ export default function SettingsPage() {
       {/* Remove modal */}
       {removeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setRemoveModal(null)}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 32, width: 400, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 32, width: 400, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Remove User</div>
             <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               Remove <strong style={{ color: 'var(--text-primary)' }}>{removeModal.first_name} {removeModal.last_name}</strong> from CommandTOUR? This removes their role but does not delete their account.

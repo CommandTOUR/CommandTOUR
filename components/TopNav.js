@@ -77,7 +77,7 @@ export default function TopNav() {
       backdropFilter: 'blur(14px) saturate(1.3)',
       WebkitBackdropFilter: 'blur(14px) saturate(1.3)',
       border: '1px solid var(--border-card)',
-      borderRadius: 14,
+      borderRadius: 'var(--tile-radius)',
       boxShadow: 'inset 0 1px 0 var(--card-glass-highlight), 0 4px 14px var(--card-glass-shadow)',
       padding: '12px 20px',
       display: 'flex',

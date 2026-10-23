@@ -10,8 +10,8 @@ import { IconX, IconChevronDown, IconChevronRight, IconAlertTriangleFilled, Icon
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -686,7 +686,7 @@ export default function StaffingTab({ tourId, eventId, event, tourColor }) {
 
       {pendingConflict && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ ...GLASS, padding: 24, borderRadius: 12, maxWidth: 400, width: '90%' }}>
+          <div style={{ ...GLASS, padding: 24, maxWidth: 400, width: '90%' }}>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Scheduling Conflict</div>
             <div style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 20 }}>
               {staffDisplayName(pendingConflict.staffMember)} is already assigned at {pendingConflict.conflictingEvent?.city}

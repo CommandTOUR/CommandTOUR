@@ -70,6 +70,11 @@
   --radius-lg: 10px;
   --radius-card: 10px;
 
+  /* Tile style: single source of truth for tile/modal radius and trim */
+  --tile-radius: 6px;
+  --tile-trim: #0a1628;
+  --tile-border: 1.5px solid var(--tile-trim);
+
   /* Glass tile */
   --glass-tile-bg: rgba(255, 255, 255, 0.72);
   --glass-tile-hover: rgba(0, 0, 0, 0.04);
@@ -79,6 +84,7 @@
 }
 
 [data-theme="dark"] {
+  --tile-trim: rgba(255, 255, 255, 0.7);
   --page-bg: #1a1a1a;
   --surface-nav: #141414;
   --surface-card: #0d0d0f;
@@ -150,8 +156,8 @@ html, body {
 /* ── GLASS CARD ────────────────────────────────────────────────────────── */
 .glass-card {
   background: var(--surface-card);
-  border: 0.5px solid var(--border-default);
-  border-radius: var(--radius-card);
+  border: var(--tile-border);
+  border-radius: var(--tile-radius);
   color: var(--text-primary);
 }
 
@@ -362,3 +368,94 @@ html, body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Focus ring for plain form controls */
+.field-ring:focus { outline: none; border-color: var(--color-info); box-shadow: 0 0 0 2px var(--color-info); }
+
+/* ── TOUR SCHEDULE LIST (tour page) ────────────────────────────────────── */
+/* Layout follows the width of the list tile (container), not the window.
+   Tiers: <760 stacked card · 760-899 narrow (TD under venue) · 900-1199 medium · >=1200 wide.
+   Header and rows share the same grid template in every tier. Data columns are bounded
+   (minmax(min, fr)), so spare width is spread proportionally across all columns. */
+.sched-list { container-type: inline-size; }
+.sched-row, .sched-head { box-sizing: border-box; }
+.sched-row > *, .sched-head > * { min-width: 0; }
+.sched-head { display: none; }
+.sched-row .c-center, .sched-head .c-center { text-align: center; justify-self: center; }
+.sched-row .td-inline { display: block; }
+.sched-row .c-td, .sched-row .c-open, .sched-row .c-close { display: none; }
+.sched-row .c-dates, .sched-row .c-dates-wrap { display: block; }
+
+/* Phone / stacked card (< 760px) */
+.sched-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-areas: "city city city status" "venue venue venue alert" "load dates shows shows" "tdline tdline tdline tdline";
+  row-gap: 4px; column-gap: 8px; padding: 10px 12px; align-items: center;
+}
+.sched-row .c-load { grid-area: load; font-size: 13px !important; }
+.sched-row .c-city { grid-area: city; font-size: 16px; }
+.sched-row .c-venue { grid-area: venue; font-size: 14px; }
+.sched-row .c-dates { grid-area: dates; font-size: 13px; color: var(--text-primary); justify-self: start; }
+.sched-row .c-shows { grid-area: shows; justify-self: start; font-size: 13px; }
+.sched-row .c-shows::before { content: '# shows '; color: var(--text-muted); font-size: 12px; }
+.sched-row .td-inline { grid-area: tdline; font-size: 13px; }
+.sched-row .c-status { grid-area: status; justify-self: end; }
+.sched-row .c-alert { grid-area: alert; justify-self: end; }
+
+/* Narrow (760-899): TD column hidden, TD shown under the venue */
+@container (min-width: 760px) {
+  .sched-head, .sched-row {
+    display: grid;
+    grid-template-columns: minmax(70px, 0.7fr) minmax(130px, 1.5fr) minmax(140px, 1.7fr) minmax(60px, 0.6fr) minmax(74px, 0.7fr) minmax(78px, 0.7fr) minmax(100px, 0.9fr) 24px;
+    grid-template-areas: none;
+    column-gap: 8px; row-gap: 0; align-items: center; padding: 6px 14px;
+  }
+  .sched-head { min-height: 32px; padding-top: 0; padding-bottom: 0; flex-shrink: 0; }
+  .sched-head .h-td { display: none; }
+  .sched-row .c-load, .sched-row .c-city, .sched-row .c-venue, .sched-row .c-shows,
+  .sched-row .c-status, .sched-row .c-alert { grid-area: auto; justify-self: auto; }
+  /* all cells on row 1; the inline TD sits on row 2 under the venue (column 3) */
+  .sched-row > :not(.td-inline) { grid-row: 1; }
+  .sched-row .td-inline { grid-area: 2 / 3; justify-self: auto; }
+  .sched-row .c-open, .sched-row .c-close { display: block; }
+  .sched-row .c-dates { display: none; }
+  .sched-row .c-shows { justify-self: center; font-size: 14px; }
+  .sched-row .c-shows::before { content: none; }
+  .sched-row .c-status { justify-self: stretch; }
+  .sched-row .c-alert { justify-self: center; }
+  .sched-row .c-city { font-size: 15px; }
+  .sched-row .c-venue { font-size: 14px; }
+  .sched-row .c-open, .sched-row .c-close { font-size: 14px; }
+  .sched-row .c-load { font-size: 14px !important; }
+  .sched-row .td-inline { font-size: 13px; }
+  .sched-head > div { font-size: 12px; letter-spacing: 0.02em; }
+}
+
+/* Medium (900-1199): TD becomes its own column, tighter gaps and fonts */
+@container (min-width: 900px) {
+  .sched-head, .sched-row {
+    grid-template-columns: minmax(70px, 0.7fr) minmax(130px, 1.5fr) minmax(140px, 1.7fr) minmax(118px, 1.3fr) minmax(60px, 0.6fr) minmax(74px, 0.7fr) minmax(78px, 0.7fr) minmax(100px, 0.9fr) 24px;
+  }
+  .sched-head .h-td { display: block; }
+  .sched-row .c-td { display: block; font-size: 13px; }
+  .sched-row .td-inline { display: none; }
+}
+
+/* Wide (>= 1200): all columns, roomier */
+@container (min-width: 1200px) {
+  .sched-head, .sched-row {
+    grid-template-columns: minmax(70px, 0.7fr) minmax(140px, 1.5fr) minmax(150px, 1.7fr) minmax(120px, 1.3fr) minmax(60px, 0.6fr) minmax(70px, 0.7fr) minmax(70px, 0.7fr) minmax(100px, 0.9fr) 24px;
+    column-gap: 12px;
+  }
+  .sched-head > div { font-size: 13px; letter-spacing: 0.05em; }
+  .sched-row .c-city { font-size: 16px; }
+  .sched-row .c-venue, .sched-row .c-shows, .sched-row .c-open, .sched-row .c-close { font-size: 15px; }
+  .sched-row .c-load { font-size: 15px !important; }
+  .sched-row .c-td { font-size: 14px; }
+}
+
+/* ── DASHBOARD TOUR GRID ──────────────────────────────────────────────── */
+.dash-tours { container-type: inline-size; }
+.dash-tour-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@container (max-width: 560px) { .dash-tour-grid { grid-template-columns: minmax(0, 1fr); } }

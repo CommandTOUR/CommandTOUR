@@ -18,7 +18,7 @@ const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
 
 const GLASS = {
   background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-  border: '0.5px solid var(--glass-tile-border)', boxShadow: 'var(--glass-tile-shadow)', borderRadius: 14,
+  border: 'var(--tile-border)', boxShadow: 'var(--glass-tile-shadow)', borderRadius: 'var(--tile-radius)',
   color: 'var(--text-primary)',
 }
 

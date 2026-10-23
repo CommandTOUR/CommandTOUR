@@ -11,8 +11,8 @@ const AIRPORT_MAP = Object.fromEntries(airportData.map(a => [a.iata.toUpperCase(
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
   padding: '18px 20px',
 }
@@ -583,7 +583,7 @@ export default function EditStaff() {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: 28, maxWidth: 400, width: '90%' }}>
+          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 28, maxWidth: 400, width: '90%' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>Delete Staff Member</div>
             <div style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
               Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>{fullName}</strong>? This cannot be undone.

@@ -11,8 +11,8 @@ import { useAppColors } from '../../hooks/useAppColors'
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
