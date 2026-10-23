@@ -12,8 +12,8 @@ import NewTourModal from '../../components/NewTourModal'
 const GLASS_CARD = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -427,7 +427,7 @@ export default function Tours() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
               {QUICK_STATS.map(stat => (
-                <div key={stat.label} style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: '12px 14px' }}>
+                <div key={stat.label} style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '12px 14px' }}>
                   <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: stat.valueColor, marginBottom: 4 }}>{stat.value}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>{stat.label}</div>
                 </div>

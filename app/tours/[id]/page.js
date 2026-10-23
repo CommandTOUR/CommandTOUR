@@ -61,8 +61,8 @@ const HOLD_STATUSES = ['1-hold', '2-hold', '3-hold']
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -149,12 +149,15 @@ function AlertIcon({ alerts }) {
 const staffName = (st) => st?.display_name?.trim() || `${st?.first_name || ''} ${st?.last_name || ''}`.trim()
 
 // Who is serving as Tour Director on an event (resolved like the staffing grid)
-function TDLine({ names }) {
+// bare: icon + name only (own column); otherwise "TD: Name" under a venue / on a tile
+function TDLine({ names, bare = false }) {
   const has = !!(names && names.length)
+  const text = has ? names.join(' / ') : 'unassigned'
+  const label = bare ? text : (has ? `TD: ${text}` : 'TD: unassigned')
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 14, fontWeight: 450, color: has ? 'var(--text-secondary)' : 'var(--text-muted)', minWidth: 0 }}>
+    <div title={`Tour Director: ${text}`} style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: bare ? 0 : 2, fontSize: bare ? 'inherit' : 14, fontWeight: 450, color: has ? 'var(--text-secondary)' : 'var(--text-muted)', minWidth: 0 }}>
       <IconUserStar size={14} style={{ flexShrink: 0 }} />
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{has ? `TD: ${names.join(' / ')}` : 'TD: unassigned'}</span>
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
     </div>
   )
 }
@@ -179,6 +182,44 @@ function StatusDropdown({ eventId, currentStatus, onUpdate }) {
         caret
         triggerStyle={{ fontSize: 13, padding: '3px 10px', borderRadius: 6 }}
       />
+    </div>
+  )
+}
+
+// One row of the schedule list (upcoming and past). Layout lives in globals.css (.sched-row) so the
+// header and rows share one grid template and it switches to a stacked card on narrow widths.
+function EventListRow({ event, shows, tdNames, past, onOpen, onLoadInUpdate, onStatusUpdate }) {
+  const firstShow = shows.length > 0 ? shows[0].show_date : null
+  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
+  const alerts = getAlerts(event, shows)
+  const place = formatLocation(event.city, event.state, event.country, 'compact')
+  const dim = (v) => ({ color: v ? 'var(--text-primary)' : 'var(--text-muted)', opacity: v ? 1 : 0.4 })
+  const fmtD = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
+  return (
+    <div
+      className="sched-row"
+      onClick={onOpen}
+      style={{ ...GLASS, cursor: 'pointer', flexShrink: 0, opacity: past ? 0.6 : 1, marginTop: past ? 4 : 0 }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)'; if (past) e.currentTarget.style.opacity = '1' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)'; if (past) e.currentTarget.style.opacity = '0.6' }}
+    >
+      <div className="c-load"><LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={onLoadInUpdate} /></div>
+      <div className="c-city" title={place} style={{ fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {place}
+      </div>
+      <div className="c-venue" title={event.venue_name || 'Venue TBD'} style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
+      </div>
+      <div className="c-td"><TDLine names={tdNames} bare /></div>
+      <div className="c-shows c-center" style={{ color: 'var(--text-primary)' }}>{shows.length > 0 ? shows.length : '—'}</div>
+      <div className="c-open c-center" style={dim(firstShow)}>{fmtD(firstShow)}</div>
+      <div className="c-close c-center" style={dim(lastShow)}>{fmtD(lastShow)}</div>
+      <div className="c-dates" style={{ color: 'var(--text-primary)' }}>{firstShow ? `${fmtD(firstShow)}${lastShow && lastShow !== firstShow ? ' – ' + fmtD(lastShow) : ''}` : 'No shows yet'}</div>
+      <div className="c-status" style={{ display: 'flex', justifyContent: 'center' }}>
+        <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={onStatusUpdate} />
+      </div>
+      <div className="c-alert c-center" style={{ display: 'flex', justifyContent: 'center' }}><AlertIcon alerts={alerts} /></div>
+      <div className="td-inline"><TDLine names={tdNames} /></div>
     </div>
   )
 }
@@ -900,84 +941,32 @@ export default function TourPage() {
             )}
 
             {events.length > 0 && (
-              <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div className="sched-list" style={{ flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
-                  alignItems: 'center',
-                  gap: '0 20px',
-                  padding: '0 16px',
-                  height: 32,
-                  flexShrink: 0,
-                }}>
-                  {['Load-In', 'City', 'Venue', 'Shows', 'First Show', 'Last Show', 'Status', ''].map((label, i) => (
-                    <div key={i} style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: 'var(--color-info)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.07em',
-                      textAlign: (i >= 3 && i <= 6) ? 'center' : 'left',
-                    }}>
-                      {label}
-                    </div>
+                <div className="sched-head">
+                  {[['Load-In', ''], ['City', ''], ['Venue', ''], ['Tour Director', 'h-td'], ['# Shows', 'c-center'], ['Eng Open', 'c-center'], ['Eng Close', 'c-center'], ['Status', 'c-center'], ['', '']].map(([label, cls], i) => (
+                    <div key={i} className={cls} style={{
+                      fontWeight: 700, color: 'var(--color-info)', textTransform: 'uppercase',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{label}</div>
                   ))}
                 </div>
 
                 {/* Upcoming events */}
-                {upcomingEvents.map((event) => {
-                  const shows = eventShows[event.id] || []
-                  const firstShow = shows.length > 0 ? shows[0].show_date : null
-                  const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
-                  const alerts = getAlerts(event, shows)
-                  return (
-                    <div
-                      key={event.id}
-                      onClick={() => {
-                        pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
-                        router.push(`/tours/${id}/events/${event.id}`)
-                      }}
-                      style={{
-                        ...GLASS,
-                        display: 'grid',
-                        gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
-                        alignItems: 'center',
-                        gap: '0 20px',
-                        padding: '0 16px',
-                        height: 44,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
-                    >
-                      <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
-                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {formatLocation(event.city, event.state, event.country, 'compact')}
-                      </div>
-                      <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
-                      </div>
-                      <TDLine names={tdByEvent[event.id]} />
-                      <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
-                        {shows.length > 0 ? shows.length : '—'}
-                      </div>
-                      <div style={{ fontSize: 15, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
-                        {fmt(firstShow)}
-                      </div>
-                      <div style={{ fontSize: 15, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
-                        {fmt(lastShow)}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={handleStatusUpdate} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <AlertIcon alerts={alerts} />
-                      </div>
-                    </div>
-                  )
-                })}
+                {upcomingEvents.map((event) => (
+                  <EventListRow
+                    key={event.id}
+                    event={event}
+                    shows={eventShows[event.id] || []}
+                    tdNames={tdByEvent[event.id]}
+                    onOpen={() => {
+                      pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
+                      router.push(`/tours/${id}/events/${event.id}`)
+                    }}
+                    onLoadInUpdate={handleLoadInUpdate}
+                    onStatusUpdate={handleStatusUpdate}
+                  />
+                ))}
 
                 {/* Past events — collapsible */}
                 {pastEvents.length > 0 && (
@@ -996,60 +985,21 @@ export default function TourPage() {
                       </span>
                     </div>
 
-                    {pastExpanded && pastEvents.map((event) => {
-                      const shows = eventShows[event.id] || []
-                      const firstShow = shows.length > 0 ? shows[0].show_date : null
-                      const lastShow = shows.length > 0 ? shows[shows.length - 1].show_date : null
-                      const alerts = getAlerts(event, shows)
-                      return (
-                        <div
-                          key={event.id}
-                          onClick={() => {
-                            pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
-                            router.push(`/tours/${id}/events/${event.id}`)
-                          }}
-                          style={{
-                            ...GLASS,
-                            display: 'grid',
-                            gridTemplateColumns: '120px 1.2fr 1.4fr 60px 100px 100px 130px 24px',
-                            alignItems: 'center',
-                            gap: '0 20px',
-                            padding: '0 16px',
-                            height: 44,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            opacity: 0.6,
-                            marginTop: 4,
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)'; e.currentTarget.style.opacity = '1' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--glass-tile-bg)'; e.currentTarget.style.opacity = '0.6' }}
-                        >
-                          <LoadInPicker eventId={event.id} currentDate={event.load_in_date} onUpdate={handleLoadInUpdate} />
-                          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {formatLocation(event.city, event.state, event.country, 'compact')}
-                          </div>
-                          <div style={{ fontSize: 15, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {event.venue_name || <span style={{ color: 'var(--text-muted)' }}>Venue TBD</span>}
-                          </div>
-                          <TDLine names={tdByEvent[event.id]} />
-                          <div style={{ fontSize: 15, color: 'var(--text-primary)', textAlign: 'center' }}>
-                            {shows.length > 0 ? shows.length : '—'}
-                          </div>
-                          <div style={{ fontSize: 15, color: firstShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: firstShow ? 1 : 0.4 }}>
-                            {fmt(firstShow)}
-                          </div>
-                          <div style={{ fontSize: 15, color: lastShow ? 'var(--text-primary)' : 'var(--text-muted)', textAlign: 'center', opacity: lastShow ? 1 : 0.4 }}>
-                            {fmt(lastShow)}
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'center' }}>
-                            <StatusDropdown eventId={event.id} currentStatus={event.status} onUpdate={handleStatusUpdate} />
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'center' }}>
-                            <AlertIcon alerts={alerts} />
-                          </div>
-                        </div>
-                      )
-                    })}
+                    {pastExpanded && pastEvents.map((event) => (
+                      <EventListRow
+                        key={event.id}
+                        past
+                        event={event}
+                        shows={eventShows[event.id] || []}
+                        tdNames={tdByEvent[event.id]}
+                        onOpen={() => {
+                          pushNav(buildNavEntry(`/tours/${id}/events/${event.id}`, event.city || 'Event', 'event'))
+                          router.push(`/tours/${id}/events/${event.id}`)
+                        }}
+                        onLoadInUpdate={handleLoadInUpdate}
+                        onStatusUpdate={handleStatusUpdate}
+                      />
+                    ))}
                   </div>
                 )}
               </div>

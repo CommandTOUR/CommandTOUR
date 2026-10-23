@@ -240,7 +240,7 @@ export default function Calendar() {
         {loading ? (
           <div style={{ color: 'var(--text-muted)', fontSize: 16 }}>Loading...</div>
         ) : (
-          <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-card)', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', overflow: 'hidden', background: 'var(--surface-card)', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Day headers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--color-info)', borderBottom: '1px solid var(--border-default)', flexShrink: 0 }}>
               {DAYS.map(d => (
@@ -323,7 +323,7 @@ export default function Calendar() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setOverflowDay(null)}>
           <div ref={overflowRef}
-            style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 12, padding: 24, width: 320, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
+            style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 24, width: 320, maxHeight: 480, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--text-muted)' }}>{fmt(overflowDay)}</div>
             {overflowEvents.map(ev => (

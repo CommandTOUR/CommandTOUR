@@ -19,8 +19,8 @@ const HOLD_STATUSES = ['1-hold', '2-hold', '3-hold']
 const GLASS_CARD = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -59,7 +59,7 @@ export default function Dashboard() {
   const [tours, setTours] = useState([])
   const [thisWeekEvents, setThisWeekEvents] = useState([])
   const [nextEventByTour, setNextEventByTour] = useState({})
-  const [tourEventStats, setTourEventStats] = useState({})
+  const [upcomingByTour, setUpcomingByTour] = useState({})
   const [unconfirmedCount, setUnconfirmedCount] = useState(0)
   const [holdEvents, setHoldEvents] = useState([])
   const [now, setNow] = useState(null)
@@ -99,9 +99,10 @@ export default function Dashboard() {
       ] = await Promise.all([
         supabase
           .from('tours')
-          .select('id, name, color, status, region, logo_url, tour_type, tour_category')
+          .select('id, name, color, status, region, logo_url, tour_type, tour_category, sort_order')
           .in('status', ['active', 'upcoming'])
-          .order('name'),
+          .is('deleted_at', null)
+          .order('sort_order', { ascending: true, nullsFirst: false }),
 
         supabase
           .from('events')
@@ -149,14 +150,12 @@ export default function Dashboard() {
       setUnconfirmedCount(unconfirmedRes.count || 0)
       setHoldEvents(holdEventsRes.data || [])
 
-      const stats = {}
+      // Upcoming = dated today or later
+      const upcoming = {}
       for (const ev of (allTourEventsRes.data || [])) {
-        if (!stats[ev.tour_id]) stats[ev.tour_id] = { total: 0, done: 0, left: 0 }
-        stats[ev.tour_id].total += 1
-        if (ev.load_in_date && ev.load_in_date < todayStr) stats[ev.tour_id].done += 1
+        if (ev.load_in_date && ev.load_in_date >= todayStr) upcoming[ev.tour_id] = (upcoming[ev.tour_id] || 0) + 1
       }
-      for (const id in stats) stats[id].left = stats[id].total - stats[id].done
-      setTourEventStats(stats)
+      setUpcomingByTour(upcoming)
 
       setLoading(false)
     }
@@ -167,13 +166,12 @@ export default function Dashboard() {
   const tourById = {}
   tours.forEach(t => { tourById[t.id] = t })
 
-  const domesticCount = tours.filter(t => t.status === 'active' && t.tour_category === 'domestic').length
-  const intlCount = tours.filter(t => t.status === 'active' && t.tour_category === 'international').length
-
-  const activeCount = tours.filter(t => t.status === 'active').length
+  // The Tours section and the stat card both use `tours` (active + upcoming, not deleted)
+  const domesticCount = tours.filter(t => t.tour_category === 'domestic').length
+  const intlCount = tours.filter(t => t.tour_category === 'international').length
 
   const STATS = [
-    { label: 'Active Tours', value: activeCount, sub: `${domesticCount} domestic · ${intlCount} intl`, color: 'var(--text-primary)' },
+    { label: 'Tours', value: tours.length, sub: `${domesticCount} domestic · ${intlCount} intl`, color: 'var(--text-primary)' },
     { label: 'Unconfirmed Staff', value: unconfirmedCount, sub: 'awaiting confirmation', color: unconfirmedCount > 0 ? 'var(--color-warning)' : 'var(--color-success)' },
     { label: 'Holds Expiring', value: holdEvents.length, sub: 'within 14 days', color: holdEvents.length > 0 ? 'var(--color-danger)' : 'var(--color-success)' },
     { label: '—', value: '—', sub: 'Coming soon', color: 'var(--text-muted)' },
@@ -200,7 +198,8 @@ export default function Dashboard() {
       action: 'Review', href: `/tours/${ev.tour_id}`,
     })
   })
-  const activeTours = tours.filter(t => t.status === 'active')
+  const TOUR_LIMIT = 8
+  const shownTours = tours.slice(0, TOUR_LIMIT)
 
   const showSeeAll = thisWeekEvents.length > 6
   const shownWeekEvents = showSeeAll ? thisWeekEvents.slice(0, 5) : thisWeekEvents
@@ -302,79 +301,73 @@ export default function Dashboard() {
       {/* Row 3: main two-column */}
       <div style={{ display: 'grid', gridTemplateColumns: '5fr 2fr', gap: 10, flex: 1, minHeight: 0 }}>
 
-        {/* Left: active tours list */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
-            Active Tours
+        {/* Left: tours */}
+        <div className="dash-tours" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }}>Tours</div>
+            {!loading && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', background: 'color-mix(in srgb, var(--color-info) 12%, transparent)', border: '0.5px solid color-mix(in srgb, var(--color-info) 35%, transparent)', borderRadius: 10, padding: '1px 8px' }}>
+                {tours.length}
+              </span>
+            )}
+            <div style={{ flex: 1 }} />
+            {tours.length <= TOUR_LIMIT && (
+              <button onClick={() => router.push('/tours')} style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}>
+                View all tours
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {loading && <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>Loading…</div>}
-            {!loading && !activeTours.length && (
+            {!loading && !tours.length && (
               <div style={{ padding: '14px', fontSize: 14, fontWeight: 450, color: 'var(--text-muted)' }}>No active or upcoming tours.</div>
             )}
-            {activeTours.map(tour => {
-              const stats = tourEventStats[tour.id] || { total: 0, done: 0, left: 0 }
-              const nextEvent = nextEventByTour[tour.id]
-
-              return (
-                <div
-                  key={tour.id}
-                  onClick={() => router.push(`/tours/${tour.id}`)}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
-                  style={{
-                    ...GLASS_CARD,
-                    display: 'grid',
-                    gridTemplateColumns: '44px 1fr 180px',
-                    alignItems: 'center',
-                    gap: 0,
-                    padding: '14px 16px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <IconRoute size={44} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
-
-                  <div style={{ minWidth: 0, marginLeft: 16, paddingLeft: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>
-                      {getTourTypeLabel(tour.tour_type)}
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tour.name}
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-secondary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tour.region || '—'}
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2 }}>
-                      {nextEvent
-                        ? <>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 450 }}>Next: </span>
-                            <span
-                              style={{ color: 'var(--color-info)', fontWeight: 700, cursor: 'pointer' }}
-                              onClick={(e) => { e.stopPropagation(); router.push(`/tours/${tour.id}/events/${nextEvent.id}`) }}
-                            >
-                              {formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · {shortDate(nextEvent.load_in_date)}
-                            </span>
-                          </>
-                        : '—'}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-around', marginLeft: 16 }}>
-                    {[
-                      { val: stats.total, lbl: 'Total' },
-                      { val: stats.done, lbl: 'Done', color: 'var(--color-success)' },
-                      { val: stats.left, lbl: 'Left' },
-                    ].map(item => (
-                      <div key={item.lbl} style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: item.color || 'var(--text-primary)' }}>{item.val}</div>
-                        <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', textAlign: 'center' }}>{item.lbl}</div>
+            <div className="dash-tour-grid">
+              {shownTours.map(tour => {
+                const upcoming = upcomingByTour[tour.id] || 0
+                const nextEvent = nextEventByTour[tour.id]
+                const nextText = nextEvent ? `${formatLocation(nextEvent.city, nextEvent.state, nextEvent.country, 'compact')} · ${shortDate(nextEvent.load_in_date)}` : null
+                return (
+                  <div
+                    key={tour.id}
+                    onClick={() => router.push(`/tours/${tour.id}`)}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--glass-tile-bg)'}
+                    style={{ ...GLASS_CARD, display: 'grid', gridTemplateColumns: '36px minmax(0, 1fr) auto', alignItems: 'center', columnGap: 12, padding: '12px 14px', cursor: 'pointer', minWidth: 0 }}
+                  >
+                    <IconRoute size={36} stroke={1.5} color={tour.color || 'var(--color-info)'} style={{ flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tour.name}>
+                        {tour.name}
                       </div>
-                    ))}
+                      <div style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {getTourTypeLabel(tour.tour_type)}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 450, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tour.region || '—'}
+                      </div>
+                      {nextText && (
+                        <div title={`Next: ${nextText}`} style={{ fontSize: 12, fontWeight: 450, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Next: {nextText}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: 'var(--text-primary)' }}>{upcoming}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginTop: 3 }}>Upcoming</div>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+            {tours.length > TOUR_LIMIT && (
+              <div style={{ textAlign: 'center', marginTop: 4 }}>
+                <button onClick={() => router.push('/tours')} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '6px 16px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}>
+                  View all tours ({tours.length})
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -439,7 +432,7 @@ export default function Dashboard() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {activeTours.slice(0, 3).map(tour => (
+              {tours.slice(0, 3).map(tour => (
                 <div key={tour.id} style={{ ...GLASS_CARD, padding: '10px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 16, fontWeight: 450, color: 'var(--text-secondary)' }}>{tour.name}</span>

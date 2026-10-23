@@ -29,8 +29,8 @@ import {
 const GLASS = {
   background: 'var(--glass-tile-bg)',
   backdropFilter: 'blur(12px) saturate(1.4)',
-  border: '0.5px solid var(--glass-tile-border)',
-  borderRadius: 14,
+  border: 'var(--tile-border)',
+  borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
 
@@ -1358,7 +1358,7 @@ export default function EventPage() {
                 >
                   <div
                     onClick={e => e.stopPropagation()}
-                    style={{ background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 14, padding: '24px 28px', width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}
+                    style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '24px 28px', width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}
                   >
                     <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Multiple Transport — {multipleModalStaff.staffName}</div>
                     <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set this staff member&apos;s travel type to Multiple.</div>

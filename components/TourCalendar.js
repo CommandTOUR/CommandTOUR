@@ -122,7 +122,7 @@ export default function TourCalendar({ tourId, tourColor, view, currentDate }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
       {/* Calendar grid */}
-      <div style={{ border: '0.5px solid var(--border-default)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-card)', margin: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', overflow: 'hidden', background: 'var(--surface-card)', margin: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--color-info)', borderBottom: cellBorder, flexShrink: 0 }}>
           {DAYS.map(d => (
             <div key={d} style={{ padding: '10px 0', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{d}</div>

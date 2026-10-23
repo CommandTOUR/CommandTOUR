@@ -76,7 +76,7 @@ export default function DashboardMap() {
   }, [])
 
   return (
-    <div style={{ position: 'relative', height: 220, borderRadius: 14, overflow: 'hidden', flexShrink: 0 }} className="glass-card">
+    <div style={{ position: 'relative', height: 220, borderRadius: 'var(--tile-radius)', overflow: 'hidden', flexShrink: 0 }} className="glass-card">
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
       <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
 
