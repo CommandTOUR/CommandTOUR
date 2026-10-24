@@ -26,7 +26,7 @@ export const EMPTY_NEW_EVENT_FORM = {
 //   countries      optional list used to suggest countries (extended only)
 export default function NewEventModal({
   title, subtitle, tour, form, setForm, onClose, onSubmit,
-  submitting = false, error = '', extended = false, countries = [],
+  submitting = false, error = '', extended = false, countries = [], onDirtyChange,
 }) {
   const [initialForm] = useState(() => JSON.stringify(form))
   const cityInputRef = useRef(null)
@@ -51,6 +51,12 @@ export default function NewEventModal({
   }, [form.no_venue, mapsLoaded, setForm])
 
   const dirty = JSON.stringify(form) !== initialForm
+
+  // optional: lets a page-level unsaved-changes guard know about typed input
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+    return () => onDirtyChange?.(false)
+  }, [dirty]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const requestClose = () => {
     if (submitting) return

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import React, { useState, useEffect, useRef, Suspense } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../lib/supabase'
@@ -461,7 +461,7 @@ function YearPills({ years, selectedYear, currentYear, onSelect, dragging, hover
   )
 }
 
-function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, onMoved }) {
+function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, onMoved, onDirtyChange, registerSave }) {
   const router = useRouter()
   const [status, setStatus] = useState(event.status || 'tentative')
   const [loadInDate, setLoadInDate] = useState(event.load_in_date || '')
@@ -508,6 +508,12 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     setTimeout(onClose, 200)
   }
 
+  // Tell the page when this panel holds typed-but-unsaved input (drives the unsaved guard)
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+    return () => onDirtyChange?.(false)
+  }, [dirty]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleAddShow = () => setShows(prev => [...prev, { id: null, show_date: loadInDate || '', show_hour: '7', show_minute: '30', show_ampm: 'PM' }])
   const handleShowChange = (idx, patch) => setShows(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
 
@@ -532,7 +538,7 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     if (eventError) {
       setSaving(false)
       setSaveError('Failed to save: ' + eventError.message)
-      return
+      return false
     }
 
     const showErrors = []
@@ -558,7 +564,7 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     if (showErrors.length > 0) {
       setSaving(false)
       setSaveError('Show save failed: ' + showErrors[0])
-      return
+      return false
     }
 
     await supabase.from('event_notes').upsert({ event_id: event.id, content: bookingNote, updated_at: new Date().toISOString() }, { onConflict: 'event_id' })
@@ -576,7 +582,14 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
       setSaveSuccess(false)
       handleClose()
     }, 1000)
+    return true
   }
+
+  // let the page's unsaved-changes guard trigger this save
+  useEffect(() => {
+    registerSave?.(handleSaveClose)
+    return () => registerSave?.(null)
+  })
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -1074,7 +1087,7 @@ const HEADER_H = 48 // approx sticky header height, for year tracking
 // ── DRAFT SCHEDULE TAB CONTENT ────────────────────────────────────────────────
 
 
-function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
+function DraftScheduleContent({ editMode, densityPref = 'auto', guard }) {
   const [tours, setTours] = useState([])
   const [events, setEvents] = useState([])
   const [venues, setVenues] = useState([])
@@ -1089,6 +1102,13 @@ function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
   const sectionRefs = useRef({})
   const [visibleYear, setVisibleYear] = useState(SCHEDULE_YEARS[0])
   const [tileWidth, setTileWidth] = useState(0)
+  const [panelDirty, setPanelDirty] = useState(false)
+  const [modalDirty, setModalDirty] = useState(false)
+  const panelSaveRef = useRef(null)
+
+  // Report unsaved input (side panel edits, new-event form) up to the page guard
+  const unsavedCount = (panelDirty ? 1 : 0) + (modalDirty ? 1 : 0)
+  useEffect(() => { guard?.onCount(unsavedCount) }, [unsavedCount]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto density follows the width of the schedule tile itself (not the window)
   useEffect(() => {
@@ -1099,6 +1119,15 @@ function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
     return () => ro.disconnect()
   }, [loading]) // the tile only exists once loading finishes
   const [newEventModal, setNewEventModal] = useState(null)
+  useEffect(() => {
+    if (!guard) return
+    guard.setApi({
+      canSave: () => !!panelSaveRef.current && panelDirty,
+      save: async () => (panelSaveRef.current ? (await panelSaveRef.current()) !== false : true),
+      discard: () => { setActiveCell(null); setNewEventModal(null); setPanelDirty(false); setModalDirty(false) },
+    })
+    return () => guard.setApi(null)
+  })
   const [newEventForm, setNewEventForm] = useState({ ...EMPTY_NEW_EVENT_FORM })
   const [newEventSaving, setNewEventSaving] = useState(false)
   const [newEventError, setNewEventError] = useState('')
@@ -1231,7 +1260,10 @@ function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
   }
 
   const handleOpenPanel = (event, row, tour) => {
-    setActiveCell({ type: 'panel', event, row, tour })
+    const open = () => setActiveCell({ type: 'panel', event, row, tour })
+    // opening another event's panel would silently drop typed edits: ask first
+    if (panelDirty && activeCell?.type === 'panel' && activeCell.event?.id !== event.id && guard) guard.confirmLeave(open)
+    else open()
   }
 
   const handleClosePanel = () => setActiveCell(null)
@@ -1364,6 +1396,8 @@ function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
           onSaved={handlePanelSaved}
           onDeleted={deleteEvent}
           onMoved={handlePanelMoved}
+          onDirtyChange={setPanelDirty}
+          registerSave={(fn) => { panelSaveRef.current = fn }}
         />
       )}
 
@@ -1376,6 +1410,7 @@ function DraftScheduleContent({ editMode, densityPref = 'auto' }) {
           error={newEventError}
           onClose={() => setNewEventModal(null)}
           onSubmit={handleCreateNewEvent}
+          onDirtyChange={setModalDirty}
         />
       )}
     </div>
@@ -1667,11 +1702,137 @@ const TABS = [
 
 // ── BC PAGE ───────────────────────────────────────────────────────────────────
 
+// Shown when something would discard typed-but-unsaved input (leaving edit mode, navigating away, switching events)
+function UnsavedGuardModal({ canSave, saving, onSave, onDiscard, onKeep }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onKeep() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onKeep])
+  const btn = { fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-primary)' }
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: 16, fontFamily: "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif" }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onKeep() }}
+    >
+      <div role="alertdialog" aria-modal="true" aria-labelledby="unsaved-title" style={{
+        background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        border: 'var(--tile-border)', boxShadow: 'var(--glass-tile-shadow)', borderRadius: 'var(--tile-radius)',
+        padding: 24, width: 420, maxWidth: '100%', boxSizing: 'border-box', color: 'var(--text-primary)',
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        <div id="unsaved-title" style={{ fontSize: 18, fontWeight: 700 }}>You have unsaved changes</div>
+        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+          {canSave ? 'Save your edits before leaving, or discard them.' : 'Typed input has not been saved. Discard it, or keep editing.'}
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button onClick={onKeep} autoFocus style={btn}>Keep editing</button>
+          <button onClick={onDiscard} disabled={saving} style={{ ...btn, borderColor: 'var(--color-danger)', color: 'var(--color-danger)' }}>Discard changes</button>
+          {canSave && (
+            <button onClick={onSave} disabled={saving} style={{ ...btn, border: 'none', background: '#FFD60A', color: '#0a1628', fontWeight: 700, opacity: saving ? 0.6 : 1 }}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 function BCContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'schedule'
   const [editMode, setEditMode] = useState(false)
+
+  // ── Unsaved-changes guard ──────────────────────────────────────────────
+  // Edit-mode actions (drags, Move, status pills, new events, panel Save) already write to Supabase at once, so the only
+  // thing that can be lost is typed-but-unsaved input in the side panel or the new-event form. The schedule reports a count.
+  const [unsavedCount, setUnsavedCount] = useState(0)
+  const unsavedRef = useRef(0)
+  const guardApiRef = useRef(null)
+  const [guardPending, setGuardPending] = useState(null) // { proceed }
+  const [guardSaving, setGuardSaving] = useState(false)
+  const sentinelRef = useRef(false)
+
+  const openGuard = useCallback((proceed) => {
+    setGuardPending({ proceed, canSave: !!guardApiRef.current?.canSave() })
+  }, [])
+  const confirmLeave = useCallback((proceed) => {
+    if (unsavedRef.current === 0) { proceed(); return }
+    openGuard(proceed)
+  }, [openGuard])
+  const guard = useMemo(() => ({
+    setApi: (api) => { guardApiRef.current = api },
+    onCount: (n) => { unsavedRef.current = n; setUnsavedCount(n) },
+    confirmLeave,
+  }), [confirmLeave])
+
+  const guardSave = async () => {
+    setGuardSaving(true)
+    const ok = await (guardApiRef.current ? guardApiRef.current.save() : true)
+    setGuardSaving(false)
+    if (!ok) return // save failed: stay in the modal flow, the panel shows its error
+    const { proceed } = guardPending
+    setGuardPending(null)
+    proceed()
+  }
+  const guardDiscard = () => {
+    const { proceed } = guardPending
+    guardApiRef.current?.discard()
+    unsavedRef.current = 0
+    setUnsavedCount(0)
+    setGuardPending(null)
+    proceed()
+  }
+
+  // Tab close / refresh
+  useEffect(() => {
+    if (unsavedCount === 0) return
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [unsavedCount])
+
+  // In-app links (sidebar etc.): intercept in the capture phase, before Next's Link handler runs
+  useEffect(() => {
+    if (unsavedCount === 0) return
+    const onClick = (e) => {
+      const a = e.target?.closest?.('a[href]')
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      if (a.target && a.target !== '_self') return
+      const url = new URL(a.href, window.location.href)
+      if (url.origin !== window.location.origin) return
+      if (url.pathname + url.search === window.location.pathname + window.location.search) return
+      e.preventDefault()
+      e.stopPropagation()
+      openGuard(() => router.push(url.pathname + url.search + url.hash))
+    }
+    document.addEventListener('click', onClick, true)
+    return () => document.removeEventListener('click', onClick, true)
+  }, [unsavedCount, router, openGuard])
+
+  // Browser back: park a sentinel history entry while there are unsaved changes; Back lands on it,
+  // we re-park and ask. Discarding/saving continues the back navigation.
+  useEffect(() => {
+    if (unsavedCount === 0) return
+    window.history.pushState(null, '', window.location.href)
+    sentinelRef.current = true
+    const onPop = () => {
+      if (unsavedRef.current === 0) return
+      window.history.pushState(null, '', window.location.href)
+      // go(-2): past the parked entry and the page itself
+openGuard(() => { sentinelRef.current = false; window.history.go(-2) })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      // changes resolved without leaving: drop the parked entry so Back behaves normally again
+      if (sentinelRef.current) { sentinelRef.current = false; window.history.back() }
+    }
+  }, [unsavedCount > 0]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [densityPref, setDensityPref] = useState(() => {
     try { const v = localStorage.getItem(DENSITY_KEY); return v === 'comfortable' || v === 'compact' ? v : 'auto' } catch { return 'auto' }
   })
@@ -1698,7 +1859,7 @@ function BCContent() {
             return (
               <div
                 key={tab.slug}
-                onClick={() => router.push(`/bc?tab=${tab.slug}`)}
+                onClick={() => { if (!active) confirmLeave(() => router.push(`/bc?tab=${tab.slug}`)) }}
                 style={{
                   background: active ? 'rgba(26,86,219,0.08)' : 'transparent',
                   color: active ? 'var(--color-info)' : 'var(--text-secondary)',
@@ -1727,22 +1888,27 @@ function BCContent() {
             >
               <DensityIcon size={16} /> {densityLabel}
             </button>
+            {unsavedCount > 0 && (
+              <span role="status" style={{ fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 10, color: 'var(--status-1hold-text)', background: 'var(--status-1hold-bg)', border: '1px solid var(--status-1hold-border)', whiteSpace: 'nowrap' }}>
+                {unsavedCount} unsaved
+              </span>
+            )}
             <button
-              onClick={() => setEditMode(v => !v)}
+              onClick={() => (editMode ? confirmLeave(() => setEditMode(false)) : setEditMode(true))}
               style={{
                 fontSize: 13, fontWeight: 700, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
                 border: editMode ? 'none' : '0.5px solid var(--border-default)',
                 background: editMode ? '#FFD60A' : 'transparent',
                 color: editMode ? '#0a1628' : 'var(--text-secondary)',
               }}
-            >{editMode ? 'Save & Exit Edit' : 'Enter Edit Mode'}</button>
+            >{editMode ? 'Exit Edit' : 'Enter Edit Mode'}</button>
           </div>
           )}
         </div>
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {activeTab === 'schedule' ? (
-            <DraftScheduleContent editMode={editMode} densityPref={densityPref} />
+            <DraftScheduleContent editMode={editMode} densityPref={densityPref} guard={guard} />
           ) : activeTab === 'bullpen' ? (
             <div style={{
               display: 'flex',
@@ -1765,6 +1931,15 @@ function BCContent() {
           )}
         </div>
       </div>
+      {guardPending && (
+        <UnsavedGuardModal
+          canSave={guardPending.canSave}
+          saving={guardSaving}
+          onSave={guardSave}
+          onDiscard={guardDiscard}
+          onKeep={() => setGuardPending(null)}
+        />
+      )}
     </div>
   )
 }
