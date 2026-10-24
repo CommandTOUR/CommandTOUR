@@ -305,7 +305,8 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           staff:staff_id(id, first_name, last_name, display_name)
         `)
         .eq('event_id', eventId)
-        .not('staff_id', 'is', null),
+        .not('staff_id', 'is', null)
+        .not('locked', 'is', true),
       event.tour_id ? supabase.from('tours').select('id, name, color').eq('id', event.tour_id).single() : Promise.resolve({ data: null }),
       supabase.from('event_rental_cars').select('*, staff:staff_id(id, first_name, last_name)').eq('event_id', eventId).order('pickup_date', { ascending: true }),
       supabase.from('event_staff_travel').select('*, staff:staff_id(id, first_name, last_name)').eq('event_id', eventId),

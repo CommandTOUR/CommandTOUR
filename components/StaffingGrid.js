@@ -8,7 +8,7 @@ import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
 import { quickToast } from '@/lib/quickToast'
-import { IconLock, IconLockOpen } from '@tabler/icons-react'
+import { IconLock, IconLockOpen, IconCheck, IconChecklist, IconChecks, IconTrash, IconCopy, IconX, IconChevronUp } from '@tabler/icons-react'
 import { useNav } from '../context/NavContext'
 import { buildNavEntry } from '../lib/navigate'
 
@@ -452,7 +452,7 @@ function LockMenu({ x, y, kind, onClose, onChoose }) {
   )
 }
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onUnlockLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, selectedAssignments, setSelectedAssignments, checkAndAssign, positionTitle }) {
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onUnlockLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, isSelected, checkAndAssign, positionTitle }) {
   const [hovered, setHovered] = useState(false)
   const [lockMenu, setLockMenu] = useState(null) // { x, y, kind: 'unlock' | 'lock' }
   const [confirmOverride, setConfirmOverride] = useState(null)
@@ -603,23 +603,19 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
   const isFilled = cellState === 'FILLED'
   const isConflicted = isFilled && !!existingConflict
 
-  const isSelectedForBulk = selectMode && !!assignment && selectedAssignments.includes(assignment.id)
+  const isSelectedForBulk = selectMode && !!isSelected
 
   const handleCellClick = (e) => {
     if (isActive) return
-    if (selectMode && isFilled && assignment) {
+    // Selection mode suspends normal clicks (menus, staff search, lock menus). Only occupied cells select.
+    if (selectMode) {
       e.stopPropagation()
-      setSelectedAssignments(prev => prev.includes(assignment.id) ? prev.filter(id => id !== assignment.id) : [...prev, assignment.id])
+      if (isFilled && assignment) onToggleSelect && onToggleSelect(e.shiftKey)
       return
     }
     if (isFilled && isConflicted) {
       e.stopPropagation()
       onConflictClick && onConflictClick(existingConflict)
-      return
-    }
-    if (isFilled && (e.ctrlKey || e.metaKey)) {
-      e.stopPropagation()
-      onToggleSelect()
       return
     }
     if (isFilled) { onActivate('menu'); return }
@@ -634,9 +630,10 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
 
   const stateBorder = null
 
-  const stateBg = (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED')
+  const stateBgBase = (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED')
     ? LOCKED_BG_COLOR
     : isLightMode ? '#ffffff' : '#1a1a1a'
+  const stateBg = isSelectedForBulk ? `color-mix(in srgb, var(--color-info) 14%, ${stateBgBase})` : stateBgBase
 
   const tooltip = hardBlockMessage
     ? hardBlockMessage
@@ -664,7 +661,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
           boxShadow: assignError
             ? 'inset 0 0 0 1px var(--color-danger)'
             : isSelectedForBulk
-            ? 'inset 0 0 0 2px var(--color-info)'
+            ? 'inset 0 0 0 2px var(--color-info), inset 0 0 0 3.5px var(--tile-trim)'
             : isDragTarget
             ? 'inset 0 0 0 1.5px var(--color-success)'
             : (!isLightMode && (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED'))
@@ -707,8 +704,13 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
 
         ) : isFilled ? (
           <React.Fragment>
+            {isSelectedForBulk && (
+              <span aria-label="Selected" style={{ position: 'absolute', top: 3, left: 4, zIndex: 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--color-info)', border: '1.5px solid var(--tile-trim)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box' }}>
+                <IconCheck size={11} stroke={3} />
+              </span>
+            )}
             <span
-              draggable={!isActive}
+              draggable={!isActive && !selectMode}
               onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart() }}
               onDragEnd={() => { onCellDragEnd && onCellDragEnd() }}
               style={{ display: 'block', width: '100%', fontSize: 14, fontWeight: nameWeight, letterSpacing: '0.01em', color: nameColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', opacity: hovered && !isActive ? 0.75 : 1, transition: 'opacity 0.15s ease', cursor: 'grab' }}>
@@ -731,7 +733,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               borderRadius: 2,
               pointerEvents: 'none',
             }} />
-            {(
+            {!selectMode && (
               <button
                 type="button"
                 title="Lock options"
@@ -933,159 +935,265 @@ function CheckboxIcon({ isChecked }) {
   )
 }
 
-function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourceEventId, tourId, assignments, onClose, onRefreshGrid }) {
+function SelectionBar({ count, busy, onSetStatus, onDelete, onCopy, onExit }) {
+  const [statusOpen, setStatusOpen] = useState(false)
+  const btn = { fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '6px 12px', borderRadius: 6, cursor: busy ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: busy ? 0.6 : 1 }
+  return (
+    <div
+      role="toolbar"
+      aria-label="Bulk actions"
+      style={{
+        position: 'fixed', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 300,
+        maxWidth: 'calc(100vw - 24px)', boxSizing: 'border-box',
+        background: 'color-mix(in srgb, var(--surface-card) 94%, transparent)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)',
+        padding: '8px 12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 8,
+        fontFamily: "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif",
+      }}
+    >
+      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{count} selected</span>
+
+      <div style={{ position: 'relative' }}>
+        <button disabled={busy} onClick={() => setStatusOpen(v => !v)} style={{ ...btn, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)' }}>
+          Set status <IconChevronUp size={14} style={{ transform: statusOpen ? 'none' : 'rotate(180deg)' }} />
+        </button>
+        {statusOpen && (
+          <div role="menu" style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, minWidth: 160, background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)', padding: 4 }}>
+            {STATUS_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                role="menuitem"
+                onClick={() => { setStatusOpen(false); onSetStatus(opt.value) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', fontFamily: 'inherit', fontSize: 14, padding: '7px 10px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
+                <span style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button disabled={busy} onClick={onCopy} style={{ ...btn, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)' }}>
+        <IconCopy size={16} /> Copy to events
+      </button>
+      <button disabled={busy} onClick={onDelete} style={{ ...btn, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)' }}>
+        <IconTrash size={16} /> Delete
+      </button>
+      <button onClick={onExit} aria-label="Exit selection" style={{ ...btn, border: '0.5px solid var(--border-strong)', background: 'transparent', color: 'var(--text-secondary)' }}>
+        <IconX size={16} /> Done
+      </button>
+    </div>
+  )
+}
+
+// Copy the selected assignments to other events. Step 1 pick events, step 2 review a preview
+// (what will be copied / skipped and why), then write. Never overwrites an occupied cell and never writes
+// into a locked one.
+function BulkCopyModal({ cells, events, tours, tpByPosTour, bookingsByStaff, getInfo, onClose, onDone }) {
+  const [step, setStep] = useState('pick') // 'pick' | 'preview'
   const [checked, setChecked] = useState([])
-  const [copying, setCopying] = useState(false)
-  const [done, setDone] = useState(null)
+  const [tourFilter, setTourFilter] = useState(() => {
+    const tourIds = [...new Set(cells.map(c => c.sourceTourId))]
+    return tourIds.length === 1 ? tourIds[0] : 'all'
+  })
+  const [yearFilter, setYearFilter] = useState('all')
+  const [writing, setWriting] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape' && !writing) onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose, writing])
 
   const today = toYMD(new Date())
-  const futureEvents = allEvents
-    .filter(e =>
-      e.load_in_date &&
-      e.load_in_date >= today &&
-      e.id !== sourceEventId &&
-      (tourId ? e.tour_id === tourId : true)
-    )
+  const years = [...new Set(events.map(e => (e.load_in_date || '').slice(0, 4)).filter(Boolean))].sort()
+  const candidates = events
+    .filter(e => e.load_in_date && e.load_in_date >= today)
+    .filter(e => tourFilter === 'all' || e.tour_id === tourFilter)
+    .filter(e => yearFilter === 'all' || e.load_in_date.startsWith(yearFilter))
     .sort((a, b) => a.load_in_date.localeCompare(b.load_in_date))
-
-  const allChecked = futureEvents.length > 0 && futureEvents.every(e => checked.includes(e.id))
+  const allChecked = candidates.length > 0 && candidates.every(e => checked.includes(e.id))
   const toggle = (id) => setChecked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-  const toggleAll = () => setChecked(allChecked ? [] : futureEvents.map(e => e.id))
+  const toggleAll = () => setChecked(allChecked ? [] : candidates.map(e => e.id))
+  const fmtD = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
 
-  const fmtDateRange = (loadIn, loadOut) => {
-    const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
-    const a = fmt(loadIn)
-    if (!loadOut || loadOut === loadIn) return a
-    return a + ' – ' + fmt(loadOut)
-  }
-
-  const handleCopy = async () => {
-    if (checked.length === 0) return
-    setCopying(true)
-    const supabase = getSupabase()
-    const rows = selectedCells.filter(c => c.staffId).map(c => {
-      const sourceAssignment = assignments.find(a =>
-        a.staff_id === c.staffId &&
-        a.tour_position_id === c.tourPositionId &&
-        a.slot_index === c.slotIndex &&
-        a.event_id === sourceEventId
-      )
-      return {
-        ...c,
-        status: sourceAssignment?.status || 'pending',
-        confirmed: sourceAssignment?.confirmed || false,
-      }
-    })
-    for (const evId of checked) {
-      const targetEvent = allEvents.find(e => e.id === evId)
-      if (!targetEvent) continue
-      for (const c of rows) {
-        const targetTp = tpByPosTour[c.positionId]?.[targetEvent.tour_id]
-        if (!targetTp) continue
-        try {
-          const { data: existing } = await supabase.from('staff_assignments')
-            .select('id, locked').eq('tour_position_id', targetTp.id).eq('slot_index', c.slotIndex).eq('event_id', evId).limit(1)
-          if (existing && existing[0]?.locked) continue // locked cells are never filled
-          if (existing && existing.length > 0) {
-            const { error } = await supabase.from('staff_assignments')
-              .update({ staff_id: c.staffId, status: c.status, confirmed: c.confirmed }).eq('id', existing[0].id)
-            if (error) console.error('[copy] update error:', error)
-          } else {
-            const { error } = await supabase.from('staff_assignments')
-              .insert([{ tour_position_id: targetTp.id, slot_index: c.slotIndex, event_id: evId, staff_id: c.staffId, status: c.status, confirmed: c.confirmed }])
-            if (error) console.error('[copy] insert error:', error)
-          }
-        } catch (err) {
-          console.error('[copy] error for', c.positionTitle, err)
-        }
+  // Build the plan: every (selected person x target event) is either copyable or skipped with a reason
+  const buildPlan = () => {
+    const ok = []
+    const skipped = []
+    const plannedSlots = new Set()
+    const plannedWeekend = new Set()
+    const targets = events.filter(e => checked.includes(e.id)).sort((a, b) => a.load_in_date.localeCompare(b.load_in_date))
+    for (const ev of targets) {
+      const wk = getWeekendDates(ev.load_in_date)
+      for (const c of cells) {
+        const label = `${c.staffName} · ${c.positionTitle}`
+        const where = `${formatLocation(ev.city, ev.state, ev.country, 'compact')} ${fmtD(ev.load_in_date)}`
+        const skip = (reason) => skipped.push({ label, where, reason })
+        if (c.sourceEventId === ev.id) { skip('Same event as the source'); continue }
+        const tp = tpByPosTour[c.positionId]?.[ev.tour_id]
+        if (!tp) { skip('Position is not on this tour'); continue }
+        const info = getInfo(c.positionId, c.slotIndex, ev)
+        if (info.state === 'FILLED') { skip('Target slot is occupied'); continue }
+        if (info.state === 'LOCKED' || info.state === 'HATCHED' || info.state === 'FULLY_LOCKED') { skip('Target slot is locked'); continue }
+        const bookings = bookingsByStaff[c.staffId] || []
+        if (bookings.some(b => b.event_id === ev.id)) { skip('Already assigned on this event'); continue }
+        const clash = bookings.find(b => b.event_id !== ev.id && b.saturday_date && b.saturday_date === wk.saturday_date)
+        if (clash) { skip(`Booked that weekend: ${clash.tour_name || 'another tour'}, ${clash.city || ''}`.trim()); continue }
+        const slotKey = tp.id + '__' + c.slotIndex + '__' + ev.id
+        if (plannedSlots.has(slotKey)) { skip('Another selected person is copied to this slot'); continue }
+        const wkKey = c.staffId + '__' + wk.saturday_date
+        if (plannedWeekend.has(wkKey)) { skip('Also being copied to another event that weekend'); continue }
+        plannedSlots.add(slotKey)
+        plannedWeekend.add(wkKey)
+        ok.push({ label, where, tp, ev, c })
       }
     }
-    setDone({ staffCount: rows.length, evCount: checked.length })
-    setCopying(false)
-    if (onRefreshGrid) onRefreshGrid()
+    return { ok, skipped }
+  }
+  const [plan, setPlan] = useState({ ok: [], skipped: [] })
+
+  const goPreview = () => { setPlan(buildPlan()); setStep('preview') }
+
+  const write = async () => {
+    setWriting(true)
+    const supabase = getSupabase()
+    let copied = 0
+    let runtimeSkipped = 0
+    for (const item of plan.ok) {
+      const { tp, ev, c } = item
+      try {
+        // re-check right before writing: never overwrite an occupied or locked cell
+        const { data: existing } = await supabase.from('staff_assignments')
+          .select('id, staff_id, locked').eq('tour_position_id', tp.id).eq('slot_index', c.slotIndex).eq('event_id', ev.id).limit(1)
+        const row = existing && existing[0]
+        if (row && (row.staff_id || row.locked)) { runtimeSkipped++; continue }
+        let error
+        if (row) {
+          ;({ error } = await supabase.from('staff_assignments').update({ staff_id: c.staffId, status: c.status, confirmed: c.confirmed }).eq('id', row.id))
+        } else {
+          ;({ error } = await supabase.from('staff_assignments').insert([{ tour_position_id: tp.id, slot_index: c.slotIndex, event_id: ev.id, staff_id: c.staffId, status: c.status, confirmed: c.confirmed }]))
+        }
+        if (error) { console.error('[bulk copy] write error:', error); runtimeSkipped++; continue }
+        // same travel side effect as a single confirmed assignment
+        if (c.status === 'confirmed' || c.confirmed) await confirmStaffMember({ supabase, eventId: ev.id, staffId: c.staffId, confirm: true })
+        copied++
+      } catch (err) {
+        console.error('[bulk copy] error', err)
+        runtimeSkipped++
+      }
+    }
+    setWriting(false)
+    onDone({ copied, skipped: plan.skipped.length + runtimeSkipped })
   }
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '24px 0', width: 560, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 64px rgba(0,0,0,0.2)', fontFamily: 'inherit' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginBottom: 16 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Copy to Events</div>
-          <div onClick={onClose} style={{ fontSize: 24, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</div>
-        </div>
-        {done != null ? (
-          <div style={{ textAlign: 'center', padding: '28px 24px', color: '#33FF99', fontSize: 17 }}>
-            ✓ {done.staffCount} staff copied to {done.evCount} event{done.evCount === 1 ? '' : 's'}
-          </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', height: 36, borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-strong)', flexShrink: 0 }}>
-              <div onClick={toggleAll} style={{ cursor: 'pointer' }}>
-                <CheckboxIcon isChecked={allChecked} />
-              </div>
-              <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 130 }}>Dates</span>
-              <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}>City</span>
-              <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: 140, textAlign: 'right' }}>Tour</span>
+  const labelCss = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }
+  const selectCss = { fontFamily: 'inherit', fontSize: 14, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-input)', color: 'var(--text-primary)', cursor: 'pointer' }
+
+  return ReactDOM.createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: 16, fontFamily: "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif" }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !writing) onClose() }}
+    >
+      <div role="dialog" aria-modal="true" style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '20px 0', width: 600, maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', color: 'var(--text-primary)', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 12px' }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>Copy to events</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              {cells.length} assignment{cells.length === 1 ? '' : 's'} · same position, slot and status
             </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {futureEvents.length === 0 && (
-                <div style={{ color: 'var(--text-muted)', fontSize: 16, textAlign: 'center', padding: '32px 0' }}>No upcoming events to copy to</div>
-              )}
-              {futureEvents.map(ev => {
+          </div>
+          <button onClick={onClose} disabled={writing} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}><IconX size={20} /></button>
+        </div>
+
+        {step === 'pick' ? (
+          <>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', padding: '0 20px 10px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={labelCss}>Tour</span>
+                <select value={tourFilter} onChange={e => setTourFilter(e.target.value)} style={selectCss}>
+                  <option value="all">All tours</option>
+                  {tours.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={labelCss}>Year</span>
+                <select value={yearFilter} onChange={e => setYearFilter(e.target.value)} style={selectCss}>
+                  <option value="all">All years</option>
+                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </label>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                <button onClick={toggleAll} style={{ ...selectCss, color: 'var(--color-info)', border: '0.5px solid var(--color-info)', background: 'transparent' }}>{allChecked ? 'None' : 'Select all'}</button>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-default)', minHeight: 120 }}>
+              {candidates.length === 0 && <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 15 }}>No upcoming events match</div>}
+              {candidates.map(ev => {
                 const tour = tours.find(t => t.id === ev.tour_id)
-                const tourColor = tour?.color || '#33FF99'
                 const isChecked = checked.includes(ev.id)
                 return (
-                  <div key={ev.id} onClick={() => toggle(ev.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, height: 44, padding: '0 24px', cursor: 'pointer', borderBottom: '0.5px solid var(--border-default)', borderLeft: isChecked ? '3px solid #33FF99' : '3px solid transparent', background: isChecked ? 'rgba(51,255,153,0.06)' : 'transparent', transition: 'background 0.1s' }}
-                    onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-                    onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = 'transparent' }}>
+                  <div
+                    key={ev.id}
+                    onClick={() => toggle(ev.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44, padding: '6px 20px', cursor: 'pointer', borderBottom: '0.5px solid var(--border-default)', borderLeft: isChecked ? '3px solid var(--color-info)' : '3px solid transparent', background: isChecked ? 'color-mix(in srgb, var(--color-info) 8%, transparent)' : 'transparent' }}
+                  >
                     <CheckboxIcon isChecked={isChecked} />
-                    <span style={{ fontSize: 15, color: 'var(--text-primary)', minWidth: 130, whiteSpace: 'nowrap' }}>{fmtDateRange(ev.load_in_date, ev.load_out_date)}</span>
-                    <span style={{ fontSize: 15, color: 'var(--text-primary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</span>
-                    {tour && <span style={{ fontSize: 14, fontWeight: 600, color: tourColor, minWidth: 140, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tour.name}</span>}
+                    <span style={{ fontSize: 14, minWidth: 64, whiteSpace: 'nowrap' }}>{fmtD(ev.load_in_date)}</span>
+                    <span style={{ fontSize: 14, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatLocation(ev.city, ev.state, ev.country, 'compact')}</span>
+                    {tour && <span style={{ fontSize: 13, fontWeight: 600, color: tour.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{tour.name}</span>}
                   </div>
                 )
               })}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0', borderTop: '0.5px solid var(--border-default)', flexShrink: 0 }}>
-              <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{checked.length} event{checked.length === 1 ? '' : 's'} selected</span>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={onClose} style={{ fontFamily: 'inherit', fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-                <button onClick={handleCopy} disabled={copying || checked.length === 0}
-                  style={{ fontFamily: 'inherit', fontSize: 15, padding: '8px 18px', borderRadius: 8, border: 'none', background: checked.length === 0 ? 'rgba(255,255,255,0.15)' : '#33FF99', color: checked.length === 0 ? '#64748b' : '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', fontWeight: 600 }}>
-                  {copying ? 'Copying…' : 'Copy'}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 20px 0', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{checked.length} event{checked.length === 1 ? '' : 's'} selected</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={onClose} style={{ ...selectCss, color: 'var(--text-primary)' }}>Cancel</button>
+                <button onClick={goPreview} disabled={checked.length === 0} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: checked.length === 0 ? 'default' : 'pointer', opacity: checked.length === 0 ? 0.5 : 1 }}>Review</button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ flex: 1, overflowY: 'auto', borderTop: '0.5px solid var(--border-default)', borderBottom: '0.5px solid var(--border-default)', padding: '10px 20px', minHeight: 120 }}>
+              <div style={{ ...labelCss, marginBottom: 6 }}>Will copy ({plan.ok.length})</div>
+              {plan.ok.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 10 }}>Nothing can be copied.</div>}
+              {plan.ok.map((it, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14, padding: '4px 0' }}>
+                  <span style={{ fontWeight: 600 }}>{it.label}</span>
+                  <span style={{ color: 'var(--text-secondary)', textAlign: 'right' }}>{it.where}</span>
+                </div>
+              ))}
+              {plan.skipped.length > 0 && (
+                <>
+                  <div style={{ ...labelCss, margin: '14px 0 6px', color: 'var(--status-1hold-text)' }}>Skipped ({plan.skipped.length})</div>
+                  {plan.skipped.map((it, i) => (
+                    <div key={i} style={{ fontSize: 14, padding: '4px 0' }}>
+                      <div><span style={{ fontWeight: 600 }}>{it.label}</span> <span style={{ color: 'var(--text-secondary)' }}>→ {it.where}</span></div>
+                      <div style={{ fontSize: 13, color: 'var(--status-1hold-text)' }}>{it.reason}</div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 20px 0', flexWrap: 'wrap' }}>
+              <button onClick={() => setStep('pick')} disabled={writing} style={{ ...selectCss, color: 'var(--text-primary)' }}>Back</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={onClose} disabled={writing} style={{ ...selectCss, color: 'var(--text-primary)' }}>Cancel</button>
+                <button onClick={write} disabled={writing || plan.ok.length === 0} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '7px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: (writing || plan.ok.length === 0) ? 'default' : 'pointer', opacity: (writing || plan.ok.length === 0) ? 0.5 : 1 }}>
+                  {writing ? 'Copying…' : `Copy ${plan.ok.length}`}
                 </button>
               </div>
             </div>
           </>
         )}
       </div>
-    </div>
-  )
-}
-
-// ── BULK ACTION BAR ────────────────────────────────────────────────────────
-
-function BulkActionBar({ count, onSetStatus, onCopyToEvents, onClear }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: 'var(--surface-raised)', border: '1px solid var(--border-stronger)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.15)', whiteSpace: 'nowrap' }}>
-      <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{count} selected</span>
-      <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-      {STATUS_OPTIONS.map(opt => (
-        <button key={opt.value} onClick={() => onSetStatus(opt.value)} style={{ fontFamily: 'inherit', fontSize: 14, padding: '5px 12px', borderRadius: 6, border: '0.5px solid ' + opt.border, background: opt.pill, color: opt.color, cursor: 'pointer' }}>
-          {opt.label}
-        </button>
-      ))}
-      <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-      <button onClick={onCopyToEvents} style={{ fontFamily: 'inherit', fontSize: 14, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-success)', background: 'transparent', color: 'var(--color-success)', cursor: 'pointer' }}>
-        Copy to Events
-      </button>
-      <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-      <button onClick={onClear} style={{ fontFamily: 'inherit', fontSize: 14, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--border-stronger)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-        Clear
-      </button>
-      <button onClick={onClear} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: '0 2px', fontFamily: 'inherit' }}>×</button>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -1231,8 +1339,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const [focusedCell, setFocusedCell] = useState(null) // { positionId, slotIndex, eventId } | null
   const [selectedKeys, setSelectedKeys] = useState(new Set())
   const [selectMode, setSelectMode] = useState(false)
-  const [selectedAssignments, setSelectedAssignments] = useState([])
-  const [bulkStatusPickerOpen, setBulkStatusPickerOpen] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkCopy, setBulkCopy] = useState(null) // snapshot of selected cells while the copy modal is open
+  const selectAnchor = useRef(null)
+  const selectedKeysRef = useRef(new Set())
+  const assignmentsRef = useRef([])
   const [conflictWizard, setConflictWizard] = useState(null)
   // Shape: {
   //   incomingStaff: { id, first_name, last_name },
@@ -1243,7 +1354,6 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   // }
   const [cellColors, setCellColors] = useState({})
   const [rightClickMenu, setRightClickMenu] = useState(null)
-  const [copyModalOpen, setCopyModalOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [draggedCell, setDraggedCell] = useState(null)
   const [dragOverCell, setDragOverCell] = useState(null)
@@ -1591,10 +1701,11 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   // ── WRITE OPERATIONS ─────────────────────────────────────────────────────
 
   const clearAssignment = async (tp, slotIndex, event, resolvedAssignment) => {
-    if (!resolvedAssignment) return
+    if (!resolvedAssignment) return false
     const supabase = getSupabase()
     if (resolvedAssignment.event_id === event.id) {
-      await supabase.from('staff_assignments').delete().eq('id', resolvedAssignment.id)
+      const { error } = await supabase.from('staff_assignments').delete().eq('id', resolvedAssignment.id)
+      if (error) { console.error('clearAssignment failed:', error); return false }
       setAssignments(prev => prev.filter(a => a.id !== resolvedAssignment.id))
       if (tp && tp.quantity_needed === 0) {
         const { data: remaining } = await supabase
@@ -1612,8 +1723,10 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       const { data, error } = await supabase.from('staff_assignments')
         .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
         .select().single()
-      if (!error && data) setAssignments(prev => [...prev, data])
+      if (error) { console.error('clearAssignment failed:', error); return false }
+      if (data) setAssignments(prev => [...prev, data])
     }
+    return true
   }
 
   const doAssign = async (tp, slotIndex, event, staffMember, removeFromEventId) => {
@@ -1669,7 +1782,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   }
 
   const applyStatusChange = async (tp, slotIndex, event, resolvedAssignment, status) => {
-    if (!resolvedAssignment) return
+    if (!resolvedAssignment) return false
     const supabase = getSupabase()
     const confirmed = status === 'confirmed'
     if (resolvedAssignment.event_id === event.id) {
@@ -1681,13 +1794,13 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       if (error) {
         setAssignments(prev => prev.map(a => a.id === resolvedAssignment.id ? { ...a, status: prevStatus, confirmed: prevConfirmed } : a))
         quickToast('Could not save status. Reverted.')
-        return
+        return false
       }
     } else {
       const { data, error } = await supabase.from('staff_assignments')
         .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: resolvedAssignment.staff_id, event_id: event.id, status, confirmed }])
         .select().single()
-      if (error) { quickToast('Could not save status. Reverted.'); return }
+      if (error) { quickToast('Could not save status. Reverted.'); return false }
       if (data) setAssignments(prev => [...prev, { ...data, staff: resolvedAssignment.staff }])
     }
     const staffId = resolvedAssignment.staff_id
@@ -1699,6 +1812,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         confirm: status === 'confirmed'
       })
     }
+    return true
   }
 
   const checkAndAssign = async (incomingStaff, targetTourPositionId, targetSlotIndex, targetEventId, targetCity, positionTitleArg, currentAssignmentId = null) => {
@@ -1963,35 +2077,125 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     await doAssign(target.tp, target.slotIndex, target.event, source.assignment.staff)
   }
 
-  const handleBulkStatus = async (status) => {
-    if (selectedKeys.size === 0) return
-    for (const key of selectedKeys) {
-      const [tpId, slotIndexStr, eventId] = key.split('__')
-      const tp = tourPositionsById[tpId]
-      const event = eventsById[eventId]
-      const slotIndex = Number(slotIndexStr)
-      const resolved = resolveAssignment(tpId, slotIndex, eventId)
-      if (tp && event && resolved) await applyStatusChange(tp, slotIndex, event, resolved, status)
-    }
-    setSelectedKeys(new Set())
+  // ── SELECTION + BULK ACTIONS ─────────────────────────────────────────────
+  // Handlers read the current selection and assignments through refs so they never act on a stale render.
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedKeys(new Set()); selectAnchor.current = null }
+
+  // Only occupied cells are selectable (locked/empty never are). Returns the cell key or null.
+  const selectableKey = (position, slotIndex, ev) => {
+    const info = getCellInfo(position, slotIndex, ev)
+    return info.state === 'FILLED' && info.tp ? cellKey(info.tp.id, slotIndex, ev.id) : null
   }
 
-  const applyBulkAssignmentStatus = async (status) => {
-    if (selectedAssignments.length === 0) return
-    const supabase = getSupabase()
-    const confirmed = status === 'confirmed'
-    await supabase.from('staff_assignments').update({ status, confirmed }).in('id', selectedAssignments)
-    setAssignments(prev => prev.map(a => selectedAssignments.includes(a.id) ? { ...a, status, confirmed } : a))
-    setSelectedAssignments([])
-    setBulkStatusPickerOpen(false)
-  }
+  const rowIndexOf = (position, slotIndex) => visiblePositionRows.findIndex(r => r.position.id === position.id && r.slotIndex === slotIndex)
 
-  const toggleSelectKey = (key) => {
+  const handleSelectClick = (position, slotIndex, ev, shift) => {
+    const r = rowIndexOf(position, slotIndex)
+    const c = filteredEvents.findIndex(e => e.id === ev.id)
+    const key = selectableKey(position, slotIndex, ev)
+    if (!key) return
+    const anchor = selectAnchor.current
     setSelectedKeys(prev => {
       const next = new Set(prev)
-      if (next.has(key)) next.delete(key); else next.add(key)
+      if (shift && anchor && (anchor.r === r || anchor.c === c)) {
+        const keys = []
+        if (anchor.r === r) {
+          const [lo, hi] = anchor.c < c ? [anchor.c, c] : [c, anchor.c]
+          for (let i = lo; i <= hi; i++) { const k = selectableKey(position, slotIndex, filteredEvents[i]); if (k) keys.push(k) }
+        } else {
+          const [lo, hi] = anchor.r < r ? [anchor.r, r] : [r, anchor.r]
+          for (let i = lo; i <= hi; i++) { const row = visiblePositionRows[i]; const k = row && selectableKey(row.position, row.slotIndex, ev); if (k) keys.push(k) }
+        }
+        keys.forEach(k => next.add(k))
+      } else if (next.has(key)) next.delete(key)
+      else next.add(key)
       return next
     })
+    selectAnchor.current = { r, c }
+  }
+
+  // "Select all" affordances: toggle every occupied cell of one event column / one position row
+  const toggleKeys = (keys) => {
+    if (keys.length === 0) return
+    setSelectedKeys(prev => {
+      const next = new Set(prev)
+      const allIn = keys.every(k => next.has(k))
+      keys.forEach(k => allIn ? next.delete(k) : next.add(k))
+      return next
+    })
+  }
+  const selectAllInEvent = (ev) => toggleKeys(visiblePositionRows.map(r => selectableKey(r.position, r.slotIndex, ev)).filter(Boolean))
+  const selectAllInRow = (position, slotIndex) => toggleKeys(filteredEvents.map(ev => selectableKey(position, slotIndex, ev)).filter(Boolean))
+
+  // Resolve the current selection to live, occupied cells
+  const collectSelected = () => {
+    const out = []
+    for (const key of selectedKeysRef.current) {
+      const [tpId, slotStr, eventId] = key.split('__')
+      const tp = tourPositionsById[tpId]
+      const event = eventsById[eventId]
+      const position = tp && positions.find(p => p.id === tp.position_id)
+      if (!tp || !event || !position) continue
+      const info = getCellInfo(position, Number(slotStr), event)
+      if (info.state !== 'FILLED' || !info.assignment?.staff_id) continue
+      out.push({ key, tp, event, position, slotIndex: Number(slotStr), assignment: info.assignment })
+    }
+    return out
+  }
+
+  const bulkSetStatus = async (status) => {
+    const items = collectSelected()
+    if (items.length === 0) return
+    setBulkBusy(true)
+    let ok = 0, failed = 0
+    // same path as a single status change, so Confirmed creates arrival/departure rows and others flag them
+    for (const it of items) {
+      const done = await applyStatusChange(it.tp, it.slotIndex, it.event, it.assignment, status)
+      done ? ok++ : failed++
+    }
+    setBulkBusy(false)
+    setSelectedKeys(new Set())
+    if (failed) quickToast(`Status updated on ${ok}, ${failed} failed`)
+    else showToast(`Status updated on ${ok}`)
+    reload()
+  }
+
+  const bulkDelete = async () => {
+    const items = collectSelected()
+    if (items.length === 0) return
+    const cities = [...new Set(items.map(it => formatLocation(it.event.city, it.event.state, it.event.country, 'compact')))]
+    const where = cities.length <= 3 ? cities.join('; ') : `${cities.slice(0, 3).join('; ')} and ${cities.length - 3} more`
+    if (!window.confirm(`Remove ${items.length} assignment${items.length === 1 ? '' : 's'} from ${cities.length} event${cities.length === 1 ? '' : 's'} (${where})? Locked cells and other cells are not touched.`)) return
+    setBulkBusy(true)
+    let ok = 0, failed = 0
+    for (const it of items) {
+      // same removal as a single delete (an event-specific row is deleted; a tour-wide default is cleared for this event only)
+      const done = await clearAssignment(it.tp, it.slotIndex, it.event, it.assignment)
+      done ? ok++ : failed++
+    }
+    setBulkBusy(false)
+    setSelectedKeys(new Set())
+    if (failed) quickToast(`Removed ${ok}, ${failed} failed`)
+    else showToast(`Removed ${ok}`)
+    reload()
+  }
+
+  const openBulkCopy = () => {
+    const items = collectSelected()
+    if (items.length === 0) return
+    setBulkCopy(items.map(it => ({
+      key: it.key,
+      positionId: it.position.id,
+      positionTitle: it.position.title,
+      slotIndex: it.slotIndex,
+      staffId: it.assignment.staff_id,
+      staffName: staffDisplayName(it.assignment.staff) || 'Staff',
+      status: it.assignment.status || 'pending',
+      confirmed: !!it.assignment.confirmed,
+      sourceEventId: it.event.id,
+      sourceTourId: it.event.tour_id,
+    })))
   }
 
   const handleSetCellBg = (key, bg) => setCellColors(prev => ({ ...prev, [key]: { ...prev[key], bg } }))
@@ -2146,6 +2350,17 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCell, focusedCell, orderedEvents, visiblePositionRows, assignmentIndex, tpByPosTour, selectedKeys])
 
+  // keep refs current for bulk handlers
+  useEffect(() => { selectedKeysRef.current = selectedKeys; assignmentsRef.current = assignments })
+
+  // Escape leaves selection mode (unless the copy modal is open; it handles its own Escape)
+  useEffect(() => {
+    if (!selectMode || bulkCopy) return
+    const onKey = (e) => { if (e.key === 'Escape') { setSelectMode(false); setSelectedKeys(new Set()); selectAnchor.current = null } }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [selectMode, bulkCopy])
+
   // ── RENDER ────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -2182,59 +2397,37 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const TOP_VENUE = TOP_STATUS + H4
   const TOTAL_HDR = TOP_VENUE + H5
 
-  const selectedCellsForCopy = Array.from(selectedKeys).map(key => {
-    const [tpId, slotIndexStr, eventId] = key.split('__')
-    const slotIndex = Number(slotIndexStr)
-    const tp = tourPositionsById[tpId]
-    const resolved = resolveAssignment(tpId, slotIndex, eventId)
-    return { positionId: tp?.position_id, tourPositionId: tpId, slotIndex, staffId: resolved?.staff_id || null }
-  }).filter(c => c.staffId && c.positionId)
-
   let globalRowIndex = 0
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: 'transparent', overflow: 'hidden' }}>
-      {selectedKeys.size > 0 && (
-        <BulkActionBar count={selectedKeys.size} onSetStatus={handleBulkStatus} onCopyToEvents={() => setCopyModalOpen(true)} onClear={() => setSelectedKeys(new Set())} />
+      {selectMode && selectedKeys.size > 0 && (
+        <SelectionBar
+          count={selectedKeys.size}
+          busy={bulkBusy}
+          onSetStatus={bulkSetStatus}
+          onDelete={bulkDelete}
+          onCopy={openBulkCopy}
+          onExit={exitSelectMode}
+        />
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 0 10px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, padding: '0 0 10px', flexShrink: 0 }}>
         <button
-          onClick={() => { setSelectMode(v => !v); setSelectedAssignments([]); setBulkStatusPickerOpen(false) }}
+          onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+          aria-pressed={selectMode}
           style={{
             fontFamily: 'inherit', fontSize: 13, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
             border: selectMode ? 'none' : '0.5px solid var(--border-default)',
             background: selectMode ? '#FFD60A' : 'transparent',
             color: selectMode ? '#0a1628' : 'var(--text-secondary)',
-            fontWeight: selectMode ? 700 : 400,
+            fontWeight: selectMode ? 700 : 500,
           }}
-        >{selectMode ? 'Exit Select' : 'Select Multiple'}</button>
-
+        ><IconChecklist size={16} /> {selectMode ? 'Done selecting' : 'Select'}</button>
         {selectMode && (
-          <>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedAssignments.length} selected</span>
-            {selectedAssignments.length > 0 && (
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setBulkStatusPickerOpen(v => !v)}
-                  style={{ fontFamily: 'inherit', fontSize: 13, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
-                >Update Status →</button>
-                {bulkStatusPickerOpen && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 400, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden', minWidth: 150 }}>
-                    {STATUS_OPTIONS.map(opt => (
-                      <div key={opt.value}
-                        onClick={() => applyBulkAssignmentStatus(opt.value)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 14, color: opt.color }}>{opt.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            {selectedKeys.size > 0 ? `${selectedKeys.size} selected` : 'Tap occupied cells. Shift-click selects a range. Esc to exit.'}
+          </span>
         )}
       </div>
       {orderedEvents.length === 0 ? (
@@ -2303,6 +2496,12 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
               <div style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLightMode ? '#555555' : '#8899aa', position: 'sticky', left: 0, zIndex: 10, boxShadow: isLightMode ? '2px 0 0 0 #000000, 0 0.75px 0 0 #000000' : '2px 0 0 0 #64748b, 0 0.75px 0 0 #64748b' }}>CITY</div>
               {filteredEvents.map((ev, i) => (
                 <div key={ev.id} style={{ backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', height: H3, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: isLastInGroup(ev) && i < filteredEvents.length-1 ? (isLightMode ? '3px solid #000000' : '3px solid #64748b') : (isLightMode ? '0.75px solid #000000' : '0.75px solid #64748b'), boxShadow: '0 0.75px 0 0 #000000', overflow: 'hidden' }}>
+                  {selectMode && (
+                    <button type="button" title="Select everyone in this event" aria-label="Select everyone in this event" onClick={() => selectAllInEvent(ev)}
+                      style={{ background: 'none', border: 'none', padding: 2, marginRight: 4, cursor: 'pointer', display: 'flex', color: 'var(--color-info)' }}>
+                      <IconChecks size={16} />
+                    </button>
+                  )}
                   <span onClick={() => router.push(`/tours/${ev.tour_id}/events/${ev.id}`)} style={{ fontSize: 14, fontWeight: 500, color: isLightMode ? '#111111' : '#cccccc', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}
                     onMouseEnter={e => { e.currentTarget.style.opacity = '0.6'; e.currentTarget.style.textDecoration = 'underline' }}
                     onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.textDecoration = 'none' }}>
@@ -2388,6 +2587,12 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                         return (
                         <tr key={position.id + '__' + slotIndex} className="sg-row">
                           <td style={{ position: 'sticky', left: 0, zIndex: 30, width: LEFT_WIDTH, minWidth: LEFT_WIDTH, height: ROW_HEIGHT, padding: '0 8px 0 12px', backgroundColor: isLightMode ? '#f0f0f0' : '#1e2a3a', borderBottom: 'none', borderLeft: 'none', borderRight: isLightMode ? '3px solid #000000' : '3px solid #64748b', fontSize: 14, fontWeight: 500, color: isLightMode ? '#111111' : '#e0e0e0', overflow: 'visible', willChange: 'transform', transform: 'translateZ(0)' }}>
+                            {selectMode && (
+                              <button type="button" title="Select this position across events" aria-label="Select this position across events" onClick={() => selectAllInRow(position, slotIndex)}
+                                style={{ background: 'none', border: 'none', padding: 2, marginRight: 4, cursor: 'pointer', display: 'flex', color: 'var(--color-info)', flexShrink: 0 }}>
+                                <IconChecks size={16} />
+                              </button>
+                            )}
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{position.title}</span>
                             <div style={{ position: 'absolute', top: 0, right: -2, width: 2, height: '100%', background: isLightMode ? '#000000' : 'rgba(255,255,255,0.15)', zIndex: 26 }} />
                           </td>
@@ -2438,10 +2643,8 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                                 }}
                                 onCloseActive={() => setActiveCell(null)}
                                 isSelected={isSelectedCell}
-                                onToggleSelect={() => key && toggleSelectKey(key)}
+                                onToggleSelect={(shift) => handleSelectClick(position, slotIndex, ev, shift)}
                                 selectMode={selectMode}
-                                selectedAssignments={selectedAssignments}
-                                setSelectedAssignments={setSelectedAssignments}
                                 onRightClick={(x, y) => key && setRightClickMenu({ x, y, key })}
                                 cellColor={key ? cellColors[key] : null}
                                 allBookings={bookingsByStaff}
@@ -2475,6 +2678,8 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                 })}
               </tbody>
             </table>
+            {/* keep the last rows clear of the floating selection bar */}
+            <div style={{ height: selectMode && selectedKeys.size > 0 ? 110 : 0 }} />
           </div>
           <div style={{
             position: 'absolute',
@@ -2496,17 +2701,22 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         />
       )}
 
-      {copyModalOpen && (
-        <CopyToEventsModal
-          selectedCells={selectedCellsForCopy}
-          tpByPosTour={tpByPosTour}
-          allEvents={events}
+      {bulkCopy && (
+        <BulkCopyModal
+          cells={bulkCopy}
+          events={events}
           tours={tours}
-          sourceEventId={focusedCell?.eventId}
-          tourId={tourId}
-          assignments={assignments}
-          onClose={() => { setCopyModalOpen(false); setSelectedKeys(new Set()) }}
-          onRefreshGrid={() => { reload(); showToast('Staff copied successfully') }}
+          tpByPosTour={tpByPosTour}
+          bookingsByStaff={bookingsByStaff}
+          getInfo={(positionId, slot, ev) => getCellInfo(positions.find(p => p.id === positionId), slot, ev)}
+          onClose={() => setBulkCopy(null)}
+          onDone={({ copied, skipped }) => {
+            setBulkCopy(null)
+            setSelectedKeys(new Set())
+            if (copied === 0 && skipped > 0) quickToast(`Copied 0, skipped ${skipped}`, 'info')
+            else showToast(`Copied ${copied}, skipped ${skipped}`)
+            reload()
+          }}
         />
       )}
 

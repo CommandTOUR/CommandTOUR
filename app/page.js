@@ -122,7 +122,8 @@ export default function Dashboard() {
           .select('id', { count: 'exact', head: true })
           .eq('confirmed', false)
           .eq('status', 'pending')
-          .not('staff_id', 'is', null),
+          .not('staff_id', 'is', null)
+          .not('locked', 'is', true), // locked cells are never staff
 
         supabase
           .from('events')

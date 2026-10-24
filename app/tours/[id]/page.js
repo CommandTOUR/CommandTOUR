@@ -409,6 +409,7 @@ export default function TourPage() {
             .eq('confirmed', false)
             .eq('status', 'pending')
             .not('staff_id', 'is', null)
+            .not('locked', 'is', true)
           setUnconfirmedStaffCount(count || 0)
 
           const { data: travelRows } = await supabase

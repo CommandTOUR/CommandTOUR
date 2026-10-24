@@ -372,7 +372,8 @@ export default function EventPage() {
             )
           `)
           .eq('event_id', eventId)
-          .not('staff_id', 'is', null),
+          .not('staff_id', 'is', null)
+          .not('locked', 'is', true),
         supabase.from('event_travel_arrivals').select('staff_id, travel_date, travel_type').eq('event_id', eventId),
         supabase.from('event_staff_travel').select('*').eq('event_id', eventId),
       ])
@@ -607,6 +608,7 @@ export default function EventPage() {
       `)
       .eq('event_id', eventId)
       .not('staff_id', 'is', null)
+      .not('locked', 'is', true)
     const assignedRows = (data || [])
       .map(r => ({
         id: r.id,
