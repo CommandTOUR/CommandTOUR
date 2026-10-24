@@ -75,6 +75,13 @@
   --tile-trim: #0a1628;
   --tile-border: 1.5px solid var(--tile-trim);
 
+  /* Side nav: blue trim with a soft blue underglow (softer in light mode) */
+  --nav-trim: var(--color-info);
+  --nav-border: 1.5px solid var(--nav-trim);
+  --nav-glow: 0 0 0 1px color-mix(in srgb, var(--color-info) 25%, transparent),
+              0 0 7px color-mix(in srgb, var(--color-info) 25%, transparent),
+              0 0 16px color-mix(in srgb, var(--color-info) 14%, transparent);
+
   /* Glass tile */
   --glass-tile-bg: rgba(255, 255, 255, 0.72);
   --glass-tile-hover: rgba(0, 0, 0, 0.04);
@@ -85,6 +92,9 @@
 
 [data-theme="dark"] {
   --tile-trim: rgba(255, 255, 255, 0.7);
+  --nav-glow: 0 0 0 1px color-mix(in srgb, var(--color-info) 40%, transparent),
+              0 0 9px color-mix(in srgb, var(--color-info) 55%, transparent),
+              0 0 21px color-mix(in srgb, var(--color-info) 30%, transparent);
   --page-bg: #1a1a1a;
   --surface-nav: #141414;
   --surface-card: #0d0d0f;
