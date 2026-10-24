@@ -8,7 +8,7 @@ import { formatLocation } from '@/lib/locationFormat'
 import { checkStaffConflict } from '@/lib/checkStaffConflict'
 import { confirmStaffMember } from '@/lib/confirmStaffMember'
 import { quickToast } from '@/lib/quickToast'
-import { IconLock } from '@tabler/icons-react'
+import { IconLock, IconLockOpen } from '@tabler/icons-react'
 import { useNav } from '../context/NavContext'
 import { buildNavEntry } from '../lib/navigate'
 
@@ -315,7 +315,7 @@ function InlineStatusMenu({ assignment, onSetStatus, onRemove, sameWeekendEvents
           </button>
           {showMove && (
             <div style={{ padding: '4px 8px 8px' }}>
-              {sameWeekendEvents.map(ev => {
+              {sameWeekendEvents.filter(ev => !getAssignment(tp.id, slotIndex, ev.id)?.locked).map(ev => {
                 const otherAssignment = getAssignment(tp.id, slotIndex, ev.id)
                 return (
                   <div key={ev.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', marginBottom: 6 }}>
@@ -411,8 +411,50 @@ function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }
 
 // ── GRID CELL ──────────────────────────────────────────────────────────────
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, selectedAssignments, setSelectedAssignments, checkAndAssign, positionTitle }) {
+// Small popover with a single deliberate action: Unlock (locked cell) or Lock (unlocked, empty cell)
+function LockMenu({ x, y, kind, onClose, onChoose }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const onDown = (e) => { if (!ref.current?.contains(e.target)) onClose() }
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    ref.current?.querySelector('button')?.focus()
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onClose, true)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onClose, true)
+    }
+  }, [onClose])
+  const Icon = kind === 'lock' ? IconLock : IconLockOpen
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      onClick={e => e.stopPropagation()}
+      style={{
+        position: 'fixed', left: Math.min(x, window.innerWidth - 150), top: Math.min(y, window.innerHeight - 60), zIndex: 10001,
+        background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)',
+        boxShadow: 'var(--glass-tile-shadow)', padding: 4, fontFamily: "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif",
+      }}
+    >
+      <button
+        role="menuitem"
+        onClick={onChoose}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '7px 12px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+      >
+        <Icon size={16} color="var(--color-info)" /> {kind === 'lock' ? 'Lock' : 'Unlock'}
+      </button>
+    </div>
+  )
+}
+
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onUnlockLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, selectedAssignments, setSelectedAssignments, checkAndAssign, positionTitle }) {
   const [hovered, setHovered] = useState(false)
+  const [lockMenu, setLockMenu] = useState(null) // { x, y, kind: 'unlock' | 'lock' }
   const [confirmOverride, setConfirmOverride] = useState(null)
   const [assignError, setAssignError] = useState(false)
   const [hardBlockMessage, setHardBlockMessage] = useState(null)
@@ -581,15 +623,18 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
       return
     }
     if (isFilled) { onActivate('menu'); return }
-    if (cellState === 'HATCHED') return
-    if (cellState === 'FULLY_LOCKED') return
+    // A plain click on a locked cell only opens a small menu; unlocking is a deliberate second step
+    if (cellState === 'HATCHED' || cellState === 'FULLY_LOCKED' || cellState === 'LOCKED') {
+      setLockMenu({ x: e.clientX, y: e.clientY, kind: 'unlock' })
+      return
+    }
     // EMPTY
     onActivate('edit')
   }
 
   const stateBorder = null
 
-  const stateBg = (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED')
+  const stateBg = (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED')
     ? LOCKED_BG_COLOR
     : isLightMode ? '#ffffff' : '#1a1a1a'
 
@@ -597,7 +642,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
     ? hardBlockMessage
     : cellState === 'FULLY_LOCKED'
     ? `This position isn't configured for ${tourName || 'this tour'}. Add it in Edit Tour.`
-    : cellState === 'HATCHED' ? 'Click to unlock' : undefined
+    : (cellState === 'HATCHED' || cellState === 'LOCKED') ? 'Locked. Click for options.' : undefined
 
   return (
     <React.Fragment>
@@ -622,7 +667,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
             ? 'inset 0 0 0 2px var(--color-info)'
             : isDragTarget
             ? 'inset 0 0 0 1.5px var(--color-success)'
-            : (!isLightMode && (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED'))
+            : (!isLightMode && (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED'))
             ? 'inset 0 0 0 1px rgba(255,255,255,0.08)'
             : 'none',
           zIndex: isActive ? 300 : (isFocused ? 5 : 1),
@@ -632,7 +677,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
         onClick={handleCellClick}
         onContextMenu={staffName ? (e) => { e.preventDefault(); onRightClick(e.clientX, e.clientY) } : undefined}
         onDragOver={e => {
-          if (cellState === 'FULLY_LOCKED') return
+          if (cellState === 'FULLY_LOCKED' || cellState === 'LOCKED') return
           e.preventDefault()
           e.dataTransfer.dropEffect = 'move'
           onDragEnterCell && onDragEnterCell()
@@ -640,7 +685,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
         onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) { onDragLeaveCell && onDragLeaveCell() } }}
         onDrop={e => {
           e.preventDefault()
-          if (cellState === 'FULLY_LOCKED') return
+          if (cellState === 'FULLY_LOCKED' || cellState === 'LOCKED') return
           if (cellState === 'HATCHED') { onDropOnLocked && onDropOnLocked() }
           else { onCellDrop && onCellDrop() }
         }}>
@@ -672,14 +717,9 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
             </span>
           </React.Fragment>
 
-        ) : (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED') ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: cellState === 'HATCHED' ? 'pointer' : 'default' }}
-            onClick={e => {
-              e.stopPropagation()
-              if (cellState === 'HATCHED') onUnlockHatched && onUnlockHatched()
-              else onUnlockFullyLocked && onUnlockFullyLocked()
-            }}>
-            <IconLock size={13} color={cellState === 'HATCHED' ? 'var(--text-muted)' : 'var(--text-muted)'} style={{ opacity: 0.4 }} />
+        ) : (cellState === 'FULLY_LOCKED' || cellState === 'HATCHED' || cellState === 'LOCKED') ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <IconLock size={14} color="var(--text-secondary)" style={{ opacity: 0.6 }} aria-label="Locked" />
           </div>
 
         ) : (
@@ -691,6 +731,15 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               borderRadius: 2,
               pointerEvents: 'none',
             }} />
+            {(
+              <button
+                type="button"
+                title="Lock options"
+                aria-label="Lock options"
+                onClick={e => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); setLockMenu({ x: r.left, y: r.bottom + 4, kind: 'lock' }) }}
+                style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', color: 'var(--text-secondary)', opacity: hovered ? 1 : 0.75, transition: 'opacity 0.15s' }}
+              ><IconLockOpen size={14} /></button>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
                 <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
@@ -698,6 +747,24 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
               </svg>
             </div>
           </React.Fragment>
+        )}
+
+        {lockMenu && typeof document !== 'undefined' && ReactDOM.createPortal(
+          <LockMenu
+            x={lockMenu.x}
+            y={lockMenu.y}
+            kind={lockMenu.kind}
+            onClose={() => setLockMenu(null)}
+            onChoose={() => {
+              const kind = lockMenu.kind
+              setLockMenu(null)
+              if (kind === 'lock') onLockEmpty && onLockEmpty()
+              else if (cellState === 'LOCKED') onUnlockLocked && onUnlockLocked()
+              else if (cellState === 'HATCHED') onUnlockHatched && onUnlockHatched({ openEdit: false })
+              else onUnlockFullyLocked && onUnlockFullyLocked({ openEdit: false })
+            }}
+          />,
+          document.body
         )}
 
         {isActive && activeType === 'menu' && assignment && typeof document !== 'undefined' && ReactDOM.createPortal(
@@ -758,7 +825,7 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
                     {(!sameWeekendEvents || sameWeekendEvents.length === 0) && (
                       <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>No other events this weekend.</div>
                     )}
-                    {sameWeekendEvents?.map(targetEvent => {
+                    {sameWeekendEvents?.filter(te => !(getAssignment && getAssignment(tp?.id, slotIndex, te.id)?.locked)).map(targetEvent => {
                       const targetAssignment = getAssignment && getAssignment(tp?.id, slotIndex, targetEvent.id)
                       return (
                         <div
@@ -917,7 +984,8 @@ function CopyToEventsModal({ selectedCells, tpByPosTour, allEvents, tours, sourc
         if (!targetTp) continue
         try {
           const { data: existing } = await supabase.from('staff_assignments')
-            .select('id').eq('tour_position_id', targetTp.id).eq('slot_index', c.slotIndex).eq('event_id', evId).limit(1)
+            .select('id, locked').eq('tour_position_id', targetTp.id).eq('slot_index', c.slotIndex).eq('event_id', evId).limit(1)
+          if (existing && existing[0]?.locked) continue // locked cells are never filled
           if (existing && existing.length > 0) {
             const { error } = await supabase.from('staff_assignments')
               .update({ staff_id: c.staffId, status: c.status, confirmed: c.confirmed }).eq('id', existing[0].id)
@@ -1259,6 +1327,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const DEPT_HEADER_BG = 'color-mix(in srgb, var(--color-info) 12%, var(--surface-card))'
 
   const [reloadKey, setReloadKey] = useState(0)
+  const tmpSeq = useRef(0) // ids for optimistic rows
   const reload = () => setReloadKey(k => k + 1)
 
   useEffect(() => {
@@ -1271,11 +1340,19 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
       let eventsQuery = supabase.from('events')
         .select('id, city, state, country, venue_name, venue_id, load_in_date, load_out_date, tour_id, status')
+        .is('deleted_at', null)
         .order('load_in_date', { ascending: true })
       if (tourId) {
         eventsQuery = eventsQuery.eq('tour_id', tourId).gte('load_in_date', today)
       } else {
-        if (!showPastEvents) eventsQuery = eventsQuery.gte('load_out_date', today)
+        // All-staff mode: events whose dates fall in the selected year, across every tour.
+        // (Events without a load-out date are common, so "past" falls back to the load-in date.)
+        eventsQuery = eventsQuery
+          .gte('load_in_date', `${effectiveYear}-01-01`)
+          .lte('load_in_date', `${effectiveYear}-12-31`)
+        if (!showPastEvents) {
+          eventsQuery = eventsQuery.or(`load_out_date.gte.${today},and(load_out_date.is.null,load_in_date.gte.${today})`)
+        }
       }
 
       const [deptRes, posRes, tpRes, toursRes, eventsRes] = await Promise.all([
@@ -1313,6 +1390,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
             event_id,
             status,
             confirmed,
+            locked,
             notes,
             travel_in_date,
             travel_out_date,
@@ -1404,6 +1482,8 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     if (!tp) return { state: 'FULLY_LOCKED', tp: null, assignment: null, canRelock: false }
     const withinCapacity = slotIndex <= tp.quantity_needed
     const eventRow = assignmentIndex[tp.id + '__' + slotIndex + '__' + event.id] || null
+    // An event-specific row with locked = true is a lock, never an assignment
+    if (eventRow && eventRow.locked) return { state: 'LOCKED', tp, assignment: eventRow, canRelock: false }
     if (!withinCapacity && !eventRow) return { state: 'HATCHED', tp, assignment: null, canRelock: false }
     const assignment = eventRow || (withinCapacity ? (assignmentIndex[tp.id + '__' + slotIndex + '__default'] || null) : null)
     if (assignment && assignment.staff_id) return { state: 'FILLED', tp, assignment, canRelock: false }
@@ -1550,6 +1630,10 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     }
 
     const existingEventRow = assignments.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && a.event_id === event.id)
+    if (existingEventRow?.locked) {
+      quickToast('That cell is locked. Unlock it first.')
+      return { error: new Error('cell locked') }
+    }
     if (existingEventRow) {
       const { error } = await supabase.from('staff_assignments')
         .update({ staff_id: staffMember.id, status: 'confirmed', confirmed: true }).eq('id', existingEventRow.id)
@@ -1730,78 +1814,148 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     })
   }
 
-  const handleUnlockHatched = async (tp, slotIndex, event) => {
-    console.log('handleUnlockHatched called', { tp, slotIndex, eventId: event.id })
+  // Locked cell (slot beyond the tour-wide quantity): unlocking adds an empty event-specific row for that slot.
+  // Optimistic: the row appears at once and is removed again (with a toast) if the save fails.
+  const handleUnlockHatched = async (tp, slotIndex, event, openEdit = true) => {
     const supabase = getSupabase()
-    const { data, error } = await supabase.from('staff_assignments')
-      .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
-      .select().single()
-    if (error) {
+    const tempId = `tmp-${++tmpSeq.current}`
+    const row = { tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }
+    setAssignments(prev => [...prev, { id: tempId, ...row }])
+    const { data, error } = await supabase.from('staff_assignments').insert([row]).select().single()
+    if (error || !data) {
       console.error('handleUnlockHatched failed:', error)
+      setAssignments(prev => prev.filter(a => a.id !== tempId))
+      quickToast('Could not unlock the cell. Reverted.')
       return
     }
-    if (data) {
-      setAssignments(prev => [...prev, data])
-      setActiveCell({ positionId: tp.position_id, slotIndex, eventId: event.id, type: 'edit', initialValue: '' })
+    setAssignments(prev => prev.map(a => a.id === tempId ? data : a))
+    if (openEdit) setActiveCell({ positionId: tp.position_id, slotIndex, eventId: event.id, type: 'edit', initialValue: '' })
+  }
+
+  // Position not configured for this tour: unlocking creates a quantity-0 tour_positions row plus the empty
+  // event-specific row (tour-wide side effect: the position becomes known to the tour, baseline stays 0).
+  const handleUnlockFullyLocked = async (position, slotIndex, event, openEdit = true) => {
+    const supabase = getSupabase()
+    const tempTpId = `tmp-tp-${++tmpSeq.current}`
+    const tempSaId = `tmp-${++tmpSeq.current}`
+    const revert = () => {
+      setTourPositions(prev => prev.filter(t => t.id !== tempTpId))
+      setAssignments(prev => prev.filter(a => a.id !== tempSaId))
+      quickToast('Could not unlock the cell. Reverted.')
+    }
+    setTourPositions(prev => [...prev, { id: tempTpId, tour_id: event.tour_id, position_id: position.id, quantity_needed: 0 }])
+    setAssignments(prev => [...prev, { id: tempSaId, tour_position_id: tempTpId, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
+
+    const { data: tp, error: tpError } = await supabase
+      .from('tour_positions')
+      .insert([{ tour_id: event.tour_id, position_id: position.id, quantity_needed: 0 }])
+      .select().single()
+    if (tpError || !tp) { console.error('tour_positions insert failed:', tpError); revert(); return }
+
+    const { data: sa, error: saError } = await supabase
+      .from('staff_assignments')
+      .insert([{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false }])
+      .select().single()
+    if (saError || !sa) {
+      console.error('staff_assignments insert failed:', saError)
+      await supabase.from('tour_positions').delete().eq('id', tp.id) // roll back the position row
+      revert()
+      return
+    }
+
+    setTourPositions(prev => prev.map(t => t.id === tempTpId ? tp : t))
+    setAssignments(prev => prev.map(a => a.id === tempSaId ? sa : a))
+    if (openEdit) setActiveCell({ positionId: position.id, slotIndex, eventId: event.id, type: 'edit', initialValue: '' })
+  }
+
+  // Remove a quantity-0 position row once no unlocked cells remain on it (it only existed to hold them)
+  const dropEmptyTourPosition = async (supabase, tp) => {
+    if (!tp || tp.quantity_needed !== 0) return
+    const { data: remaining } = await supabase.from('staff_assignments').select('id').eq('tour_position_id', tp.id).limit(1)
+    if (!remaining || remaining.length === 0) {
+      await supabase.from('tour_positions').delete().eq('id', tp.id)
+      setTourPositions(prev => prev.filter(t => t.id !== tp.id))
     }
   }
 
-  const handleUnlockFullyLocked = async (position, slotIndex, event) => {
+  // LOCK an empty cell. Never touches staff (only empty cells offer it). Optimistic; reverts with a toast.
+  //  - slot beyond the tour-wide quantity: remove its empty event-specific row (cell returns to hatched/locked)
+  //  - slot within the baseline: store a locked row (locked = true, no staff). If an empty event-specific
+  //    row already exists it is updated in place (the table allows one row per position/slot/event).
+  const lockCell = async (tp, slotIndex, event) => {
     const supabase = getSupabase()
+    const own = assignments.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && a.event_id === event.id)
+    if (own && (own.staff_id || own.locked || String(own.id).startsWith('tmp-'))) return
+    const beyondBaseline = slotIndex > tp.quantity_needed
 
-    console.log('handleUnlockFullyLocked called', { position, slotIndex, eventId: event.id, tourId: event.tour_id })
-
-    // Step 1: Create tour_positions row with quantity_needed=0
-    // (marks position as known to tour but not baseline)
-    const { data: tp, error: tpError } = await supabase
-      .from('tour_positions')
-      .insert([{
-        tour_id: event.tour_id,
-        position_id: position.id,
-        quantity_needed: 0
-      }])
-      .select()
-      .single()
-
-    if (tpError) {
-      console.error('tour_positions insert failed:', tpError)
+    if (beyondBaseline) {
+      if (!own) return
+      setAssignments(prev => prev.filter(a => a.id !== own.id))
+      const { error } = await supabase.from('staff_assignments').delete().eq('id', own.id)
+      if (error) {
+        console.error('lockCell failed:', error)
+        setAssignments(prev => [...prev, own])
+        quickToast('Could not lock the cell. Reverted.')
+        return
+      }
+      await dropEmptyTourPosition(supabase, tp)
       return
     }
 
-    // Step 2: Create event-level staff_assignments exception
-    const { data: sa, error: saError } = await supabase
-      .from('staff_assignments')
-      .insert([{
-        tour_position_id: tp.id,
-        slot_index: slotIndex,
-        staff_id: null,
-        event_id: event.id,
-        status: 'pending',
-        confirmed: false
-      }])
-      .select()
-      .single()
-
-    if (saError) {
-      console.error('staff_assignments insert failed:', saError)
-      // Rollback tour_positions row
-      await supabase.from('tour_positions').delete()
-        .eq('id', tp.id)
+    if (own) {
+      setAssignments(prev => prev.map(a => a.id === own.id ? { ...a, locked: true } : a))
+      const { error } = await supabase.from('staff_assignments').update({ locked: true }).eq('id', own.id)
+      if (error) {
+        console.error('lockCell failed:', error)
+        setAssignments(prev => prev.map(a => a.id === own.id ? { ...a, locked: false } : a))
+        quickToast('Could not lock the cell. Reverted.')
+      }
       return
     }
 
-    // Step 3: Update local state
-    setTourPositions(prev => [...prev, tp])
-    setAssignments(prev => [...prev, sa])
-    setActiveCell({
-      positionId: position.id,
-      slotIndex,
-      eventId: event.id,
-      type: 'edit',
-      initialValue: ''
-    })
-    reload()
-    router.refresh()
+    const tempId = `tmp-${++tmpSeq.current}`
+    const row = { tour_position_id: tp.id, slot_index: slotIndex, staff_id: null, event_id: event.id, status: 'pending', confirmed: false, locked: true }
+    setAssignments(prev => [...prev, { id: tempId, ...row }])
+    const { data, error } = await supabase.from('staff_assignments').insert([row]).select().single()
+    if (error || !data) {
+      console.error('lockCell failed:', error)
+      setAssignments(prev => prev.filter(a => a.id !== tempId))
+      quickToast('Could not lock the cell. Reverted.')
+      return
+    }
+    setAssignments(prev => prev.map(a => a.id === tempId ? data : a))
+  }
+
+  // UNLOCK a locked cell (row with locked = true). The locked row is deleted, leaving no empty row behind,
+  // unless a tour-wide default assignee exists for this slot: then the row is kept as an empty override
+  // (locked = false) so that default person does not reappear on this event.
+  const unlockLocked = async (tp, slotIndex, event) => {
+    const supabase = getSupabase()
+    const row = assignments.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && a.event_id === event.id && a.locked)
+    if (!row || String(row.id).startsWith('tmp-')) return
+    const hasDefaultStaff = slotIndex <= tp.quantity_needed &&
+      !!assignments.find(a => a.tour_position_id === tp.id && a.slot_index === slotIndex && !a.event_id && a.staff_id)
+
+    if (hasDefaultStaff) {
+      setAssignments(prev => prev.map(a => a.id === row.id ? { ...a, locked: false } : a))
+      const { error } = await supabase.from('staff_assignments').update({ locked: false }).eq('id', row.id)
+      if (error) {
+        console.error('unlockLocked failed:', error)
+        setAssignments(prev => prev.map(a => a.id === row.id ? { ...a, locked: true } : a))
+        quickToast('Could not unlock the cell. Reverted.')
+      }
+      return
+    }
+
+    setAssignments(prev => prev.filter(a => a.id !== row.id))
+    const { error } = await supabase.from('staff_assignments').delete().eq('id', row.id)
+    if (error) {
+      console.error('unlockLocked failed:', error)
+      setAssignments(prev => [...prev, row])
+      quickToast('Could not unlock the cell. Reverted.')
+      return
+    }
+    await dropEmptyTourPosition(supabase, tp)
   }
 
   const doMoveStaff = async (source, target) => {
@@ -1945,7 +2099,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       const ev = orderedEvents.find(e2 => e2.id === focusedCell.eventId)
       if (!row || !ev) return
       const info = getCellInfo(row.position, row.slotIndex, ev)
-      if (info.state === 'FULLY_LOCKED' || info.state === 'HATCHED') return
+      if (info.state === 'FULLY_LOCKED' || info.state === 'HATCHED' || info.state === 'LOCKED') return
       setActiveCell({ positionId: row.position.id, slotIndex: row.slotIndex, eventId: ev.id, type: info.state === 'FILLED' ? 'menu' : 'edit', initialValue: initialValue || '' })
     }
     const handleKeyDown = (e) => {
@@ -2268,9 +2422,10 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                                 onAssign={(staffMember, removeFromEventId) => doAssign(tp, slotIndex, ev, staffMember, removeFromEventId)}
                                 onRemove={() => clearAssignment(tp, slotIndex, ev, info.assignment)}
                                 onSetStatus={(status) => applyStatusChange(tp, slotIndex, ev, info.assignment, status)}
-                                onUnlockHatched={() => handleUnlockHatched(tp, slotIndex, ev)}
-                                onUnlockFullyLocked={() => handleUnlockFullyLocked(position, slotIndex, ev)}
-                                onLockEmpty={() => clearAssignment(tp, slotIndex, ev, info.assignment)}
+                                onUnlockHatched={(opts) => handleUnlockHatched(tp, slotIndex, ev, opts?.openEdit !== false)}
+                                onUnlockFullyLocked={(opts) => handleUnlockFullyLocked(position, slotIndex, ev, opts?.openEdit !== false)}
+                                onLockEmpty={() => lockCell(tp, slotIndex, ev)}
+                                onUnlockLocked={() => unlockLocked(tp, slotIndex, ev)}
                                 isActive={isActiveCell}
                                 activeType={isActiveCell ? activeCell.type : null}
                                 initialValue={isActiveCell ? activeCell.initialValue : undefined}
