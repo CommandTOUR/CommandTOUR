@@ -286,88 +286,6 @@ function InlineStaffSearch({ eventId, event, onAssign, onClose, initialValue, al
   )
 }
 
-// ── INLINE STATUS MENU ─────────────────────────────────────────────────────
-
-function InlineStatusMenu({ assignment, onSetStatus, onRemove, sameWeekendEvents, toursById, getAssignment, tp, slotIndex, onMove, onSwap, onReplace }) {
-  const [showMove, setShowMove] = useState(false)
-  const canMove = !!(tp && sameWeekendEvents && sameWeekendEvents.length > 0)
-  return (
-    <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, width: showMove ? 260 : 150, background: 'var(--surface-card)', border: '0.5px solid var(--border-stronger)', borderRadius: 8, marginTop: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-      {STATUS_OPTIONS.map(opt => (
-        <div key={opt.value}
-          onMouseDown={e => { e.preventDefault(); onSetStatus(opt.value) }}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', background: assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = assignment && assignment.status === opt.value ? 'rgba(255,255,255,0.06)' : 'transparent' }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
-          <span style={{ fontSize: 14, color: opt.color }}>{opt.label}</span>
-        </div>
-      ))}
-      <div style={{ height: '1px', background: 'var(--border-default)' }} />
-      {canMove && (
-        <>
-          <button
-            onMouseDown={e => e.preventDefault()}
-            onClick={() => setShowMove(v => !v)}
-            style={{ fontFamily: 'inherit', fontSize: 13, color: 'var(--color-info)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 12px', textAlign: 'left', width: '100%' }}
-          >
-            {showMove ? 'Hide move options ↑' : 'Move to another event this weekend ↓'}
-          </button>
-          {showMove && (
-            <div style={{ padding: '4px 8px 8px' }}>
-              {sameWeekendEvents.filter(ev => !getAssignment(tp.id, slotIndex, ev.id)?.locked).map(ev => {
-                const otherAssignment = getAssignment(tp.id, slotIndex, ev.id)
-                return (
-                  <div key={ev.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', marginBottom: 6 }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{ev.city}, {ev.state || ev.country}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{fmtDate(ev.load_in_date)} · {toursById[ev.tour_id]?.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {otherAssignment ? `${otherAssignment.staff?.first_name} ${otherAssignment.staff?.last_name} is here` : 'Currently empty'}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {!otherAssignment && (
-                        <button
-                          onMouseDown={e => e.preventDefault()}
-                          onClick={() => onMove(ev)}
-                          style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
-                        >Move</button>
-                      )}
-                      {otherAssignment && (
-                        <>
-                          <button
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => onSwap(ev, otherAssignment)}
-                            style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
-                          >Swap</button>
-                          <button
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => onReplace(ev, otherAssignment)}
-                            style={{ fontFamily: 'inherit', fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
-                          >Replace</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          <div style={{ height: '1px', background: 'var(--border-default)' }} />
-        </>
-      )}
-      <div
-        onMouseDown={e => { e.preventDefault(); onRemove() }}
-        style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, color: '#FF3333' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,51,51,0.08)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-        × Remove
-      </div>
-    </div>
-  )
-}
-
 // ── CONFIRM OVERRIDE ───────────────────────────────────────────────────────
 
 function ConfirmOverride({ staffMember, avail, travelInfo, onConfirm, onCancel }) {
@@ -452,7 +370,7 @@ function LockMenu({ x, y, kind, onClose, onChoose }) {
   )
 }
 
-function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onUnlockLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, isSelected, checkAndAssign, positionTitle }) {
+function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assignment, canRelock, onAssign, onRemove, onSetStatus, onUnlockHatched, onUnlockFullyLocked, onUnlockLocked, onLockEmpty, isActive, activeType, initialValue, isFocused, cellRef, onActivate, onCloseActive, onToggleSelect, onRightClick, cellColor, allBookings, onCellDragStart, onCellDragEnd, onCellDrop, onDragEnterCell, onDragLeaveCell, onDropOnLocked, isDragTarget, onConflictClick, COL_WIDTH, ROW_HEIGHT, borderRight, rowBg, LOCKED_STRIPE, LOCKED_BG_COLOR, STAFF_NAME_COLORS, cellBorder, isLastCol, isLastRow, isLightMode, sameWeekendEvents, getAssignment, toursById, fetchAll, selectMode, isSelected, isOverride, checkAndAssign, positionTitle, onSwapCells, onReplaceCell }) {
   const [hovered, setHovered] = useState(false)
   const [lockMenu, setLockMenu] = useState(null) // { x, y, kind: 'unlock' | 'lock' }
   const [confirmOverride, setConfirmOverride] = useState(null)
@@ -553,37 +471,25 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
       targetEv.id,
       targetEv.city,
       positionTitle || '',
-      assignment.id
+      assignment.id,
+      event.id
     )
     onCloseActive()
   }
 
-  const handleSwap = async (targetEvent, targetAssignment) => {
+  // Swap / Replace go through the parent's safe cell handlers (new placement is written and checked before anything is removed)
+  const handleSwap = async (targetEvent) => {
     if (!assignment) return
-    const supabase = getSupabase()
-    await supabase.from('staff_assignments')
-      .update({ event_id: targetEvent.id })
-      .eq('id', assignment.id)
-    await supabase.from('staff_assignments')
-      .update({ event_id: event.id })
-      .eq('id', targetAssignment.id)
+    await onSwapCells?.(targetEvent)
     onCloseActive()
-    fetchAll && fetchAll()
   }
 
   const handleReplace = async (targetEvent, targetAssignment) => {
     if (!assignment) return
     const confirmed = window.confirm(`Replace ${targetAssignment.staff?.first_name} ${targetAssignment.staff?.last_name} at ${targetEvent.city}? They will be removed from this event.`)
     if (!confirmed) return
-    const supabase = getSupabase()
-    await supabase.from('staff_assignments')
-      .update({ event_id: targetEvent.id })
-      .eq('id', assignment.id)
-    await supabase.from('staff_assignments')
-      .delete()
-      .eq('id', targetAssignment.id)
+    await onReplaceCell?.(targetEvent)
     onCloseActive()
-    fetchAll && fetchAll()
   }
 
   const nameColor = cellColor?.text || (STAFF_NAME_COLORS[assignment?.status] || 'var(--text-primary)')
@@ -709,6 +615,10 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
                 <IconCheck size={11} stroke={3} />
               </span>
             )}
+            {isOverride && (
+              <span title="Event-specific override of the tour-wide assignment" aria-label="Event-specific override"
+                style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: '50%', background: 'var(--color-info)', border: '1px solid var(--tile-trim)', boxSizing: 'border-box' }} />
+            )}
             <span
               draggable={!isActive && !selectMode}
               onDragStart={e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; onCellDragStart && onCellDragStart() }}
@@ -827,8 +737,9 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
                     {(!sameWeekendEvents || sameWeekendEvents.length === 0) && (
                       <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>No other events this weekend.</div>
                     )}
-                    {sameWeekendEvents?.filter(te => !(getAssignment && getAssignment(tp?.id, slotIndex, te.id)?.locked)).map(targetEvent => {
+                    {sameWeekendEvents?.map(targetEvent => {
                       const targetAssignment = getAssignment && getAssignment(tp?.id, slotIndex, targetEvent.id)
+                      const blocked = !!targetAssignment?.locked
                       return (
                         <div
                           key={targetEvent.id}
@@ -838,22 +749,22 @@ function GridCell({ event, tourName, tourColor, tp, slotIndex, cellState, assign
                             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{targetEvent.city}{targetEvent.state ? `, ${targetEvent.state}` : targetEvent.country ? `, ${targetEvent.country}` : ''}</div>
                             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{toursById?.[targetEvent.tour_id]?.name}</div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {targetAssignment ? `${targetAssignment.staff?.first_name} ${targetAssignment.staff?.last_name} is here` : 'Currently empty'}
+                              {blocked ? (targetAssignment.notOnTour ? 'Position not on this tour' : 'Cell is locked') : targetAssignment ? `${targetAssignment.staff?.first_name} ${targetAssignment.staff?.last_name} is here` : 'Currently empty'}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
-                            {!targetAssignment && (
+                            {(!targetAssignment || blocked) && (
                               <button
                                 onClick={() => handleMove(targetEvent)}
                                 style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
                               >Move</button>
                             )}
-                            {targetAssignment && (
+                            <button
+                              onClick={() => handleSwap(targetEvent)}
+                              style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+                            >Swap</button>
+                            {targetAssignment && !blocked && (
                               <>
-                                <button
-                                  onClick={() => handleSwap(targetEvent, targetAssignment)}
-                                  style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
-                                >Swap</button>
                                 <button
                                   onClick={() => handleReplace(targetEvent, targetAssignment)}
                                   style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
@@ -1073,13 +984,13 @@ function BulkCopyModal({ cells, events, tours, tpByPosTour, bookingsByStaff, get
         if (row && (row.staff_id || row.locked)) { runtimeSkipped++; continue }
         let error
         if (row) {
-          ;({ error } = await supabase.from('staff_assignments').update({ staff_id: c.staffId, status: c.status, confirmed: c.confirmed }).eq('id', row.id))
+          ;({ error } = await supabase.from('staff_assignments').update({ staff_id: c.staffId, status: 'confirmed', confirmed: true }).eq('id', row.id))
         } else {
-          ;({ error } = await supabase.from('staff_assignments').insert([{ tour_position_id: tp.id, slot_index: c.slotIndex, event_id: ev.id, staff_id: c.staffId, status: c.status, confirmed: c.confirmed }]))
+          ;({ error } = await supabase.from('staff_assignments').insert([{ tour_position_id: tp.id, slot_index: c.slotIndex, event_id: ev.id, staff_id: c.staffId, status: 'confirmed', confirmed: true }]))
         }
         if (error) { console.error('[bulk copy] write error:', error); runtimeSkipped++; continue }
-        // same travel side effect as a single confirmed assignment
-        if (c.status === 'confirmed' || c.confirmed) await confirmStaffMember({ supabase, eventId: ev.id, staffId: c.staffId, confirm: true })
+        // new assignments are Confirmed, so they get the same travel rows as a single confirmed assignment
+        await confirmStaffMember({ supabase, eventId: ev.id, staffId: c.staffId, confirm: true })
         copied++
       } catch (err) {
         console.error('[bulk copy] error', err)
@@ -1103,7 +1014,7 @@ function BulkCopyModal({ cells, events, tours, tpByPosTour, bookingsByStaff, get
           <div>
             <div style={{ fontSize: 18, fontWeight: 700 }}>Copy to events</div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              {cells.length} assignment{cells.length === 1 ? '' : 's'} · same position, slot and status
+              {cells.length} assignment{cells.length === 1 ? '' : 's'} · same position and slot, added as Confirmed
             </div>
           </div>
           <button onClick={onClose} disabled={writing} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}><IconX size={20} /></button>
@@ -1199,8 +1110,151 @@ function BulkCopyModal({ cells, events, tours, tpByPosTour, bookingsByStaff, get
 
 // ── CONFLICT WIZARD MODAL ───────────────────────────────────────────────────
 
+// Move target is a locked cell, or a position the target tour does not have: offer a way forward instead of refusing
+function BlockedMoveWizard({ wizard, onClose }) {
+  const { incomingStaff, reason, positionTitle, targetCity, tourName, departmentName, cells, onUnlockMove, onAddPositionMove, onPickCell } = wizard
+  const [view, setView] = useState('choice') // 'choice' | 'pick'
+  const [busy, setBusy] = useState(false)
+  const run = async (fn, arg) => { setBusy(true); await fn(arg); setBusy(false) }
+  const groups = []
+  cells.forEach(c => {
+    let g = groups.find(x => x.dept === c.dept)
+    if (!g) { g = { dept: c.dept, items: [] }; groups.push(g) }
+    g.items.push(c)
+  })
+  const optBtn = { width: '100%', textAlign: 'left', fontFamily: 'inherit', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, borderRadius: 8, padding: '11px 14px', background: 'transparent', color: 'var(--text-primary)' }
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: 16 }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose() }}
+    >
+      <div id="conflict-wizard-modal" role="dialog" aria-modal="true" style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 22, width: 440, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', boxSizing: 'border-box', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>
+              Moving to {positionTitle} · {targetCity}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 600 }}>{incomingStaff.first_name} {incomingStaff.last_name}</div>
+          </div>
+          <div onClick={() => { if (!busy) onClose() }} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>×</div>
+        </div>
+
+        <div style={{ background: 'var(--status-1hold-bg)', border: '0.5px solid var(--status-1hold-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: 'var(--status-1hold-text)', fontWeight: 600 }}>
+          {reason === 'locked'
+            ? `That ${positionTitle} cell at ${targetCity} is locked.`
+            : `${tourName || 'That tour'} has no ${positionTitle} position.`}
+          {' '}{incomingStaff.first_name} stays where they are until you choose.
+        </div>
+
+        {view === 'choice' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {reason === 'locked' ? (
+              <button disabled={busy} onClick={() => run(onUnlockMove)} style={{ ...optBtn, border: '0.5px solid var(--color-info)' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-info)' }}>Unlock this cell and move here</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>The cell is unlocked and {incomingStaff.first_name} takes it, Confirmed.</div>
+              </button>
+            ) : (
+              <button disabled={busy} onClick={() => run(onAddPositionMove)} style={{ ...optBtn, border: '0.5px solid var(--color-info)' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-info)' }}>Add this position to that tour and move here</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Adds {positionTitle}{departmentName ? ` (${departmentName})` : ''}, 1 slot, to {tourName}. You will be asked to confirm.</div>
+              </button>
+            )}
+            <button disabled={busy} onClick={() => setView('pick')} style={{ ...optBtn, border: '0.5px solid var(--border-strong)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Choose a different position</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Pick any open cell at {targetCity}.</div>
+            </button>
+            <button disabled={busy} onClick={onClose} style={{ ...optBtn, textAlign: 'center', border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)', fontSize: 13 }}>Cancel</button>
+          </div>
+        ) : (
+          <div>
+            <button onClick={() => setView('choice')} disabled={busy} style={{ background: 'none', border: 'none', padding: 0, marginBottom: 10, color: 'var(--color-info)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← Back</button>
+            {groups.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-secondary)', padding: '8px 0' }}>No open cells at {targetCity}.</div>}
+            {groups.map(g => (
+              <div key={g.dept} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', marginBottom: 4 }}>{g.dept}</div>
+                {g.items.map(c => (
+                  <button key={c.key} disabled={busy} onClick={() => run(onPickCell, c)}
+                    style={{ ...optBtn, padding: '8px 12px', marginBottom: 4, display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 14,
+                      border: c.isOwn ? '1.5px solid var(--color-info)' : '0.5px solid var(--border-default)',
+                      background: c.isOwn ? 'color-mix(in srgb, var(--color-info) 10%, transparent)' : 'transparent' }}>
+                    <span style={{ fontWeight: c.isOwn ? 700 : 500 }}>{c.positionTitle}{c.isOwn ? ' (same position)' : ''}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Slot {c.slotIndex}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Swap: pick WHO to swap with from everyone assigned on the other event
+function SwapPickerModal({ picker, onClose, onConfirm }) {
+  const [selected, setSelected] = useState(picker.preselect || null)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape' && !busy) onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose, busy])
+  const groups = []
+  picker.options.forEach(o => {
+    let g = groups.find(x => x.dept === o.dept)
+    if (!g) { g = { dept: o.dept, items: [] }; groups.push(g) }
+    g.items.push(o)
+  })
+  const chosen = picker.options.find(o => o.key === selected)
+  const go = async () => { if (!chosen) return; setBusy(true); await onConfirm(chosen); setBusy(false) }
+  return ReactDOM.createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: 16, fontFamily: "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif" }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose() }}
+    >
+      <div role="dialog" aria-modal="true" style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 22, width: 460, maxWidth: '100%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', color: 'var(--text-primary)' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Swap with someone at {picker.otherCity}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>{picker.staffName} swaps places with…</div>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 80 }}>
+          {groups.length === 0 && <div style={{ fontSize: 14, color: 'var(--text-secondary)', padding: '10px 0' }}>Nobody is assigned at {picker.otherCity}.</div>}
+          {groups.map(g => (
+            <div key={g.dept} style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', marginBottom: 4 }}>{g.dept}</div>
+              {g.items.map(o => {
+                const on = o.key === selected
+                const st = STATUS_OPTIONS.find(x => x.value === o.status)
+                return (
+                  <button key={o.key} disabled={busy} onClick={() => setSelected(o.key)}
+                    style={{ width: '100%', textAlign: 'left', fontFamily: 'inherit', cursor: 'pointer', marginBottom: 4, padding: '8px 12px', borderRadius: 8, color: 'var(--text-primary)',
+                      border: on ? '1.5px solid var(--color-info)' : '0.5px solid var(--border-default)',
+                      background: on ? 'color-mix(in srgb, var(--color-info) 10%, transparent)' : 'transparent',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 14, fontWeight: 600 }}>{o.name}</span>
+                      <span style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)' }}>{o.positionTitle} · Slot {o.slotIndex}</span>
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: st?.color || 'var(--text-secondary)', flexShrink: 0 }}>{st?.label || o.status}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+          <button onClick={onClose} disabled={busy} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={go} disabled={!chosen || busy} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: (!chosen || busy) ? 'default' : 'pointer', opacity: (!chosen || busy) ? 0.5 : 1 }}>
+            {busy ? 'Swapping…' : 'Swap'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 function ConflictWizardModal({ wizard, onClose }) {
   if (!wizard) return null
+  if (wizard.mode === 'blocked') return <BlockedMoveWizard wizard={wizard} onClose={onClose} />
   const { incomingStaff, incomingFrom, targetSlot, existingAtTarget, onResolve } = wizard
   return (
     <div
@@ -1345,6 +1399,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   const selectedKeysRef = useRef(new Set())
   const assignmentsRef = useRef([])
   const [conflictWizard, setConflictWizard] = useState(null)
+  const [swapPicker, setSwapPicker] = useState(null)
   // Shape: {
   //   incomingStaff: { id, first_name, last_name },
   //   incomingFrom: { assignmentId, eventId, city, positionTitle, slotIndex } | null,
@@ -1595,8 +1650,10 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     // An event-specific row with locked = true is a lock, never an assignment
     if (eventRow && eventRow.locked) return { state: 'LOCKED', tp, assignment: eventRow, canRelock: false }
     if (!withinCapacity && !eventRow) return { state: 'HATCHED', tp, assignment: null, canRelock: false }
-    const assignment = eventRow || (withinCapacity ? (assignmentIndex[tp.id + '__' + slotIndex + '__default'] || null) : null)
-    if (assignment && assignment.staff_id) return { state: 'FILLED', tp, assignment, canRelock: false }
+    const defaultRow = withinCapacity ? (assignmentIndex[tp.id + '__' + slotIndex + '__default'] || null) : null
+    const assignment = eventRow || defaultRow
+    // an event-specific row sitting on top of a tour-wide default is an override
+    if (assignment && assignment.staff_id) return { state: 'FILLED', tp, assignment, canRelock: false, isOverride: !!(eventRow && defaultRow) }
     return { state: 'EMPTY', tp, assignment, canRelock: !withinCapacity && !!eventRow }
   }
 
@@ -1783,6 +1840,12 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
   const applyStatusChange = async (tp, slotIndex, event, resolvedAssignment, status) => {
     if (!resolvedAssignment) return false
+    // Defensive: a cell only ever resolves to THIS event's row or the tour-wide default (event_id null).
+    // A row that belongs to a different event, or a locked row, is never used to create an assignment here.
+    if (resolvedAssignment.locked || (resolvedAssignment.event_id && resolvedAssignment.event_id !== event.id)) {
+      quickToast('That assignment does not belong to this event. Nothing changed.')
+      return false
+    }
     const supabase = getSupabase()
     const confirmed = status === 'confirmed'
     if (resolvedAssignment.event_id === event.id) {
@@ -1815,11 +1878,173 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
     return true
   }
 
-  const checkAndAssign = async (incomingStaff, targetTourPositionId, targetSlotIndex, targetEventId, targetCity, positionTitleArg, currentAssignmentId = null) => {
+  // ── SAFE CELL MOVES ───────────────────────────────────────────────────────
+  // Rule: the new placement is written and checked FIRST; the original is only removed after that succeeded.
+  // A failure leaves the original untouched and shows an error toast.
+
+  // The same position on the target event's tour (positions are tour-wide, each tour has its own tour_positions row)
+  const targetTpFor = (srcTpId, targetEvent) => {
+    const src = tourPositionsById[srcTpId]
+    if (!src || !targetEvent) return null
+    return src.tour_id === targetEvent.tour_id ? src : (tpByPosTour[src.position_id]?.[targetEvent.tour_id] || null)
+  }
+
+  // For the cell menu's Move/Swap/Replace lists: resolve the cell on ANOTHER event, across tours.
+  // A position the target tour doesn't have comes back as a locked pseudo-row so it is never offered.
+  const resolveAcrossTours = (tpId, slotIndex, eventId) => {
+    const t = targetTpFor(tpId, eventsById[eventId])
+    if (!t) return { locked: true, notOnTour: true }
+    return resolveAssignment(t.id, slotIndex, eventId)
+  }
+
+  // Put a person into one cell: reuses an empty event-specific row, never overwrites a person or a lock.
+  const placeStaffInCell = async (supabase, { staffId, tpId, slotIndex, eventId, status = 'confirmed' }) => {
+    const { data: existing, error: selErr } = await supabase.from('staff_assignments')
+      .select('id, staff_id, locked').eq('tour_position_id', tpId).eq('slot_index', slotIndex).eq('event_id', eventId).maybeSingle()
+    if (selErr) return { error: selErr }
+    if (existing?.locked) return { error: new Error('that cell is locked') }
+    if (existing?.staff_id) return { error: new Error('that cell is already occupied') }
+    const confirmed = status === 'confirmed'
+    if (existing) {
+      const { error } = await supabase.from('staff_assignments').update({ staff_id: staffId, status, confirmed }).eq('id', existing.id)
+      return { error }
+    }
+    const { error } = await supabase.from('staff_assignments')
+      .insert([{ tour_position_id: tpId, slot_index: slotIndex, event_id: eventId, staff_id: staffId, status, confirmed }])
+    return { error }
+  }
+
+  const sourceFromAssignmentId = (id, fallbackEventId) => {
+    const row = assignmentsRef.current.find(a => a.id === id)
+    if (!row) return null
+    const tp = tourPositionsById[row.tour_position_id]
+    const event = eventsById[row.event_id || fallbackEventId]
+    return tp && event ? { tp, slotIndex: row.slot_index, event, row } : null
+  }
+  const sourceFromConflict = (c) => {
+    const tp = tourPositionsById[c.tour_position_id]
+    const event = eventsById[c.event_id]
+    return tp && event ? { tp, slotIndex: c.slot_index, event, row: { id: c.id, event_id: c.event_id, staff_id: c.staff_id, status: c.status, confirmed: c.confirmed } } : null
+  }
+
+  // MOVE: place at the target, then remove from the source. Lands Confirmed on the target.
+  const moveStaffToCell = async (staffId, source, target) => {
+    const supabase = getSupabase()
+    const placed = await placeStaffInCell(supabase, { staffId, tpId: target.tp.id, slotIndex: target.slotIndex, eventId: target.event.id, status: 'confirmed' })
+    if (placed.error) {
+      console.error('move: placing at target failed:', placed.error)
+      quickToast(`Could not move: ${placed.error.message || 'target not available'}. Nothing changed.`)
+      return false
+    }
+    const removed = await clearAssignment(source.tp, source.slotIndex, source.event, source.row)
+    if (!removed) quickToast('Added at the new event, but could not remove from the original. Please check both.')
+    await confirmStaffMember({ supabase, eventId: target.event.id, staffId, confirm: true })
+    return removed
+  }
+
+  // SWAP: exchange the two people between two occupied cells (each keeps their own status)
+  const swapCells = async (src, tgt) => {
+    const supabase = getSupabase()
+    const sId = src.row.staff_id, tId = tgt.row.staff_id
+    if (!sId || !tId || tgt.row.event_id !== tgt.event.id) {
+      quickToast('Those two cells cannot be swapped here. Nothing changed.')
+      return false
+    }
+    const tStatus = { status: tgt.row.status || 'confirmed', confirmed: !!tgt.row.confirmed }
+    const sStatus = { status: src.row.status || 'confirmed', confirmed: !!src.row.confirmed }
+    const first = await supabase.from('staff_assignments').update({ staff_id: sId, ...sStatus }).eq('id', tgt.row.id)
+    if (first.error) { console.error(first.error); quickToast('Could not swap. Nothing changed.'); return false }
+    let second
+    if (src.row.event_id === src.event.id) {
+      second = await supabase.from('staff_assignments').update({ staff_id: tId, ...tStatus }).eq('id', src.row.id)
+    } else {
+      // the source was a tour-wide default: give the other person an event-specific row in that cell
+      second = await supabase.from('staff_assignments').insert([{ tour_position_id: src.tp.id, slot_index: src.slotIndex, event_id: src.event.id, staff_id: tId, ...tStatus }])
+    }
+    if (second.error) {
+      console.error(second.error)
+      await supabase.from('staff_assignments').update({ staff_id: tId, ...tStatus }).eq('id', tgt.row.id) // undo the first half
+      quickToast('Could not swap. Nothing changed.')
+      return false
+    }
+    if (sStatus.confirmed) await confirmStaffMember({ supabase, eventId: tgt.event.id, staffId: sId, confirm: true })
+    if (tStatus.confirmed) await confirmStaffMember({ supabase, eventId: src.event.id, staffId: tId, confirm: true })
+    return true
+  }
+
+  // REPLACE: the incoming person takes over the occupied target cell; the source (when there is one) is cleared afterwards
+  const replaceCell = async (staffId, source, tgt) => {
+    const supabase = getSupabase()
+    if (tgt.row.event_id !== tgt.event.id) { quickToast('That assignment is tour-wide and cannot be replaced here. Nothing changed.'); return false }
+    const { error } = await supabase.from('staff_assignments').update({ staff_id: staffId, status: 'confirmed', confirmed: true }).eq('id', tgt.row.id)
+    if (error) { console.error(error); quickToast('Could not replace. Nothing changed.'); return false }
+    if (source) {
+      const removed = await clearAssignment(source.tp, source.slotIndex, source.event, source.row)
+      if (!removed) quickToast('Replaced, but could not remove from the original. Please check both.')
+    }
+    await confirmStaffMember({ supabase, eventId: tgt.event.id, staffId, confirm: true })
+    return true
+  }
+
+  // Everyone assigned on an event, as swap candidates (grouped by department in the picker)
+  const swapOptionsFor = (otherEvent) => departmentsWithRows.flatMap(dept => dept.rows.map(({ position, slotIndex }) => {
+    const info = getCellInfo(position, slotIndex, otherEvent)
+    if (info.state !== 'FILLED' || !info.tp) return null
+    return {
+      key: cellKey(info.tp.id, slotIndex, otherEvent.id),
+      dept: dept.name, positionId: position.id, positionTitle: position.title, slotIndex,
+      tp: info.tp, row: info.assignment, status: info.assignment.status || 'pending',
+      name: staffDisplayName(info.assignment.staff) || 'Staff',
+    }
+  }).filter(Boolean))
+
+  // Open the swap picker for a source cell and the other event. Preselects the person in the same position when
+  // there is exactly one, else the given fallback row; the user can always change the choice.
+  const openSwapPicker = (src, otherEvent, fallbackRowId = null, staffNameOverride = null) => {
+    const options = swapOptionsFor(otherEvent)
+    const samePos = options.filter(o => o.positionId === src.tp.position_id)
+    const preselect = samePos.length === 1 ? samePos[0].key : (options.find(o => o.row.id === fallbackRowId)?.key || null)
+    setSwapPicker({
+      src, otherEvent, options, preselect,
+      staffName: staffNameOverride || staffDisplayName(src.row.staff) || 'This person',
+      otherCity: otherEvent.city || 'the other event',
+    })
+  }
+
+  const confirmSwap = async (option) => {
+    const { src, otherEvent } = swapPicker
+    const supabase = getSupabase()
+    // re-check both rows right now: both must still be occupied and neither locked
+    const { data: fresh } = await supabase.from('staff_assignments').select('id, staff_id, locked').in('id', [src.row.id, option.row.id])
+    const a = fresh?.find(r => r.id === src.row.id), b = fresh?.find(r => r.id === option.row.id)
+    if (a?.locked || b?.locked) { quickToast('One of the cells is locked. Unlock it first. Nothing changed.'); return }
+    if (!a?.staff_id || !b?.staff_id) { quickToast('One of the cells changed. Refresh and try again. Nothing changed.'); reload(); return }
+    const ok = await swapCells(src, { tp: option.tp, slotIndex: option.slotIndex, event: otherEvent, row: option.row })
+    if (ok) { setSwapPicker(null); showToast('Swapped') }
+    reload()
+  }
+
+  const swapFromMenu = async (tp, slotIndex, ev, assignment, targetEvent) => {
+    openSwapPicker({ tp, slotIndex, event: ev, row: assignment }, targetEvent)
+  }
+  const replaceFromMenu = async (tp, slotIndex, ev, assignment, targetEvent) => {
+    const tgtTp = targetTpFor(tp.id, targetEvent)
+    const tgtInfo = tgtTp ? getCellInfo(positionsById[tp.position_id], slotIndex, targetEvent) : null
+    if (!tgtInfo || tgtInfo.state !== 'FILLED') { quickToast('The other cell is not occupied. Nothing changed.'); return }
+    await replaceCell(assignment.staff_id, { tp, slotIndex, event: ev, row: assignment }, { tp: tgtTp, slotIndex, event: targetEvent, row: tgtInfo.assignment })
+    reload()
+  }
+
+  const checkAndAssign = async (incomingStaff, targetTourPositionId, targetSlotIndex, targetEventId, targetCity, positionTitleArg, currentAssignmentId = null, sourceEventId = null) => {
     const supabase = getSupabase()
 
+    const targetEvent = eventsById[targetEventId] || orderedEvents.find(e => e.id === targetEventId)
+    // the move/assign target is the same position on the TARGET event's tour (a different tour has its own tour_positions row)
+    const givenTp = tourPositionsById[targetTourPositionId]
+    const targetTp = targetTpFor(targetTourPositionId, targetEvent)
+    const targetTpId = targetTp ? targetTp.id : null
+
     // Find if incoming staff is already assigned this weekend
-    const targetEvent = orderedEvents.find(e => e.id === targetEventId)
     const weekendKey = targetEvent ? getWeekendGroup(targetEvent.load_in_date) : null
     const weekendEventIds = weekendKey
       ? orderedEvents.filter(e => getWeekendGroup(e.load_in_date) === weekendKey).map(e => e.id)
@@ -1827,42 +2052,121 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
 
     const { data: incomingConflict } = await supabase
       .from('staff_assignments')
-      .select('id, event_id, tour_position_id, slot_index, tour_positions(positions(title))')
+      .select('id, event_id, tour_position_id, slot_index, staff_id, status, confirmed, tour_positions(positions(title))')
       .eq('staff_id', incomingStaff.id)
       .in('event_id', weekendEventIds)
       .neq('event_id', targetEventId)
       .maybeSingle()
 
     // Find if target slot already has someone
-    const { data: existingAtTarget } = await supabase
-      .from('staff_assignments')
-      .select('id, staff_id, staff:staff_id(id, first_name, last_name)')
-      .eq('tour_position_id', targetTourPositionId)
-      .eq('slot_index', targetSlotIndex)
-      .eq('event_id', targetEventId)
-      .maybeSingle()
+    let existingAtTarget = null
+    if (targetTpId) {
+      const res = await supabase
+        .from('staff_assignments')
+        .select('id, staff_id, event_id, tour_position_id, slot_index, status, confirmed, locked, staff:staff_id(id, first_name, last_name)')
+        .eq('tour_position_id', targetTpId)
+        .eq('slot_index', targetSlotIndex)
+        .eq('event_id', targetEventId)
+        .maybeSingle()
+      existingAtTarget = res.data
+    }
 
-    const hasConflict = incomingConflict || existingAtTarget
+    // The person's current cell: where they are being moved from, else their double-booked row
+    const sourceCell = currentAssignmentId
+      ? sourceFromAssignmentId(currentAssignmentId, sourceEventId)
+      : (incomingConflict ? sourceFromConflict(incomingConflict) : null)
+
+    // Blocked target (locked cell, or position missing on that tour): offer a way forward instead of refusing
+    if (!targetTp || existingAtTarget?.locked) {
+      const position = givenTp ? positionsById[givenTp.position_id] : null
+      const dept = position ? departments.find(d => d.id === position.department_id) : null
+      const targetTour = targetEvent ? toursById[targetEvent.tour_id] : null
+      const openCells = []
+      departmentsWithRows.forEach(d => d.rows.forEach(({ position: pos, slotIndex }) => {
+        const info = getCellInfo(pos, slotIndex, targetEvent)
+        if (info.state === 'EMPTY' && info.tp && !info.assignment?.locked) {
+          openCells.push({ key: cellKey(info.tp.id, slotIndex, targetEvent.id), dept: d.name, positionTitle: pos.title, slotIndex, tp: info.tp, isOwn: !!position && pos.id === position.id })
+        }
+      }))
+      const finish = async (ok) => { setConflictWizard(null); reload() }
+      setConflictWizard({
+        mode: 'blocked',
+        reason: targetTp ? 'locked' : 'missing_position',
+        incomingStaff,
+        positionTitle: positionTitleArg || position?.title || 'this position',
+        targetCity: targetCity || targetEvent?.city || 'the target event',
+        tourName: targetTour?.name,
+        departmentName: dept?.name,
+        cells: openCells,
+        // unlock + place in ONE write (the locked row becomes the person's row), then remove the original
+        onUnlockMove: async () => {
+          const sb = getSupabase()
+          const { error } = await sb.from('staff_assignments')
+            .update({ staff_id: incomingStaff.id, status: 'confirmed', confirmed: true, locked: false }).eq('id', existingAtTarget.id)
+          if (error) { console.error(error); quickToast('Could not unlock and move. Nothing changed.'); return }
+          if (sourceCell) {
+            const removed = await clearAssignment(sourceCell.tp, sourceCell.slotIndex, sourceCell.event, sourceCell.row)
+            if (!removed) quickToast('Moved, but could not remove from the original. Please check both.')
+          }
+          await confirmStaffMember({ supabase: sb, eventId: targetEventId, staffId: incomingStaff.id, confirm: true })
+          await finish(true)
+        },
+        // the position row is shared by all tours; adding it to this tour means giving the tour a 1-slot link to it
+        onAddPositionMove: async () => {
+          const label = `${position?.title || 'this position'}${dept ? ` (${dept.name})` : ''}`
+          if (!window.confirm(`Add ${label} to ${targetTour?.name || 'that tour'} with 1 slot, and move ${incomingStaff.first_name} there? This changes that tour's setup.`)) return
+          const sb = getSupabase()
+          const { data: newTp, error: tpErr } = await sb.from('tour_positions')
+            .insert([{ tour_id: targetEvent.tour_id, position_id: givenTp.position_id, quantity_needed: 1 }]).select().single()
+          if (tpErr || !newTp) { console.error(tpErr); quickToast('Could not add the position. Nothing changed.'); return }
+          setTourPositions(prev => [...prev, newTp])
+          const placed = await placeStaffInCell(sb, { staffId: incomingStaff.id, tpId: newTp.id, slotIndex: 1, eventId: targetEventId, status: 'confirmed' })
+          if (placed.error) {
+            console.error(placed.error)
+            await sb.from('tour_positions').delete().eq('id', newTp.id) // undo the setup change
+            setTourPositions(prev => prev.filter(t => t.id !== newTp.id))
+            quickToast('Could not move. The position was not added. Nothing changed.')
+            return
+          }
+          if (sourceCell) {
+            const removed = await clearAssignment(sourceCell.tp, sourceCell.slotIndex, sourceCell.event, sourceCell.row)
+            if (!removed) quickToast('Moved, but could not remove from the original. Please check both.')
+          }
+          await confirmStaffMember({ supabase: sb, eventId: targetEventId, staffId: incomingStaff.id, confirm: true })
+          await finish(true)
+        },
+        onPickCell: async (cell) => {
+          const moved = sourceCell
+            ? await moveStaffToCell(incomingStaff.id, sourceCell, { tp: cell.tp, slotIndex: cell.slotIndex, event: targetEvent })
+            : (await placeStaffInCell(getSupabase(), { staffId: incomingStaff.id, tpId: cell.tp.id, slotIndex: cell.slotIndex, eventId: targetEventId, status: 'confirmed' })).error == null
+          if (moved) await finish(true)
+        },
+      })
+      return
+    }
+
+    if (existingAtTarget?.locked) return
+    const occupiedAtTarget = existingAtTarget && existingAtTarget.staff_id ? existingAtTarget : null
+    const hasConflict = incomingConflict || occupiedAtTarget
+
+    const targetCell = { tp: targetTp, slotIndex: targetSlotIndex, event: targetEvent }
 
     if (!hasConflict) {
-      // Clean assign — no conflicts
+      // Clean assign: no conflicts
       if (currentAssignmentId) {
-        await supabase.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
+        const src = sourceFromAssignmentId(currentAssignmentId, sourceEventId)
+        if (!src) { quickToast('Could not find the original assignment. Nothing changed.'); return }
+        await moveStaffToCell(incomingStaff.id, src, targetCell)
       } else {
-        await supabase.from('staff_assignments').insert([{
-          event_id: targetEventId,
-          staff_id: incomingStaff.id,
-          tour_position_id: targetTourPositionId,
-          slot_index: targetSlotIndex,
-          confirmed: false,
-          status: 'pending',
-        }])
+        const placed = await placeStaffInCell(supabase, { staffId: incomingStaff.id, tpId: targetTpId, slotIndex: targetSlotIndex, eventId: targetEventId, status: 'confirmed' })
+        if (placed.error) quickToast(`Could not assign: ${placed.error.message || 'cell not available'}.`)
+        else await confirmStaffMember({ supabase, eventId: targetEventId, staffId: incomingStaff.id, confirm: true })
       }
       reload()
       return
     }
 
-    // Has conflict — show wizard
+    // Has conflict: show wizard
     const incomingFromEvent = incomingConflict
       ? orderedEvents.find(e => e.id === incomingConflict.event_id)
       : null
@@ -1879,48 +2183,38 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
       targetSlot: {
         eventId: targetEventId,
         city: targetCity,
-        tourPositionId: targetTourPositionId,
+        tourPositionId: targetTpId,
         slotIndex: targetSlotIndex,
         positionTitle: positionTitleArg,
       },
-      existingAtTarget: existingAtTarget ? {
-        assignmentId: existingAtTarget.id,
-        staffId: existingAtTarget.staff_id,
-        first_name: existingAtTarget.staff?.first_name,
-        last_name: existingAtTarget.staff?.last_name,
+      existingAtTarget: occupiedAtTarget ? {
+        assignmentId: occupiedAtTarget.id,
+        staffId: occupiedAtTarget.staff_id,
+        first_name: occupiedAtTarget.staff?.first_name,
+        last_name: occupiedAtTarget.staff?.last_name,
       } : null,
       onResolve: async (action) => {
         const supabase2 = getSupabase()
+        // where the person currently is: the cell they were moved from, else their double-booked row
+        const src = sourceCell
+        const tgtRow = occupiedAtTarget ? { tp: targetTp, slotIndex: targetSlotIndex, event: targetEvent, row: occupiedAtTarget } : null
+
         if (action === 'swap') {
-          // Move incoming to target, move existing to incoming's old event
-          if (currentAssignmentId) {
-            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
-          } else {
-            await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: targetSlotIndex, confirmed: false, status: 'pending' }])
-          }
-          if (existingAtTarget && incomingConflict) {
-            await supabase2.from('staff_assignments').update({ event_id: incomingConflict.event_id }).eq('id', existingAtTarget.id)
-          } else if (existingAtTarget) {
-            await supabase2.from('staff_assignments').delete().eq('id', existingAtTarget.id)
-          }
+          if (!src) quickToast('Could not find the original assignment. Nothing changed.')
+          else openSwapPicker(src, targetEvent, occupiedAtTarget ? occupiedAtTarget.id : null, `${incomingStaff.first_name} ${incomingStaff.last_name}`)
         } else if (action === 'replace') {
-          if (existingAtTarget) await supabase2.from('staff_assignments').delete().eq('id', existingAtTarget.id)
-          if (currentAssignmentId) {
-            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
-          } else {
-            await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: targetSlotIndex, confirmed: false, status: 'pending' }])
-          }
+          if (!tgtRow) quickToast('The target cell is empty. Nothing changed.')
+          else await replaceCell(incomingStaff.id, currentAssignmentId ? src : null, tgtRow)
         } else if (action === 'extra') {
           // Find max slot_index for this position at target event
-          const { data: existingSlots } = await supabase2.from('staff_assignments').select('slot_index').eq('tour_position_id', targetTourPositionId).eq('event_id', targetEventId)
+          const { data: existingSlots } = await supabase2.from('staff_assignments').select('slot_index').eq('tour_position_id', targetTpId).eq('event_id', targetEventId)
           const maxSlot = existingSlots?.length ? Math.max(...existingSlots.map(s => s.slot_index)) : 0
-          await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTourPositionId, slot_index: maxSlot + 1, confirmed: false, status: 'pending' }])
+          const { error } = await supabase2.from('staff_assignments').insert([{ event_id: targetEventId, staff_id: incomingStaff.id, tour_position_id: targetTpId, slot_index: maxSlot + 1, confirmed: true, status: 'confirmed' }])
+          if (error) { console.error(error); quickToast('Could not add as extra. Nothing changed.') }
+          else await confirmStaffMember({ supabase: supabase2, eventId: targetEventId, staffId: incomingStaff.id, confirm: true })
         } else if (action === 'move') {
-          if (currentAssignmentId) {
-            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', currentAssignmentId)
-          } else if (incomingConflict) {
-            await supabase2.from('staff_assignments').update({ event_id: targetEventId }).eq('id', incomingConflict.id)
-          }
+          if (!src) quickToast('Could not find the original assignment. Nothing changed.')
+          else await moveStaffToCell(incomingStaff.id, src, targetCell)
         }
         setConflictWizard(null)
         reload()
@@ -2073,8 +2367,14 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
   }
 
   const doMoveStaff = async (source, target) => {
+    // write the new placement first; only remove the original once it landed
+    const res = await doAssign(target.tp, target.slotIndex, target.event, source.assignment.staff)
+    if (res && res.error) {
+      console.error('doMoveStaff failed:', res.error)
+      quickToast('Could not move the person. Nothing changed.')
+      return
+    }
     await clearAssignment(source.tp, source.slotIndex, source.event, source.assignment)
-    await doAssign(target.tp, target.slotIndex, target.event, source.assignment.staff)
   }
 
   // ── SELECTION + BULK ACTIONS ─────────────────────────────────────────────
@@ -2612,7 +2912,9 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                                 key={ev.id}
                                 event={ev}
                                 sameWeekendEvents={sameWeekendEvents}
-                                getAssignment={resolveAssignment}
+                                getAssignment={resolveAcrossTours}
+                                onSwapCells={(targetEvent) => swapFromMenu(tp, slotIndex, ev, info.assignment, targetEvent)}
+                                onReplaceCell={(targetEvent) => replaceFromMenu(tp, slotIndex, ev, info.assignment, targetEvent)}
                                 toursById={toursById}
                                 fetchAll={reload}
                                 checkAndAssign={checkAndAssign}
@@ -2624,6 +2926,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
                                 cellState={info.state}
                                 assignment={info.assignment}
                                 canRelock={info.canRelock}
+                                isOverride={!!info.isOverride}
                                 onAssign={(staffMember, removeFromEventId) => doAssign(tp, slotIndex, ev, staffMember, removeFromEventId)}
                                 onRemove={() => clearAssignment(tp, slotIndex, ev, info.assignment)}
                                 onSetStatus={(status) => applyStatusChange(tp, slotIndex, ev, info.assignment, status)}
@@ -2817,6 +3120,7 @@ export default function StaffingGrid({ tourId, year, showPastEvents = false, sea
         document.body
       )}
 
+      {swapPicker && <SwapPickerModal picker={swapPicker} onClose={() => setSwapPicker(null)} onConfirm={confirmSwap} />}
       <ConflictWizardModal
         wizard={conflictWizard}
         onClose={() => setConflictWizard(null)}
