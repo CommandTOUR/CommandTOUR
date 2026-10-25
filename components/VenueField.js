@@ -19,14 +19,19 @@ const smallBtn = { fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding
 // Venue picker for the event modal.
 // Default: search EXISTING venues only (no Google). "Add new venue" opens a panel with Google Places +
 // manual fields, guarded against duplicates. Selecting links the event by venue_id.
-export default function VenueField({ form, setForm }) {
+// Extra props for editing an EXISTING event:
+//   hideNoVenue   omit the "No venue yet" checkbox
+//   preserveCity  ask before replacing a city the user already has with the picked venue's city
+//   originalVenue { id, name } the event's current venue: picking a different one asks "Change venue from X to Y?"
+//   initialVenue  venue object to show as the selected chip on open
+export default function VenueField({ form, setForm, hideNoVenue = false, preserveCity = false, originalVenue = null, initialVenue = null }) {
   const [mode, setMode] = useState('search') // 'search' | 'new'
   const [query, setQuery] = useState(form.venue_name || '')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [open, setOpen] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
-  const [selected, setSelected] = useState(null)
+  const [selected, setSelected] = useState(initialVenue)
 
   const [nv, setNv] = useState(EMPTY_NV)
   const [dupes, setDupes] = useState([])
@@ -88,6 +93,11 @@ export default function VenueField({ form, setForm }) {
   }
 
   const selectVenue = (v) => {
+    if (originalVenue?.id && originalVenue.id !== v.id &&
+        !window.confirm(`Change venue from ${originalVenue.name} to ${v.name}?`)) return
+    // keep a city the user already has unless they agree to take the venue's
+    const keepCity = preserveCity && !!form.city && !!v.city && form.city.trim().toLowerCase() !== v.city.trim().toLowerCase() &&
+      !window.confirm(`Use the venue's city (${v.city}) instead of ${form.city}?`)
     clearTimeout(debounceRef.current)
     searchSeq.current++
     setSelected(v)
@@ -96,7 +106,9 @@ export default function VenueField({ form, setForm }) {
     setResults([])
     setOpen(false)
     setDupes([])
-    setForm(p => ({ ...p, venue_id: v.id, venue_name: v.name, place_id: '', city: v.city || '', state: v.state || '', country: v.country || '' }))
+    setForm(p => keepCity
+      ? { ...p, venue_id: v.id, venue_name: v.name, place_id: '' }
+      : { ...p, venue_id: v.id, venue_name: v.name, place_id: '', city: v.city || '', state: v.state || '', country: v.country || '' })
   }
 
   const clearSelected = () => {
@@ -348,7 +360,7 @@ export default function VenueField({ form, setForm }) {
           </div>
         </>
       )}
-      {noVenueCheckbox}
+      {!hideNoVenue && noVenueCheckbox}
     </div>
   )
 }

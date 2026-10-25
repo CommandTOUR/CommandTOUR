@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../../../../lib/supabase'
 import TravelHotelTab from '../../../../../components/TravelHotelTab'
 import ScheduleTab from '../../../../../components/ScheduleTab'
 import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
+import EventVenueEditor from '../../../../../components/EventVenueEditor'
 import FilesTab from '../../../../../components/FilesTab'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 import { useNav } from '../../../../../context/NavContext'
@@ -276,6 +278,10 @@ export default function EventPage() {
   const [shows, setShows] = useState([])
   const [venue, setVenue] = useState(null)
   const [venueContacts, setVenueContacts] = useState([])
+  const [venueModal, setVenueModal] = useState(false)
+  const [venuePatch, setVenuePatch] = useState(null)
+  const [venueSaving, setVenueSaving] = useState(false)
+  const [venueError, setVenueError] = useState('')
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
     const tab = searchParams.get('tab')
@@ -657,6 +663,34 @@ export default function EventPage() {
 
   const color = tour?.color || 'var(--accent)'
 
+  // Set, change or remove this event's venue (a removed venue returns the event to a hold; the city stays)
+  const saveVenue = async () => {
+    if (!venuePatch) { setVenueModal(false); return }
+    setVenueSaving(true)
+    setVenueError('')
+    const supabase = getSupabase()
+    const { data, error } = await supabase.from('events').update({
+      venue_id: venuePatch.venue_id, venue_name: venuePatch.venue_name,
+      city: venuePatch.city, state: venuePatch.state, country: venuePatch.country || null,
+    }).eq('id', eventId).select().single()
+    if (error || !data) { setVenueSaving(false); setVenueError(error?.message || 'Could not save the venue'); return }
+    setEvent(data)
+    if (data.venue_id) {
+      const [venueRes, contactsRes] = await Promise.all([
+        supabase.from('venues').select('*').eq('id', data.venue_id).single(),
+        supabase.from('venue_contacts').select('*').eq('venue_id', data.venue_id).order('created_at', { ascending: true }),
+      ])
+      setVenue(venueRes.error ? null : venueRes.data)
+      setVenueContacts(contactsRes.error ? [] : contactsRes.data)
+    } else {
+      setVenue(null)
+      setVenueContacts([])
+    }
+    setVenueSaving(false)
+    setVenueModal(false)
+    setVenuePatch(null)
+  }
+
   const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   }) : '—'
@@ -757,7 +791,13 @@ export default function EventPage() {
 
           {/* Right: actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => { setVenuePatch(null); setVenueError(''); setVenueModal(true) }}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
+              >
+                {event.venue_name ? 'Change venue' : 'Add venue'}
+              </button>
               <button onClick={handleDeleteEvent} style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>
                 Delete Event
               </button>
@@ -1401,6 +1441,35 @@ export default function EventPage() {
           )}
         </div>
       </div>
+      {venueModal && event && createPortal(
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: 16 }}
+          onMouseDown={(e) => { if (e.target === e.currentTarget && !venueSaving) setVenueModal(false) }}
+        >
+          <div role="dialog" aria-modal="true" style={{
+            background: 'var(--glass-tile-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            border: 'var(--tile-border)', boxShadow: 'var(--glass-tile-shadow)', borderRadius: 'var(--tile-radius)',
+            padding: 24, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box',
+            display: 'flex', flexDirection: 'column', gap: 14, color: 'var(--text-primary)',
+          }}>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>Event venue</div>
+            <EventVenueEditor
+              base={{ venue_id: event.venue_id || null, venue_name: event.venue_name || null, city: event.city || '', state: event.state || '', country: event.country || '' }}
+              patch={venuePatch}
+              onChange={setVenuePatch}
+              disabled={venueSaving}
+            />
+            {venueError && <div role="alert" style={{ fontSize: 14, color: 'var(--color-danger)' }}>{venueError}</div>}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setVenueModal(false)} disabled={venueSaving} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={saveVenue} disabled={venueSaving || !venuePatch} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: (venueSaving || !venuePatch) ? 'default' : 'pointer', opacity: (venueSaving || !venuePatch) ? 0.5 : 1 }}>
+                {venueSaving ? 'Saving…' : 'Save venue'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import TopNav from '../../../../../../components/TopNav'
 import { getSupabase } from '../../../../../../lib/supabase'
-import { formatLocation } from '@/lib/locationFormat'
 import { useNav } from '../../../../../../context/NavContext'
+import VenueField from '../../../../../../components/VenueField'
 import { IconLayoutDashboard } from '@tabler/icons-react'
 
 export default function EditEvent() {
@@ -16,11 +16,8 @@ export default function EditEvent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [extendedLoadOut, setExtendedLoadOut] = useState(false)
-  const [venues, setVenues] = useState([])
-  const [venueSearch, setVenueSearch] = useState('')
-  const [showVenueList, setShowVenueList] = useState(false)
-  const [venueActiveIndex, setVenueActiveIndex] = useState(-1)
-  const [selectedVenue, setSelectedVenue] = useState(null)
+  const [linkedVenue, setLinkedVenue] = useState(null) // the event's saved venue, for the picker chip
+  const [originalVenue, setOriginalVenue] = useState(null)
   const [allCountries, setAllCountries] = useState([])
   const [countrySuggestions, setCountrySuggestions] = useState([])
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false)
@@ -44,9 +41,8 @@ export default function EditEvent() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [eventRes, venuesRes, countriesRes] = await Promise.all([
+      const [eventRes, countriesRes] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
-        supabase.from('venues').select('id, name, city, state, country, address').order('name', { ascending: true }),
         supabase.from('events').select('country').not('country', 'is', null),
       ])
 
@@ -58,6 +54,7 @@ export default function EditEvent() {
           country: data.country || '',
           venue_name: data.venue_name || '',
           venue_id: data.venue_id || null,
+          no_venue: !data.venue_name,
           status: data.status || 'tentative',
           event_type: data.event_type || '',
           load_in_date: data.load_in_date || '',
@@ -65,12 +62,11 @@ export default function EditEvent() {
           notes: data.notes || '',
         })
         if (data.load_out_date && data.load_out_date !== data.load_in_date) setExtendedLoadOut(true)
-        if (data.venue_id && venuesRes.data) {
-          const linked = venuesRes.data.find(v => v.id === data.venue_id)
-          if (linked) { setSelectedVenue(linked); setVenueSearch(linked.name) }
+        if (data.venue_id) {
+          const { data: linked } = await supabase.from('venues').select('id, name, city, state, country, address').eq('id', data.venue_id).single()
+          if (linked) { setLinkedVenue(linked); setOriginalVenue({ id: linked.id, name: linked.name }) }
         }
       }
-      if (!venuesRes.error) setVenues(venuesRes.data || [])
       if (countriesRes.data) {
         const unique = [...new Set(countriesRes.data.map(r => r.country).filter(Boolean))].sort()
         setAllCountries(unique)
@@ -115,40 +111,6 @@ export default function EditEvent() {
     else if (e.key === 'Escape') { setShowCountrySuggestions(false); setCountryActiveIndex(-1) }
   }
 
-  const filteredVenues = venues.filter(v =>
-    v.name?.toLowerCase().includes(venueSearch.toLowerCase()) ||
-    v.city?.toLowerCase().includes(venueSearch.toLowerCase())
-  )
-
-  const handleSelectVenue = (venue) => {
-    setSelectedVenue(venue)
-    setForm(prev => ({
-      ...prev,
-      venue_id: venue.id,
-      venue_name: venue.name,
-      city: venue.city || prev.city,
-      state: venue.state || prev.state,
-      country: venue.country || prev.country,
-    }))
-    setVenueSearch(venue.name)
-    setShowVenueList(false)
-    setVenueActiveIndex(-1)
-  }
-
-  const handleVenueKeyDown = (e) => {
-    if (!showVenueList || filteredVenues.length === 0) return
-    if (e.key === 'ArrowDown') { e.preventDefault(); setVenueActiveIndex(i => Math.min(i + 1, filteredVenues.length - 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setVenueActiveIndex(i => Math.max(i - 1, 0)) }
-    else if (e.key === 'Enter' && venueActiveIndex >= 0) { e.preventDefault(); handleSelectVenue(filteredVenues[venueActiveIndex]) }
-    else if (e.key === 'Escape') { setShowVenueList(false); setVenueActiveIndex(-1) }
-  }
-
-  const handleClearVenue = () => {
-    setSelectedVenue(null)
-    setVenueSearch('')
-    setForm(prev => ({ ...prev, venue_id: null, venue_name: '' }))
-  }
-
   const handleSave = async () => {
     if (!form.city.trim()) { setError('City is required'); return }
     if (!form.load_in_date) { setError('Load-in date is required'); return }
@@ -159,8 +121,8 @@ export default function EditEvent() {
       city: form.city,
       state: form.state,
       country: form.country,
-      venue_name: form.venue_name,
-      venue_id: form.venue_id || null,
+      venue_name: form.no_venue ? null : (form.venue_name || null),
+      venue_id: form.no_venue ? null : (form.venue_id || null),
       status: form.status,
       event_type: form.event_type || null,
       load_in_date: form.load_in_date,
@@ -197,46 +159,14 @@ export default function EditEvent() {
 
         <div className="glass-card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Venue picker */}
-          <div>
-            <label style={labelStyle}>Venue</label>
-            {selectedVenue ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(51,255,153,0.4)', background: 'rgba(51,255,153,0.08)' }}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: '#33FF99' }}>{selectedVenue.name}</div>
-                  <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 2 }}>{formatLocation(selectedVenue.city, selectedVenue.state, selectedVenue.country, 'full')}</div>
-                </div>
-                <div onClick={handleClearVenue} style={{ fontSize: 15, color: '#94a3b8', cursor: 'pointer', padding: '4px 8px' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
-                  onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
-                  x Clear
-                </div>
-              </div>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                <input style={inputStyle} placeholder="Search venues or leave blank to enter manually..."
-                  value={venueSearch}
-                  onChange={e => { setVenueSearch(e.target.value); setShowVenueList(true); setVenueActiveIndex(-1) }}
-                  onFocus={() => setShowVenueList(true)}
-                  onBlur={() => setTimeout(() => setShowVenueList(false), 150)}
-                  onKeyDown={handleVenueKeyDown}
-                />
-                {showVenueList && filteredVenues.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: '#0d1f3a', border: '0.5px solid var(--glass-border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                    {filteredVenues.map((venue, i) => (
-                      <div key={venue.id} onMouseDown={() => handleSelectVenue(venue)}
-                        onMouseEnter={() => setVenueActiveIndex(i)}
-                        onMouseLeave={() => setVenueActiveIndex(-1)}
-                        style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid var(--glass-border)', background: i === venueActiveIndex ? 'rgba(51,255,153,0.08)' : 'transparent' }}>
-                        <div style={{ fontSize: 16, fontWeight: 500, color: i === venueActiveIndex ? 'var(--mint)' : 'var(--text-primary)' }}>{venue.name}</div>
-                        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 1 }}>{formatLocation(venue.city, venue.state, venue.country, 'full')}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Venue: shared picker (existing venues first, guarded Add new venue, hold by city) */}
+          <VenueField
+            form={form}
+            setForm={setForm}
+            preserveCity
+            originalVenue={originalVenue}
+            initialVenue={linkedVenue}
+          />
 
           {/* City + State + Country */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>

@@ -9,6 +9,7 @@ import { getSupabase } from '../../lib/supabase'
 import { IconClock, IconCalendarOff, IconFlag, IconLayoutGrid, IconLayoutList, IconAdjustmentsHorizontal } from '@tabler/icons-react'
 import { formatLocation, shortCountry } from '@/lib/locationFormat'
 import QuickStatusPill from '../../components/QuickStatusPill'
+import EventVenueEditor from '../../components/EventVenueEditor'
 import { getTourForLine, NO_TOUR_MSG } from '../../lib/tourLines'
 import { quickToast } from '../../lib/quickToast'
 import NewEventModal, { ALL_STATUSES, statusLabel, EMPTY_NEW_EVENT_FORM } from '../../components/NewEventModal'
@@ -480,6 +481,9 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
   const [moving, setMoving] = useState(false)
   const [visible, setVisible] = useState(false)
 
+  // Venue edits are held here (counted as unsaved) until Save, like the other panel fields
+  const [venueBase, setVenueBase] = useState({ venue_id: event.venue_id || null, venue_name: event.venue_name || null, city: event.city || '', state: event.state || '', country: event.country || '' })
+  const [venuePatch, setVenuePatch] = useState(null)
   const [initial] = useState({ status: event.status || 'tentative', loadInDate: event.load_in_date || '', bookingNote: event.booking_note || '' })
 
   useEffect(() => {
@@ -498,7 +502,8 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     fetchShows()
   }, [event.id])
 
-  const dirty = status !== initial.status
+  const dirty = venuePatch !== null
+    || status !== initial.status
     || loadInDate !== initial.loadInDate
     || bookingNote !== initial.bookingNote
     || JSON.stringify(shows) !== JSON.stringify(initialShows)
@@ -533,6 +538,7 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     const supabase = getSupabase()
     const { data: updatedEvent, error: eventError } = await supabase.from('events').update({
       status, load_in_date: loadInDate || null, booking_note: bookingNote,
+      ...(venuePatch ? { venue_id: venuePatch.venue_id, venue_name: venuePatch.venue_name, city: venuePatch.city, state: venuePatch.state, country: venuePatch.country || null } : {}),
     }).eq('id', event.id).select().single()
 
     if (eventError) {
@@ -575,6 +581,7 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
     setShows((freshShows || []).map(transformShow))
     setInitialShows((freshShows || []).map(transformShow))
 
+    if (venuePatch) { setVenueBase(venuePatch); setVenuePatch(null) }
     setSaving(false)
     setSaveSuccess(true)
     onSaved(updatedEvent)
@@ -670,6 +677,11 @@ function EventSidePanel({ event, tour, lines, row, onClose, onSaved, onDeleted, 
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div>
+          <label style={labelStyle}>Venue</label>
+          <EventVenueEditor base={venueBase} patch={venuePatch} onChange={setVenuePatch} disabled={saving} />
+        </div>
+
         <div>
           <label style={labelStyle}>Status</label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
