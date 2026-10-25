@@ -304,7 +304,7 @@ export default function Dashboard() {
 
         {/* Left: tours */}
         <div className="dash-tours" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <div className="dash-section-head">
             <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }}>Tours</div>
             {!loading && (
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-info)', background: 'color-mix(in srgb, var(--color-info) 12%, transparent)', border: '0.5px solid color-mix(in srgb, var(--color-info) 35%, transparent)', borderRadius: 10, padding: '1px 8px' }}>
@@ -377,7 +377,7 @@ export default function Dashboard() {
 
           {/* Needs attention */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>
+            <div className="dash-section-head" style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }}>
               <div style={{ position: 'relative', display: 'inline-flex', width: 16, height: 16, flexShrink: 0 }}>
                 <IconAlertTriangleFilled size={16} color="#FFD60A" />
                 <IconAlertTriangle size={16} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
@@ -428,7 +428,7 @@ export default function Dashboard() {
 
           {/* Budget placeholder */}
           <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6 }}>
+            <div className="dash-section-head" style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)' }}>
               Budget Overview
             </div>
 

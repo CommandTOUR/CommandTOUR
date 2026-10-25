@@ -469,3 +469,7 @@ html, body {
 .dash-tours { container-type: inline-size; }
 .dash-tour-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 @container (max-width: 560px) { .dash-tour-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Dashboard section headers: one height and one bottom margin so the first tile in every column
+   starts at the same y, whether or not the header row contains a button */
+.dash-section-head { display: flex; align-items: center; gap: 8px; height: 26px; margin-bottom: 6px; box-sizing: border-box; }
