@@ -304,8 +304,8 @@ padding: 14px 16px;
 Uses `.tile-sub1` / `.tile-sub2` / `.tile-next-event-text` (hardcoded hex,
 Section 2) for its text hierarchy. Don't invest in fixing this page's colors
 ad hoc — it gets the Section 5b or 5a treatment (TBD) when its turn comes.
-`components/TourTiles.js` and `components/ThisWeek.js` implement a related
-older pattern and are **orphaned** (not imported anywhere) but kept on disk.
+(`components/TourTiles.js` and `components/ThisWeek.js`, an older related pattern,
+were orphaned and have been removed.)
 
 ---
 
@@ -341,17 +341,12 @@ older pattern and are **orphaned** (not imported anywhere) but kept on disk.
   `background 0.1s, color 0.1s` (background-color easing, not the blanket
   300ms rule from `globals.css` — see Section 11 on the "no transitions on
   color" rule).
-- **Logo**: `<img>` swapped by `theme` state —
-  `/images/V1_CommandTOUR_Dark1.png` in dark mode,
-  `/images/V1_CommandTOUR_Light1.png` in light mode. Wrapped in a `<Link
-  href="/">`. Container: `padding: '16px 14px 12px'`, `border-bottom: 0.5px
-  solid var(--border-default)`. Image: `width: '100%', maxWidth: 200, height:
-  'auto', display: 'block'`. (Other logo files exist on disk in
-  `public/images/` — `V1_CommandTOUR_Dark.png` / `V1_CommandTOUR_Light.png`
-  without the `1` suffix, plus several `CommandTOUR_Branding-*` and
-  `CommandTOUR_Splash*` files, and `commandtour-logo.png` — none of those
-  are referenced by `SideNav.js`; the `*1.png` pair is the only pair
-  actually wired in.)
+- **Logo**: a single `<img>` of `/command-tour-navigation-logo.png`, the same
+  in light and dark mode (no theme switching, no filter). Wrapped in a `<Link
+  href="/">`. Container: `padding: '16px 14px 14px'`, `border-bottom: 0.5px
+  solid var(--border-default)`. Image: `width: '100%', maxWidth: 172, height:
+  'auto', aspectRatio: '1631 / 600', objectFit: 'contain'`. The browser tab
+  icon (`app/icon.png`, `app/apple-icon.png`) is the logo's blue arrowhead.
 - **Theme toggle**: lives in the nav footer, a plain `<button>` (no
   `.btn-*` class) containing `IconSun` (shown when `theme === 'dark'`, i.e.
   the icon shows the *destination* state) or `IconMoon` (shown in light
@@ -832,10 +827,6 @@ Section 5 card treatment):
 - `/calendar`, `/venues`, `/venues/new`, `/venues/[venueId]`,
   `/venues/[venueId]/edit`
 - `/bc`, `/reports`, `/settings`, `/staffing-grid`, `/budget`
-
-### Orphaned files (kept on disk, no longer imported)
-- `components/TourTiles.js`
-- `components/ThisWeek.js`
 
 ### Exception — no nav at all
 - `/login` — never had one; `SideNav` explicitly returns `null` there
