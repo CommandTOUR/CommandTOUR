@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 import PrintClient from './PrintClient'
 
 export default async function PrintSchedulePage({ params, searchParams }) {
   const { tourId } = await params
   const { year } = await searchParams
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+  // Runs as the logged-in user so row-level security applies
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const { data: tour } = await supabase
     .from('tours')

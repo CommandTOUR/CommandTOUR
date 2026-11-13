@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../lib/supabase'
 import { formatLocation } from '@/lib/locationFormat'
+import { getSignedDocUrl } from '@/lib/staffDocuments'
 import { IconPrinter, IconId, IconUserCircle, IconMail, IconPhone, IconUser } from '@tabler/icons-react'
 import { useNav } from '../../../context/NavContext'
 import { buildNavEntry } from '../../../lib/navigate'
@@ -62,9 +63,10 @@ function Field({ label, value }) {
 }
 
 function UploadSlot({ label, url, icon: Icon, onPreview }) {
+  // `url` is the stored storage path; a fresh signed URL is created on click
   return (
     <div
-      onClick={url ? () => onPreview(url) : undefined}
+      onClick={url ? async () => { const signed = await getSignedDocUrl(getSupabase(), url); if (signed) onPreview(signed) } : undefined}
       style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 0, cursor: url ? 'pointer' : 'default' }}
     >
       <Icon size={36} stroke={1.5} color={url ? 'var(--color-info)' : 'var(--text-muted)'} />
