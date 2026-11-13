@@ -19,15 +19,16 @@ export async function proxy(req) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  // getUser() verifies the token with Supabase Auth; getSession() only reads the cookie
+  const { data: { user } } = await supabase.auth.getUser()
 
   const isLoginPage = req.nextUrl.pathname === '/login'
 
-  if (!session && !isLoginPage) {
+  if (!user && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  if (session && isLoginPage) {
+  if (user && isLoginPage) {
     return NextResponse.redirect(new URL('/', req.url))
   }
 

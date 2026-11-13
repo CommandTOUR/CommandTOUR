@@ -1,11 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/lib/supabaseServer'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
+  const supabase = await getSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
 
   const [toursRes, eventsRes, venuesRes, showListRes] = await Promise.all([
     supabase.from('tours').select('id, name, color, status, tour_type, created_at, sort_order, deleted_at').is('deleted_at', null).order('name', { ascending: true }),

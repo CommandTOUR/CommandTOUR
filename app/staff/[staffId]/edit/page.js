@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../../lib/supabase'
 import { IconId, IconUserCircle } from '@tabler/icons-react'
 import airportData from '@/lib/airports.json'
+import { uploadStaffDoc, removeStaffDocs } from '@/lib/staffDocuments'
 
 const AIRPORT_MAP = Object.fromEntries(airportData.map(a => [a.iata.toUpperCase(), a]))
 
@@ -300,15 +301,14 @@ export default function EditStaff() {
     setUploading(true)
     setError('')
     const supabase = getSupabase()
-    const filename = `${staffId}-${slot}-${Date.now()}.${file.name.split('.').pop()}`
-    const { error: uploadError } = await supabase.storage.from('staff-documents').upload(filename, file, { upsert: true })
+    const previousPath = form[column]
+    const { path, error: uploadError } = await uploadStaffDoc(supabase, staffId, slot, file)
     if (uploadError) { setError(uploadError.message); setUploading(false); return }
-    const { data: urlData } = supabase.storage.from('staff-documents').getPublicUrl(filename)
-    const publicUrl = urlData.publicUrl
-    const { error: updateError } = await supabase.from('staff').update({ [column]: publicUrl }).eq('id', staffId)
+    const { error: updateError } = await supabase.from('staff').update({ [column]: path }).eq('id', staffId)
     if (updateError) { setError(updateError.message); setUploading(false); return }
-    set(column, publicUrl)
-    setOriginal(prev => ({ ...prev, [column]: publicUrl }))
+    if (previousPath) await removeStaffDocs(supabase, [previousPath])
+    set(column, path)
+    setOriginal(prev => ({ ...prev, [column]: path }))
     setUploading(false)
   }
 
@@ -322,6 +322,7 @@ export default function EditStaff() {
       setDeleteConfirm(false)
       return
     }
+    await removeStaffDocs(supabase, [form.passport_image_url, form.passport_headshot_url])
     router.push('/staff')
   }
 
