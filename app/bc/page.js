@@ -12,27 +12,14 @@ import QuickStatusPill from '../../components/QuickStatusPill'
 import EventVenueEditor from '../../components/EventVenueEditor'
 import { getTourForLine, NO_TOUR_MSG } from '../../lib/tourLines'
 import { quickToast } from '../../lib/quickToast'
+import { EVENT_STATUS_PILL_STYLES } from '../../lib/eventStatusStyles'
 import NewEventModal, { ALL_STATUSES, statusLabel, EMPTY_NEW_EVENT_FORM } from '../../components/NewEventModal'
 
-const STATUS_STYLES = {
-  confirmed:   { color: 'var(--color-success)', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
-  '1-hold':    { color: 'var(--color-warning)', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: 'var(--color-warning)', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
-  '3-hold':    { color: 'var(--color-danger)', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
-  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
-}
+const STATUS_STYLES = EVENT_STATUS_PILL_STYLES
 
 const STATUS_OPTIONS = ALL_STATUSES.map(v => ({ value: v, label: statusLabel(v) }))
 
-const STATUS_PILL_LIGHT = {
-  confirmed:   { color: 'var(--color-success)', background: 'rgba(51,255,153,0.15)',   border: 'rgba(51,255,153,0.30)' },
-  tentative:   { color: '#BF5AF2', background: 'rgba(191,90,242,0.15)',   border: 'rgba(191,90,242,0.30)' },
-  '1-hold':    { color: 'var(--color-warning)', background: 'rgba(255,214,10,0.15)',   border: 'rgba(255,214,10,0.30)' },
-  '2-hold':    { color: 'var(--color-warning)', background: 'rgba(255,149,0,0.15)',    border: 'rgba(255,149,0,0.30)' },
-  '3-hold':    { color: 'var(--color-danger)', background: 'rgba(255,59,48,0.15)',    border: 'rgba(255,59,48,0.30)' },
-  'date-hold': { color: '#8E8E93', background: 'rgba(142,142,147,0.15)',  border: 'rgba(142,142,147,0.30)' },
-}
+const STATUS_PILL_LIGHT = EVENT_STATUS_PILL_STYLES
 
 const PANEL_STATUSES_ROW1 = ['confirmed', '1-hold', '2-hold', '3-hold', 'tentative']
 const PANEL_STATUSES_ROW2 = ['date-hold']

@@ -15,7 +15,10 @@ const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
 // The pill shows the new value optimistically and reverts + toasts if the save fails.
 export default function QuickStatusPill({
   value, options, styles = {}, optionStyles, onSelect, triggerStyle, caret = false, fallbackValue,
+  icons, // optional { [value]: node } shown before the label (e.g. a warning icon)
   chars, // optional { [value]: 'C' }: render the trigger as a small status circle with that character
+  variant = 'pill', // 'dot': a small status-colored dot (real button, 24px/44px hit area); menu rows show dot + name
+  dotIcons, // dot variant: { [value]: node } drawn instead of the dot (e.g. a warning icon)
 }) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(null) // optimistic value while saving
@@ -106,8 +109,27 @@ export default function QuickStatusPill({
     else if (e.key === 'Tab') { close(false) }
   }
 
-  return (
-    <>
+  const dotNode = (value, color) => (dotIcons?.[value]
+    ? <span style={{ color, display: 'flex' }}>{dotIcons[value]}</span>
+    : <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'block', flexShrink: 0 }} />)
+
+  const trigger = variant === 'dot' ? (
+    <button
+      ref={triggerRef}
+      type="button"
+      className="status-dot-btn"
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      aria-busy={saving}
+      aria-label={`Status: ${opt?.label ?? shown}. Change status`}
+      title={opt?.label ?? shown}
+      onClick={(e) => { e.stopPropagation(); open ? close(false) : openMenu() }}
+      onKeyDown={(e) => { if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); openMenu() } }}
+      style={{ cursor: saving ? 'progress' : 'pointer', opacity: saving ? 0.6 : 1, ...triggerStyle }}
+    >
+      {dotNode(shown, st.color)}
+    </button>
+  ) : (
       <div
         ref={triggerRef}
         role="button"
@@ -129,9 +151,15 @@ export default function QuickStatusPill({
           ...triggerStyle,
         }}
       >
+        {!chars && icons?.[shown]}
         {chars ? (chars[shown] ?? (opt?.label ?? shown).charAt(0)) : (opt?.label ?? shown)}
         {!chars && (saving ? <IconLoader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : caret && <IconChevronDown size={12} />)}
       </div>
+  )
+
+  return (
+    <>
+      {trigger}
       {open && pos && createPortal(
         <div
           ref={menuRef}
@@ -162,9 +190,16 @@ export default function QuickStatusPill({
                 onFocus={e => e.currentTarget.style.background = 'var(--glass-tile-hover)'}
                 onBlur={e => e.currentTarget.style.background = 'transparent'}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
-                  {o.label}
-                </span>
+                {variant === 'dot' ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: active ? 700 : 500, color: 'var(--text-primary)' }}>
+                    {dotNode(o.value, s.color)}
+                    {o.label}
+                  </span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 600, color: s.color, background: s.background, border: `1px solid ${s.border}` }}>
+                    {o.label}
+                  </span>
+                )}
                 {active && <IconCheck size={14} color="var(--color-info)" />}
               </div>
             )

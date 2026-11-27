@@ -12,6 +12,8 @@
 :root {
   /* Page */
   --page-bg: #edeef0;
+  /* staffing views: page tone lightened toward the card surface (follows both themes) */
+  --staff-view-bg: color-mix(in srgb, var(--page-bg) 40%, var(--surface-card));
   --page-bg-dark: #111111;
 
   /* Surfaces */
@@ -473,3 +475,9 @@ html, body {
 /* Dashboard section headers: one height and one bottom margin so the first tile in every column
    starts at the same y, whether or not the header row contains a button */
 .dash-section-head { display: flex; align-items: center; gap: 8px; height: 26px; margin-bottom: 6px; box-sizing: border-box; }
+
+/* Status dot button (staffing tiles): small dot, generous hit area */
+.status-dot-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; padding: 0; margin: 0; background: transparent; border: none; border-radius: 6px; flex-shrink: 0; }
+.status-dot-btn:focus-visible { outline: 2px solid var(--color-info); outline-offset: 1px; }
+/* touch: 44px hit area overlaps the tile padding (negative margin) instead of making the tile taller */
+@media (pointer: coarse) { .status-dot-btn { min-width: 44px; min-height: 44px; margin: -10px -6px; } }
