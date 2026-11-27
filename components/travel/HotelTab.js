@@ -157,9 +157,9 @@ export default function HotelTab({ eventId, event, data, canEdit, reload, undoab
   }
 
   const cols = [
-    { key: 'n', label: '#', width: 4, render: x => (canEdit ? <span draggable onDragStart={startDrag({ roomId: x.room.id })} onDragEnd={endDrag} title="Drag This Room To Another Cost Group" style={{ ...handle, cursor: 'grab' }}>{x.index}</span> : x.index) },
-    { key: 'g1', label: 'Guest 1', width: 16, render: x => guestCell(x.room, 1) },
-    { key: 'g2', label: 'Guest 2', width: 14, render: x => guestCell(x.room, 2) },
+    { key: 'n', label: '#', width: 3, render: x => (canEdit ? <span draggable onDragStart={startDrag({ roomId: x.room.id })} onDragEnd={endDrag} title="Drag This Room To Another Cost Group" style={{ ...handle, cursor: 'grab' }}>{x.index}</span> : x.index) },
+    { key: 'g1', label: 'Guest 1', width: 12, render: x => guestCell(x.room, 1) },
+    { key: 'g2', label: 'Guest 2', width: 11, render: x => guestCell(x.room, 2) },
     { key: 'type', label: 'Type', width: 7, render: x => (
       <select aria-label="Room Type" disabled={!canEdit} value={ROOM_TYPES.includes(x.room.room_type) ? x.room.room_type : '1 Bed'} onChange={e => upd(x.room.id, { room_type: e.target.value }, 'Room type changed')} style={sel}>
         {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -169,14 +169,14 @@ export default function HotelTab({ eventId, event, data, canEdit, reload, undoab
     { key: 'out', label: 'Check Out', width: 10, render: x => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><InlineInput type="date" ariaLabel="Check Out" disabled={!canEdit} value={x.info.dates.checkOut} onSave={v => upd(x.room.id, { check_out_date: v })} />{x.info.dates.autoOut && x.info.dates.checkOut && <Chip tone="grey" title="From the guests' trips. Edit to override.">Auto</Chip>}</div>) },
     { key: 'nights', label: 'Nights', width: 5, align: 'center', render: x => x.info.nights },
-    { key: 'early', label: 'Early Check-In', width: 6, align: 'center', render: x => <Check checked={!!x.room.early_check_in} disabled={!canEdit} label="Early Check-In" onChange={() => upd(x.room.id, { early_check_in: !x.room.early_check_in })} /> },
-    { key: 'conf', label: 'Confirmation', width: 10, render: x => <InlineInput ariaLabel="Confirmation" disabled={!canEdit} value={x.room.confirmation_number} onSave={v => upd(x.room.id, { confirmation_number: v })} /> },
+    { key: 'early', label: 'Early Check-In', width: 9, align: 'center', render: x => <Check checked={!!x.room.early_check_in} disabled={!canEdit} label="Early Check-In" onChange={() => upd(x.room.id, { early_check_in: !x.room.early_check_in })} /> },
+    { key: 'conf', label: 'Confirmation', width: 9, render: x => <InlineInput ariaLabel="Confirmation" disabled={!canEdit} value={x.room.confirmation_number} onSave={v => upd(x.room.id, { confirmation_number: v })} /> },
     { key: 'parking', label: 'Parking', width: 7, render: x => (
       <select aria-label="Parking" disabled={!canEdit} value={x.room.parking || ''} onChange={e => upd(x.room.id, { parking: e.target.value || null }, 'Parking changed')} style={sel}>
         <option value="">None</option><option value="self">Self</option><option value="valet">Valet</option>
       </select>) },
-    { key: 'rate', label: 'Rate', width: 8, align: 'right', render: x => <InlineMoney ariaLabel="Rate Override" disabled={!canEdit} value={x.room.rate_override} placeholder={nightlyRate(x.room, hotel || {}).toFixed(2)} onSave={v => upd(x.room.id, { rate_override: v })} /> },
-    { key: 'budget', label: 'Budget', width: 7, align: 'right', render: x => (String(x.room.cost_group || '').toLowerCase() === PAY_ON_OWN.toLowerCase() ? <span style={muted}>Pays Own</span> : money(x.info.estimate)) },
+    { key: 'rate', label: 'Rate', width: 7, align: 'right', render: x => <InlineMoney ariaLabel="Rate Override" disabled={!canEdit} value={x.room.rate_override} placeholder={nightlyRate(x.room, hotel || {}).toFixed(2)} onSave={v => upd(x.room.id, { rate_override: v })} /> },
+    { key: 'budget', label: 'Budget', width: 8, align: 'right', render: x => (String(x.room.cost_group || '').toLowerCase() === PAY_ON_OWN.toLowerCase() ? <span style={muted}>Pays Own</span> : money(x.info.estimate)) },
     { key: 'remove', label: '', width: 2, align: 'center', render: x => (canEdit ? <span role="button" aria-label="Remove Room" title="Remove Room" onClick={() => { if (confirm('Remove this room?')) guard(() => deleteRoom(sb(), x.room.id), 'Room removed') }} style={{ cursor: 'pointer', color: 'var(--color-danger)' }}>×</span> : null) },
   ]
 
@@ -241,7 +241,7 @@ export default function HotelTab({ eventId, event, data, canEdit, reload, undoab
       <div className="travel-hotel-layout">
         <div style={{ minWidth: 0 }}>
           <div style={{ ...SMALL_LABEL, margin: '0 0 8px' }}>Rooming List · {rooms.length} {rooms.length === 1 ? 'Room' : 'Rooms'} · {totals.roomNights} Room Nights</div>
-          <TableShell cols={cols} minWidth={1100}>
+          <TableShell cols={cols} minWidth={1360}>
             {groups.length === 0 && <EmptyRow cols={cols}>No cost groups yet. Add groups in Settings, Travel.</EmptyRow>}
             {groups.map(g => {
               const t = { type: 'group', group: g.group }
