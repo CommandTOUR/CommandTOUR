@@ -37,7 +37,7 @@ export const personName = (s) => (s ? (s.display_name?.trim() || `${s.first_name
 export function Chip({ tone: t = 'grey', children, onClick, anchorRef, title }) {
   return (
     <span ref={anchorRef} title={title} role={onClick ? 'button' : undefined} onClick={onClick}
-      style={{ display: 'inline-block', fontSize: FS.small, fontWeight: 600, padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap', cursor: onClick ? 'pointer' : 'default', userSelect: 'none', ...CHIP_TONES[t] }}>{children}</span>
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: FS.small, fontWeight: 600, padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap', cursor: onClick ? 'pointer' : 'default', userSelect: 'none', ...CHIP_TONES[t] }}>{children}</span>
   )
 }
 
@@ -66,16 +66,16 @@ export function Check({ checked, onChange, disabled, label }) {
   )
 }
 
-// A text field that looks like a cell and saves when you leave it (only if the value changed)
+// A text field that reads as plain text until hovered or focused, and saves when you leave it (only if the value changed)
 export function InlineInput({ value, onSave, placeholder = '—', disabled, type = 'text', style, ariaLabel }) {
   const [v, setV] = useStateInline(value ?? '')
   useEffectInline(() => { setV(value ?? '') }, [value])
   return (
-    <input type={type} aria-label={ariaLabel} value={v} disabled={disabled} placeholder={placeholder}
+    <input className="plain-cell" type={type} aria-label={ariaLabel} value={v} disabled={disabled} placeholder={placeholder}
       onChange={e => setV(e.target.value)}
       onBlur={() => { if (String(v) !== String(value ?? '')) onSave(v) }}
       onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-      style={{ fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', ...style }} />
+      style={style} />
   )
 }
 
@@ -85,8 +85,8 @@ export function InlineMoney({ value, onSave, disabled, ariaLabel, placeholder })
   const [v, setV] = useStateInline(shown)
   useEffectInline(() => { setV(shown) }, [shown])
   return (
-    <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={6} placeholder={placeholder}
-      inputStyle={{ fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', textAlign: 'right' }}
+    <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={2} placeholder={placeholder} className="plain-cell"
+      inputStyle={{ fontSize: FS.body, textAlign: 'right' }}
       onBlur={(e, f) => { if (f !== shown) onSave(f) }} />
   )
 }

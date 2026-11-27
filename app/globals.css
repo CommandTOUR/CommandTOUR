@@ -503,3 +503,12 @@ html, body {
 /* Travel workspace, Hotel tab: rooming list on the left, sidebar on the right; the sidebar stacks above on narrow screens */
 .travel-hotel-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 @media (max-width: 1100px) { .travel-hotel-layout { grid-template-columns: minmax(0, 1fr); } .travel-hotel-side { order: -1; } }
+
+/* Travel workspace grids: cells read as plain text until hovered or focused */
+.plain-cell { font-family: inherit; font-size: var(--font-size-table); color: inherit; width: 100%; box-sizing: border-box; padding: 2px 2px; margin: 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; outline: none; text-overflow: ellipsis; }
+.plain-cell:hover:not(:disabled) { border-bottom-color: var(--border-stronger); }
+.plain-cell:focus { border-bottom-color: var(--color-info); background: var(--surface-card); }
+.plain-cell:disabled { opacity: 1; cursor: default; }
+.plain-text-btn { font-family: inherit; font-size: inherit; color: inherit; background: none; border: 0; border-bottom: 1px solid transparent; padding: 2px 0; margin: 0; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plain-text-btn:hover:not(:disabled) { border-bottom-color: var(--border-stronger); }
+.plain-text-btn:disabled { cursor: default; }

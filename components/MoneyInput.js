@@ -8,7 +8,7 @@ export const formatMoneyInput = (v, min = 2, max = 2) => {
   return Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: false }) : ''
 }
 
-export default function MoneyInput({ value, onChange, onBlur, disabled, maxDecimals = 2, placeholder = '0.00', inputStyle, prefixLeft = 14, ...rest }) {
+export default function MoneyInput({ value, onChange, onBlur, disabled, maxDecimals = 2, placeholder = '0.00', inputStyle, className, prefixLeft = 14, ...rest }) {
   const pattern = new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}$`)
   const base = inputStyle || INPUT
   return (
@@ -16,6 +16,7 @@ export default function MoneyInput({ value, onChange, onBlur, disabled, maxDecim
       <span aria-hidden="true" style={{ position: 'absolute', left: prefixLeft, top: '50%', transform: 'translateY(-50%)', fontSize: base.fontSize || 16, color: 'var(--text-muted-legible)', pointerEvents: 'none' }}>$</span>
       <input
         {...rest}
+        className={className}
         type="text" inputMode="decimal" disabled={disabled} value={value ?? ''} placeholder={placeholder}
         onChange={e => { if (pattern.test(e.target.value)) onChange(e.target.value) }}
         onBlur={(e) => { const f = formatMoneyInput(value, 2, maxDecimals); if (f !== (value ?? '')) onChange(f); onBlur?.(e, f) }}

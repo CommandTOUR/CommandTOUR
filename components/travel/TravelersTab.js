@@ -6,22 +6,24 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { quickToast } from '@/lib/quickToast'
 import { getSupabase } from '@/lib/supabase'
-import { TRIP_STATUS_MENU, statusLabel, modeLabel, isEntered, tripDate, tripTime, tripAirport, hasFlightFields, COST_CATEGORIES,
-  upsertTrip, saveSegments, saveCosts, setTripStatus, deleteTrip, resolveRework, copyToReturnTrip } from '@/lib/travel/trips'
+import { TRIP_STATUS_MENU, TRIP_MODES, statusLabel, modeLabel, isEntered, tripDate, tripTime, tripAirport, hasFlightFields, COST_CATEGORIES,
+  upsertTrip, saveSegments, saveCosts, setTripStatus, setTripMode, deleteTrip, resolveRework, copyToReturnTrip } from '@/lib/travel/trips'
 import { setTravelerFlag } from '@/lib/travel/travelers'
+import { runRoomOps } from '@/lib/travel/hotelData'
+import { planUncheckRoom } from '@/lib/travel/rooming'
 import { formatTime } from '@/lib/travel/time'
 import { describeTrip } from '@/lib/travelRework'
 import { useAnchoredMenu } from '@/components/staffing/popup'
 import { Z_MENU } from '@/components/staffing/shared'
 import TripModal from './TripModal'
 import { TableShell, BodyRow, GroupRow, ExpandRow, EmptyRow } from './DataTable'
+import { Chevron, Caret, ModeIcon, ModeIcons, PickText } from './cells'
 import { FS, CARD, LINE, SMALL_LABEL, BTN_S, Chip, Pill, STATUS_TONE, fmtDay, personName, money, Check } from './shared'
 
 const DIRS = [{ key: 'both', label: 'Both' }, { key: 'in', label: 'Travel To' }, { key: 'out', label: 'Travel From' }]
 const RANK = { hold: 0, good_to_book: 1, needs_approval: 2, booked: 3 }
 const flyerRank = (t) => (t && !hasFlightFields(t.mode) ? 1 : 0)
 const link = { color: 'var(--text-muted-legible)' }
-const LOCAL_TIME_HINT = 'Times are local to each airport, as printed on the itinerary.'
 const catLabel = (v) => COST_CATEGORIES.find(c => c.value === v)?.label || v
 
 // one pill for a person: the least advanced of their live trips (Cancelled only when every trip is cancelled)
@@ -47,7 +49,7 @@ function StatusMenu({ canEdit, onChange, status, enabled = true }) {
   const interactive = canEdit && enabled
   return (
     <>
-      <Chip tone={STATUS_TONE[status]} anchorRef={anchorRef} title={interactive ? 'Click To Change Status' : undefined} onClick={interactive ? (e) => { e.stopPropagation(); setOpen(o => !o) } : undefined}>{statusLabel(status)}{interactive ? ' ▾' : ''}</Chip>
+      <Chip tone={STATUS_TONE[status]} anchorRef={anchorRef} title={interactive ? 'Click To Change Status' : undefined} onClick={interactive ? (e) => { e.stopPropagation(); setOpen(o => !o) } : undefined}>{statusLabel(status)}{interactive ? <Caret /> : null}</Chip>
       {open && style && createPortal(
         <div ref={menuRef} role="menu" style={{ ...style, zIndex: Z_MENU, background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 10, padding: 4, boxShadow: '0 8px 28px rgba(0,0,0,0.35)', boxSizing: 'border-box' }}>
           {TRIP_STATUS_MENU.map(o => (
@@ -62,21 +64,25 @@ function StatusMenu({ canEdit, onChange, status, enabled = true }) {
   )
 }
 
-// "Mon, Jan 4 · 4:17 PM" over "AA 5309 → PIA"
+// Two rows. Flying or rail: "Delta 1234 · 2:30 PM" over the mode icon and the airport code. Driving, carpool and books own: one row with the icon.
+// Only the parts that exist are shown. The date follows the airport so rows still read in order.
 function Leg({ trip }) {
   if (!trip) return <span style={link}>Not Entered</span>
-  if (trip.mode === 'books_own' && !trip.segments.length) return <span style={link}>Not Tracked</span>
+  const date = tripDate(trip) ? fmtDay(tripDate(trip)) : ''
+  const time = tripTime(trip) ? formatTime(tripTime(trip)) : ''
+  const row = { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+  if (['driving', 'carpool', 'books_own'].includes(trip.mode)) {
+    return <div style={row}><ModeIcon mode={trip.mode} /><span>{modeLabel(trip.mode)}</span>{date && <span style={link}>· {date}</span>}</div>
+  }
   const lead = trip.direction === 'in' ? trip.segments[trip.segments.length - 1] : trip.segments[0]
-  const when = [fmtDay(tripDate(trip)), tripTime(trip) ? formatTime(tripTime(trip)) : ''].filter(Boolean).join(' · ')
-  const flight = [lead?.airline, lead?.flight_number].filter(Boolean).join(' ')
+  const carrier = [lead?.airline, lead?.flight_number].filter(Boolean).join(' ')
+  const first = [carrier, time].filter(Boolean).join(' · ')
   const port = tripAirport(trip)
-  const detail = hasFlightFields(trip.mode)
-    ? [flight && port ? `${flight} ${trip.direction === 'in' ? '→' : 'from'} ${port}` : flight || port, trip.segments.length > 1 ? `${trip.segments.length} Segments` : ''].filter(Boolean).join(' · ')
-    : modeLabel(trip.mode)
+  const second = [port, date].filter(Boolean)
   return (
-    <div style={{ lineHeight: 1.3 }}>
-      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{when}</div>
-      {detail && <div style={{ fontSize: FS.small, color: 'var(--text-muted-legible)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>}
+    <div style={{ lineHeight: 1.35 }}>
+      {first && <div style={{ ...row }}>{first}</div>}
+      {(second.length > 0 || !first) && <div style={{ ...row, color: first ? 'var(--text-muted-legible)' : 'inherit' }}><ModeIcon mode={trip.mode} size={14} />{second.length ? <span>{second.join(' · ')}</span> : <span style={link}>Details Not Entered</span>}</div>}
     </div>
   )
 }
@@ -95,7 +101,6 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
   const people = useMemo(() => assignments.filter(a => a.staff_id), [assignments])
   const tbdRoles = useMemo(() => assignments.filter(a => !a.staff_id && a.position.title), [assignments])
   const flagsByStaff = useMemo(() => Object.fromEntries(travelers.map(t => [t.staff_id, t])), [travelers])
-  const roomedIds = useMemo(() => new Set(rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)), [rooms])
   const rentalIds = useMemo(() => new Set([...rentals.map(r => r.staff_id), ...legs.filter(l => l.rental_car_id).map(l => l.staff_id)].filter(Boolean)), [rentals, legs])
 
   const nameOf = (staffId) => personName(staffList.find(s => s.id === staffId) || people.find(p => p.staff_id === staffId)?.staff)
@@ -165,7 +170,18 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
   // Room, Per Diem and Rental boxes: checking adds the person to that list; unchecking someone already assigned asks first and never deletes the room or car
   const toggle = (p, field, label) => {
     const on = !flagsByStaff[p.staff_id]?.[field]
-    if (!on && field === 'needs_room' && roomedIds.has(p.staff_id) && !confirm(`${personName(p.staff)} is assigned a room. Uncheck Room anyway? The room is kept.`)) return
+    if (!on && field === 'needs_room') {
+      const plan = planUncheckRoom(rooms, p.staff_id)
+      if (plan.room) {
+        // a person in a room always has Room checked: unchecking takes them out of it first
+        if (!confirm(`Remove ${personName(p.staff)} From Their Room?`)) return
+        return run(`${personName(p.staff)}: Removed From Room`, async () => {
+          const sb = getSupabase()
+          await runRoomOps(sb, eventId, plan.ops, () => confirm('This room has a confirmation number. Remove the room too? Cancel keeps the empty room.'))
+          await setTravelerFlag(sb, eventId, p.staff_id, 'needs_room', false)
+        })
+      }
+    }
     if (!on && field === 'needs_rental' && rentalIds.has(p.staff_id) && !confirm(`${personName(p.staff)} is on a rental car. Uncheck Rental anyway? The car is kept.`)) return
     run(`${personName(p.staff)}: ${label} ${on ? 'Added' : 'Removed'}`, () => setTravelerFlag(getSupabase(), eventId, p.staff_id, field, on))
   }
@@ -174,16 +190,16 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
   const showIn = dir !== 'out', showOut = dir !== 'in'
   const both = showIn && showOut
   const cols = [
-    { key: 'role', label: 'Role', width: 12, render: p => p.role },
-    { key: 'name', label: 'Name', width: 13, render: p => (p.tbd ? <span style={{ ...link, fontStyle: 'italic', fontWeight: 600 }}>TBD</span> : <b>{personName(p.staff)}</b>) },
-    { key: 'mode', label: 'Mode', width: 8, render: p => { const m = [...new Set(p.list.map(t => modeLabel(t.mode)))]; return m.length ? m.join(' / ') : '—' } },
+    { key: 'role', label: 'Role', width: 11, wrap: true, render: p => p.role },
+    { key: 'name', label: 'Name', width: 16, wrap: true, render: p => (p.tbd ? <span style={{ ...link, fontStyle: 'italic', fontWeight: 600 }}>TBD</span> : <b>{personName(p.staff)}</b>) },
+    { key: 'mode', label: 'Mode', width: 6, render: p => <ModeIcons toMode={p.inT?.mode} fromMode={p.outT?.mode} /> },
     { key: 'status', label: 'Status', width: 11, render: p => <div onClick={e => e.stopPropagation()}><StatusMenu canEdit={canEdit} enabled={p.list.length > 0} status={p.status} onChange={(st) => setStatuses(p, st)} /></div> },
-    ...(showIn ? [{ key: 'in', label: 'Inbound · Final Arrival', width: both ? 16 : 32, wrap: true, render: p => <Leg trip={p.inT} /> }] : []),
-    ...(showOut ? [{ key: 'out', label: 'Outbound · First Departure', width: both ? 16 : 32, wrap: true, render: p => <Leg trip={p.outT} /> }] : []),
-    { key: 'room', label: 'Room', width: 6, align: 'center', render: box('needs_room', 'Room') },
-    { key: 'perdiem', label: 'Per Diem', width: 7, align: 'center', render: box('per_diem_eligible', 'Per Diem') },
-    { key: 'rental', label: 'Rental', width: 6, align: 'center', render: box('needs_rental', 'Rental') },
-    { key: 'chev', label: '', width: 5, align: 'center', render: p => (p.tbd ? '' : <span style={link}>{expanded[p.key] ? '▴' : '▾'}</span>) },
+    ...(showIn ? [{ key: 'in', label: 'Inbound · Final Arrival', width: both ? 17 : 34, wrap: true, render: p => <Leg trip={p.inT} /> }] : []),
+    ...(showOut ? [{ key: 'out', label: 'Outbound · First Departure', width: both ? 17 : 34, wrap: true, render: p => <Leg trip={p.outT} /> }] : []),
+    { key: 'room', label: 'Room', width: 5, align: 'center', render: box('needs_room', 'Room') },
+    { key: 'perdiem', label: 'Per Diem', width: 6, align: 'center', render: box('per_diem_eligible', 'Per Diem') },
+    { key: 'rental', label: 'Rental', width: 5, align: 'center', render: box('needs_rental', 'Rental') },
+    { key: 'chev', label: '', width: 4, align: 'center', render: p => (p.tbd ? '' : <span style={{ display: 'inline-flex' }}><Chevron open={!!expanded[p.key]} /></span>) },
   ]
 
   // Expanded row: flat label-and-value lines, two columns (Travel To, Travel From), no boxes
@@ -224,8 +240,12 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
     return (
       <div>
         <div style={{ ...SMALL_LABEL, marginBottom: 6 }}>{heading}</div>
-        {line('Mode', modeLabel(trip.mode))}
-        {line('Status', <StatusMenu canEdit={canEdit} status={trip.status} onChange={(st) => run(`${nameOf(trip.staff_id)}: ${statusLabel(st)}`, () => setTripStatus(getSupabase(), trip.id, st))} />)}
+        {line('Mode', (
+          <PickText ariaLabel="Mode" disabled={!canEdit} value={trip.mode} width={190}
+            options={TRIP_MODES.map(m => ({ value: m.value, label: m.label, icon: <ModeIcon mode={m.value} /> }))}
+            onPick={(m) => run(`${nameOf(trip.staff_id)}: ${modeLabel(m)}`, () => setTripMode(getSupabase(), trip.id, m))}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><ModeIcon mode={trip.mode} />{modeLabel(trip.mode)}</span>
+          </PickText>))}
         {line('Confirmation', trip.confirmation || <span style={link}>Not Booked Yet</span>)}
         {trip.segments.length === 0 ? line('Segments', <span style={link}>None Entered</span>) : trip.segments.map((s, i) => segLine(s, i, trip))}
         {trip.notes && line('Notes', trip.notes)}
@@ -288,7 +308,6 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
                         {showIn && infoCol(p, p.inT, 'in')}
                         {showOut && infoCol(p, p.outT, 'out')}
                       </div>
-                      <div title={LOCAL_TIME_HINT} style={{ marginTop: 8, fontSize: FS.small, color: 'var(--text-muted-legible)' }}>{LOCAL_TIME_HINT}</div>
                     </div>
                   </ExpandRow>
                 )}

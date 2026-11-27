@@ -4,14 +4,16 @@
 //   cols: [{ key, label, width (percent), align: 'left' | 'center' | 'right', render(row) }]
 import { LINE, SMALL_LABEL, CARD, FS } from './shared'
 
-const CELL_PAD = '9px 10px'
-export const thStyle = (col) => ({ ...SMALL_LABEL, textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', whiteSpace: 'normal', overflowWrap: 'normal', lineHeight: 1.25, verticalAlign: 'bottom', boxSizing: 'border-box' })
+const CELL_PAD = '8px 8px'
+export const thStyle = (col) => ({ ...SMALL_LABEL, textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised)', position: 'sticky', top: 0, zIndex: 2, whiteSpace: 'normal', overflowWrap: 'normal', lineHeight: 1.25, verticalAlign: 'bottom', boxSizing: 'border-box' })
 export const tdStyle = (col) => ({ textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, verticalAlign: 'middle', fontSize: FS.body, color: 'var(--text-primary)', boxSizing: 'border-box', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: col.wrap ? 'normal' : 'nowrap' })
 
-export function TableShell({ cols, minWidth = 900, children, tableRef }) {
+// A card tile with its own scroll container; the header row stays locked while the body scrolls (same pattern as the staffing grid).
+// Short tables shrink to fit. minWidth is only for tables that cannot be narrower.
+export function TableShell({ cols, minWidth = 0, children, tableRef, maxHeight = 'calc(100vh - 260px)' }) {
   return (
-    <div style={{ ...CARD, overflow: 'auto', flexShrink: 0 }}>
-      <table ref={tableRef} style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed', minWidth }}>
+    <div data-table-card="" style={{ ...CARD, overflow: 'auto', flexShrink: 0, maxHeight }}>
+      <table ref={tableRef} style={{ borderCollapse: 'separate', borderSpacing: 0, width: '100%', tableLayout: 'fixed', minWidth: minWidth || undefined }}>
         <colgroup>{cols.map(c => <col key={c.key} style={{ width: `${c.width}%` }} />)}</colgroup>
         <thead><tr>{cols.map(c => <th key={c.key} data-col={c.key} style={thStyle(c)}>{c.label}</th>)}</tr></thead>
         <tbody>{children}</tbody>
@@ -42,5 +44,5 @@ export function ExpandRow({ cols, children }) {
 }
 
 export function EmptyRow({ cols, children }) {
-  return <tr><td colSpan={cols.length} style={{ padding: '12px 10px', fontSize: FS.body, color: 'var(--text-muted-legible)' }}>{children}</td></tr>
+  return <tr><td colSpan={cols.length} style={{ padding: '10px 8px', fontSize: FS.body, color: 'var(--text-muted-legible)' }}>{children}</td></tr>
 }

@@ -2,9 +2,12 @@
 
 // The travel workspace on the event page. Structure follows docs/mockups/travel-workspace.html: a tab strip with the count on each tab
 // and "+ Add Traveler" at the right of the Travelers tab. Every tab reads from one shared data load that refreshes after each write.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useProfile } from '@/lib/auth/profile'
 import { isEntered } from '@/lib/travel/trips'
+import { reconcileNeedsRoom } from '@/lib/travel/rooming'
+import { setTravelerFlag } from '@/lib/travel/travelers'
+import { getSupabase } from '@/lib/supabase'
 import useUndoable from '@/components/staffing/useUndoable'
 import TravelersTab from './TravelersTab'
 import GroundTab from './GroundTab'
@@ -28,6 +31,24 @@ export default function TravelWorkspace({ eventId, event }) {
     onUndone: reload,
     onMessage: (m) => { setToast(m); setTimeout(() => setToast(''), 3000) },
   })
+
+  // A person in a room always has Room checked: anyone already in a room whose box is unchecked gets it checked (and we say so)
+  const reconciled = useRef(new Set())
+  useEffect(() => {
+    if (loading || !canEdit) return
+    const missing = reconcileNeedsRoom(data.rooms, data.travelers).filter(id => !reconciled.current.has(id))
+    if (!missing.length) return
+    missing.forEach(id => reconciled.current.add(id))
+    ;(async () => {
+      try {
+        for (const id of missing) await setTravelerFlag(getSupabase(), eventId, id, 'needs_room', true)
+        const names = missing.map(id => personName(data.staffList.find(s => s.id === id))).join(', ')
+        console.info('Room checked for people already in a room:', names)
+        setToast(`Room Checked For ${names}`); setTimeout(() => setToast(''), 6000)
+        reload()
+      } catch (e) { console.error('Could not check Room for people already in rooms:', e) }
+    })()
+  }, [loading, canEdit, data.rooms, data.travelers, data.staffList, eventId, reload])
 
   const travelerCount = useMemo(() => {
     const ids = new Set(data.assignments.filter(a => a.staff_id).map(a => a.staff_id))
