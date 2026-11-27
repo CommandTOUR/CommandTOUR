@@ -3,7 +3,7 @@
 // UNDO for the staffing grid.
 //
 // How it works: before a change we snapshot the rows it can touch (the staff_assignments of the events involved, their
-// arrival/departure rows, and the tour_positions of their tours); after the change we snapshot again. The difference IS the
+// trips and trip segments, and the tour_positions of their tours); after the change we snapshot again. The difference IS the
 // change (including both sides of a swap and any travel rows that were created), so undoing means putting every row back exactly
 // as it was: re-insert what was deleted (same ids), set changed rows back, delete what was created.
 //
@@ -28,13 +28,21 @@ const byId = (rows) => new Map(rows.map(r => [r.id, r]))
 export async function takeSnapshot(supabase, eventIds, tourIds) {
   const ev = [...new Set(eventIds)]
   const tours = [...new Set(tourIds)]
-  const [assignments, arrivals, departures, tourPositions] = await Promise.all([
+  const [assignments, trips, travelers, rooms, tourPositions] = await Promise.all([
     ev.length ? fetchAll(() => supabase.from('staff_assignments').select('*').in('event_id', ev)) : [],
-    ev.length ? fetchAll(() => supabase.from('event_travel_arrivals').select('*').in('event_id', ev)) : [],
-    ev.length ? fetchAll(() => supabase.from('event_travel_departures').select('*').in('event_id', ev)) : [],
+    ev.length ? fetchAll(() => supabase.from('trips').select('*').in('event_id', ev)) : [],
+    ev.length ? fetchAll(() => supabase.from('event_travelers').select('*').in('event_id', ev)) : [],
+    ev.length ? fetchAll(() => supabase.from('event_hotel_rooms').select('*').in('event_id', ev)) : [],
     tours.length ? fetchAll(() => supabase.from('tour_positions').select('*').in('tour_id', tours)) : [],
   ])
-  return { assignments: byId(assignments), arrivals: byId(arrivals), departures: byId(departures), tourPositions: byId(tourPositions) }
+  const tripIds = trips.map(t => t.id)
+  const segments = [], costs = []
+  for (let i = 0; i < tripIds.length; i += 200) {
+    const chunk = tripIds.slice(i, i + 200)
+    segments.push(...await fetchAll(() => supabase.from('trip_segments').select('*').in('trip_id', chunk)))
+    costs.push(...await fetchAll(() => supabase.from('trip_costs').select('*').in('trip_id', chunk)))
+  }
+  return { assignments: byId(assignments), trips: byId(trips), segments: byId(segments), costs: byId(costs), travelers: byId(travelers), rooms: byId(rooms), tourPositions: byId(tourPositions) }
 }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -52,8 +60,11 @@ function diffTable(before, after) {
 export function diffSnapshots(before, after) {
   const ops = {
     assignments: diffTable(before.assignments, after.assignments),
-    arrivals: diffTable(before.arrivals, after.arrivals),
-    departures: diffTable(before.departures, after.departures),
+    trips: diffTable(before.trips, after.trips),
+    segments: diffTable(before.segments, after.segments),
+    costs: diffTable(before.costs, after.costs),
+    travelers: diffTable(before.travelers, after.travelers),
+    rooms: diffTable(before.rooms, after.rooms),
     tourPositions: diffTable(before.tourPositions, after.tourPositions),
   }
   ops.empty = Object.values(ops).every(t => !t.created.length && !t.deleted.length && !t.changed.length)
@@ -83,15 +94,23 @@ export async function applyUndo(supabase, ops) {
   for (const r of ops.tourPositions.deleted) await run('tour position', supabase.from('tour_positions').insert([r]))
   for (const r of A.deleted) await run('assignment', supabase.from('staff_assignments').insert([r]))
   for (const c of A.changed) await run('assignment', supabase.from('staff_assignments').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
-  for (const t of ['arrivals', 'departures']) {
-    const table = t === 'arrivals' ? 'event_travel_arrivals' : 'event_travel_departures'
-    for (const r of ops[t].deleted) await run(t, supabase.from(table).insert([r]))
-    for (const c of ops[t].changed) await run(t, supabase.from(table).update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
-  }
-  for (const t of ['arrivals', 'departures']) {
-    const table = t === 'arrivals' ? 'event_travel_arrivals' : 'event_travel_departures'
-    if (ops[t].created.length) await run(t, supabase.from(table).delete().in('id', ops[t].created.map(r => r.id)))
-  }
+  // Segments the change created go first (they would clash with the restored ones on trip + seq), then trips come back before
+  // their segments (a segment needs its trip); a deleted trip's segments come back with it.
+  if (ops.segments.created.length) await run('trip segment', supabase.from('trip_segments').delete().in('id', ops.segments.created.map(r => r.id)))
+  for (const r of ops.trips.deleted) await run('trip', supabase.from('trips').insert([r]))
+  for (const c of ops.trips.changed) await run('trip', supabase.from('trips').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  for (const r of ops.segments.deleted) await run('trip segment', supabase.from('trip_segments').insert([r]))
+  for (const r of ops.costs.deleted) await run('trip cost', supabase.from('trip_costs').insert([r]))
+  for (const c of ops.costs.changed) await run('trip cost', supabase.from('trip_costs').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  for (const c of ops.segments.changed) await run('trip segment', supabase.from('trip_segments').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  if (ops.costs.created.length) await run('trip cost', supabase.from('trip_costs').delete().in('id', ops.costs.created.map(r => r.id)))
+  for (const r of ops.travelers.deleted) await run('traveler', supabase.from('event_travelers').insert([r]))
+  for (const c of ops.travelers.changed) await run('traveler', supabase.from('event_travelers').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  if (ops.travelers.created.length) await run('traveler', supabase.from('event_travelers').delete().in('id', ops.travelers.created.map(r => r.id)))
+  for (const r of ops.rooms.deleted) await run('room', supabase.from('event_hotel_rooms').insert([r]))
+  for (const c of ops.rooms.changed) await run('room', supabase.from('event_hotel_rooms').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  if (ops.rooms.created.length) await run('room', supabase.from('event_hotel_rooms').delete().in('id', ops.rooms.created.map(r => r.id)))
+  if (ops.trips.created.length) await run('trip', supabase.from('trips').delete().in('id', ops.trips.created.map(r => r.id)))
   if (A.created.length) await run('assignment', supabase.from('staff_assignments').delete().in('id', A.created.map(r => r.id)))
   if (ops.tourPositions.created.length) await run('tour position', supabase.from('tour_positions').delete().in('id', ops.tourPositions.created.map(r => r.id)))
   for (const c of ops.tourPositions.changed) await run('tour position', supabase.from('tour_positions').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))

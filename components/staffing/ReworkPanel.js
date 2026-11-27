@@ -1,30 +1,30 @@
 'use client'
 
-// Travel that needs rework for one person (they were moved, swapped, pulled or removed while travel was booked).
+// Trips that need rework for one person (they were moved, swapped, pulled or removed while travel was booked).
 // "Mark Resolved" clears the flag; "Delete Row" removes the row. Used from the grid (ghost tile / marker) and the staff panel.
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { IconX } from '@tabler/icons-react'
-import { describeTravelRow } from '@/lib/travelRework'
+import { describeTrip } from '@/lib/travelRework'
 import { Z_POPUP } from './shared'
 
 const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
 const btn = { fontFamily: FONT, fontSize: 13, fontWeight: 600, padding: '4px 10px', borderRadius: 6, cursor: 'pointer', background: 'transparent', color: 'var(--text-primary)' }
 
-//   groups  [{ eventId, eventLabel, rows: [{ dir, r }] }]   one per event the person left
+//   groups  [{ eventId, eventLabel, rows: [trip] }]   one per event the person left
 export function ReworkList({ groups, onResolve, onDelete }) {
   return (
     <div data-rework-list="">
       {groups.map(g => (
         <div key={g.eventId} style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{g.eventLabel}</div>
-          {g.rows.map(({ dir, r }) => (
+          {g.rows.map((r) => (
             <div key={r.id} data-rework-row="" style={{ border: '1px solid var(--tile-trim)', borderRadius: 8, padding: '8px 10px', marginBottom: 6 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{dir === 'arrivals' ? 'Arrival' : 'Departure'}: {describeTravelRow(r, dir)}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{r.direction === 'in' ? 'Arrival' : 'Departure'}: {describeTrip(r)}</div>
               {r.rework_note && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginTop: 2 }}>{r.rework_note}</div>}
               <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                <button type="button" onClick={() => onResolve(r, dir, g)} style={{ ...btn, border: '1px solid var(--color-success)' }}>Mark Resolved</button>
-                <button type="button" onClick={() => onDelete(r, dir, g)} style={{ ...btn, border: '1px solid var(--color-danger)', color: 'var(--color-danger)' }}>Delete Row</button>
+                <button type="button" onClick={() => onResolve(r, g)} style={{ ...btn, border: '1px solid var(--color-success)' }}>Mark Resolved</button>
+                <button type="button" onClick={() => onDelete(r, g)} style={{ ...btn, border: '1px solid var(--color-danger)', color: 'var(--color-danger)' }}>Delete Row</button>
               </div>
             </div>
           ))}

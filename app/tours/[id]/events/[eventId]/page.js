@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../../../../lib/supabase'
-import TravelHotelTab from '../../../../../components/TravelHotelTab'
+import TravelWorkspace from '../../../../../components/travel/TravelWorkspace'
+import { listTripsForEvent, isLive, tripDate } from '../../../../../lib/travel/trips'
 import ScheduleTab from '../../../../../components/ScheduleTab'
 import TasksTab from '../../../../../components/TasksTab'
 import NotesTab from '../../../../../components/NotesTab'
@@ -38,80 +39,6 @@ const GLASS = {
   borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
 }
-
-const STAFFING_GRID = '1.2fr 1.4fr 1fr 1fr 0.8fr 0.5fr 0.65fr 0.6fr 0.8fr 0.65fr'
-
-const TRAVEL_TYPE_COLORS = {
-  flight:  { label: 'Flight',  bg: 'rgba(26,86,219,0.12)',  color: '#1a56db',  border: 'rgba(26,86,219,0.35)' },
-  train:   { label: 'Train',   bg: 'rgba(0,208,132,0.12)',  color: '#00D084',  border: 'rgba(0,208,132,0.35)' },
-  bus:     { label: 'Bus',     bg: 'rgba(255,184,0,0.12)',  color: '#FFB800',  border: 'rgba(255,184,0,0.35)' },
-  driving: { label: 'Driving', bg: 'rgba(168,85,247,0.12)', color: '#a855f7',  border: 'rgba(168,85,247,0.35)' },
-  na:      { label: 'N/A',     bg: 'rgba(100,116,139,0.10)', color: 'var(--text-muted)', border: 'var(--border-default)' },
-  multiple: { label: 'Multiple', bg: 'rgba(234,179,8,0.12)', color: '#eab308', border: 'rgba(234,179,8,0.35)' },
-}
-
-const statusColor = (status) => {
-  if (status === 'pending') return 'var(--color-warning)'
-  if (status === 'needs_attention') return 'var(--color-danger)'
-  return 'var(--text-primary)'
-}
-
-function WarningTriangle() {
-  return (
-    <div style={{ position: 'relative', display: 'inline-flex', width: 14, height: 14, flexShrink: 0 }}>
-      <IconAlertTriangleFilled size={14} color="#FFD60A" />
-      <IconAlertTriangle size={14} color="#111111" style={{ position: 'absolute', top: 0, left: 0 }} />
-    </div>
-  )
-}
-
-// TODO: ALTER TABLE event_staff_travel ADD COLUMN arrival_mode text; ADD COLUMN departure_mode text;
-// These are used when travel_type = 'multiple' to store separate in/out transport modes.
-// For now render 'Not set' for both until the columns exist.
-function TravelTypeCell({ travelType, typeStyle, travelEntry, onChange }) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div
-        style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 8px', borderRadius: 20, fontSize: 13, fontWeight: 600, background: typeStyle.bg, color: typeStyle.color, border: `0.5px solid ${typeStyle.border}`, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-          {typeStyle.label}
-          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 3 }}>
-            <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <select
-          value={travelType}
-          onChange={onChange}
-          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-        >
-          <option value="flight">Flight</option>
-          <option value="train">Train</option>
-          <option value="bus">Bus</option>
-          <option value="driving">Driving</option>
-          <option value="na">N/A</option>
-          <option value="multiple">Multiple</option>
-        </select>
-        {travelType === 'multiple' && hovered && (
-          <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap', zIndex: 50, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-            <div style={{ marginBottom: 3 }}>
-              <span style={{ color: 'var(--text-muted)' }}>Arrival: </span>
-              <span>{travelEntry?.arrival_mode || 'Not set'}</span>
-            </div>
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Departure: </span>
-              <span>{travelEntry?.departure_mode || 'Not set'}</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 
 const STATUS_PILL = {
   confirmed:   { color: 'var(--status-confirmed-text)', background: 'var(--status-confirmed-bg)', border: 'var(--status-confirmed-border)' },
@@ -292,8 +219,6 @@ export default function EventPage() {
     if (tab === 'travel') return 'staffing'
     return tab || 'overview'
   })
-  const [staffingInternalTab, setStaffingInternalTab] = useState('roster')
-  const [multipleModalStaff, setMultipleModalStaff] = useState(null) // { staffId, staffName }
   const [addingShow, setAddingShow] = useState(false)
   const [newShow, setNewShow] = useState({ show_date: '', notes: '' })
   const [newHour, setNewHour] = useState('7')
@@ -304,29 +229,7 @@ export default function EventPage() {
   const [todayScheduleItems, setTodayScheduleItems] = useState([])
   const [travelToday, setTravelToday] = useState(0)
   const [travelDates, setTravelDates] = useState({ earliestArrival: null, latestDeparture: null })
-  const [assignedStaff, setAssignedStaff] = useState([])
-  const [arrivals, setArrivals] = useState([])
-  const [staffTravel, setStaffTravel] = useState([])
   const { setNav, clearNav, pushNav } = useNav()
-
-  const groupedStaff = useMemo(() => {
-    const groups = {}
-    const deptOrder = {}
-    ;(assignedStaff || []).forEach(s => {
-      const dept = s.position?.department || 'Other'
-      const deptSort = s.position?.deptSortOrder ?? 999
-      if (!groups[dept]) { groups[dept] = []; deptOrder[dept] = deptSort }
-      groups[dept].push(s)
-    })
-    // Sort each department's members by position sort_order
-    Object.keys(groups).forEach(dept => {
-      groups[dept].sort((a, b) =>
-        (a.position?.sortOrder ?? 999) - (b.position?.sortOrder ?? 999)
-      )
-    })
-    // Return as sorted array of [dept, members] pairs
-    return Object.entries(groups).sort(([a], [b]) => (deptOrder[a] ?? 999) - (deptOrder[b] ?? 999))
-  }, [assignedStaff])
 
   useEffect(() => {
     if (!event && !tour) return
@@ -360,32 +263,10 @@ export default function EventPage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = getSupabase()
-      const [eventRes, tourRes, showsRes, staffAssignRes, arrivalsRes, staffTravelRes] = await Promise.all([
+      const [eventRes, tourRes, showsRes] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
         supabase.from('tours').select('*').eq('id', id).single(),
         supabase.from('show_list').select('*').eq('event_id', eventId).order('show_date', { ascending: true }).order('show_time', { ascending: true }),
-        supabase.from('staff_assignments')
-          .select(`
-            id,
-            staff_id,
-            status,
-            confirmed,
-            good_to_book,
-            booked,
-            staff:staff_id(id, first_name, last_name),
-            tour_position:tour_position_id(
-              position:position_id(
-                title,
-                sort_order,
-                department:department_id(name, sort_order)
-              )
-            )
-          `)
-          .eq('event_id', eventId)
-          .not('staff_id', 'is', null)
-          .not('locked', 'is', true),
-        supabase.from('event_travel_arrivals').select('staff_id, travel_date, travel_type').eq('event_id', eventId),
-        supabase.from('event_staff_travel').select('*').eq('event_id', eventId),
       ])
       if (!eventRes.error) {
         setEvent(eventRes.data)
@@ -400,26 +281,6 @@ export default function EventPage() {
       }
       if (!tourRes.error) setTour(tourRes.data)
       if (!showsRes.error) setShows(showsRes.data)
-
-      const assignedRows = (staffAssignRes.data || [])
-        .map(r => ({
-          id: r.id,
-          staff_id: r.staff_id,
-          staff: r.staff,
-          status: r.status,
-          good_to_book: r.good_to_book,
-          booked: r.booked,
-          position: {
-            title: r.tour_position?.position?.title || null,
-            sortOrder: r.tour_position?.position?.sort_order ?? 999,
-            department: r.tour_position?.position?.department?.name || 'Other',
-            deptSortOrder: r.tour_position?.position?.department?.sort_order ?? 0,
-          },
-        }))
-        .sort((a, b) => a.position.deptSortOrder - b.position.deptSortOrder)
-      setAssignedStaff(assignedRows)
-      setArrivals(arrivalsRes.data || [])
-      setStaffTravel(staffTravelRes.data || [])
 
       setLoading(false)
     }
@@ -444,24 +305,18 @@ export default function EventPage() {
     const pad = n => String(n).padStart(2, '0')
     const d = new Date()
     const today = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
-    Promise.all([
-      supabase.from('event_travel_arrivals').select('travel_date').eq('event_id', eventId),
-      supabase.from('event_travel_departures').select('travel_date').eq('event_id', eventId),
-    ]).then(([arrRes, depRes]) => {
-      const arrivals = arrRes.data || []
-      const departures = depRes.data || []
-      const travelingToday = new Set([
-        ...arrivals.filter(r => r.travel_date === today).map((_, i) => `a${i}`),
-        ...departures.filter(r => r.travel_date === today).map((_, i) => `d${i}`),
-      ]).size
-      setTravelToday(travelingToday)
-      const allArrivalDates = arrivals.map(r => r.travel_date).filter(Boolean).sort()
-      const allDepDates = departures.map(r => r.travel_date).filter(Boolean).sort()
+    listTripsForEvent(supabase, eventId).then(trips => {
+      const live = trips.filter(isLive)
+      const arrivals = live.filter(t => t.direction === 'in').map(tripDate)
+      const departures = live.filter(t => t.direction === 'out').map(tripDate)
+      setTravelToday([...arrivals, ...departures].filter(d => d === today).length)
+      const allArrivalDates = arrivals.filter(Boolean).sort()
+      const allDepDates = departures.filter(Boolean).sort()
       setTravelDates({
         earliestArrival: allArrivalDates[0] || null,
         latestDeparture: allDepDates[allDepDates.length - 1] || null,
       })
-    })
+    }).catch(e => console.error('Could not load travel dates:', e))
   }, [activeTab, eventId])
 
   useEffect(() => {
@@ -577,77 +432,6 @@ export default function EventPage() {
       .select()
       .single()
     if (!error) setShows(prev => prev.map(s => s.id === showId ? { ...s, ...data } : s))
-  }
-
-  const handleStaffTravelUpdate = async (staffId, field, value) => {
-    const supabase = getSupabase()
-    const existing = staffTravel.find(t => t.staff_id === staffId)
-    if (existing) {
-      await supabase.from('event_staff_travel').update({ [field]: value }).eq('id', existing.id)
-    } else {
-      await supabase.from('event_staff_travel').insert([{
-        event_id: eventId,
-        staff_id: staffId,
-        travel_type: 'na',
-        [field]: value,
-      }])
-    }
-    const { data } = await supabase.from('event_staff_travel').select('*').eq('event_id', eventId)
-    setStaffTravel(data || [])
-  }
-
-  const fetchAssignedStaff = async () => {
-    const supabase = getSupabase()
-    const { data } = await supabase
-      .from('staff_assignments')
-      .select(`
-        id,
-        staff_id,
-        status,
-        confirmed,
-        good_to_book,
-        booked,
-        staff:staff_id(id, first_name, last_name),
-        tour_position:tour_position_id(
-          position:position_id(
-            title,
-            sort_order,
-            department:department_id(name, sort_order)
-          )
-        )
-      `)
-      .eq('event_id', eventId)
-      .not('staff_id', 'is', null)
-      .not('locked', 'is', true)
-    const assignedRows = (data || [])
-      .map(r => ({
-        id: r.id,
-        staff_id: r.staff_id,
-        staff: r.staff,
-        status: r.status,
-        good_to_book: r.good_to_book,
-        booked: r.booked,
-        position: {
-          title: r.tour_position?.position?.title || null,
-          sortOrder: r.tour_position?.position?.sort_order ?? 999,
-          department: r.tour_position?.position?.department?.name || 'Other',
-          deptSortOrder: r.tour_position?.position?.department?.sort_order ?? 0,
-        },
-      }))
-      .sort((a, b) => a.position.deptSortOrder - b.position.deptSortOrder)
-    setAssignedStaff(assignedRows)
-  }
-
-  const handleToggleGoodToBook = async (assignmentId, current) => {
-    const supabase = getSupabase()
-    await supabase.from('staff_assignments').update({ good_to_book: !current }).eq('id', assignmentId)
-    fetchAssignedStaff()
-  }
-
-  const handleToggleBooked = async (assignmentId, current) => {
-    const supabase = getSupabase()
-    await supabase.from('staff_assignments').update({ booked: !current }).eq('id', assignmentId)
-    fetchAssignedStaff()
   }
 
   const handleExportPacket = async () => {
@@ -903,7 +687,7 @@ export default function EventPage() {
                       return 'no travel data'
                     })(),
                     color: travelToday > 0 ? 'var(--color-info)' : 'var(--text-primary)',
-                    onClick: () => setActiveTab('travel'),
+                    onClick: () => setActiveTab('staffing'),
                   },
                   {
                     label: 'Booking Status',
@@ -1220,255 +1004,8 @@ export default function EventPage() {
             </div>
           )}
 
-          {activeTab === 'staffing' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-
-              {/* Internal tab bar */}
-              <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0, padding: '0 0 4px' }}>
-                <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-                  {[
-                    { key: 'roster', label: 'Roster' },
-                    { key: 'arrivals', label: 'Arrivals' },
-                    { key: 'departures', label: 'Departures' },
-                    { key: 'hotel', label: 'Hotel' },
-                    { key: 'rental', label: 'Rental Cars' },
-                    { key: 'perdiem', label: 'Per Diem' },
-                  ].map(t => (
-                    <button
-                      key={t.key}
-                      onClick={() => setStaffingInternalTab(t.key)}
-                      style={{
-                        fontSize: 16, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                        background: staffingInternalTab === t.key ? 'rgba(26,86,219,0.08)' : 'transparent',
-                        color: staffingInternalTab === t.key ? 'var(--color-info)' : 'var(--text-secondary)',
-                        fontWeight: staffingInternalTab === t.key ? 600 : 400,
-                      }}
-                    >{t.label}</button>
-                  ))}
-                </div>
-              </div>
-
-              {staffingInternalTab === 'roster' && (
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-
-              {/* Sticky column headers — outside and above the tile */}
-              <div style={{ flexShrink: 0, background: 'var(--page-bg)', zIndex: 10 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: STAFFING_GRID, gap: '0 6px', padding: '12px 16px 6px', alignItems: 'center' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }}>Position</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', paddingLeft: 16 }}>Staff Member</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel In</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Out</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Travel Type</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Hotel</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Per Diem</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Rental</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Good to Book</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)', textAlign: 'center' }}>Booked</div>
-                </div>
-              </div>
-
-              {/* Scrollable GLASS tile — full width, no margin */}
-              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
-                <div style={{ height: '100%', overflowY: 'auto' }}>
-
-                  {/* Group by department */}
-                  {groupedStaff.map(([dept, members], deptIdx) => {
-                    return (
-                      <div key={dept}>
-                        {/* Department header */}
-                        <div style={{ padding: '6px 14px', background: 'rgba(26,86,219,0.05)', borderTop: deptIdx === 0 ? 'none' : '0.5px solid var(--border-default)' }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)' }}>{dept}</span>
-                        </div>
-
-                        {/* Staff rows */}
-                        {members.map((s) => {
-                          const travelEntry = staffTravel.find(t => t.staff_id === s.staff_id)
-                          const travelType = travelEntry?.travel_type || 'na'
-                          const typeStyle = TRAVEL_TYPE_COLORS[travelType] || TRAVEL_TYPE_COLORS.na
-                          const isDriving = travelType === 'driving'
-                          const rowBg = isDriving ? 'rgba(168,85,247,0.04)' : 'transparent'
-
-                          // Check for date mismatch between travel_in_date and actual flight arrival
-                          const arrival = arrivals?.find(a => a.staff_id === s.staff_id)
-                          const hasMismatch = travelEntry?.travel_in_date && arrival?.travel_date &&
-                            travelEntry.travel_in_date !== arrival.travel_date
-
-                          return (
-                            <div
-                              key={s.id}
-                              style={{ display: 'grid', gridTemplateColumns: STAFFING_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 16px', borderTop: '0.5px solid var(--border-default)', background: rowBg }}
-                            >
-                              {/* Position */}
-                              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {s.position?.title || '—'}
-                              </div>
-
-                              {/* Staff name */}
-                              <div style={{ fontSize: 15, color: statusColor(s.status), display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 16 }}>
-                                {hasMismatch && <WarningTriangle />}
-                                {s.staff ? `${s.staff.first_name} ${s.staff.last_name}` : '—'}
-                              </div>
-
-                              {/* Travel In date */}
-                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <input
-                                  type="date"
-                                  value={travelEntry?.travel_in_date || ''}
-                                  onChange={e => handleStaffTravelUpdate(s.staff_id, 'travel_in_date', e.target.value)}
-                                  style={{ fontSize: 14, border: 'none', background: 'transparent', color: hasMismatch ? '#f59e0b' : 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
-                                />
-                              </div>
-
-                              {/* Travel Out date */}
-                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <input
-                                  type="date"
-                                  value={travelEntry?.travel_out_date || ''}
-                                  onChange={e => handleStaffTravelUpdate(s.staff_id, 'travel_out_date', e.target.value)}
-                                  style={{ fontSize: 14, border: 'none', background: 'transparent', color: 'var(--text-secondary)', textAlign: 'center', cursor: 'pointer', outline: 'none', maxWidth: 110 }}
-                                />
-                              </div>
-
-                              {/* Travel Type pill dropdown */}
-                              <TravelTypeCell
-                                travelType={travelType}
-                                typeStyle={typeStyle}
-                                travelEntry={travelEntry}
-                                onChange={e => {
-                                  const val = e.target.value
-                                  if (val === 'multiple') {
-                                    setMultipleModalStaff({ staffId: s.staff_id, staffName: `${s.staff?.first_name} ${s.staff?.last_name}` })
-                                  } else {
-                                    handleStaffTravelUpdate(s.staff_id, 'travel_type', val)
-                                  }
-                                }}
-                              />
-
-                              {/* Hotel checkbox */}
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <div
-                                  onClick={() => handleStaffTravelUpdate(s.staff_id, 'needs_hotel', !travelEntry?.needs_hotel)}
-                                  style={{ width: 18, height: 18, borderRadius: 4, cursor: 'pointer', background: travelEntry?.needs_hotel ? 'rgba(0,208,132,0.2)' : 'transparent', border: travelEntry?.needs_hotel ? '1px solid #00D084' : '1px solid var(--border-stronger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  {travelEntry?.needs_hotel && (
-                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                      <path d="M2 6L5 9L10 3" stroke="#00D084" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Per Diem checkbox */}
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <div
-                                  onClick={() => handleStaffTravelUpdate(s.staff_id, 'needs_perdiem', !travelEntry?.needs_perdiem)}
-                                  style={{ width: 18, height: 18, borderRadius: 4, cursor: 'pointer', background: travelEntry?.needs_perdiem ? 'rgba(0,208,132,0.2)' : 'transparent', border: travelEntry?.needs_perdiem ? '1px solid #00D084' : '1px solid var(--border-stronger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  {travelEntry?.needs_perdiem && (
-                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                      <path d="M2 6L5 9L10 3" stroke="#00D084" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Rental checkbox */}
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <div
-                                  onClick={() => handleStaffTravelUpdate(s.staff_id, 'needs_rental', !travelEntry?.needs_rental)}
-                                  style={{ width: 18, height: 18, borderRadius: 4, cursor: 'pointer', background: travelEntry?.needs_rental ? 'rgba(0,208,132,0.2)' : 'transparent', border: travelEntry?.needs_rental ? '1px solid #00D084' : '1px solid var(--border-stronger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  {travelEntry?.needs_rental && (
-                                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                                      <path d="M2 6L5 9L10 3" stroke="#00D084" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Good to Book checkbox */}
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <div
-                                  onClick={() => handleToggleGoodToBook(s.id, s.good_to_book)}
-                                  style={{ width: 18, height: 18, borderRadius: 4, cursor: 'pointer', background: s.good_to_book ? 'rgba(26,86,219,0.2)' : 'transparent', border: s.good_to_book ? '1px solid #1a56db' : '1px solid var(--border-stronger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  {s.good_to_book && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#1a56db" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                                </div>
-                              </div>
-
-                              {/* Booked checkbox */}
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <div
-                                  onClick={() => handleToggleBooked(s.id, s.booked)}
-                                  style={{ width: 18, height: 18, borderRadius: 4, cursor: 'pointer', background: s.booked ? 'rgba(0,208,132,0.2)' : 'transparent', border: s.booked ? '1px solid #00D084' : '1px solid var(--border-stronger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  {s.booked && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#00D084" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-
-                  {/* Mismatch warning footer */}
-                  {(() => {
-                    const mismatches = (assignedStaff || []).filter(s => {
-                      const travelEntry = staffTravel.find(t => t.staff_id === s.staff_id)
-                      const arrival = arrivals?.find(a => a.staff_id === s.staff_id)
-                      return travelEntry?.travel_in_date && arrival?.travel_date &&
-                        travelEntry.travel_in_date !== arrival.travel_date
-                    })
-                    if (mismatches.length === 0) return null
-                    return (
-                      <div style={{ padding: '8px 14px', borderTop: '0.5px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <WarningTriangle />
-                        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                          {mismatches.length} date mismatch{mismatches.length > 1 ? 'es' : ''} — travel in date doesn&apos;t match flight arrival date
-                        </span>
-                      </div>
-                    )
-                  })()}
-
-                </div>
-              </div>
-              </div>
-              )}
-
-              {staffingInternalTab !== 'roster' && event && (
-                <TravelHotelTab eventId={eventId} event={event} initialTab={staffingInternalTab} />
-              )}
-
-              {multipleModalStaff && (
-                <div
-                  onClick={() => setMultipleModalStaff(null)}
-                  style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <div
-                    onClick={e => e.stopPropagation()}
-                    style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: '24px 28px', width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}
-                  >
-                    <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Multiple Transport — {multipleModalStaff.staffName}</div>
-                    <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set this staff member&apos;s travel type to Multiple.</div>
-
-                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                      <button
-                        onClick={() => setMultipleModalStaff(null)}
-                        style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                      >Cancel</button>
-                      <button
-                        onClick={async () => {
-                          await handleStaffTravelUpdate(multipleModalStaff.staffId, 'travel_type', 'multiple')
-                          setMultipleModalStaff(null)
-                        }}
-                        style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}
-                      >Set to Multiple</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          {activeTab === 'staffing' && event && (
+            <TravelWorkspace eventId={eventId} event={event} />
           )}
 
           {activeTab === 'schedule' && (

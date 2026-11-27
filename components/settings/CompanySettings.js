@@ -5,29 +5,10 @@ import { IconArrowUp, IconArrowDown, IconTrash } from '@tabler/icons-react'
 import { getSetting, setSetting, SETTING_DEFAULTS as D } from '../../lib/settings'
 import { useProfile } from '../../lib/auth/profile'
 import { SectionCard, INPUT, LABEL, BTN_PRIMARY, BTN_GHOST } from './styles'
+import MoneyInput, { formatMoneyInput } from '../MoneyInput'
 
 const num = (v) => (v === '' || v === null || v === undefined ? '' : String(v))
-const money = (v, min = 2, max = 2) => {
-  const n = parseFloat(v)
-  return Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: false }) : ''
-}
-
-// Dollar field: "$" inside the left edge, only valid amounts, formats on blur. Same size for every money field.
-function MoneyInput({ value, onChange, disabled, maxDecimals = 2, placeholder = '0.00' }) {
-  const pattern = new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}$`)
-  return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <span aria-hidden="true" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--text-muted)', pointerEvents: 'none' }}>$</span>
-      <input
-        type="text" inputMode="decimal" disabled={disabled} value={value} placeholder={placeholder}
-        onChange={e => { if (pattern.test(e.target.value)) onChange(e.target.value) }}
-        onBlur={() => onChange(money(value, 2, maxDecimals))}
-        style={{ ...INPUT, paddingLeft: 28, ...(disabled ? { opacity: 0.7, cursor: 'default' } : {}) }}
-      />
-    </div>
-  )
-}
-const toNum = (v) => { const n = parseFloat(v); return Number.isFinite(n) && n >= 0 ? n : 0 }
+const money = formatMoneyInput
 
 export default function CompanySettings() {
   const { isManager } = useProfile()

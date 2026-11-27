@@ -27,10 +27,22 @@
   --border-strong: rgba(0,0,0,0.14);
   --border-stronger: rgba(0,0,0,0.22);
 
+  /* Travel workspace type scale (denser than the rest of the app). Change these to roll the same scale out sitewide. */
+  --font-size-table: 13px;
+  --font-size-table-small: 12px;
+  --font-size-table-header: 11px;
+  --font-size-tab: 14px;
+  --font-size-title: 16px;
+  --font-size-hero: 20px;
+
   /* Text */
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --text-muted: #999999;
+  /* Legible secondary text (4.5:1 or better on cards, tables and the page) and legible purple text, used by the travel workspace */
+  --text-muted-legible: #666666;
+  --text-purple-legible: #6d3fc4;
+  --text-on-info: #ffffff;
   --text-disabled: #cccccc;
 
   /* Brand */
@@ -110,6 +122,9 @@
   --text-primary: #f2f2f2;
   --text-secondary: #a8a8a8;
   --text-muted: #707070;
+  --text-muted-legible: #a0a0a0;
+  --text-purple-legible: #c084fc;
+  --text-on-info: #06101f;
   --text-disabled: #333333;
 
   --glass-tile-bg: rgba(0, 0, 0, 0.55);
@@ -481,3 +496,10 @@ html, body {
 .status-dot-btn:focus-visible { outline: 2px solid var(--color-info); outline-offset: 1px; }
 /* touch: 44px hit area overlaps the tile padding (negative margin) instead of making the tile taller */
 @media (pointer: coarse) { .status-dot-btn { min-width: 44px; min-height: 44px; margin: -10px -6px; } }
+
+/* Travel workspace: placeholders must be as readable as muted text */
+.travel-workspace input::placeholder, .travel-workspace textarea::placeholder, .travel-modal input::placeholder, .travel-modal textarea::placeholder { color: var(--text-muted-legible); opacity: 1; }
+
+/* Travel workspace, Hotel tab: rooming list on the left, sidebar on the right; the sidebar stacks above on narrow screens */
+.travel-hotel-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .travel-hotel-layout { grid-template-columns: minmax(0, 1fr); } .travel-hotel-side { order: -1; } }

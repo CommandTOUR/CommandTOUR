@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import { staffDisplayName } from './shared'
-import { TRAVEL_TABLES } from '@/lib/travelRework'
+import { listReworkTrips } from '@/lib/travel/trips'
 import { toYMD, getWeekendGroup, getWeekendDates, isPastEvent } from './weekend'
 
 export const cellKey = (tpId, slotIndex, eventId) => tpId + '__' + slotIndex + '__' + eventId
@@ -20,7 +20,7 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
   const [tours, setTours] = useState([])
   const [events, setEvents] = useState([])
   const [assignments, setAssignments] = useState([])
-  const [reworkRows, setReworkRows] = useState([]) // flagged travel rows: [{ dir, r }] (r.staff = the person)
+  const [reworkRows, setReworkRows] = useState([]) // flagged trips (trip.staff = the person)
   const [loading, setLoading] = useState(true)
   const [reloadKey, setReloadKey] = useState(0)
   const reload = () => setReloadKey(k => k + 1)
@@ -60,16 +60,10 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
       setTours(toursRes.data || [])
       setEvents((eventsRes.data || []).filter(ev => showPastEvents || !isPastEvent(ev, today)))
 
-      // travel rows flagged "needs rework" (people who were moved / swapped / pulled / removed with booked travel).
-      // If the needs_rework column does not exist yet the query errors and there is simply nothing flagged.
+      // trips flagged "needs rework" (people who were moved / swapped / pulled / removed with booked travel)
       const shownEventIds = (eventsRes.data || []).filter(ev => showPastEvents || !isPastEvent(ev, today)).map(e => e.id)
-      const flagged = []
-      if (shownEventIds.length) {
-        for (const dir of ['arrivals', 'departures']) {
-          const { data, error } = await supabase.from(TRAVEL_TABLES[dir]).select('*, staff:staff_id(id, first_name, last_name, display_name)').in('event_id', shownEventIds).eq('needs_rework', true)
-          if (!error) (data || []).forEach(r => flagged.push({ dir, r }))
-        }
-      }
+      let flagged = []
+      try { flagged = await listReworkTrips(supabase, shownEventIds) } catch (e) { console.error('Could not load flagged travel:', e) }
       setReworkRows(flagged)
 
       const tpIds = (tpRes.data || []).map(tp => tp.id)
@@ -95,8 +89,6 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
             confirmed,
             locked,
             notes,
-            travel_in_date,
-            travel_out_date,
             staff:staff(id, first_name, last_name, display_name)
           `)
           .in('tour_position_id', tpIds)
@@ -227,7 +219,7 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
   })
 
   // staff_id -> [{ event_id, city, load_in_date, load_out_date, saturday_date, sunday_date, tour_name, position,
-  //   tour_position_id, slot_index, travel_in_date, travel_out_date }]  (for the double-booked markers; the write guard asks the database instead)
+  //   tour_position_id, slot_index }]  (for the double-booked markers; the write guard asks the database instead)
   const bookingsByStaff = useMemo(() => {
     const map = {}
     departmentsWithRows.forEach(dept => {
@@ -243,7 +235,6 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
             event_id: event.id, city: event.city, load_in_date: event.load_in_date, load_out_date: event.load_out_date,
             saturday_date, sunday_date, tour_name: tour?.name, position: position.title,
             tour_position_id: info.tp.id, slot_index: slotIndex,
-            travel_in_date: assignment.travel_in_date, travel_out_date: assignment.travel_out_date,
           })
         })
       })
@@ -267,11 +258,11 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
   // reworkByStaff drives the marker on the tile of someone who is now on another event.
   const reworkByStaff = useMemo(() => {
     const m = {}
-    for (const { dir, r } of reworkRows) {
+    for (const r of reworkRows) {
       const list = m[r.staff_id] || (m[r.staff_id] = [])
       let g = list.find(x => x.eventId === r.event_id)
       if (!g) { g = { eventId: r.event_id, staffId: r.staff_id, staff: r.staff, rows: [] }; list.push(g) }
-      g.rows.push({ dir, r })
+      g.rows.push(r)
     }
     return m
   }, [reworkRows])
