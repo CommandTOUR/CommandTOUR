@@ -6,10 +6,10 @@ import { useMemo, useState } from 'react'
 import { useProfile } from '@/lib/auth/profile'
 import { isEntered } from '@/lib/travel/trips'
 import useUndoable from '@/components/staffing/useUndoable'
-import TravelHotelTab from '@/components/TravelHotelTab'
 import TravelersTab from './TravelersTab'
 import GroundTab from './GroundTab'
 import HotelTab from './HotelTab'
+import PerDiemTab from './PerDiemTab'
 import useTravelData from './useTravelData'
 import { LINE, BTN_P } from './shared'
 
@@ -40,7 +40,7 @@ export default function TravelWorkspace({ eventId, event }) {
     { key: 'travelers', label: `Travelers (${travelerCount})` },
     { key: 'ground', label: `Ground Transport (${data.trips.filter(t => isEntered(t) && !t.needs_rework).length})` },
     { key: 'hotel', label: `Hotel (${data.rooms.length})` },
-    { key: 'perdiem', label: 'Per Diem' },
+    { key: 'perdiem', label: `Per Diem (${data.travelers.filter(t => t.per_diem_eligible).length})` },
   ]
 
   return (
@@ -61,7 +61,7 @@ export default function TravelWorkspace({ eventId, event }) {
           {tab === 'travelers' && <TravelersTab eventId={eventId} data={data} canEdit={canEdit} undoable={undoable} reload={reload} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} />}
           {tab === 'ground' && <GroundTab eventId={eventId} data={data} canEdit={canEdit} reload={reload} />}
           {tab === 'hotel' && <HotelTab eventId={eventId} data={data} canEdit={canEdit} reload={reload} />}
-          {['perdiem'].includes(tab) && event && <TravelHotelTab key={tab} eventId={eventId} event={event} initialTab={tab} />}
+          {tab === 'perdiem' && event && <PerDiemTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} />}
         </>
       )}
       {toastElement}
