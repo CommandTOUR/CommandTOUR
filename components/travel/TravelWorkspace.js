@@ -10,6 +10,7 @@ import TravelersTab from './TravelersTab'
 import GroundTab from './GroundTab'
 import HotelTab from './HotelTab'
 import PerDiemTab from './PerDiemTab'
+import CostsTab from './CostsTab'
 import useTravelData from './useTravelData'
 import { LINE, BTN_P } from './shared'
 
@@ -41,6 +42,7 @@ export default function TravelWorkspace({ eventId, event }) {
     { key: 'ground', label: `Ground Transport (${data.trips.filter(t => isEntered(t) && !t.needs_rework).length})` },
     { key: 'hotel', label: `Hotel (${data.rooms.length})` },
     { key: 'perdiem', label: `Per Diem (${data.travelers.filter(t => t.per_diem_eligible).length})` },
+    { key: 'costs', label: 'Costs' },
   ]
 
   return (
@@ -61,6 +63,7 @@ export default function TravelWorkspace({ eventId, event }) {
           {tab === 'travelers' && <TravelersTab eventId={eventId} data={data} canEdit={canEdit} undoable={undoable} reload={reload} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} />}
           {tab === 'ground' && <GroundTab eventId={eventId} data={data} canEdit={canEdit} reload={reload} />}
           {tab === 'hotel' && <HotelTab eventId={eventId} data={data} canEdit={canEdit} reload={reload} />}
+          {tab === 'costs' && event && <CostsTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} />}
           {tab === 'perdiem' && event && <PerDiemTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} />}
         </>
       )}
