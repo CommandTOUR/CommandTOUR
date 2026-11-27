@@ -1187,7 +1187,7 @@ export default function TourPage() {
         )}
 
         {activeTab === 'staffing' && (
-          <StaffingGrid tourId={id} />
+          <StaffingGrid tourId={id} year={yearSel === 'all' ? null : Number(yearSel)} />
         )}
 
         {activeTab !== 'overview' && activeTab !== 'schedule' && activeTab !== 'calendar' && activeTab !== 'travel' && activeTab !== 'venues' && activeTab !== 'files' && activeTab !== 'staffing' && (

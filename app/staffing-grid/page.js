@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
-import StaffingGridComponent from '@/components/StaffingGrid'
+import StaffingGrid from '@/components/StaffingGrid'
 
 export default function AllToursStaffingGridPage() {
   const router = useRouter()
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
-  const [showPast, setShowPast] = useState(false)
   const [availableYears, setAvailableYears] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -40,7 +39,7 @@ export default function AllToursStaffingGridPage() {
             ← Back to Staff
           </button>
           <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>
-            All Tours Staffing Grid
+            All Staff
           </div>
         </div>
 
@@ -48,7 +47,7 @@ export default function AllToursStaffingGridPage() {
         <div style={{ flex: 1, maxWidth: 480, margin: '0 24px' }}>
           <input
             type="text"
-            placeholder="Search city, venue, staff, date, position..."
+            placeholder="Search City, Venue, Staff, Date, Position..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
@@ -64,20 +63,8 @@ export default function AllToursStaffingGridPage() {
           />
         </div>
 
-        {/* Right: show past toggle + year selector */}
+        {/* Right: year selector (the Show Past Events toggle is in the grid's toolbar) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <button
-            onClick={() => setShowPast(p => !p)}
-            style={{
-              fontSize: 15, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
-              border: showPast ? 'none' : '0.5px solid var(--border-default)',
-              background: showPast ? 'var(--color-info)' : 'transparent',
-              color: showPast ? '#ffffff' : 'var(--text-secondary)',
-              fontWeight: showPast ? 600 : 400,
-            }}>
-            {showPast ? 'Hide Past Events' : 'Show Past Events'}
-          </button>
-
           {availableYears.length > 0 && (
             <select
               value={selectedYear}
@@ -93,9 +80,8 @@ export default function AllToursStaffingGridPage() {
 
       {/* Scrollable content area */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', padding: '12px 0 0 0' }}>
-        <StaffingGridComponent
+        <StaffingGrid
           year={selectedYear}
-          showPastEvents={showPast}
           searchQuery={searchQuery}
         />
       </div>
