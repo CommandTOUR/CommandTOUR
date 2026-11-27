@@ -7,13 +7,33 @@ import { useProfile } from '../../lib/auth/profile'
 import { SectionCard, INPUT, LABEL, BTN_PRIMARY, BTN_GHOST } from './styles'
 
 const num = (v) => (v === '' || v === null || v === undefined ? '' : String(v))
+const money = (v, min = 2, max = 2) => {
+  const n = parseFloat(v)
+  return Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: false }) : ''
+}
+
+// Dollar field: "$" inside the left edge, only valid amounts, formats on blur. Same size for every money field.
+function MoneyInput({ value, onChange, disabled, maxDecimals = 2, placeholder = '0.00' }) {
+  const pattern = new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}$`)
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <span aria-hidden="true" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--text-muted)', pointerEvents: 'none' }}>$</span>
+      <input
+        type="text" inputMode="decimal" disabled={disabled} value={value} placeholder={placeholder}
+        onChange={e => { if (pattern.test(e.target.value)) onChange(e.target.value) }}
+        onBlur={() => onChange(money(value, 2, maxDecimals))}
+        style={{ ...INPUT, paddingLeft: 28, ...(disabled ? { opacity: 0.7, cursor: 'default' } : {}) }}
+      />
+    </div>
+  )
+}
 const toNum = (v) => { const n = parseFloat(v); return Number.isFinite(n) && n >= 0 ? n : 0 }
 
 export default function CompanySettings() {
   const { isManager } = useProfile()
   const canEdit = isManager
   const [loaded, setLoaded] = useState(false)
-  const [mileage, setMileage] = useState(num(D.mileage_rate.rate))
+  const [mileage, setMileage] = useState(money(D.mileage_rate.rate, 2, 3))
   const [limits, setLimits] = useState({ one_way: '', round_trip: '', multi_city: '' })
   const [perDiem, setPerDiem] = useState({ breakfast: '', lunch: '', dinner: '', meal_times: { ...D.per_diem_defaults.meal_times } })
   const [groups, setGroups] = useState([...D.hotel_cost_groups])
@@ -29,9 +49,9 @@ export default function CompanySettings() {
         getSetting('per_diem_defaults', D.per_diem_defaults),
         getSetting('hotel_cost_groups', D.hotel_cost_groups),
       ])
-      setMileage(num(m.rate))
-      setLimits({ one_way: num(l.one_way), round_trip: num(l.round_trip), multi_city: num(l.multi_city) })
-      setPerDiem({ breakfast: num(p.breakfast), lunch: num(p.lunch), dinner: num(p.dinner), meal_times: { ...D.per_diem_defaults.meal_times, ...(p.meal_times || {}) } })
+      setMileage(money(m.rate, 2, 3))
+      setLimits({ one_way: money(l.one_way), round_trip: money(l.round_trip), multi_city: money(l.multi_city) })
+      setPerDiem({ breakfast: money(p.breakfast), lunch: money(p.lunch), dinner: money(p.dinner), meal_times: { ...D.per_diem_defaults.meal_times, ...(p.meal_times || {}) } })
       setGroups(Array.isArray(g) ? g : D.hotel_cost_groups)
       setLoaded(true)
     })()
@@ -65,8 +85,11 @@ export default function CompanySettings() {
 
       <SectionCard title="Mileage Rate" description="Dollars per mile for reimbursed driving.">
         <div style={{ maxWidth: 240 }}>
-          <label style={LABEL}>Rate ($ Per Mile)</label>
-          <input {...ro} type="number" step="0.001" min="0" value={mileage} onChange={e => setMileage(e.target.value)} />
+          <label style={LABEL}>Rate</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <MoneyInput disabled={!canEdit} maxDecimals={3} value={mileage} onChange={setMileage} />
+            <span style={{ fontSize: 15, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>per mile</span>
+          </div>
         </div>
         <SaveBtn k="mileage_rate" onClick={() => save('mileage_rate', { rate: toNum(mileage), unit: 'mile' }, 'the mileage rate')} />
       </SectionCard>
@@ -76,7 +99,7 @@ export default function CompanySettings() {
           {[['one_way', 'One-Way'], ['round_trip', 'Round Trip'], ['multi_city', 'Multi-City']].map(([k, label]) => (
             <div key={k} style={{ flex: 1 }}>
               <label style={LABEL}>{label}</label>
-              <input {...ro} type="number" min="0" step="1" value={limits[k]} onChange={e => setLimits(p => ({ ...p, [k]: e.target.value }))} placeholder="0" />
+              <MoneyInput disabled={!canEdit} value={limits[k]} onChange={v => setLimits(p => ({ ...p, [k]: v }))} />
             </div>
           ))}
         </div>
@@ -87,8 +110,8 @@ export default function CompanySettings() {
         <div style={{ display: 'flex', gap: 16 }}>
           {[['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner']].map(([k, label]) => (
             <div key={k} style={{ flex: 1 }}>
-              <label style={LABEL}>{label} Amount</label>
-              <input {...ro} type="number" min="0" step="0.01" value={perDiem[k]} onChange={e => setPerDiem(p => ({ ...p, [k]: e.target.value }))} placeholder="0.00" />
+              <label style={LABEL}>{label}</label>
+              <MoneyInput disabled={!canEdit} value={perDiem[k]} onChange={v => setPerDiem(p => ({ ...p, [k]: v }))} />
             </div>
           ))}
         </div>

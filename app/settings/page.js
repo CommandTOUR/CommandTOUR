@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { label: 'Staff', tab: 'staff', icon: IconUsers },
   { label: 'Venues', tab: 'venues', icon: IconBuildingStadium },
   { label: 'Tours', tab: 'tours', icon: IconRoute },
-  { label: 'Company Settings', tab: 'company', icon: IconCoin },
+  { label: 'Travel', tab: 'company', icon: IconCoin },
   { label: 'Master Schedule', tab: 'booking', icon: IconFileText },
   { label: 'Notifications', tab: 'notifications', icon: IconBell },
   { label: 'Users And Roles', tab: 'users', icon: IconUsersGroup, adminOnly: true },
