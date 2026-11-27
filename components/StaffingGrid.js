@@ -786,7 +786,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
         [{ tour_position_id: tp.id, slot_index: slotIndex, staff_id: staffMember.id, event_id: event.id, status: 'confirmed', confirmed: true }],
         { onConflict: 'tour_position_id,slot_index,event_id', ignoreDuplicates: false }
       )
-      .select('id, tour_position_id, slot_index, staff_id, event_id, status, confirmed, notes, travel_in_date, travel_out_date')
+      .select('id, tour_position_id, slot_index, staff_id, event_id, status, confirmed, notes')
       .single()
     if (error) return { error }
     setAssignments(prev => {
@@ -1716,14 +1716,12 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
         city: event.city, tourName: currentTour?.name,
         weekendLabel: fmtWeekend(getWeekendGroup(event.load_in_date)),
         position: positionsById[tp.position_id]?.title,
-        travel_in_date: assignment.travel_in_date, travel_out_date: assignment.travel_out_date,
       },
       conflict: {
         tourPositionId: conflictBooking.tour_position_id, slotIndex: conflictBooking.slot_index, eventId: conflictBooking.event_id,
         city: conflictBooking.city, tourName: conflictBooking.tour_name,
         weekendLabel: fmtWeekend(getWeekendGroup(conflictBooking.load_in_date)),
         position: conflictBooking.position,
-        travel_in_date: conflictBooking.travel_in_date, travel_out_date: conflictBooking.travel_out_date,
       },
     })
   }
@@ -2098,12 +2096,6 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
                   <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{ev.city || '—'}</div>
                   {ev.weekendLabel && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{ev.weekendLabel}</div>}
                   {ev.position && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{ev.position}</div>}
-                  {(ev.travel_in_date || ev.travel_out_date) && (
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, paddingTop: 4, borderTop: '0.5px solid var(--border-default)' }}>
-                      {ev.travel_in_date && <div>✈ In: {fmtDate(ev.travel_in_date)}</div>}
-                      {ev.travel_out_date && <div>✈ Out: {fmtDate(ev.travel_out_date)}</div>}
-                    </div>
-                  )}
                   <button
                     onClick={() => handleKeepHere(side)}
                     style={{ fontFamily: 'inherit', marginTop: 'auto', fontSize: 15, padding: '8px 14px', borderRadius: 7, border: 'none', background: '#33FF99', color: '#0a1628', cursor: 'pointer', fontWeight: 600 }}

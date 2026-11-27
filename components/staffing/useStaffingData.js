@@ -89,8 +89,6 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
             confirmed,
             locked,
             notes,
-            travel_in_date,
-            travel_out_date,
             staff:staff(id, first_name, last_name, display_name)
           `)
           .in('tour_position_id', tpIds)
@@ -221,7 +219,7 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
   })
 
   // staff_id -> [{ event_id, city, load_in_date, load_out_date, saturday_date, sunday_date, tour_name, position,
-  //   tour_position_id, slot_index, travel_in_date, travel_out_date }]  (for the double-booked markers; the write guard asks the database instead)
+  //   tour_position_id, slot_index }]  (for the double-booked markers; the write guard asks the database instead)
   const bookingsByStaff = useMemo(() => {
     const map = {}
     departmentsWithRows.forEach(dept => {
@@ -237,7 +235,6 @@ export default function useStaffingData({ tourId, year, showPastEvents = false, 
             event_id: event.id, city: event.city, load_in_date: event.load_in_date, load_out_date: event.load_out_date,
             saturday_date, sunday_date, tour_name: tour?.name, position: position.title,
             tour_position_id: info.tp.id, slot_index: slotIndex,
-            travel_in_date: assignment.travel_in_date, travel_out_date: assignment.travel_out_date,
           })
         })
       })

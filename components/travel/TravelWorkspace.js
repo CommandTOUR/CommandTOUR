@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/auth/profile'
-import { listTripsForEvent, listSegmentSuggestions, computeFlags } from '@/lib/travel/trips'
+import { listTripsForEvent, listSegmentSuggestions } from '@/lib/travel/trips'
 import useUndoable from '@/components/staffing/useUndoable'
 import TravelHotelTab from '@/components/TravelHotelTab'
 import TravelersTab from './TravelersTab'
@@ -83,36 +83,11 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   const people = useMemo(() => assignments.filter(a => a.staff_id), [assignments])
   const tbdRoles = useMemo(() => assignments.filter(a => !a.staff_id && a.position.title).map(a => ({ id: a.id, title: a.position.title, department: a.position.department, deptSortOrder: a.position.deptSortOrder, sortOrder: a.position.sortOrder })), [assignments])
 
-  const stats = useMemo(() => {
-    let booked = 0, good = 0
-    for (const p of people) {
-      const f = computeFlags(trips.filter(t => t.staff_id === p.staff_id))
-      if (f.booked) booked++
-      else if (f.good_to_book) good++
-    }
-    return { travelers: people.length, booked, good, action: trips.filter(t => t.needs_rework).length }
-  }, [people, trips])
-
-  const color = tour?.color || 'var(--color-info)'
   if (!canSee) return <div style={{ fontSize: 15, color: 'var(--text-muted-legible)', padding: 16 }}>You do not have access to travel.</div>
 
   return (
     <div className="travel-workspace" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <div style={{ border: `2.5px solid ${color}`, borderRadius: 10, background: 'var(--surface-card)', overflow: 'hidden', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', flexShrink: 0 }}>
-        {[
-          { label: 'Travelers', value: stats.travelers, color: 'var(--text-primary)' },
-          { label: 'Booked', value: stats.booked, color: 'var(--color-success)' },
-          { label: 'Good To Book', value: stats.good, color: 'var(--color-info)' },
-          { label: 'Needs Action', value: stats.action, color: 'var(--text-warning-legible)' },
-        ].map((st, i) => (
-          <div key={st.label} style={{ padding: '10px 16px', textAlign: 'center', borderLeft: i ? `1px solid ${LINE}` : 'none' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, color: st.color }}>{st.value}</div>
-            <div style={{ fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted-legible)', fontWeight: 600 }}>{st.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0 12px', gap: 12, flexShrink: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px', gap: 12, flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${LINE}`, flex: 1 }}>
           {TABS.map(t => (
             <div key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}

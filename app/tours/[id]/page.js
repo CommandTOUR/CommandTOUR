@@ -1,5 +1,6 @@
 'use client'
 
+import { listTravelSpans } from '../../../lib/travel/trips'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getSupabase } from '../../../lib/supabase'
@@ -412,24 +413,7 @@ export default function TourPage() {
             .not('locked', 'is', true)
           setUnconfirmedStaffCount(count || 0)
 
-          const { data: travelRows } = await supabase
-            .from('staff_assignments')
-            .select('event_id, travel_in_date, travel_out_date')
-            .in('event_id', eventIds)
-            .not('travel_in_date', 'is', null)
-
-          const travelMap = {}
-          for (const row of (travelRows || [])) {
-            if (!travelMap[row.event_id]) travelMap[row.event_id] = { arrival: null, departure: null }
-            if (row.travel_in_date) {
-              if (!travelMap[row.event_id].arrival || row.travel_in_date < travelMap[row.event_id].arrival)
-                travelMap[row.event_id].arrival = row.travel_in_date
-            }
-            if (row.travel_out_date) {
-              if (!travelMap[row.event_id].departure || row.travel_out_date > travelMap[row.event_id].departure)
-                travelMap[row.event_id].departure = row.travel_out_date
-            }
-          }
+          const travelMap = await listTravelSpans(supabase, eventIds).catch(() => ({}))
           setEventTravelMap(travelMap)
         }
       }
