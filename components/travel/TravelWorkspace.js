@@ -63,7 +63,7 @@ export default function TravelWorkspace({ eventId, event }) {
           {tab === 'travelers' && <TravelersTab eventId={eventId} data={data} canEdit={canEdit} undoable={undoable} reload={reload} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} />}
           {tab === 'ground' && <GroundTab eventId={eventId} data={data} canEdit={canEdit} reload={reload} />}
           {tab === 'hotel' && <HotelTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} undoable={undoable} />}
-          {tab === 'costs' && event && <CostsTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} />}
+          {tab === 'costs' && event && <CostsTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} openTab={setTab} />}
           {tab === 'perdiem' && event && <PerDiemTab eventId={eventId} event={event} data={data} canEdit={canEdit} reload={reload} />}
         </>
       )}
