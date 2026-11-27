@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { getSupabase } from '../../lib/supabase'
 import { useNav } from '../../context/NavContext'
+import { useProfile } from '../../lib/auth/profile'
+import CompanySettings from '../../components/settings/CompanySettings'
+import UsersAndRoles from '../../components/settings/UsersAndRoles'
+import { SectionCard, INPUT, LABEL, BTN_PRIMARY, BTN_GHOST } from '../../components/settings/styles'
 import {
   IconUser, IconPalette, IconUsers, IconBuildingStadium, IconRoute,
   IconCoin, IconFileText, IconBell, IconUsersGroup, IconPlug,
@@ -12,8 +16,6 @@ import {
 const TOUR_TYPES = ['HWMTL', 'HWSS', 'International', 'Domestic']
 const YEARS = ['2025', '2026', '2027', '2028']
 const LANDING_PAGES = ['Dashboard', 'Tours', 'All Events', 'Calendar']
-const ROLES = ['admin', 'editor', 'viewer']
-const ROLE_COLORS = { admin: 'var(--color-success)', editor: 'var(--color-warning)', viewer: 'var(--text-muted)' }
 const SORT_OPTIONS = ['Last Name', 'First Name', 'Department']
 
 const DEPT_COLOR_PRESETS = ['#eab308', '#1a56db', '#fde047', '#8b5cf6', '#ec4899', '#f97316', '#ef4444', '#14b8a6', '#22c55e', '#94a3b8']
@@ -29,10 +31,10 @@ const NAV_ITEMS = [
   { label: 'Staff', tab: 'staff', icon: IconUsers },
   { label: 'Venues', tab: 'venues', icon: IconBuildingStadium },
   { label: 'Tours', tab: 'tours', icon: IconRoute },
-  { label: 'Per Diem', tab: 'perdiem', icon: IconCoin },
+  { label: 'Travel', tab: 'company', icon: IconCoin },
   { label: 'Master Schedule', tab: 'booking', icon: IconFileText },
   { label: 'Notifications', tab: 'notifications', icon: IconBell },
-  { label: 'User Management', tab: 'users', icon: IconUsersGroup },
+  { label: 'Users And Roles', tab: 'users', icon: IconUsersGroup, adminOnly: true },
   { label: 'Integrations', tab: 'integrations', icon: IconPlug },
 ]
 
@@ -42,60 +44,6 @@ const GLASS = {
   border: 'var(--tile-border)',
   borderRadius: 'var(--tile-radius)',
   boxShadow: 'var(--glass-tile-shadow)',
-}
-
-const INPUT = {
-  fontSize: 16,
-  padding: '10px 14px',
-  borderRadius: 8,
-  border: '0.5px solid var(--border-default)',
-  background: 'var(--surface-card)',
-  color: 'var(--text-primary)',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}
-
-const LABEL = {
-  fontSize: 13,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
-  color: 'var(--text-muted)',
-  display: 'block',
-  marginBottom: 8,
-}
-
-const BTN_PRIMARY = {
-  background: 'var(--color-info)',
-  color: '#ffffff',
-  border: 'none',
-  borderRadius: 8,
-  fontSize: 15,
-  padding: '9px 18px',
-  cursor: 'pointer',
-}
-
-const BTN_GHOST = {
-  background: 'transparent',
-  border: '0.5px solid var(--color-info)',
-  color: 'var(--color-info)',
-  borderRadius: 8,
-  fontSize: 15,
-  padding: '8px 16px',
-  cursor: 'pointer',
-}
-
-function SectionCard({ title, description, children }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 4 }}>{title}</div>
-      {description && <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 12 }}>{description}</div>}
-      <div style={{ background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)', padding: '20px 24px' }}>
-        {children}
-      </div>
-    </div>
-  )
 }
 
 function ColorSwatchPicker({ color, presets, onChange }) {
@@ -175,21 +123,7 @@ export default function SettingsPage() {
   const [newRegionName, setNewRegionName] = useState('')
   const [regionColorsSaved, setRegionColorsSaved] = useState(false)
 
-  // Per diem
-  const [breakfastRate, setBreakfastRate] = useState('')
-  const [lunchRate, setLunchRate]         = useState('')
-  const [dinnerRate, setDinnerRate]       = useState('')
-  const [perDiemSaved, setPerDiemSaved]   = useState(false)
-
-  // Users
-  const [staffList, setStaffList]           = useState([])
-  const [staffRoles, setStaffRoles]         = useState({})
-  const [inviteEmail, setInviteEmail]       = useState('')
-  const [inviteRole, setInviteRole]         = useState('editor')
-  const [inviteModal, setInviteModal]       = useState(null)
-  const [pendingInvites, setPendingInvites] = useState([])
-  const [removeModal, setRemoveModal]       = useState(null)
-  const [linkCopied, setLinkCopied]         = useState(false)
+  const { isAdmin } = useProfile()
 
   useEffect(() => {
     setNav({
@@ -198,10 +132,10 @@ export default function SettingsPage() {
       title: 'Settings',
       activeTab: activeSection,
       onTabChange: (tab) => setActiveSection(tab),
-      items: NAV_ITEMS,
+      items: NAV_ITEMS.filter(i => !i.adminOnly || isAdmin),
     })
     return () => clearNav()
-  }, [activeSection])
+  }, [activeSection, isAdmin])
 
   useEffect(() => {
     const check = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light')
@@ -227,14 +161,6 @@ export default function SettingsPage() {
       const { data: templates } = await supabase
         .from('task_templates').select('id, name').order('name')
       setTaskTemplates(templates || [])
-
-      const { data: staffData } = await supabase
-        .from('staff').select('id, first_name, last_name, email, created_at').order('last_name')
-      setStaffList(staffData || [])
-
-      const { data: invitesData } = await supabase
-        .from('pending_invites').select('*').order('invited_at', { ascending: false })
-      setPendingInvites(invitesData || [])
 
       const { data: deptData } = await supabase
         .from('staff_departments').select('id, name, sort_order, color').order('sort_order', { ascending: true })
@@ -269,13 +195,6 @@ export default function SettingsPage() {
       setStaffDefaultSort(localStorage.getItem('staffDefaultSort') || 'Last Name')
       setStaffDefaultFilter(localStorage.getItem('staffDefaultFilter') || 'All')
       try { setTemplateDefaults(JSON.parse(localStorage.getItem('taskTemplateDefaults') || '{}')) } catch {}
-      try { setStaffRoles(JSON.parse(localStorage.getItem('staffRoles') || '{}')) } catch {}
-      try {
-        const rates = JSON.parse(localStorage.getItem('perDiemDefaults') || '{}')
-        setBreakfastRate(rates.breakfast || '')
-        setLunchRate(rates.lunch || '')
-        setDinnerRate(rates.dinner || '')
-      } catch {}
     }
     init()
   }, [])
@@ -409,56 +328,6 @@ export default function SettingsPage() {
     setRegionColorsSaved(true)
     setTimeout(() => setRegionColorsSaved(false), 2000)
   }
-
-  // ── Per diem handlers ─────────────────────────────────────────────────────
-
-  const handleSavePerDiem = () => {
-    localStorage.setItem('perDiemDefaults', JSON.stringify({ breakfast: breakfastRate, lunch: lunchRate, dinner: dinnerRate }))
-    setPerDiemSaved(true)
-    setTimeout(() => setPerDiemSaved(false), 2000)
-  }
-
-  // ── Users handlers ────────────────────────────────────────────────────────
-
-  const getRoleForStaff = (staffId) => staffRoles[staffId] || 'editor'
-
-  const handleRoleChange = (staff, newRole) => {
-    const next = { ...staffRoles, [staff.id]: newRole }
-    setStaffRoles(next)
-    localStorage.setItem('staffRoles', JSON.stringify(next))
-  }
-
-  const handleInvite = () => {
-    if (!inviteEmail.trim()) return
-    setInviteModal({ email: inviteEmail.trim(), role: inviteRole })
-  }
-
-  const handleConfirmInvite = async () => {
-    const supabase = getSupabase()
-    const { error } = await supabase
-      .from('pending_invites').insert([{ email: inviteModal.email, role: inviteModal.role }])
-    if (!error) {
-      const { data } = await supabase
-        .from('pending_invites').select('*').order('invited_at', { ascending: false })
-      setPendingInvites(data || [])
-    }
-    setInviteEmail('')
-    setInviteModal(null)
-  }
-
-  const handleRemoveUser = (staff) => {
-    const next = { ...staffRoles }
-    delete next[staff.id]
-    setStaffRoles(next)
-    localStorage.setItem('staffRoles', JSON.stringify(next))
-    setRemoveModal(null)
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  const fmtDate = (d) => d
-    ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : '—'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -749,27 +618,7 @@ export default function SettingsPage() {
             </>
           )}
 
-          {activeSection === 'perdiem' && (
-            <SectionCard title="Default Meal Rates" description="These are default rates. Each event can override them.">
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={LABEL}>Default Breakfast Rate</label>
-                  <input style={INPUT} type="number" value={breakfastRate} onChange={e => setBreakfastRate(e.target.value)} placeholder="0.00" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={LABEL}>Default Lunch Rate</label>
-                  <input style={INPUT} type="number" value={lunchRate} onChange={e => setLunchRate(e.target.value)} placeholder="0.00" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={LABEL}>Default Dinner Rate</label>
-                  <input style={INPUT} type="number" value={dinnerRate} onChange={e => setDinnerRate(e.target.value)} placeholder="0.00" />
-                </div>
-              </div>
-              <button onClick={handleSavePerDiem} style={{ ...BTN_PRIMARY, marginTop: 16 }}>
-                {perDiemSaved ? '✓ Saved' : 'Save'}
-              </button>
-            </SectionCard>
-          )}
+          {activeSection === 'company' && <CompanySettings />}
 
           {activeSection === 'booking' && (
             <SectionCard title="Defaults">
@@ -783,95 +632,7 @@ export default function SettingsPage() {
             </SectionCard>
           )}
 
-          {activeSection === 'users' && (
-            <>
-              <SectionCard title="Current Users">
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 110px 100px 80px', gap: '0 12px', padding: '0 0 10px' }}>
-                  {['Name', 'Email', 'Role', 'Joined', 'Actions'].map(h => (
-                    <div key={h} style={{ fontSize: 12.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
-                  ))}
-                </div>
-                {staffList.length === 0 && (
-                  <div style={{ fontSize: 15, color: 'var(--text-muted)', padding: '8px 0' }}>No users found.</div>
-                )}
-                {staffList.map((staff, i) => {
-                  const role = getRoleForStaff(staff.id)
-                  const isCurrentUser = staff.email === user?.email
-                  return (
-                    <div
-                      key={staff.id}
-                      style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 110px 100px 80px', gap: '0 12px', padding: '10px 0', borderTop: i > 0 ? '0.5px solid var(--border-default)' : 'none', alignItems: 'center' }}
-                    >
-                      <div style={{ fontSize: 15, color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {staff.first_name} {staff.last_name}
-                        {isCurrentUser && (
-                          <span style={{ fontSize: 12, color: 'var(--color-success)', background: 'var(--status-confirmed-bg)', border: '0.5px solid var(--status-confirmed-border)', borderRadius: 999, padding: '1px 6px' }}>You</span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 14, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{staff.email || '—'}</div>
-                      <select
-                        value={role}
-                        onChange={e => handleRoleChange(staff, e.target.value)}
-                        style={{ fontSize: 14, padding: '4px 8px', borderRadius: 6, border: `0.5px solid ${ROLE_COLORS[role]}`, background: 'var(--surface-card)', color: ROLE_COLORS[role], outline: 'none', cursor: 'pointer' }}
-                      >
-                        {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                      </select>
-                      <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>{fmtDate(staff.created_at)}</div>
-                      <div>
-                        {!isCurrentUser && (
-                          <button
-                            onClick={() => setRemoveModal(staff)}
-                            style={{ fontSize: 14, padding: '4px 10px', borderRadius: 6, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </SectionCard>
-
-              {pendingInvites.length > 0 && (
-                <SectionCard title="Pending Invites">
-                  {pendingInvites.map((invite, i) => (
-                    <div key={invite.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: i > 0 ? '0.5px solid var(--border-default)' : 'none' }}>
-                      <div style={{ flex: 1, fontSize: 15, color: 'var(--text-secondary)' }}>{invite.email}</div>
-                      <span style={{ fontSize: 13, padding: '3px 9px', borderRadius: 999, background: 'var(--surface-raised)', color: ROLE_COLORS[invite.role] || 'var(--text-secondary)', border: `0.5px solid ${ROLE_COLORS[invite.role] || 'var(--border-default)'}` }}>
-                        {invite.role}
-                      </span>
-                      <span style={{ fontSize: 13, color: 'var(--color-warning)', padding: '2px 8px', borderRadius: 999, background: 'var(--status-1hold-bg)', border: '0.5px solid var(--status-1hold-border)' }}>
-                        Pending
-                      </span>
-                    </div>
-                  ))}
-                </SectionCard>
-              )}
-
-              <SectionCard title="Invite Team Member">
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={LABEL}>Email Address</label>
-                    <input
-                      style={INPUT}
-                      type="email"
-                      value={inviteEmail}
-                      onChange={e => setInviteEmail(e.target.value)}
-                      placeholder="name@example.com"
-                      onKeyDown={e => e.key === 'Enter' && handleInvite()}
-                    />
-                  </div>
-                  <div>
-                    <label style={LABEL}>Role</label>
-                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ ...INPUT, width: 'auto', cursor: 'pointer' }}>
-                      {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-                    </select>
-                  </div>
-                  <button onClick={handleInvite} style={BTN_PRIMARY}>Send Invite</button>
-                </div>
-              </SectionCard>
-            </>
-          )}
+          {activeSection === 'users' && isAdmin && <UsersAndRoles />}
 
           {activeSection === 'integrations' && (
             <SectionCard title="Connected Services">
@@ -882,46 +643,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Invite modal */}
-      {inviteModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setInviteModal(null)}>
-          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 32, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Invite Team Member</div>
-            <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              To invite <strong style={{ color: 'var(--text-primary)' }}>{inviteModal.email}</strong>, send them this signup link:
-            </div>
-            <div style={{ background: 'var(--surface-raised)', border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '12px 14px', fontSize: 15, color: 'var(--color-info)', wordBreak: 'break-all' }}>
-              commandtour.vercel.app/signup
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText('commandtour.vercel.app/signup'); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}
-              style={{ fontSize: 15, padding: '10px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: linkCopied ? 'var(--status-confirmed-bg)' : 'var(--surface-raised)', color: linkCopied ? 'var(--color-success)' : 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              {linkCopied ? '✓ Copied!' : 'Copy Link'}
-            </button>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setInviteModal(null)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleConfirmInvite} style={BTN_PRIMARY}>Mark as Invited</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Remove modal */}
-      {removeModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setRemoveModal(null)}>
-          <div style={{ background: 'var(--surface-card)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', padding: 32, width: 400, display: 'flex', flexDirection: 'column', gap: 16 }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Remove User</div>
-            <div style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              Remove <strong style={{ color: 'var(--text-primary)' }}>{removeModal.first_name} {removeModal.last_name}</strong> from CommandTOUR? This removes their role but does not delete their account.
-            </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={() => setRemoveModal(null)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => handleRemoveUser(removeModal)} style={{ fontSize: 15, padding: '9px 16px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>Remove</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

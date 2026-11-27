@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getSupabase } from '../../../../lib/supabase'
 import { IconChevronDown, IconChevronRight, IconLayoutDashboard } from '@tabler/icons-react'
 import { useNav } from '../../../../context/NavContext'
+import TourApprovers from '../../../../components/TourApprovers'
 import { fetchTakenLines, lineOptions, NONE_LINE, lineToSortOrder } from '../../../../lib/scheduleLines'
 
 const GLASS = {
@@ -588,6 +589,8 @@ export default function EditTour() {
               <label style={labelStyle}>Notes</label>
               <textarea style={{ ...inputStyle, height: 80, resize: 'vertical' }} placeholder="Any notes about this tour..." value={form.notes} onChange={e => set('notes', e.target.value)} />
             </div>
+
+            <TourApprovers tourId={id} />
 
             {error && <div style={{ fontSize: 15, color: 'var(--color-danger)' }}>{error}</div>}
 
