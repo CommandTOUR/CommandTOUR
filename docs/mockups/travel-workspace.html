@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Workspace Mockup</title>
+<style>
+:root{
+  --text:#14213a;--muted:#4a5873;--line:#cfd5df;--row:#e6eaf1;--bg:#f3f5f9;--card:#fff;
+  --blue:#0b5fd6;--blue-t:#e8f0fd;--green:#15803d;--green-t:#e7f6ec;--amber:#b45309;--amber-t:#fdf1e0;
+  --purple:#6d3fc4;--purple-t:#f0eafb;--red:#b42318;--red-t:#fdeceb;--grey-t:#eef1f6;--tour:#00f900;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.35}
+.wrap{max-width:1360px;margin:0 auto;padding:20px 24px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.hdr{border:2.5px solid var(--tour);border-radius:10px;background:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:rgba(0,249,0,.14);color:var(--text)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--tour);border:1px solid #0a7a0a}
+.city{font-size:24px;font-weight:700;margin:6px 0 2px}
+.sub{color:var(--muted)}
+.stats{display:flex;gap:8px;justify-content:flex-end}
+.stat{border:1px solid var(--line);border-radius:6px;padding:6px 12px;min-width:104px;text-align:center;background:#fff}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.bar{display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;gap:12px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex:1}
+.tab{padding:9px 16px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--blue);border-color:var(--blue)}
+.btn{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;border:1px solid var(--line);background:#fff;color:var(--text);cursor:pointer}
+.btn.p{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.s{padding:5px 10px;font-size:12px}
+.btn.g{color:var(--green);border-color:#a9d9b9}
+.btn.r{color:var(--red);border-color:#efb7b2}
+.view{display:none}.view.on{display:block}
+.action{border:1.5px solid #e6b36a;background:var(--amber-t);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.action h4{margin:0 0 2px;font-size:13px;color:var(--amber);text-transform:uppercase;letter-spacing:.05em}
+.tools{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.seg button{font:inherit;font-weight:600;border:0;background:#fff;padding:6px 14px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--blue-t);color:var(--blue)}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.c-g{background:var(--green-t);color:var(--green);border-color:#a9d9b9}
+.c-b{background:var(--blue-t);color:var(--blue);border-color:#b7cff5}
+.c-a{background:#fff;color:var(--amber);border-color:#e6b36a}
+.c-p{background:var(--purple-t);color:var(--purple);border-color:#cdbdf0}
+.c-n{background:var(--grey-t);color:var(--muted);border-color:var(--line)}
+.c-r{background:var(--red-t);color:var(--red);border-color:#efb7b2}
+.search{font:inherit;border:1px solid var(--line);border-radius:6px;padding:7px 12px;min-width:220px;background:#fff}
+table{border-collapse:collapse;width:100%}
+th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);background:#fafbfd;font-weight:700;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--row);vertical-align:middle}
+tr.r{cursor:pointer}tr.r:hover td{background:#f8faff}
+td.n{font-weight:600}
+#v2 td,#v3 td,#v4 td{white-space:nowrap}
+.muted{color:var(--muted)}
+.dept td{background:#f3f5f9;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 10px}
+.leg{font-size:12.5px}.leg small{display:block;color:var(--muted);font-size:11.5px}
+.ex td{background:#fafbfd;padding:0}
+.exg{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;padding:14px 16px}
+.box{border:1px solid var(--line);border-radius:6px;background:#fff;padding:10px 12px}
+.box h5{margin:0 0 8px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seglist{display:flex;flex-direction:column;gap:8px}
+.sg{display:flex;gap:10px;align-items:center}
+.sg .t{font-weight:700;min-width:64px}
+.sg .l{flex:1}.sg .l small{display:block;color:var(--muted)}
+.kv{display:flex;justify-content:space-between;padding:3px 0}
+.kv.tot{border-top:1px solid var(--row);margin-top:4px;padding-top:7px;font-weight:700}
+.file{display:flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:6px;padding:7px 10px;margin-top:8px;background:#fafbfd}
+.mask{position:fixed;inset:0;background:rgba(20,33,58,.45);display:none;align-items:flex-start;justify-content:center;padding:36px 20px;overflow:auto;z-index:20}
+.mask.on{display:flex}
+.modal{background:#fff;border-radius:10px;width:1080px;max-width:100%;border:1px solid var(--line);box-shadow:0 20px 60px rgba(20,33,58,.3)}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+.mh h3{margin:0;font-size:17px}
+.mb{padding:16px 20px}
+.mf{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfd;border-radius:0 0 10px 10px;gap:12px}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.opt{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff;position:relative}
+.opt.rec{border:2px solid var(--blue);background:#f7faff}
+.opt h4{margin:0 0 2px;font-size:14px}
+.opt .tag{position:absolute;top:-10px;right:10px;background:var(--blue);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 9px;letter-spacing:.04em}
+.opt .big{font-size:22px;font-weight:700;margin:8px 0 6px}
+.opt .kv{font-size:12.5px}
+.opt.add{border-style:dashed;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600;min-height:240px}
+.banner{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--purple-t);border:1px solid #cdbdf0;border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.who{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.who div{border:1px solid var(--line);border-radius:6px;padding:7px 12px;background:#fafbfd}
+.who span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-height:64px;resize:vertical}
+label.ck{display:flex;gap:8px;align-items:center;margin:4px 0;font-size:12.5px}
+.drop{border:2px dashed #b7cff5;background:var(--blue-t);border-radius:10px;padding:22px;text-align:center;color:var(--blue);font-weight:600}
+.ext{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.fld{border:1px solid var(--line);border-radius:6px;padding:7px 10px;background:#fff;margin-bottom:8px}
+.fld span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fld b{font-weight:600}
+.conf{float:right;font-size:11px;color:var(--green);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
+.setrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.setrow div{border:1px solid var(--line);border-radius:6px;padding:7px 12px;background:#fff}
+.setrow span{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tile{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--text);border-radius:6px;padding:6px 10px;margin:0 6px 6px 0;background:#fff;font-weight:500;cursor:grab}
+.tile i{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}
+.pd td.c{text-align:center}
+.pd .prov{background:var(--grey-t);color:var(--muted);text-decoration:line-through}
+.meter{height:10px;border-radius:999px;background:var(--grey-t);overflow:hidden;min-width:160px}
+.meter i{display:block;height:100%;background:var(--blue)}
+.meter i.over{background:var(--amber)}
+.note{margin-top:10px;color:var(--muted);font-size:12px}
+.hide-in .in,.hide-out .out{display:none}
+@media (max-width:1100px){.exg,.opts,.grid2,.ext{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div>
+      <span class="pill"><span class="dot"></span>HWSS Domestic</span>
+      <div class="city">Peoria, IL</div>
+      <div class="sub">Peoria Civic Center &nbsp;·&nbsp; Load-In Wed, Jan 6 &nbsp;·&nbsp; Shows Jan 9 – Jan 10, 2027 &nbsp;·&nbsp; Travel Starts In <b style="color:var(--text)">41 Days</b></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>18</b><span>Travelers</span></div>
+      <div class="stat"><b style="color:var(--green)">11</b><span>Booked</span></div>
+      <div class="stat"><b style="color:var(--blue)">3</b><span>Good To Book</span></div>
+      <div class="stat"><b style="color:var(--purple)">2</b><span>Pending Approval</span></div>
+      <div class="stat"><b style="color:var(--amber)">1</b><span>Needs Action</span></div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-v="v1">Travelers</div>
+      <div class="tab" data-v="v5">Ground Transport</div>
+      <div class="tab" data-v="v2">Hotel</div>
+      <div class="tab" data-v="v3">Per Diem</div>
+      <div class="tab" data-v="v4">Costs</div>
+    </div>
+    <div id="acts" style="display:flex;gap:8px">
+      <button class="btn" onclick="openM('mImp')">Import Itinerary</button>
+      <button class="btn">Export Travel Lists</button>
+      <button class="btn p">+ Add Traveler</button>
+    </div>
+  </div>
+
+  <!-- TRAVELERS -->
+  <div class="view on" id="v1">
+    <div class="action">
+      <div>
+        <h4>Needs Action · Removed From Event, Travel Still Booked</h4>
+        <div><b>Jordan Ellis</b> (Tech Official) was moved to Tulsa on Nov 13. &nbsp;Booked: UA 1822 arriving Jan 5, 2:15 PM · UA 640 departing Jan 11 &nbsp;·&nbsp; Room: 1 night confirmed</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn s r">Cancel Travel</button>
+        <button class="btn s">Rebook On Another Event</button>
+        <button class="btn s">Keep As Credit</button>
+      </div>
+    </div>
+
+    <div class="tools">
+      <div class="seg" id="dir"><button class="on" data-d="both">Both</button><button data-d="in">Travel To</button><button data-d="out">Travel From</button></div>
+      <button class="btn s">All</button>
+      <span class="chip c-a">Needs Booking · 2</span>
+      <span class="chip c-b">Good To Book · 3</span>
+      <span class="chip c-p">Pending Approval · 2</span>
+      <span class="chip c-g">Booked · 11</span>
+      <span style="flex:1"></span>
+      <input class="search" placeholder="Search Name, Role, Flight, Confirmation">
+    </div>
+
+    <div class="card" style="overflow:auto">
+    <table id="tt">
+      <thead><tr>
+        <th>Role</th><th>Name</th><th>Mode</th><th>Status</th>
+        <th class="in">Inbound · Final Arrival</th><th class="out">Outbound · First Departure</th>
+        <th>Room</th><th>Per Diem</th><th style="text-align:right">Est. Cost</th><th></th>
+      </tr></thead>
+      <tbody>
+        <tr class="dept"><td colspan="10">Operations</td></tr>
+        <tr class="r"><td>Tour Director</td><td class="n">Casey Morgan</td><td>Flying</td><td><span class="chip c-g">Booked</span></td>
+          <td class="in leg">Mon, Jan 4 · 4:17 PM<small>AA 5309 → PIA</small></td><td class="out leg">Mon, Jan 11 · 5:42 AM<small>AA 3486 from PIA</small></td>
+          <td><span class="chip c-g">Room</span></td><td><span class="chip c-g">$350</span></td><td style="text-align:right">$512</td><td class="muted">▾</td></tr>
+        <tr class="r"><td>Event Manager</td><td class="n">Riley Hart</td><td>Flying</td><td><span class="chip c-g">Booked</span></td>
+          <td class="in leg">Tue, Jan 5 · 10:05 AM<small>UA 5949 → PIA</small></td><td class="out leg">Mon, Jan 11 · 8:00 AM<small>UA 5532 from PIA</small></td>
+          <td><span class="chip c-g">Room</span></td><td><span class="chip c-g">$290</span></td><td style="text-align:right">$468</td><td class="muted">▾</td></tr>
+        <tr class="r"><td>Front Of House Manager</td><td class="n muted" style="font-style:italic">TBD</td><td>—</td><td><span class="chip c-a">Needs Booking</span></td>
+          <td class="in leg muted">Not Entered</td><td class="out leg muted">Not Entered</td>
+          <td><span class="chip c-n">Hold</span></td><td><span class="chip c-n">—</span></td><td style="text-align:right" class="muted">—</td><td class="muted">▾</td></tr>
+        <tr class="dept"><td colspan="10">Tech Official</td></tr>
+        <tr class="r" data-open="1"><td>Tech Official</td><td class="n">Cameron Blake</td><td>Flying</td><td><span class="chip c-p">Pending Approval</span></td>
+          <td class="in leg">Tue, Jan 5 · 4:19 PM<small>AA 5309 → PIA · via ORD</small></td><td class="out leg">Mon, Jan 11 · 6:17 AM<small>AA 5193 from PIA</small></td>
+          <td><span class="chip c-b">Unassigned</span></td><td><span class="chip c-g">$330</span></td><td style="text-align:right">$672</td><td class="muted">▴</td></tr>
+        <tr class="ex"><td colspan="10"><div class="exg">
+          <div class="box"><h5>Full Schedule · Travel To</h5>
+            <div class="seglist">
+              <div class="sg"><span class="t">AA 2210</span><div class="l">ERI → ORD<small>Tue, Jan 5 · 12:05 PM → 12:58 PM CT</small></div><span class="chip c-n">Scheduled</span></div>
+              <div class="sg"><span class="t">AA 5309</span><div class="l">ORD → PIA<small>Tue, Jan 5 · 3:20 PM → 4:19 PM CT</small></div><span class="chip c-n">Scheduled</span></div>
+            </div>
+            <div class="kv" style="margin-top:8px"><span class="muted">Confirmation</span><b>Not Booked Yet</b></div>
+            <div class="file"><span>📎</span><span class="muted">No receipt attached yet</span><span style="flex:1"></span><button class="btn s" onclick="openM('mImp')">Import Itinerary</button></div>
+          </div>
+          <div class="box"><h5>Estimated Cost (Selected Option)</h5>
+            <div class="kv"><span>Airfare</span><span>$672</span></div>
+            <div class="kv"><span>Bags</span><span class="muted">Free (preferred airline)</span></div>
+            <div class="kv"><span>Mileage · 10 mi × $0.76</span><span>$7.60</span></div>
+            <div class="kv"><span>Airport Parking</span><span>$0</span></div>
+            <div class="kv tot"><span>True Total</span><span>$679.60</span></div>
+          </div>
+          <div class="box"><h5>Approval</h5>
+            <span class="chip c-p">Pending · Over $450 Round Trip Limit</span>
+            <div class="note" style="margin-top:8px">Requested by <b style="color:var(--text)">Taylor Quinn</b> (TC) · 2 Options · Waiting On Event Manager</div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn s p" onclick="openM('mReq')">Open Request</button><button class="btn s">Edit Trip</button>
+            </div>
+          </div>
+        </div></td></tr>
+        <tr class="r"><td>Tech Official</td><td class="n">Sam Okafor</td><td>Driving</td><td><span class="chip c-n">Driving</span></td>
+          <td class="in leg">Tue, Jan 5<small>Own vehicle · 180 mi</small></td><td class="out leg">Mon, Jan 11<small>Own vehicle · 180 mi</small></td>
+          <td><span class="chip c-g">Room</span></td><td><span class="chip c-g">$310</span></td><td style="text-align:right">$273</td><td class="muted">▾</td></tr>
+        <tr class="r"><td>Tech Official</td><td class="n">Dana Reyes</td><td>Flying</td><td><span class="chip c-b">Good To Book</span></td>
+          <td class="in leg">Wed, Jan 6<small>Target Arrival</small></td><td class="out leg">Mon, Jan 11<small>Target Departure</small></td>
+          <td><span class="chip c-b">Unassigned</span></td><td><span class="chip c-n">—</span></td><td style="text-align:right" class="muted">$450 Est.</td><td class="muted">▾</td></tr>
+        <tr class="dept"><td colspan="10">Host</td></tr>
+        <tr class="r"><td>Host</td><td class="n">Morgan Lee</td><td>Flying</td><td><span class="chip c-g">Booked</span></td>
+          <td class="in leg">Wed, Jan 6 · 9:35 PM<small>AA 3422 → PIA</small></td><td class="out leg">Mon, Jan 11 · 5:42 AM<small>AA 3486 from PIA</small></td>
+          <td><span class="chip c-g">Room</span></td><td><span class="chip c-g">$330</span></td><td style="text-align:right">$398</td><td class="muted">▾</td></tr>
+        <tr class="r"><td>Host</td><td class="n">Alex Rivera</td><td>Books Own</td><td><span class="chip c-n">Books Own</span></td>
+          <td class="in leg muted">Not Tracked</td><td class="out leg muted">Not Tracked</td>
+          <td><span class="chip c-n">Pays Own</span></td><td><span class="chip c-n">Not Eligible</span></td><td style="text-align:right" class="muted">—</td><td class="muted">▾</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Click any row to open the full schedule, receipt, cost breakdown and approval. Names, roles and holds come from the staffing grid. Anyone not on the grid can be added by hand.</div>
+  </div>
+
+
+  <!-- GROUND TRANSPORT -->
+  <div class="view" id="v5">
+    <div class="note" style="margin:0 0 10px">What each person does when they land and when they leave. This is also what each traveler sees on their own itinerary.</div>
+
+    <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin:4px 0 8px">Airport Arrivals</div>
+    <div class="card" style="overflow:auto;margin-bottom:16px"><table>
+      <thead><tr><th>Arrives</th><th>Name</th><th>Flight</th><th>Airport</th><th>Getting To The Hotel</th><th>Pickup Details</th><th>Contact</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr class="dept"><td colspan="8">Mon, Jan 4 · 1 Arrival</td></tr>
+        <tr><td class="n">4:17 PM</td><td class="n">Casey Morgan</td><td>AA 5309</td><td>PIA</td><td><span class="chip c-b">Rental Car</span></td><td>Counter In Baggage Claim · Enterprise</td><td class="muted">—</td><td class="muted">Early load-in</td></tr>
+        <tr class="dept"><td colspan="8">Tue, Jan 5 · 3 Arrivals</td></tr>
+        <tr><td class="n">10:05 AM</td><td class="n">Riley Hart</td><td>UA 5949</td><td>PIA</td><td><span class="chip c-g">Hotel Shuttle</span></td><td>Door 3 · Shuttle Every 30 Min</td><td class="muted">Hotel Front Desk</td><td class="muted">—</td></tr>
+        <tr><td class="n">4:19 PM</td><td class="n">Cameron Blake</td><td>AA 5309</td><td>PIA</td><td><span class="chip c-g">Hotel Shuttle</span></td><td>Door 3 · Shuttle Every 30 Min</td><td class="muted">Hotel Front Desk</td><td class="muted">—</td></tr>
+        <tr><td class="n muted">Driving</td><td class="n">Sam Okafor</td><td class="muted">—</td><td class="muted">—</td><td><span class="chip c-n">Own Vehicle</span></td><td>Straight To Hotel · Parking Included</td><td class="muted">—</td><td class="muted">180 Mi</td></tr>
+        <tr class="dept"><td colspan="8">Wed, Jan 6 · 2 Arrivals</td></tr>
+        <tr><td class="n">9:35 PM</td><td class="n">Morgan Lee</td><td>AA 3422</td><td>PIA</td><td><span class="chip c-p">Rideshare</span></td><td>Rideshare Zone · Company Card</td><td class="muted">—</td><td class="muted">Late arrival</td></tr>
+        <tr><td class="n muted">TBD</td><td class="n">Dana Reyes</td><td class="muted">Not Booked</td><td class="muted">—</td><td><span class="chip c-a">Needs Plan</span></td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td></tr>
+      </tbody></table></div>
+
+    <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin:4px 0 8px">Rental Cars</div>
+    <div class="card" style="overflow:auto;margin-bottom:16px"><table>
+      <thead><tr><th>Vendor</th><th>Car Class</th><th>Driver</th><th>Riders</th><th>Pick Up</th><th>Return</th><th>Confirmation #</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="n">Enterprise</td><td>Full-Size SUV</td><td class="n">Casey Morgan</td><td>Casey Morgan, Cameron Blake</td><td>PIA Counter · Mon, Jan 4</td><td>PIA · Mon, Jan 11</td><td>RC-77120</td><td class="muted">Fuel Receipt Required</td></tr>
+        <tr><td class="n muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td><button class="btn s">+ Add Rental</button></td></tr>
+      </tbody></table></div>
+
+    <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin:4px 0 8px">Departures</div>
+    <div class="card" style="overflow:auto"><table>
+      <thead><tr><th>Leaves</th><th>Name</th><th>Flight</th><th>Airport</th><th>Getting To The Airport</th><th>Pickup Details</th><th>Contact</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr class="dept"><td colspan="8">Mon, Jan 11 · 3 Departures</td></tr>
+        <tr><td class="n">5:42 AM</td><td class="n">Casey Morgan</td><td>AA 3486</td><td>PIA</td><td><span class="chip c-b">Rental Car</span></td><td>Return Car By 4:30 AM · Fuel Full</td><td class="muted">—</td><td class="muted">Leave Hotel 4:00 AM</td></tr>
+        <tr><td class="n">6:17 AM</td><td class="n">Cameron Blake</td><td>AA 5193</td><td>PIA</td><td><span class="chip c-p">Rideshare</span></td><td>Hotel Lobby · 4:15 AM</td><td class="muted">—</td><td class="muted">Shares With Morgan Lee</td></tr>
+        <tr><td class="n">8:00 AM</td><td class="n">Riley Hart</td><td>UA 5532</td><td>PIA</td><td><span class="chip c-g">Hotel Shuttle</span></td><td>Hotel Lobby · 5:45 AM</td><td class="muted">Hotel Front Desk</td><td class="muted">—</td></tr>
+      </tbody></table></div>
+  </div>
+
+  <!-- HOTEL -->
+  <div class="view" id="v2">
+    <div class="grid2">
+      <div>
+        <div class="card" style="padding:14px 16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap">
+            <div><div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase">Hotel</div><div style="font-size:17px;font-weight:700">Sample Hotel &amp; Suites</div><div class="sub">100 Sample Street, Peoria, IL 61602 · (555) 010-0142</div></div>
+            <div class="setrow" style="margin:0">
+              <div><span>Single Rate</span><b>$129</b></div><div><span>Double Rate</span><b>$149</b></div><div><span>Tax</span><b>12%</b></div><div><span>Self Park</span><b>$15 / Night</b></div><div><span>Cut-Off Date</span><b>Dec 28</b></div><div><span>Rooming List Sent</span><b style="color:var(--green)">✓ Dec 14</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="overflow:auto"><table>
+          <thead><tr><th>#</th><th>Guest</th><th>Roommate</th><th>Beds</th><th>Check-In</th><th>Check-Out</th><th>Nights</th><th>Cost Group</th><th>Confirmation #</th><th style="text-align:right">Est. Cost</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td class="n">Casey Morgan</td><td class="muted">—</td><td>1</td><td>Mon, Jan 4</td><td>Mon, Jan 11</td><td>7</td><td><span class="chip c-b">Production</span></td><td>HTL-48213</td><td style="text-align:right">$1,011</td></tr>
+            <tr><td>2</td><td class="n">Riley Hart</td><td>Morgan Lee</td><td>2</td><td>Tue, Jan 5</td><td>Mon, Jan 11</td><td>6</td><td><span class="chip c-b">Production</span></td><td>HTL-48214</td><td style="text-align:right">$1,001</td></tr>
+            <tr><td>3</td><td class="n">Sam Okafor</td><td class="muted">—</td><td>1</td><td>Tue, Jan 5</td><td>Mon, Jan 11</td><td>6</td><td><span class="chip c-b">Production</span></td><td>HTL-48215</td><td style="text-align:right">$867</td></tr>
+            <tr><td>4</td><td class="n">Hold · Merch</td><td class="muted">—</td><td>1</td><td>Wed, Jan 6</td><td>Mon, Jan 11</td><td>5</td><td><span class="chip c-p">Merchandise</span></td><td class="muted">Pending</td><td style="text-align:right">$722</td></tr>
+            <tr><td>5</td><td class="n">Alex Rivera</td><td class="muted">—</td><td>1</td><td colspan="3" class="muted">Pays Own</td><td><span class="chip c-n">Pay On Own</span></td><td class="muted">—</td><td style="text-align:right" class="muted">—</td></tr>
+          </tbody></table></div>
+        <div class="note">Check-in and check-out fill from the earliest arrival and latest departure of the guest and roommate. Cost Group is chosen by hand per room, so finance knows where the expense lands.</div>
+      </div>
+      <div>
+        <div class="card" style="padding:14px 16px">
+          <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin-bottom:8px">Booked, No Room Yet · 2</div>
+          <span class="tile"><i></i>Cameron Blake</span><span class="tile"><i></i>Dana Reyes</span>
+          <div class="note">Drag a name onto a room, or click Assign. Only people with booked or planned travel appear here.</div>
+        </div>
+        <div class="card" style="padding:14px 16px;margin-top:12px">
+          <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin-bottom:8px">Totals</div>
+          <div class="kv"><span>Rooms</span><b>4</b></div><div class="kv"><span>Room Nights</span><b>24</b></div>
+          <div class="kv"><span>First Check-In</span><b>Jan 4</b></div><div class="kv"><span>Last Check-Out</span><b>Jan 11</b></div>
+          <div class="kv tot"><span>Estimate</span><span>$3,601</span></div>
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn s">Download Rooming List (PDF)</button><button class="btn s">Excel</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PER DIEM -->
+  <div class="view" id="v3">
+    <div class="setrow">
+      <div><span>Breakfast</span><b>$10 · 7:00 AM</b></div><div><span>Lunch</span><b>$20 · 12:00 PM</b></div><div><span>Dinner</span><b>$30 · 6:00 PM</b></div><div><span>Full Day</span><b>$60</b></div>
+      <div><span>Window</span><b>Jan 4 – Jan 11 · 8 Days</b></div>
+      <div style="margin-left:auto"><span>Total Eligible</span><b style="font-size:16px">$950</b></div>
+    </div>
+    <div class="card" style="overflow:auto"><table class="pd">
+      <thead><tr><th>Eligible</th><th>Role</th><th>Name</th><th>Travel Start</th><th>Travel End</th>
+        <th class="c">Mon 1/4</th><th class="c">Tue 1/5</th><th class="c">Wed 1/6</th><th class="c">Thu 1/7</th><th class="c">Fri 1/8</th><th class="c">Sat 1/9</th><th class="c">Sun 1/10</th><th class="c">Mon 1/11</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>
+        <tr style="background:#fafbfd"><td colspan="5" class="muted" style="font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase">Meals Provided By The Show</td>
+          <td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c"><span class="chip c-n">Lunch</span></td><td class="c"><span class="chip c-n">Lunch, Dinner</span></td><td class="c">—</td><td></td></tr>
+        <tr><td>☑</td><td>Tour Director</td><td class="n">Casey Morgan</td><td>Jan 4 · 11:30 AM</td><td>Jan 11 · 9:15 AM</td><td class="c">$50</td><td class="c">$60</td><td class="c">$60</td><td class="c">$60</td><td class="c">$60</td><td class="c">$40</td><td class="c">$10</td><td class="c">$10</td><td style="text-align:right;font-weight:700">$350</td></tr>
+        <tr><td>☑</td><td>Event Manager</td><td class="n">Riley Hart</td><td>Jan 5 · 7:30 AM</td><td>Jan 11 · 10:30 AM</td><td class="c">—</td><td class="c">$50</td><td class="c">$60</td><td class="c">$60</td><td class="c">$60</td><td class="c">$40</td><td class="c">$10</td><td class="c">$10</td><td style="text-align:right;font-weight:700">$290</td></tr>
+        <tr><td>☑</td><td>Tech Official</td><td class="n">Sam Okafor</td><td>Jan 5 · 8:00 AM</td><td>Jan 11 · 3:00 PM</td><td class="c">—</td><td class="c">$50</td><td class="c">$60</td><td class="c">$60</td><td class="c">$60</td><td class="c">$40</td><td class="c">$10</td><td class="c">$30</td><td style="text-align:right;font-weight:700">$310</td></tr>
+        <tr><td>☐</td><td>Host</td><td class="n">Alex Rivera</td><td class="muted">Not Eligible</td><td class="muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td class="c muted">—</td><td style="text-align:right" class="muted">$0</td></tr>
+      </tbody></table></div>
+    <div class="note">Travel Start and End come from the flight legs plus drive time. Rates and meal times are settings per tour. A meal is owed if travel starts before the meal time and ends after it, unless the show provides it.</div>
+  </div>
+
+  <!-- COSTS -->
+  <div class="view" id="v4">
+    <div class="card" style="overflow:auto"><table>
+      <thead><tr><th>Category</th><th style="text-align:right">Budget</th><th style="text-align:right">Estimated</th><th style="text-align:right">Actual</th><th style="text-align:right">+ / −</th><th style="width:240px">Estimate vs Budget</th></tr></thead>
+      <tbody>
+        <tr><td class="n">Airfare</td><td style="text-align:right">$9,000</td><td style="text-align:right">$8,420</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;color:var(--green)">+$580</td><td><div class="meter"><i style="width:94%"></i></div></td></tr>
+        <tr><td class="n">Ground · Rental Car</td><td style="text-align:right">$2,400</td><td style="text-align:right">$2,650</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;color:var(--amber)">−$250</td><td><div class="meter"><i class="over" style="width:100%"></i></div></td></tr>
+        <tr><td class="n">Other Travel · Bags, Mileage, Parking, Tolls, Rideshare</td><td style="text-align:right">$1,800</td><td style="text-align:right">$1,230</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;color:var(--green)">+$570</td><td><div class="meter"><i style="width:68%"></i></div></td></tr>
+        <tr><td class="n">Hotel · Rooms And Parking</td><td style="text-align:right">$4,200</td><td style="text-align:right">$3,601</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;color:var(--green)">+$599</td><td><div class="meter"><i style="width:86%"></i></div></td></tr>
+        <tr><td class="n">Per Diem</td><td style="text-align:right">$1,600</td><td style="text-align:right">$950</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;color:var(--green)">+$650</td><td><div class="meter"><i style="width:59%"></i></div></td></tr>
+        <tr><td class="n" style="font-size:14px">Total</td><td style="text-align:right;font-weight:700">$19,000</td><td style="text-align:right;font-weight:700">$16,851</td><td style="text-align:right" class="muted">—</td><td style="text-align:right;font-weight:700;color:var(--green)">+$2,149</td><td></td></tr>
+      </tbody></table></div>
+    <div class="note">After the event, actuals come from the receipts and adjustments entered on each trip (credits, change fees, extras). The Pre vs Post view shows the variance. Budgets are set per event or per tour.</div>
+  </div>
+</div>
+
+<!-- FLIGHT REQUEST MODAL -->
+<div class="mask" id="mReq"><div class="modal">
+  <div class="mh"><h3>Flight Request · Cameron Blake · Peoria, IL</h3><button class="btn s" onclick="closeM('mReq')">Close</button></div>
+  <div class="mb">
+    <div class="who">
+      <div><span>Role</span><b>Tech Official</b></div>
+      <div><span>Home Airport</span><b>ERI · Erie, PA</b></div>
+      <div><span>Home To Airport</span><b>10 Mi · $7.60 At $0.76 / Mi</b></div>
+      <div><span>Trip Type</span><b>Round Trip</b></div>
+      <div><span>Needed By</span><b>Tue, Jan 5 · Return Mon, Jan 11</b></div>
+    </div>
+    <div class="banner"><div><b style="color:var(--purple)">Over The Limit.</b> Round trip limit is $450 all-in. Option 1 totals $679.60, so this request needs approval.</div><span class="chip c-p">Approvers · Riley Hart, Casey Morgan</span></div>
+    <div class="opts" id="opts">
+      <div class="opt rec"><span class="tag">Recommended</span><h4>Option 1 · American</h4><div class="muted">ERI → ORD → PIA · Round Trip</div>
+        <div class="big">$679.60</div>
+        <div class="kv"><span>Fare</span><span>$672.00</span></div>
+        <label class="ck"><input type="checkbox" checked> Free Bags</label>
+        <div class="kv"><span>Drive To Airport</span><span>10 Mi · $7.60</span></div>
+        <label class="ck"><input type="checkbox"> Airport Parking Needed</label>
+        <div class="kv"><span>Preferred Airline</span><span style="color:var(--green)">Yes ✓</span></div>
+        <div class="kv"><span>vs Limit</span><span style="color:var(--red)">+$229.60</span></div></div>
+      <div class="opt"><h4>Option 2 · Delta</h4><div class="muted">PIT → ATL → PIA · Round Trip</div>
+        <div class="big">$792.80</div>
+        <div class="kv"><span>Fare</span><span>$550.00</span></div>
+        <div class="kv"><span>Bags</span><span>$70.00</span></div>
+        <div class="kv"><span>Drive To Airport</span><span>180 Mi · $136.80</span></div>
+        <div class="kv"><span>Parking · 6 Days</span><span>$36.00</span></div>
+        <div class="kv"><span>Preferred Airline</span><span class="muted">No</span></div>
+        <div class="kv"><span>vs Limit</span><span style="color:var(--red)">+$342.80</span></div></div>
+      <div class="opt add">+ Add Option 3</div>
+      <div class="opt add">+ Add Option 4</div>
+    </div>
+    <div style="margin-top:14px"><div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin-bottom:6px">Reason For Recommendation</div>
+      <textarea>Option 1 is on his preferred airline, includes free bags, and is only 10 miles round trip from his house. Option 2 is cheaper on the fare, but once bag fees, 180 miles of driving and airport parking are added it costs more overall.</textarea></div>
+  </div>
+  <div class="mf"><span class="muted">Totals use the staff profile's home address and the company mileage rate. Saved as a draft until submitted.</span>
+    <div style="display:flex;gap:8px"><button class="btn" onclick="closeM('mReq')">Save Draft</button><button class="btn p" onclick="closeM('mReq')">Submit For Approval</button></div></div>
+</div></div>
+
+<!-- IMPORT MODAL -->
+<div class="mask" id="mImp"><div class="modal">
+  <div class="mh"><h3>Import Itinerary Or Receipt</h3><button class="btn s" onclick="closeM('mImp')">Close</button></div>
+  <div class="mb">
+    <div class="drop">Drop a PDF, screenshot or pasted email here · or Choose File</div>
+    <div class="ext">
+      <div>
+        <div class="muted" style="font-size:10.5px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;margin:0 0 8px">What We Found · Check Before Saving</div>
+        <div class="fld"><span>Traveler <em class="conf">Matched</em></span><b>Cameron Blake · Tech Official · Peoria, IL</b></div>
+        <div class="fld"><span>Confirmation <em class="conf">High</em></span><b>AB12CD</b></div>
+        <div class="fld"><span>Total Fare <em class="conf">High</em></span><b>$672.00 · Bags Included</b></div>
+        <div class="fld"><span>Trip Type</span><b>Round Trip</b></div>
+        <div class="file"><span>📎</span><b>AA Itinerary Receipt.pdf</b><span style="flex:1"></span><span class="muted">Saved Privately</span></div>
+      </div>
+      <div class="box"><h5>Segments · 4 Found</h5>
+        <div class="seglist">
+          <div class="sg"><span class="t">AA 2210</span><div class="l">ERI → ORD<small>Tue, Jan 5 · 12:05 PM → 12:58 PM</small></div><span class="conf" style="float:none">High</span></div>
+          <div class="sg"><span class="t">AA 5309</span><div class="l">ORD → PIA<small>Tue, Jan 5 · 3:20 PM → 4:19 PM</small></div><span class="conf" style="float:none">High</span></div>
+          <div class="sg"><span class="t">AA 3486</span><div class="l">PIA → ORD<small>Mon, Jan 11 · 5:42 AM → 6:40 AM</small></div><span class="conf" style="float:none">High</span></div>
+          <div class="sg"><span class="t">AA 2215</span><div class="l">ORD → ERI<small>Mon, Jan 11 · 8:10 AM → 10:25 AM</small></div><span class="conf" style="float:none;color:var(--amber)">Check</span></div>
+        </div>
+        <div class="note">Anything marked Check is highlighted for you to confirm. Nothing is saved until you press Save Trip.</div>
+      </div>
+    </div>
+  </div>
+  <div class="mf"><span class="muted">The original file is stored privately. The traveler will see it on their own itinerary.</span>
+    <div style="display:flex;gap:8px"><button class="btn" onclick="closeM('mImp')">Cancel</button><button class="btn p" onclick="closeM('mImp')">Save Trip</button></div></div>
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+$$('#tabs .tab').forEach(t=>t.onclick=()=>{$$('#tabs .tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');$$('.view').forEach(v=>v.classList.remove('on'));$('#'+t.dataset.v).classList.add('on');$('#acts').style.display=t.dataset.v==='v1'?'flex':'none'});
+$$('#dir button').forEach(b=>b.onclick=()=>{$$('#dir button').forEach(x=>x.classList.remove('on'));b.classList.add('on');const t=$('#tt');t.classList.remove('hide-in','hide-out');if(b.dataset.d==='in')t.classList.add('hide-out');if(b.dataset.d==='out')t.classList.add('hide-in')});
+$$('#tt tr.r').forEach(r=>r.onclick=()=>{const n=r.nextElementSibling;if(n&&n.classList.contains('ex')){n.style.display=n.style.display==='none'?'':'none'}});
+function openM(id){document.getElementById(id).classList.add('on')}
+function closeM(id){document.getElementById(id).classList.remove('on')}
+$$('.mask').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
+</script>
+</body>
+</html>
