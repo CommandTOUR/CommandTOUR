@@ -1,15 +1,16 @@
 'use client'
 
-// The travel workspace on the event page: a header band with live counts, then Travelers, Roster, Hotel, Rental Cars and Per Diem tabs.
+// The travel workspace on the event page. Structure follows docs/mockups/travel-workspace.html: a header band with a tour-colored
+// border and live counts, then a tab strip (Travelers, Roster, Hotel, Rental Cars, Per Diem) with "+ Add Traveler" at the right.
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import { useProfile } from '@/lib/auth/profile'
-import { listTripsForEvent, computeFlags } from '@/lib/travel/trips'
+import { listTripsForEvent, listSegmentSuggestions, computeFlags } from '@/lib/travel/trips'
 import useUndoable from '@/components/staffing/useUndoable'
 import TravelHotelTab from '@/components/TravelHotelTab'
 import TravelersTab from './TravelersTab'
 import RosterTab from './RosterTab'
-import { GLASS, BTN_PRIMARY } from './shared'
+import { LINE, BTN_P } from './shared'
 
 const TABS = [
   { key: 'travelers', label: 'Travelers' },
@@ -18,8 +19,8 @@ const TABS = [
   { key: 'rental', label: 'Rental Cars' },
   { key: 'perdiem', label: 'Per Diem' },
 ]
-
 const fmtShort = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '')
+const fmtWeekdayShort = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '')
 
 export default function TravelWorkspace({ eventId, event, tour }) {
   const { role } = useProfile()
@@ -29,6 +30,9 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   const [assignments, setAssignments] = useState([])
   const [trips, setTrips] = useState([])
   const [staffList, setStaffList] = useState([])
+  const [roomedIds, setRoomedIds] = useState(new Set())
+  const [needsByStaff, setNeedsByStaff] = useState({})
+  const [suggest, setSuggest] = useState({ airlines: [], airports: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
@@ -37,13 +41,16 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   const load = useCallback(async () => {
     const supabase = getSupabase()
     try {
-      const [a, t, s] = await Promise.all([
+      const [a, t, s, rooms, flags, sug] = await Promise.all([
         supabase.from('staff_assignments')
           .select(`id, staff_id, status, confirmed, staff:staff_id(id, first_name, last_name, display_name),
             tour_position:tour_position_id(position:position_id(title, sort_order, department:department_id(name, sort_order)))`)
           .eq('event_id', eventId).not('locked', 'is', true).is('deleted_at', null),
         listTripsForEvent(supabase, eventId),
         supabase.from('staff').select('id, first_name, last_name, display_name').order('last_name', { ascending: true }),
+        supabase.from('event_hotel_rooms').select('staff_id, staff_id_1, staff_id_2').eq('event_id', eventId),
+        supabase.from('event_staff_travel').select('staff_id, needs_hotel, needs_perdiem').eq('event_id', eventId),
+        listSegmentSuggestions(supabase).catch(() => ({ airlines: [], airports: [] })),
       ])
       if (a.error) throw a.error
       setAssignments((a.data || []).map(r => ({
@@ -57,6 +64,9 @@ export default function TravelWorkspace({ eventId, event, tour }) {
       })).sort((x, y) => x.position.deptSortOrder - y.position.deptSortOrder || x.position.sortOrder - y.position.sortOrder))
       setTrips(t)
       setStaffList(s.data || [])
+      setRoomedIds(new Set((rooms.data || []).flatMap(r => [r.staff_id, r.staff_id_1, r.staff_id_2]).filter(Boolean)))
+      setNeedsByStaff(Object.fromEntries((flags.data || []).map(f => [f.staff_id, f])))
+      setSuggest(sug)
       setError('')
     } catch (e) {
       console.error('Could not load travel:', e)
@@ -73,7 +83,7 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   })
 
   const people = useMemo(() => assignments.filter(a => a.staff_id), [assignments])
-  const tbdRoles = useMemo(() => assignments.filter(a => !a.staff_id && a.position.title).map(a => ({ id: a.id, title: a.position.title })), [assignments])
+  const tbdRoles = useMemo(() => assignments.filter(a => !a.staff_id && a.position.title).map(a => ({ id: a.id, title: a.position.title, department: a.position.department, deptSortOrder: a.position.deptSortOrder, sortOrder: a.position.sortOrder })), [assignments])
 
   const stats = useMemo(() => {
     let booked = 0, good = 0
@@ -88,44 +98,52 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   const color = tour?.color || 'var(--color-info)'
   if (!canSee) return <div style={{ fontSize: 15, color: 'var(--text-muted)', padding: 16 }}>You do not have access to travel.</div>
 
-  const dates = [event?.load_in_date && `Load-In ${fmtShort(event.load_in_date)}`, event?.load_out_date && `Load-Out ${fmtShort(event.load_out_date)}`].filter(Boolean).join(' · ')
+  const shows = event?.saturday_date || event?.sunday_date ? [event.saturday_date, event.sunday_date].filter(Boolean) : []
+  const sub = [
+    event?.venue_name,
+    event?.load_in_date && `Load-In ${fmtWeekdayShort(event.load_in_date)}`,
+    shows.length && `Shows ${shows.map(fmtShort).join(' – ')}`,
+  ].filter(Boolean).join('  ·  ')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', gap: 10 }}>
-      <div style={{ ...GLASS, border: `2.5px solid ${color}`, padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ border: `2.5px solid ${color}`, borderRadius: 10, background: 'var(--surface-card)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, flexShrink: 0 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{tour?.name || 'Tour'}</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{[event?.city, event?.state].filter(Boolean).join(', ') || 'Event'}</div>
-          <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{[event?.venue_name, dates].filter(Boolean).join(' · ')}</div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: `color-mix(in srgb, ${color} 14%, transparent)`, color: 'var(--text-primary)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, border: '1px solid rgba(0,0,0,0.3)' }} />{tour?.name || 'Tour'}
+          </span>
+          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0 2px', color: 'var(--text-primary)' }}>{[event?.city, event?.state].filter(Boolean).join(', ') || 'Event'}</div>
+          <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{sub}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           {[
             { label: 'Travelers', value: stats.travelers, color: 'var(--text-primary)' },
             { label: 'Booked', value: stats.booked, color: 'var(--color-success)' },
             { label: 'Good To Book', value: stats.good, color: 'var(--color-info)' },
-            { label: 'Needs Action', value: stats.action, color: stats.action ? 'var(--color-warning)' : 'var(--text-primary)' },
+            { label: 'Needs Action', value: stats.action, color: 'var(--color-warning)' },
           ].map(s => (
-            <div key={s.label} style={{ border: '0.5px solid var(--border-default)', borderRadius: 8, padding: '6px 14px', minWidth: 100, textAlign: 'center', background: 'var(--surface-card)' }}>
+            <div key={s.label} style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: '6px 12px', minWidth: 104, textAlign: 'center', background: 'var(--surface-card)' }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>{s.label}</div>
+              <div style={{ fontSize: 11.5, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
-        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-card)', border: '0.5px solid var(--border-default)', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0 12px', gap: 12, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${LINE}`, flex: 1 }}>
           {TABS.map(t => (
-            <button key={t.key} type="button" onClick={() => setTab(t.key)} style={{ fontSize: 16, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: tab === t.key ? 'rgba(26,86,219,0.08)' : 'transparent', color: tab === t.key ? 'var(--color-info)' : 'var(--text-secondary)', fontWeight: tab === t.key ? 600 : 400 }}>{t.label}</button>
+            <div key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
+              style={{ padding: '9px 16px', fontSize: 16, fontWeight: 600, cursor: 'pointer', marginBottom: -1, color: tab === t.key ? 'var(--color-info)' : 'var(--text-muted)', borderBottom: `3px solid ${tab === t.key ? 'var(--color-info)' : 'transparent'}` }}>{t.label}</div>
           ))}
         </div>
-        {tab === 'travelers' && canEdit && <button type="button" onClick={() => setModalRequest(n => n + 1)} style={BTN_PRIMARY}>+ Add Traveler</button>}
+        {tab === 'travelers' && canEdit && <button type="button" onClick={() => setModalRequest(n => n + 1)} style={BTN_P}>+ Add Traveler</button>}
       </div>
 
-      {error && <div role="alert" style={{ fontSize: 15, color: 'var(--color-danger)' }}>{error}</div>}
+      {error && <div role="alert" style={{ fontSize: 15, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
       {loading ? <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div> : (
         <>
-          {tab === 'travelers' && <TravelersTab eventId={eventId} people={people} tbdRoles={tbdRoles} trips={trips} staffList={staffList} canEdit={canEdit} undoable={undoable} reload={load} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} />}
+          {tab === 'travelers' && <TravelersTab eventId={eventId} people={people} tbdRoles={tbdRoles} trips={trips} staffList={staffList} canEdit={canEdit} undoable={undoable} reload={load} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} roomedIds={roomedIds} needsByStaff={needsByStaff} suggest={suggest} />}
           {tab === 'roster' && <RosterTab eventId={eventId} people={people} canEdit={canEdit} />}
           {['hotel', 'rental', 'perdiem'].includes(tab) && event && <TravelHotelTab key={tab} eventId={eventId} event={event} initialTab={tab} />}
         </>

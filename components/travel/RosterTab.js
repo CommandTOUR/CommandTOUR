@@ -4,9 +4,8 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import { quickToast } from '@/lib/quickToast'
-import { GLASS, HEADER_CELL, personName } from './shared'
+import { CARD, LINE, SMALL_LABEL, TH, TD, personName } from './shared'
 
-const GRID = '1.2fr 1.6fr 0.6fr 0.7fr 0.6fr'
 const statusColor = (status) => (status === 'pending' ? 'var(--color-warning)' : status === 'needs_attention' ? 'var(--color-danger)' : 'var(--text-primary)')
 
 function Check({ checked, onClick, disabled }) {
@@ -48,39 +47,43 @@ export default function RosterTab({ eventId, people, canEdit }) {
     return Object.entries(groups).sort(([a], [b]) => (order[a] ?? 999) - (order[b] ?? 999))
   }, [people])
 
+  const center = { ...TD, textAlign: 'center' }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', padding: '12px 16px 6px', alignItems: 'center', flexShrink: 0 }}>
-        <div style={HEADER_CELL}>Position</div>
-        <div style={{ ...HEADER_CELL, paddingLeft: 16 }}>Staff Member</div>
-        <div style={{ ...HEADER_CELL, textAlign: 'center' }}>Hotel</div>
-        <div style={{ ...HEADER_CELL, textAlign: 'center' }}>Per Diem</div>
-        <div style={{ ...HEADER_CELL, textAlign: 'center' }}>Rental</div>
-      </div>
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
-        <div style={{ height: '100%', overflowY: 'auto' }}>
-          {people.length === 0 && <div style={{ padding: '16px', fontSize: 15, color: 'var(--text-muted)' }}>No one is assigned to this event yet.</div>}
-          {grouped.map(([dept, members], i) => (
-            <div key={dept}>
-              <div style={{ padding: '6px 14px', background: 'rgba(26,86,219,0.05)', borderTop: i === 0 ? 'none' : '0.5px solid var(--border-default)' }}>
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-info)' }}>{dept}</span>
-              </div>
-              {members.map(s => {
-                const f = flags.find(t => t.staff_id === s.staff_id)
-                return (
-                  <div key={s.id} style={{ display: 'grid', gridTemplateColumns: GRID, gap: '0 6px', alignItems: 'center', padding: '7px 16px', borderTop: '0.5px solid var(--border-default)' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.position?.title || '—'}</div>
-                    <div style={{ fontSize: 15, color: statusColor(s.status), paddingLeft: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{personName(s.staff)}</div>
-                    <Check checked={!!f?.needs_hotel} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_hotel', !f?.needs_hotel)} />
-                    <Check checked={!!f?.needs_perdiem} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_perdiem', !f?.needs_perdiem)} />
-                    <Check checked={!!f?.needs_rental} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_rental', !f?.needs_rental)} />
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div style={{ ...CARD, overflow: 'auto' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}>
+          <colgroup><col style={{ width: '24%' }} /><col style={{ width: '34%' }} /><col style={{ width: '14%' }} /><col style={{ width: '14%' }} /><col style={{ width: '14%' }} /></colgroup>
+          <thead><tr><th style={TH}>Position</th><th style={TH}>Staff Member</th><th style={{ ...TH, textAlign: 'center' }}>Hotel</th><th style={{ ...TH, textAlign: 'center' }}>Per Diem</th><th style={{ ...TH, textAlign: 'center' }}>Rental</th></tr></thead>
+          <tbody>
+            {people.length === 0 && <tr><td colSpan={5} style={{ ...TD, color: 'var(--text-muted)' }}>No one is assigned to this event yet.</td></tr>}
+            {grouped.map(([dept, members]) => (
+              <Group key={dept} dept={dept}>
+                {members.map(s => {
+                  const f = flags.find(t => t.staff_id === s.staff_id)
+                  return (
+                    <tr key={s.id}>
+                      <td style={TD}>{s.position?.title || '—'}</td>
+                      <td style={{ ...TD, fontWeight: 600, color: statusColor(s.status) }}>{personName(s.staff)}</td>
+                      <td style={center}><Check checked={!!f?.needs_hotel} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_hotel', !f?.needs_hotel)} /></td>
+                      <td style={center}><Check checked={!!f?.needs_perdiem} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_perdiem', !f?.needs_perdiem)} /></td>
+                      <td style={center}><Check checked={!!f?.needs_rental} disabled={!canEdit} onClick={() => update(s.staff_id, 'needs_rental', !f?.needs_rental)} /></td>
+                    </tr>
+                  )
+                })}
+              </Group>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
+  )
+}
+
+function Group({ dept, children }) {
+  return (
+    <>
+      <tr><td colSpan={5} style={{ ...SMALL_LABEL, fontSize: 12, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>{dept}</td></tr>
+      {children}
+    </>
   )
 }
