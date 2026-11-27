@@ -2,6 +2,8 @@ import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import SideNav from '../components/SideNav'
 import { NavProvider } from '../context/NavContext'
+import { ProfileProvider } from '../lib/auth/profile'
+import AccessGate from '../components/AccessGate'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -25,6 +27,8 @@ export default function RootLayout({ children }) {
       </head>
       <body className={dmSans.variable} style={{ margin: 0, padding: 0 }}>
         <NavProvider>
+        <ProfileProvider>
+        <AccessGate>
         <div style={{
           display: 'flex',
           gap: 10,
@@ -38,6 +42,8 @@ export default function RootLayout({ children }) {
             {children}
           </main>
         </div>
+        </AccessGate>
+        </ProfileProvider>
         </NavProvider>
       </body>
     </html>
