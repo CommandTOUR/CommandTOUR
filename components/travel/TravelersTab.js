@@ -18,7 +18,7 @@ import { TableShell, BodyRow, GroupRow, ExpandRow, EmptyRow } from './DataTable'
 import { CARD, LINE, SMALL_LABEL, BTN_S, Chip, Pill, STATUS_TONE, fmtDay, personName, money, Check } from './shared'
 
 const DIRS = [{ key: 'both', label: 'Both' }, { key: 'in', label: 'Travel To' }, { key: 'out', label: 'Travel From' }]
-const RANK = { hold: 0, good_to_book: 1, pending_approval: 2, booked: 3 }
+const RANK = { hold: 0, good_to_book: 1, needs_approval: 2, booked: 3 }
 const flyerRank = (t) => (t && !hasFlightFields(t.mode) ? 1 : 0)
 const link = { color: 'var(--text-muted-legible)' }
 const LOCAL_TIME_HINT = 'Times are local to each airport, as printed on the itinerary.'
@@ -118,7 +118,7 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
   }, [people, entered, assignedIds, tbdRoles])
 
   const filters = useMemo(() => {
-    const base = [{ key: 'hold', label: 'Hold' }, { key: 'good_to_book', label: 'Good To Book' }, { key: 'booked', label: 'Booked' }]
+    const base = [{ key: 'hold', label: 'Hold' }, { key: 'good_to_book', label: 'Good To Book' }, { key: 'needs_approval', label: 'Needs Approval' }, { key: 'booked', label: 'Booked' }]
     if (persons.some(p => !p.tbd && p.status === 'cancelled')) base.push({ key: 'cancelled', label: 'Cancelled' })
     return base
   }, [persons])

@@ -19,7 +19,7 @@ export const CHIP_TONES = {
   green: tone('var(--color-success)'), blue: tone('var(--color-info)'), yellow: { color: '#1a1a1a', background: '#FFD60A', border: '1px solid #FFD60A' },
   purple: tone('#a855f7', 'var(--text-purple-legible)'), grey: { color: 'var(--text-muted-legible)', background: 'rgba(100,116,139,0.10)', border: `1px solid ${LINE}` }, red: tone('var(--color-danger)'),
 }
-export const STATUS_TONE = { hold: 'yellow', good_to_book: 'blue', pending_approval: 'purple', booked: 'green', cancelled: 'red' }
+export const STATUS_TONE = { hold: 'yellow', good_to_book: 'blue', needs_approval: 'purple', booked: 'green', cancelled: 'red' }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

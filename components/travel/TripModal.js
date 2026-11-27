@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getSupabase } from '@/lib/supabase'
-import { TRIP_MODES, TRIP_TYPES, TRIP_STATUS_MENU, TRIP_STATUSES, COST_CATEGORIES, hasFlightFields, segmentModeFor } from '@/lib/travel/trips'
+import { TRIP_MODES, TRIP_TYPES, TRIP_STATUS_MENU, COST_CATEGORIES, hasFlightFields, segmentModeFor } from '@/lib/travel/trips'
 import { mileageAmount } from '@/lib/travel/costs'
 import MoneyInput, { formatMoneyInput } from '@/components/MoneyInput'
 import { loadTravelerPrefs } from '@/lib/travel/prefs'
@@ -154,7 +154,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, mil
             </Fld>
             <Fld label="Mode" basis="160px"><select value={mode} onChange={e => changeMode(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{TRIP_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
             <Fld label="Trip Type" basis="170px"><select value={tripType} onChange={e => setTripType(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}><option value="">None</option>{TRIP_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
-            <Fld label="Status" basis="170px"><select value={status} onChange={e => setStatus(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{(trip?.status === 'pending_approval' ? TRIP_STATUSES : TRIP_STATUS_MENU).map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
+            <Fld label="Status" basis="170px"><select value={status} onChange={e => setStatus(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{TRIP_STATUS_MENU.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
           </div>
 
           {staffId && (
