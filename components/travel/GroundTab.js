@@ -12,7 +12,7 @@ import { parseTime, formatTime } from '@/lib/travel/time'
 import { useAnchoredMenu } from '@/components/staffing/popup'
 import { Z_MENU } from '@/components/staffing/shared'
 import { TableShell, BodyRow, GroupRow, EmptyRow } from './DataTable'
-import { LINE, SMALL_LABEL, BTN_S, Chip, InlineInput, InlineMoney, fmtDay, personName, money, CARD } from './shared'
+import { FS, LINE, SMALL_LABEL, BTN_S, Chip, InlineInput, InlineMoney, fmtDay, personName, money, CARD } from './shared'
 
 const muted = { color: 'var(--text-muted-legible)' }
 const SECTION_TITLE = { ...SMALL_LABEL, margin: '4px 0 8px' }
@@ -45,7 +45,7 @@ function MethodMenu({ value, onPick, disabled }) {
   )
 }
 
-const selectStyle = { fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }
+const selectStyle = { fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }
 
 export default function GroundTab({ eventId, data, canEdit, reload }) {
   const { trips, legs, rentals, travelers, assignments, staffList } = data
@@ -134,12 +134,12 @@ export default function GroundTab({ eventId, data, canEdit, reload }) {
     { key: 'riders', label: 'Riders', width: 12, wrap: true, render: c => (ridersOf(c).join(', ') || <span style={muted}>—</span>) },
     { key: 'dates', label: 'Pickup / Return', width: 24, wrap: true, render: c => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><span style={{ ...muted, fontSize: 13, minWidth: 48 }}>Pickup</span><InlineInput type="date" ariaLabel="Pickup Date" disabled={!canEdit} value={c.pickup_date} onSave={v => upd(c.id, { pickup_date: v })} style={{ width: 140, flexShrink: 0 }} /><InlineInput ariaLabel="Pickup Location" disabled={!canEdit} value={c.pickup_location} placeholder="Location" onSave={v => upd(c.id, { pickup_location: v })} /></div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><span style={{ ...muted, fontSize: 13, minWidth: 48 }}>Return</span><InlineInput type="date" ariaLabel="Return Date" disabled={!canEdit} value={c.return_date} onSave={v => upd(c.id, { return_date: v })} style={{ width: 140, flexShrink: 0 }} /><InlineInput ariaLabel="Return Location" disabled={!canEdit} value={c.return_location} placeholder="Location" onSave={v => upd(c.id, { return_location: v })} /></div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><span style={{ ...muted, fontSize: FS.small, minWidth: 48 }}>Pickup</span><InlineInput type="date" ariaLabel="Pickup Date" disabled={!canEdit} value={c.pickup_date} onSave={v => upd(c.id, { pickup_date: v })} style={{ width: 140, flexShrink: 0 }} /><InlineInput ariaLabel="Pickup Location" disabled={!canEdit} value={c.pickup_location} placeholder="Location" onSave={v => upd(c.id, { pickup_location: v })} /></div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><span style={{ ...muted, fontSize: FS.small, minWidth: 48 }}>Return</span><InlineInput type="date" ariaLabel="Return Date" disabled={!canEdit} value={c.return_date} onSave={v => upd(c.id, { return_date: v })} style={{ width: 140, flexShrink: 0 }} /><InlineInput ariaLabel="Return Location" disabled={!canEdit} value={c.return_location} placeholder="Location" onSave={v => upd(c.id, { return_location: v })} /></div>
       </div>) },
     { key: 'confirmation', label: 'Confirmation', width: 10, render: c => <InlineInput ariaLabel="Confirmation" disabled={!canEdit} value={c.confirmation_number} onSave={v => upd(c.id, { confirmation_number: v })} /> },
-    { key: 'estimated', label: 'Estimated Cost', width: 9, align: 'right', render: c => <InlineMoney ariaLabel="Estimated Cost" disabled={!canEdit} value={c.estimated_cost} onSave={v => upd(c.id, { estimated_cost: v })} /> },
-    { key: 'actual', label: 'Actual Cost', width: 9, align: 'right', render: c => <InlineMoney ariaLabel="Actual Cost" disabled={!canEdit} value={c.actual_cost} onSave={v => upd(c.id, { actual_cost: v })} /> },
+    { key: 'estimated', label: 'Budget', width: 9, align: 'right', render: c => <InlineMoney ariaLabel="Budget" disabled={!canEdit} value={c.estimated_cost} onSave={v => upd(c.id, { estimated_cost: v })} /> },
+    { key: 'actual', label: 'Actual', width: 9, align: 'right', render: c => <InlineMoney ariaLabel="Actual" disabled={!canEdit} value={c.actual_cost} onSave={v => upd(c.id, { actual_cost: v })} /> },
     { key: 'remove', label: '', width: 2, align: 'center', render: c => (canEdit ? <span role="button" aria-label="Remove Rental Car" title="Remove Rental Car" onClick={() => { if (confirm('Remove this rental car? Anyone linked to it goes back to Needs Plan.')) guard(() => deleteRentalCar(getSupabase(), c.id)) }} style={{ cursor: 'pointer', color: 'var(--color-danger)' }}>×</span> : null) },
   ]
 
@@ -168,7 +168,7 @@ export default function GroundTab({ eventId, data, canEdit, reload }) {
           {rentals.map(c => <BodyRow key={c.id} cols={rentalCols} row={c} hover={false} />)}
           {rentals.length > 0 && (
             <tr><td colSpan={rentalCols.length} style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, borderBottom: `1px solid ${LINE}` }}>
-              Total · Estimated {money(rentals.reduce((a, c) => a + (Number(c.estimated_cost) || 0), 0))} · Actual {rentals.some(c => c.actual_cost !== null && c.actual_cost !== undefined) ? money(rentals.reduce((a, c) => a + (Number(c.actual_cost) || 0), 0)) : '—'}
+              Total · Budget {money(rentals.reduce((a, c) => a + (Number(c.estimated_cost) || 0), 0))} · Actual {rentals.some(c => c.actual_cost !== null && c.actual_cost !== undefined) ? money(rentals.reduce((a, c) => a + (Number(c.actual_cost) || 0), 0)) : '—'}
             </td></tr>
           )}
         </TableShell>

@@ -10,7 +10,7 @@ import { getOrCreateRates, saveRate, setMealProvided } from '@/lib/travel/perDie
 import { setTravelerFlag } from '@/lib/travel/travelers'
 import { formatTime } from '@/lib/travel/time'
 import { TableShell, BodyRow, EmptyRow } from './DataTable'
-import { LINE, SMALL_LABEL, CARD, Chip, Check, InlineMoney, fmtDay, personName, money } from './shared'
+import { FS, LINE, SMALL_LABEL, CARD, Chip, Check, InlineMoney, fmtDay, personName, money } from './shared'
 
 const muted = { color: 'var(--text-muted-legible)' }
 const MEAL_LABEL = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' }
@@ -56,18 +56,18 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
   const byStaff = (id) => travelers.find(t => t.staff_id === id)
 
   const cols = [
-    { key: 'name', label: 'Name', width: 20, wrap: true, render: r => (<div style={{ lineHeight: 1.3 }}><b>{nameOf(r.staff_id)}</b><div style={{ fontSize: 12.5, ...muted }}>{roleOf(r.staff_id)}</div>{r.estimated && <Chip tone="yellow">Estimated From Event Dates</Chip>}</div>) },
+    { key: 'name', label: 'Name', width: 20, wrap: true, render: r => (<div style={{ lineHeight: 1.3 }}><b>{nameOf(r.staff_id)}</b><div style={{ fontSize: FS.small, ...muted }}>{roleOf(r.staff_id)}</div>{r.estimated && <Chip tone="yellow">Estimated From Event Dates</Chip>}</div>) },
     { key: 'start', label: 'Travel Start', width: 14, render: r => stamp(r.start) },
     { key: 'end', label: 'Travel End', width: 14, render: r => stamp(r.end) },
     { key: 'strip', label: 'Day-By-Day', width: 34, wrap: true, render: r => (
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {r.days.map(d => (
           <div key={d.date} title={`${fmtDay(d.date)}: ${money(d.total)}`} style={{ textAlign: 'center', minWidth: 42 }}>
-            <div style={{ fontSize: 11.5, ...muted }}>{shortDay(d.date)}</div>
+            <div style={{ fontSize: FS.header, ...muted }}>{shortDay(d.date)}</div>
             <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               {MEALS.map(m => (
                 <span key={m} title={`${MEAL_LABEL[m]}: ${d.meals[m].provided ? 'Provided By The Venue' : d.meals[m].owed ? 'Owed' : 'Not Owed'}`}
-                  style={{ fontSize: 11.5, fontWeight: 700, width: 14, height: 18, lineHeight: '18px', borderRadius: 3, textAlign: 'center', boxSizing: 'border-box',
+                  style={{ fontSize: FS.header, fontWeight: 700, width: 14, height: 18, lineHeight: '18px', borderRadius: 3, textAlign: 'center', boxSizing: 'border-box',
                     background: d.meals[m].owed ? 'color-mix(in srgb, var(--color-success) 22%, transparent)' : 'transparent', color: d.meals[m].owed ? 'var(--text-primary)' : 'var(--text-muted-legible)',
                     border: `1px solid ${d.meals[m].owed ? 'var(--color-success)' : LINE}`, textDecoration: d.meals[m].provided ? 'line-through' : 'none' }}>{LETTER[m]}</span>
               ))}
@@ -90,14 +90,14 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
         ))}
         <div style={{ ...CARD, padding: '8px 12px' }}>
           <div style={SMALL_LABEL}>Full Day</div>
-          <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{money(MEALS.reduce((a, m) => a + (Number(effRates[`${m}_rate`]) || 0), 0))}</div>
+          <div style={{ fontSize: FS.title, fontWeight: 700, marginTop: 6 }}>{money(MEALS.reduce((a, m) => a + (Number(effRates[`${m}_rate`]) || 0), 0))}</div>
         </div>
         <div style={{ ...CARD, padding: '8px 12px', marginLeft: 'auto' }}>
           <div style={SMALL_LABEL}>Total Owed · {eligible.length} {eligible.length === 1 ? 'Traveler' : 'Travelers'}</div>
-          <div style={{ fontSize: 17, fontWeight: 700, marginTop: 6 }}>{money(result.total)}</div>
+          <div style={{ fontSize: FS.title, fontWeight: 700, marginTop: 6 }}>{money(result.total)}</div>
         </div>
       </div>
-      <div style={{ fontSize: 13, ...muted, marginBottom: 12 }}>Rates start from the company defaults and can be changed for this event. Meal times come from Settings, Travel.</div>
+      <div style={{ fontSize: FS.small, ...muted, marginBottom: 12 }}>Rates start from the company defaults and can be changed for this event. Meal times come from Settings, Travel.</div>
 
       <div style={{ ...CARD, padding: '10px 12px', marginBottom: 12 }}>
         <div style={{ ...SMALL_LABEL, marginBottom: 8 }}>Meals Provided By The Venue</div>
@@ -105,9 +105,9 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {eventDays.map(d => (
               <div key={d} style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: '6px 10px', minWidth: 118 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{fmtDay(d)}</div>
+                <div style={{ fontSize: FS.small, fontWeight: 600, marginBottom: 4 }}>{fmtDay(d)}</div>
                 {MEALS.map(m => (
-                  <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: canEdit ? 'pointer' : 'default' }}>
+                  <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: FS.body, cursor: canEdit ? 'pointer' : 'default' }}>
                     <Check checked={!!provided.get(d)?.[`${m}_provided`]} disabled={!canEdit || busy} label={`${MEAL_LABEL[m]} Provided On ${fmtDay(d)}`} onChange={() => guard(() => setMealProvided(getSupabase(), eventId, d, m, !provided.get(d)?.[`${m}_provided`]))} />
                     {MEAL_LABEL[m]}
                   </label>
@@ -123,7 +123,7 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
         {result.rows.map(r => <BodyRow key={r.staff_id} cols={cols} row={r} hover={false} />)}
         {result.rows.length > 0 && <tr><td colSpan={cols.length} style={{ padding: '10px', textAlign: 'right', fontWeight: 700, borderBottom: `1px solid ${LINE}` }}>Per Diem Total · {money(result.total)}</td></tr>}
       </TableShell>
-      <div style={{ marginTop: 10, fontSize: 13, ...muted }}>A meal is owed when travel starts before the meal time and ends after it, unless the venue provides it. Travel Start and End come from the trips; without trips, the event dates are used.</div>
+      <div style={{ marginTop: 10, fontSize: FS.small, ...muted }}>A meal is owed when travel starts before the meal time and ends after it, unless the venue provides it. Travel Start and End come from the trips; without trips, the event dates are used.</div>
     </div>
   )
 }

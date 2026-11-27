@@ -7,10 +7,10 @@ import { getSupabase } from '@/lib/supabase'
 import { saveHotelField, addRoom, updateRoom, deleteRoom } from '@/lib/travel/hotelData'
 import { hotelTotals, nightlyRate, ROOM_TYPES, PAY_ON_OWN } from '@/lib/travel/hotelCost'
 import { TableShell, BodyRow, GroupRow, EmptyRow } from './DataTable'
-import { LINE, SMALL_LABEL, BTN_S, CARD, Chip, Check, InlineInput, InlineMoney, personName, money } from './shared'
+import { FS, LINE, SMALL_LABEL, BTN_S, CARD, Chip, Check, InlineInput, InlineMoney, personName, money } from './shared'
 
 const muted = { color: 'var(--text-muted-legible)' }
-const sel = { fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }
+const sel = { fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }
 const NO_GROUP = 'No Cost Group'
 
 function Field({ label, children, span = 1 }) {
@@ -141,7 +141,7 @@ export default function HotelTab({ eventId, data, canEdit, reload }) {
           <tr><td colSpan={cols.length} style={{ padding: '10px', textAlign: 'right', fontWeight: 700, borderBottom: `1px solid ${LINE}` }}>Hotel Total · {totals.roomNights} Room Nights · {money(totals.total)}</td></tr>
         )}
       </TableShell>
-      <div style={{ marginTop: 10, fontSize: 13, ...muted }}>Check In and Check Out fill from the earliest arrival and latest departure of the guests and can be edited. Estimates use the rates above plus tax, the other fee and parking per night. Rooms in the Pay On Own group are not counted.</div>
+      <div style={{ marginTop: 10, fontSize: FS.small, ...muted }}>Check In and Check Out fill from the earliest arrival and latest departure of the guests and can be edited. Estimates use the rates above plus tax, the other fee and parking per night. Rooms in the Pay On Own group are not counted.</div>
     </div>
   )
 }

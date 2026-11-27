@@ -4,14 +4,16 @@ import { useEffect as useEffectInline, useState as useStateInline } from 'react'
 import MoneyInput, { formatMoneyInput } from '@/components/MoneyInput'
 // Shared look and helpers for the Travel Workspace. Structure, proportions and spacing follow docs/mockups/travel-workspace.html;
 // colors and type come from the app's own tokens.
+// Type scale for the travel workspace: values live in app/globals.css (--font-size-table and friends)
+export const FS = { body: 'var(--font-size-table)', small: 'var(--font-size-table-small)', header: 'var(--font-size-table-header)', tab: 'var(--font-size-tab)', title: 'var(--font-size-title)', hero: 'var(--font-size-hero)' }
 export const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
 export const LINE = 'var(--border-default)'
 export const CARD = { background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 8 }
-export const SMALL_LABEL = { fontSize: 11.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted-legible)' }
-export const INPUT = { fontSize: 15, padding: '8px 10px', borderRadius: 6, border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }
-export const BTN = { fontFamily: 'inherit', fontSize: 15, fontWeight: 600, borderRadius: 6, padding: '8px 14px', border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer' }
+export const SMALL_LABEL = { fontSize: FS.header, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted-legible)' }
+export const INPUT = { fontSize: FS.body, padding: '8px 10px', borderRadius: 6, border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }
+export const BTN = { fontFamily: 'inherit', fontSize: FS.body, fontWeight: 600, borderRadius: 6, padding: '8px 14px', border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer' }
 export const BTN_P = { ...BTN, background: 'var(--color-info)', borderColor: 'var(--color-info)', color: 'var(--text-on-info)' }
-export const BTN_S = { ...BTN, padding: '5px 10px', fontSize: 13 }
+export const BTN_S = { ...BTN, padding: '5px 10px', fontSize: FS.small }
 
 // Chips (mockup .chip / c-g / c-b / c-a / c-p / c-n / c-r)
 const tone = (c, text = c) => ({ color: text, background: `color-mix(in srgb, ${c} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 38%, transparent)` })
@@ -35,7 +37,7 @@ export const personName = (s) => (s ? (s.display_name?.trim() || `${s.first_name
 export function Chip({ tone: t = 'grey', children, onClick, anchorRef, title }) {
   return (
     <span ref={anchorRef} title={title} role={onClick ? 'button' : undefined} onClick={onClick}
-      style={{ display: 'inline-block', fontSize: 12.5, fontWeight: 600, padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap', cursor: onClick ? 'pointer' : 'default', userSelect: 'none', ...CHIP_TONES[t] }}>{children}</span>
+      style={{ display: 'inline-block', fontSize: FS.small, fontWeight: 600, padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap', cursor: onClick ? 'pointer' : 'default', userSelect: 'none', ...CHIP_TONES[t] }}>{children}</span>
   )
 }
 
@@ -45,7 +47,7 @@ export function Pill({ children, selected, onClick, tone: t = 'blue', title }) {
   const yellow = t === 'yellow'
   return (
     <button type="button" title={title} onClick={onClick} aria-pressed={!!selected}
-      style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 600, height: 28, padding: '0 14px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+      style={{ fontFamily: 'inherit', fontSize: FS.small, fontWeight: 600, height: 28, padding: '0 14px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
         border: `1px solid ${yellow ? '#c9a400' : c.color}`, background: selected ? (yellow ? '#FFD60A' : c.color) : 'transparent', color: selected ? (yellow ? '#1a1a1a' : 'var(--text-on-info)') : (yellow ? 'var(--text-primary)' : c.color) }}>{children}</button>
   )
 }
@@ -73,7 +75,7 @@ export function InlineInput({ value, onSave, placeholder = '—', disabled, type
       onChange={e => setV(e.target.value)}
       onBlur={() => { if (String(v) !== String(value ?? '')) onSave(v) }}
       onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-      style={{ fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', ...style }} />
+      style={{ fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', ...style }} />
   )
 }
 
@@ -84,7 +86,7 @@ export function InlineMoney({ value, onSave, disabled, ariaLabel, placeholder })
   useEffectInline(() => { setV(shown) }, [shown])
   return (
     <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={6} placeholder={placeholder}
-      inputStyle={{ fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', textAlign: 'right' }}
+      inputStyle={{ fontFamily: 'inherit', fontSize: FS.body, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', textAlign: 'right' }}
       onBlur={(e, f) => { if (f !== shown) onSave(f) }} />
   )
 }

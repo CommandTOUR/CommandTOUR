@@ -10,7 +10,7 @@ import { buildCostSummary, variance } from '@/lib/travel/costs'
 import { COST_CATEGORIES } from '@/lib/travel/trips'
 import { saveBudget } from '@/lib/travel/budget'
 import { TableShell, BodyRow, ExpandRow, EmptyRow } from './DataTable'
-import { LINE, SMALL_LABEL, CARD, InlineMoney, personName, money } from './shared'
+import { FS, LINE, SMALL_LABEL, CARD, InlineMoney, personName, money } from './shared'
 
 const muted = { color: 'var(--text-muted-legible)' }
 const catLabel = (v) => COST_CATEGORIES.find(c => c.value === v)?.label || v
@@ -18,7 +18,7 @@ const signed = (v) => (v === null ? '—' : `${v > 0 ? '+' : v < 0 ? '−' : ''}
 const varColor = (v) => (v === null || v === 0 ? 'var(--text-primary)' : v > 0 ? 'var(--color-danger)' : 'var(--color-success)') // actual above estimate = worse
 
 function Tile({ label, children }) {
-  return <div style={{ ...CARD, padding: '10px 14px', flex: 1, minWidth: 180 }}><div style={SMALL_LABEL}>{label}</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{children}</div></div>
+  return <div style={{ ...CARD, padding: '10px 14px', flex: 1, minWidth: 180 }}><div style={SMALL_LABEL}>{label}</div><div style={{ fontSize: FS.hero, fontWeight: 700, marginTop: 4 }}>{children}</div></div>
 }
 
 export default function CostsTab({ eventId, event, data, canEdit, reload }) {
@@ -63,7 +63,7 @@ export default function CostsTab({ eventId, event, data, canEdit, reload }) {
       <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
         <Tile label="Estimated Total">{money(summary.estimatedTotal)}</Tile>
         <Tile label="Actual Total (Where Entered)">{summary.actualTotal === null ? <span style={muted}>—</span> : money(summary.actualTotal)}</Tile>
-        <Tile label="Budget"><div style={{ fontSize: 16, fontWeight: 400 }}><InlineMoney ariaLabel="Travel Budget" disabled={!canEdit} value={budget?.travel_budget} placeholder="0.00" onSave={saveBudgetValue} /></div></Tile>
+        <Tile label="Budget"><div style={{ fontSize: FS.tab, fontWeight: 400 }}><InlineMoney ariaLabel="Travel Budget" disabled={!canEdit} value={budget?.travel_budget} placeholder="0.00" onSave={saveBudgetValue} /></div></Tile>
         <Tile label="Over Or Under Budget">{over === null ? <span style={muted}>Set A Budget</span> : <span style={{ color: over > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>{over > 0 ? `Over ${money(over)}` : over < 0 ? `Under ${money(Math.abs(over))}` : 'On Budget'}</span>}</Tile>
       </div>
 
@@ -72,7 +72,7 @@ export default function CostsTab({ eventId, event, data, canEdit, reload }) {
         {rows.map(r => <BodyRow key={r.key} cols={breakdownCols} row={r} hover={false} />)}
         <tr><td colSpan={breakdownCols.length} style={{ padding: '10px', textAlign: 'right', fontWeight: 700, borderBottom: `1px solid ${LINE}` }}>Total · Estimated {money(summary.estimatedTotal)} · Actual {summary.actualTotal === null ? '—' : money(summary.actualTotal)}</td></tr>
       </TableShell>
-      <div style={{ margin: '6px 0 16px', fontSize: 13, ...muted }}>Actual counts only the lines that have an actual amount. Hotel and Per Diem are estimates until receipts are tracked. Cancelled trips are left out.</div>
+      <div style={{ margin: '6px 0 16px', fontSize: FS.small, ...muted }}>Actual counts only the lines that have an actual amount. Hotel and Per Diem are estimates until receipts are tracked. Cancelled trips are left out.</div>
 
       <div style={{ ...SMALL_LABEL, margin: '4px 0 8px' }}>By Traveler · Trip Costs</div>
       <TableShell cols={travelerCols} minWidth={700}>
@@ -85,7 +85,7 @@ export default function CostsTab({ eventId, event, data, canEdit, reload }) {
                 <div style={{ padding: '10px 16px' }}>
                   {r.lines.length === 0 && <span style={muted}>No cost lines.</span>}
                   {r.lines.map((c, i) => (
-                    <div key={c.id || i} style={{ display: 'grid', gridTemplateColumns: '16% 14% 1fr 14% 14%', gap: 10, padding: '3px 0', fontSize: 15 }}>
+                    <div key={c.id || i} style={{ display: 'grid', gridTemplateColumns: '16% 14% 1fr 14% 14%', gap: 10, padding: '3px 0', fontSize: FS.body }}>
                       <span>{catLabel(c.category)}</span><span style={muted}>{c.direction === 'in' ? 'Travel To' : 'Travel From'}</span><span style={muted}>{c.note || (c.category === 'mileage' && c.miles ? `${c.miles} Miles` : '')}</span>
                       <span style={{ textAlign: 'right' }}>{money(c.estimated)}</span><span style={{ textAlign: 'right' }}>{c.actual === null || c.actual === undefined ? '—' : money(c.actual)}</span>
                     </div>

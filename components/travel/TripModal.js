@@ -10,7 +10,7 @@ import MoneyInput, { formatMoneyInput } from '@/components/MoneyInput'
 import { loadTravelerPrefs } from '@/lib/travel/prefs'
 import { parseTime, formatTime } from '@/lib/travel/time'
 import { Z_POPUP } from '@/components/staffing/shared'
-import { personName, FONT, LINE, SMALL_LABEL, INPUT, BTN, BTN_P, BTN_S } from './shared'
+import { FS, personName, FONT, LINE, SMALL_LABEL, INPUT, BTN, BTN_P, BTN_S } from './shared'
 
 const blankSegment = (mode, airline = '') => ({ mode: segmentModeFor(mode), airline, flight_number: '', from_airport: '', to_airport: '', depart_date: '', depart_time: '', arrive_date: '', arrive_time: '' })
 const fromTrip = (t) => (t.segments || []).map(s => ({
@@ -28,7 +28,7 @@ const Fld = ({ label, children, flex = 1, basis }) => (
 const Who = ({ label, value }) => (
   <div style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: '7px 12px', background: 'var(--surface-raised, rgba(0,0,0,0.03))' }}>
     <div style={SMALL_LABEL}>{label}</div>
-    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{value || '—'}</div>
+    <div style={{ fontSize: FS.body, fontWeight: 600, color: 'var(--text-primary)' }}>{value || '—'}</div>
   </div>
 )
 
@@ -134,7 +134,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, mil
     <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, zIndex: Z_POPUP, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(20,33,58,0.45)', padding: '36px 20px', overflowY: 'auto', fontFamily: FONT }}>
       <div role="dialog" className="travel-modal" aria-modal="true" aria-label={editing ? 'Edit Trip' : 'Add Trip'} style={{ background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 10, width: 960, maxWidth: '100%', boxShadow: '0 20px 60px rgba(20,33,58,0.3)', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: `1px solid ${LINE}` }}>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>{editing ? 'Edit Trip' : 'Add Trip'}{person ? ` · ${personName(person)}` : ''}</div>
+          <div style={{ fontSize: FS.title, fontWeight: 700 }}>{editing ? 'Edit Trip' : 'Add Trip'}{person ? ` · ${personName(person)}` : ''}</div>
           <button type="button" onClick={onClose} style={BTN_S}>Close</button>
         </div>
 
@@ -191,7 +191,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, mil
                 </div>
               </div>
             ))}
-            <div style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Times are local to each airport, as printed on the itinerary.</div>
+            <div style={{ fontSize: FS.small, color: 'var(--text-muted-legible)' }}>Times are local to each airport, as printed on the itinerary.</div>
           </div>
 
           <div>
@@ -203,13 +203,13 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, mil
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', marginBottom: 8 }}>
                 <Fld label="Category" basis="150px"><select value={c.category} onChange={e => setCost(i, { category: e.target.value })} style={{ ...INPUT, cursor: 'pointer' }}>{COST_CATEGORIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Fld>
                 {c.category === 'mileage' && <Fld label="Miles" basis="100px"><input style={INPUT} inputMode="decimal" value={c.miles} onChange={e => { const m = e.target.value.replace(/[^0-9.]/g, ''); setCost(i, { miles: m, estimated: m ? formatMoneyInput(mileageAmount(m, mileageRate)) : c.estimated }) }} placeholder="0" /></Fld>}
-                <Fld label="Estimated" basis="140px"><MoneyInput inputStyle={INPUT} prefixLeft={10} value={c.estimated} onChange={v => setCost(i, { estimated: v })} /></Fld>
+                <Fld label="Budget" basis="140px"><MoneyInput inputStyle={INPUT} prefixLeft={10} value={c.estimated} onChange={v => setCost(i, { estimated: v })} /></Fld>
                 <Fld label="Actual" basis="140px"><MoneyInput inputStyle={INPUT} prefixLeft={10} value={c.actual} onChange={v => setCost(i, { actual: v })} /></Fld>
                 <Fld label="Note"><input style={INPUT} value={c.note} onChange={e => setCost(i, { note: e.target.value })} /></Fld>
                 <button type="button" tabIndex={-1} onClick={() => setCosts(prev => prev.filter((_, j) => j !== i))} style={{ ...BTN_S, color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>Remove</button>
               </div>
             ))}
-            {costs.some(c => c.category === 'mileage') && <div style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Mileage is filled from the company rate of ${Number(mileageRate).toFixed(2)} per mile and saved on the line, so later rate changes do not change it.</div>}
+            {costs.some(c => c.category === 'mileage') && <div style={{ fontSize: FS.small, color: 'var(--text-muted-legible)' }}>Mileage is filled from the company rate of ${Number(mileageRate).toFixed(2)} per mile and saved on the line, so later rate changes do not change it.</div>}
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
@@ -217,11 +217,11 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, mil
             <Fld label="Notes"><input style={INPUT} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ground Transport: …" onKeyDown={e => { if (e.key === 'Enter') submit() }} /></Fld>
           </div>
 
-          {(error || duplicate) && <div role="alert" style={{ fontSize: 15, color: 'var(--color-danger)' }}>{error || 'This person already has a trip in this direction. Edit that trip instead.'}</div>}
+          {(error || duplicate) && <div role="alert" style={{ fontSize: FS.body, color: 'var(--color-danger)' }}>{error || 'This person already has a trip in this direction. Edit that trip instead.'}</div>}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', borderRadius: '0 0 10px 10px', gap: 12 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Enter on the last field saves.</span>
+          <span style={{ fontSize: FS.small, color: 'var(--text-muted-legible)' }}>Enter on the last field saves.</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={onClose} style={BTN}>Cancel</button>
             <button type="button" onClick={submit} disabled={saving || duplicate} style={{ ...BTN_P, opacity: saving || duplicate ? 0.6 : 1, cursor: saving || duplicate ? 'default' : 'pointer' }}>{saving ? 'Saving…' : 'Save Trip'}</button>

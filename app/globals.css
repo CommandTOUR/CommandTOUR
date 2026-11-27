@@ -27,6 +27,14 @@
   --border-strong: rgba(0,0,0,0.14);
   --border-stronger: rgba(0,0,0,0.22);
 
+  /* Travel workspace type scale (denser than the rest of the app). Change these to roll the same scale out sitewide. */
+  --font-size-table: 13px;
+  --font-size-table-small: 12px;
+  --font-size-table-header: 11px;
+  --font-size-tab: 14px;
+  --font-size-title: 16px;
+  --font-size-hero: 20px;
+
   /* Text */
   --text-primary: #1a1a1a;
   --text-secondary: #555555;

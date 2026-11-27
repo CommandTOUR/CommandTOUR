@@ -2,11 +2,11 @@
 
 // One column definition drives the header AND every body row of a table, so their left edges always match.
 //   cols: [{ key, label, width (percent), align: 'left' | 'center' | 'right', render(row) }]
-import { LINE, SMALL_LABEL, CARD } from './shared'
+import { LINE, SMALL_LABEL, CARD, FS } from './shared'
 
 const CELL_PAD = '9px 10px'
-export const thStyle = (col) => ({ ...SMALL_LABEL, textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', whiteSpace: 'nowrap', boxSizing: 'border-box', overflow: 'hidden', textOverflow: 'ellipsis' })
-export const tdStyle = (col) => ({ textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, verticalAlign: 'middle', fontSize: 15, color: 'var(--text-primary)', boxSizing: 'border-box', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: col.wrap ? 'normal' : 'nowrap' })
+export const thStyle = (col) => ({ ...SMALL_LABEL, textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', whiteSpace: 'normal', overflowWrap: 'normal', lineHeight: 1.25, verticalAlign: 'bottom', boxSizing: 'border-box' })
+export const tdStyle = (col) => ({ textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, verticalAlign: 'middle', fontSize: FS.body, color: 'var(--text-primary)', boxSizing: 'border-box', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: col.wrap ? 'normal' : 'nowrap' })
 
 export function TableShell({ cols, minWidth = 900, children, tableRef }) {
   return (
@@ -31,7 +31,7 @@ export function BodyRow({ cols, row, onClick, hover = true }) {
 
 export function GroupRow({ cols, children, right }) {
   return (
-    <tr><td colSpan={cols.length} style={{ ...SMALL_LABEL, fontSize: 12, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>
+    <tr><td colSpan={cols.length} style={{ ...SMALL_LABEL, fontSize: FS.header, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{children}</span>{right ? <span>{right}</span> : null}</div>
     </td></tr>
   )
@@ -42,5 +42,5 @@ export function ExpandRow({ cols, children }) {
 }
 
 export function EmptyRow({ cols, children }) {
-  return <tr><td colSpan={cols.length} style={{ padding: '12px 10px', fontSize: 15, color: 'var(--text-muted-legible)' }}>{children}</td></tr>
+  return <tr><td colSpan={cols.length} style={{ padding: '12px 10px', fontSize: FS.body, color: 'var(--text-muted-legible)' }}>{children}</td></tr>
 }

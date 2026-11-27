@@ -15,7 +15,7 @@ import { useAnchoredMenu } from '@/components/staffing/popup'
 import { Z_MENU } from '@/components/staffing/shared'
 import TripModal from './TripModal'
 import { TableShell, BodyRow, GroupRow, ExpandRow, EmptyRow } from './DataTable'
-import { CARD, LINE, SMALL_LABEL, BTN_S, Chip, Pill, STATUS_TONE, fmtDay, personName, money, Check } from './shared'
+import { FS, CARD, LINE, SMALL_LABEL, BTN_S, Chip, Pill, STATUS_TONE, fmtDay, personName, money, Check } from './shared'
 
 const DIRS = [{ key: 'both', label: 'Both' }, { key: 'in', label: 'Travel To' }, { key: 'out', label: 'Travel From' }]
 const RANK = { hold: 0, good_to_book: 1, needs_approval: 2, booked: 3 }
@@ -76,7 +76,7 @@ function Leg({ trip }) {
   return (
     <div style={{ lineHeight: 1.3 }}>
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{when}</div>
-      {detail && <div style={{ fontSize: 12.5, color: 'var(--text-muted-legible)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>}
+      {detail && <div style={{ fontSize: FS.small, color: 'var(--text-muted-legible)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>}
     </div>
   )
 }
@@ -186,67 +186,57 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
     { key: 'chev', label: '', width: 5, align: 'center', render: p => (p.tbd ? '' : <span style={link}>{expanded[p.key] ? '▴' : '▾'}</span>) },
   ]
 
-  const legBox = (p, trip, direction) => (
-    <div style={{ ...CARD, padding: '10px 12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
-        <div style={SMALL_LABEL}>Full Schedule · {direction === 'in' ? 'Travel To' : 'Travel From'}</div>
-        <div title={LOCAL_TIME_HINT} style={{ fontSize: 12.5, color: 'var(--text-muted-legible)' }}>{LOCAL_TIME_HINT}</div>
-      </div>
-      {!trip ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={link}>No Travel Entered</span>
-          {canEdit && p.staff_id && <button type="button" onClick={() => setModal({ trip: null, preset: { staffId: p.staff_id, direction, role: p.role } })} style={BTN_S}>+ Add</button>}
-        </div>
-      ) : (
-        <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {trip.segments.length === 0 && <span style={link}>No segments entered.</span>}
-            {trip.segments.map((s, i) => (
-              <div key={s.id || i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, minWidth: 64 }}>{[s.airline, s.flight_number].filter(Boolean).join(' ') || `Leg ${i + 1}`}</span>
-                <div style={{ flex: 1, lineHeight: 1.3 }}>
-                  {[s.from_airport, s.to_airport].filter(Boolean).join(' → ') || modeLabel(trip.mode)}
-                  <div style={{ fontSize: 12.5, color: 'var(--text-muted-legible)' }}>{fmtDay(s.depart_date)}{s.depart_time ? ` · ${formatTime(s.depart_time)}` : ''}{(s.arrive_time || s.arrive_date) ? ` → ${s.arrive_date && s.arrive_date !== s.depart_date ? `${fmtDay(s.arrive_date)} · ` : ''}${formatTime(s.arrive_time)}` : ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 0', marginTop: 8, borderTop: `1px solid ${LINE}` }}><span style={link}>Confirmation</span><b>{trip.confirmation || 'Not Booked Yet'}</b></div>
-          {trip.notes && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Notes: {trip.notes}</div>}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <StatusMenu canEdit={canEdit} status={trip.status} onChange={(st) => run(`${nameOf(trip.staff_id)}: ${statusLabel(st)}`, () => setTripStatus(getSupabase(), trip.id, st))} />
-            {canEdit && (
-              <>
-                <button type="button" onClick={() => setModal({ trip })} style={BTN_S}>Edit Trip</button>
-                {!(direction === 'in' ? p.outT : p.inT) && <button type="button" onClick={() => copyReturn(trip)} style={BTN_S}>Copy To Return Trip</button>}
-                <button type="button" onClick={() => removeTrip(trip)} style={{ ...BTN_S, color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>Delete Trip</button>
-              </>
-            )}
-          </div>
-        </>
-      )}
+  // Expanded row: flat label-and-value lines, two columns (Travel To, Travel From), no boxes
+  const textBtn = (danger) => ({ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: FS.small, fontWeight: 600, color: danger ? 'var(--color-danger)' : 'var(--color-info)' })
+  const line = (label, value) => (
+    <div style={{ display: 'flex', gap: 10, padding: '2px 0', fontSize: FS.body }}>
+      <span style={{ ...link, minWidth: 92, flexShrink: 0 }}>{label}</span><span style={{ minWidth: 0 }}>{value}</span>
     </div>
   )
-
-  const costBox = (p) => {
-    const lines = p.list.flatMap(t => (t.costs || []).map(c => ({ ...c, direction: t.direction })))
-    const est = lines.reduce((a, c) => a + (Number(c.estimated) || 0), 0)
-    const withActual = lines.filter(c => c.actual !== null && c.actual !== undefined)
+  const segLine = (s, i, trip) => {
+    const carrier = [s.airline, s.flight_number].filter(Boolean).join(' ')
+    const from = [s.from_airport, s.depart_time ? formatTime(s.depart_time) : ''].filter(Boolean).join(' ')
+    const to = [s.to_airport, s.arrive_time ? formatTime(s.arrive_time) : ''].filter(Boolean).join(' ')
+    const route = [from, to].filter(Boolean).join(' → ')
+    const day = s.depart_date ? fmtDay(s.depart_date) : ''
     return (
-      <div style={{ ...CARD, padding: '10px 12px', gridColumn: '1 / -1' }}>
-        <div style={{ ...SMALL_LABEL, marginBottom: 8 }}>Costs</div>
-        {lines.length === 0 ? <span style={link}>No costs entered.</span> : (
-          <>
-            {lines.map((c, i) => (
-              <div key={c.id || i} style={{ display: 'grid', gridTemplateColumns: '14% 12% 1fr 14% 14%', gap: 10, padding: '3px 0', fontSize: 15 }}>
-                <span>{catLabel(c.category)}</span><span style={link}>{c.direction === 'in' ? 'Travel To' : 'Travel From'}</span><span style={link}>{c.note || (c.category === 'mileage' && c.miles ? `${c.miles} Miles` : '')}</span>
-                <span style={{ textAlign: 'right' }}>{money(c.estimated)}</span><span style={{ textAlign: 'right' }}>{c.actual === null || c.actual === undefined ? '—' : money(c.actual)}</span>
-              </div>
-            ))}
-            <div style={{ display: 'grid', gridTemplateColumns: '14% 12% 1fr 14% 14%', gap: 10, padding: '6px 0 0', marginTop: 4, borderTop: `1px solid ${LINE}`, fontWeight: 700 }}>
-              <span>Total</span><span /><span style={{ ...link, fontWeight: 500 }}>Estimated · Actual</span><span style={{ textAlign: 'right' }}>{money(est)}</span><span style={{ textAlign: 'right' }}>{withActual.length ? money(withActual.reduce((a, c) => a + Number(c.actual), 0)) : '—'}</span>
-            </div>
-          </>
+      <div key={s.id || i} style={{ display: 'flex', gap: 10, padding: '2px 0', fontSize: FS.body }}>
+        <span style={{ ...link, minWidth: 92, flexShrink: 0 }}>{`Segment ${i + 1}`}</span>
+        <span>{[carrier || modeLabel(trip.mode), route].filter(Boolean).join(' · ')}{day ? <span style={link}> · {day}{s.arrive_date && s.arrive_date !== s.depart_date ? ` → ${fmtDay(s.arrive_date)}` : ''}</span> : null}</span>
+      </div>
+    )
+  }
+  const infoCol = (p, trip, direction) => {
+    const heading = direction === 'in' ? 'Travel To' : 'Travel From'
+    if (!trip) {
+      return (
+        <div>
+          <div style={{ ...SMALL_LABEL, marginBottom: 6 }}>{heading}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: FS.body }}>
+            <span style={link}>No Travel Entered</span>
+            {canEdit && p.staff_id && <button type="button" onClick={() => setModal({ trip: null, preset: { staffId: p.staff_id, direction, role: p.role } })} style={textBtn(false)}>+ Add</button>}
+          </div>
+        </div>
+      )
+    }
+    const est = trip.costs.reduce((a, c) => a + (Number(c.estimated) || 0), 0)
+    const actuals = trip.costs.filter(c => c.actual !== null && c.actual !== undefined)
+    return (
+      <div>
+        <div style={{ ...SMALL_LABEL, marginBottom: 6 }}>{heading}</div>
+        {line('Mode', modeLabel(trip.mode))}
+        {line('Status', <StatusMenu canEdit={canEdit} status={trip.status} onChange={(st) => run(`${nameOf(trip.staff_id)}: ${statusLabel(st)}`, () => setTripStatus(getSupabase(), trip.id, st))} />)}
+        {line('Confirmation', trip.confirmation || <span style={link}>Not Booked Yet</span>)}
+        {trip.segments.length === 0 ? line('Segments', <span style={link}>None Entered</span>) : trip.segments.map((s, i) => segLine(s, i, trip))}
+        {trip.notes && line('Notes', trip.notes)}
+        {trip.costs.map((c, i) => line(i === 0 ? 'Costs' : '', <span>{catLabel(c.category)}{c.category === 'mileage' && c.miles ? ` · ${c.miles} Miles` : ''}{c.note ? ` · ${c.note}` : ''} · Budget {money(c.estimated)} · Actual {c.actual === null || c.actual === undefined ? '—' : money(c.actual)}</span>))}
+        {trip.costs.length > 0 && line('Total', <b>Budget {money(est)} · Actual {actuals.length ? money(actuals.reduce((a, c) => a + Number(c.actual), 0)) : '—'}</b>)}
+        {canEdit && (
+          <div style={{ display: 'flex', gap: 14, marginTop: 6 }}>
+            <button type="button" onClick={() => setModal({ trip })} style={textBtn(false)}>Edit</button>
+            {!(direction === 'in' ? p.outT : p.inT) && <button type="button" onClick={() => copyReturn(trip)} style={textBtn(false)}>Copy To Return Trip</button>}
+            <button type="button" onClick={() => removeTrip(trip)} style={textBtn(true)}>Delete</button>
+          </div>
         )}
       </div>
     )
@@ -256,12 +246,12 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 12 }}>
       {rework.length > 0 && (
         <div style={{ border: '1.5px solid #c9a400', background: 'color-mix(in srgb, #FFD60A 14%, transparent)', borderRadius: 8, padding: '12px 16px', marginBottom: 12, flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
+          <div style={{ fontSize: FS.small, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
           {rework.map((t, i) => (
             <div key={t.id} data-rework-row="" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '6px 0', borderTop: i ? `1px solid ${LINE}` : 'none' }}>
               <div style={{ minWidth: 0 }}>
                 <div><b>{personName(t.staff)}</b> · {t.direction === 'in' ? 'Travel To' : 'Travel From'}: {describeTrip(t)}</div>
-                {t.rework_note && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t.rework_note}</div>}
+                {t.rework_note && <div style={{ fontSize: FS.body, color: 'var(--text-secondary)' }}>{t.rework_note}</div>}
               </div>
               {canEdit && (
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -280,7 +270,7 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
         <Pill selected={!filter} onClick={() => setFilter(null)}>All</Pill>
         {filters.map(f => <Pill key={f.key} tone={STATUS_TONE[f.key]} selected={filter === f.key} onClick={() => setFilter(filter === f.key ? null : f.key)}>{f.label} · {counts[f.key]}</Pill>)}
         <span style={{ flex: 1 }} />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Name, Role, Flight, Confirmation" style={{ fontFamily: 'inherit', fontSize: 15, border: `1px solid ${LINE}`, borderRadius: 6, padding: '7px 12px', minWidth: 260, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Name, Role, Flight, Confirmation" style={{ fontFamily: 'inherit', fontSize: FS.body, border: `1px solid ${LINE}`, borderRadius: 6, padding: '7px 12px', minWidth: 260, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
       </div>
 
       <TableShell cols={cols} minWidth={1000}>
@@ -293,10 +283,12 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
                 <BodyRow cols={cols} row={p} onClick={p.tbd ? undefined : () => setExpanded(x => ({ ...x, [p.key]: !x[p.key] }))} />
                 {expanded[p.key] && !p.tbd && (
                   <ExpandRow cols={cols}>
-                    <div style={{ display: 'grid', gridTemplateColumns: both ? '1fr 1fr' : '1fr', gap: 14, padding: '14px 16px' }}>
-                      {showIn && legBox(p, p.inT, 'in')}
-                      {showOut && legBox(p, p.outT, 'out')}
-                      {costBox(p)}
+                    <div style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: both ? '1fr 1fr' : '1fr', gap: 32 }}>
+                        {showIn && infoCol(p, p.inT, 'in')}
+                        {showOut && infoCol(p, p.outT, 'out')}
+                      </div>
+                      <div title={LOCAL_TIME_HINT} style={{ marginTop: 8, fontSize: FS.small, color: 'var(--text-muted-legible)' }}>{LOCAL_TIME_HINT}</div>
                     </div>
                   </ExpandRow>
                 )}
@@ -305,7 +297,7 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
           </FragmentWith>
         ))}
       </TableShell>
-      <div style={{ marginTop: 10, color: 'var(--text-muted-legible)', fontSize: 13 }}>Click any row to open the full schedule and costs. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
+      <div style={{ marginTop: 10, color: 'var(--text-muted-legible)', fontSize: FS.small }}>Click any row to open the full schedule and costs. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
 
       {modal && (
         <TripModal trip={modal.trip} preset={modal.preset} staffList={staffList} trips={trips.filter(isEntered)} suggest={suggest} mileageRate={mileageRate} saving={saving} onSave={save} onClose={() => setModal(null)} />
