@@ -31,9 +31,8 @@
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --text-muted: #999999;
-  /* Legible secondary text (4.5:1 or better on cards, tables and the page) and legible warning / purple text, used by the travel workspace */
+  /* Legible secondary text (4.5:1 or better on cards, tables and the page) and legible purple text, used by the travel workspace */
   --text-muted-legible: #666666;
-  --text-warning-legible: #8a5a00;
   --text-purple-legible: #6d3fc4;
   --text-on-info: #ffffff;
   --text-disabled: #cccccc;
@@ -116,7 +115,6 @@
   --text-secondary: #a8a8a8;
   --text-muted: #707070;
   --text-muted-legible: #a0a0a0;
-  --text-warning-legible: #FFD60A;
   --text-purple-legible: #c084fc;
   --text-on-info: #06101f;
   --text-disabled: #333333;

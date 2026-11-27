@@ -4,7 +4,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getSupabase } from '@/lib/supabase'
-import { TRIP_MODES, TRIP_TYPES, TRIP_STATUSES, hasFlightFields, segmentModeFor } from '@/lib/travel/trips'
+import { TRIP_MODES, TRIP_TYPES, TRIP_STATUS_MENU, TRIP_STATUSES, COST_CATEGORIES, hasFlightFields, segmentModeFor } from '@/lib/travel/trips'
+import { mileageAmount } from '@/lib/travel/costs'
+import MoneyInput, { formatMoneyInput } from '@/components/MoneyInput'
 import { loadTravelerPrefs } from '@/lib/travel/prefs'
 import { parseTime, formatTime } from '@/lib/travel/time'
 import { Z_POPUP } from '@/components/staffing/shared'
@@ -48,16 +50,17 @@ function TimeField({ value, onChange, onInvalid, onEnter }) {
 //   preset   { staffId, direction, role } when adding from a row
 //   trips    entered trips for the event (to stop a second trip in the same direction for one person)
 //   suggest  { airlines, airports } already used on other trips
-export default function TripModal({ trip, preset, staffList, trips, suggest, saving, onSave, onClose }) {
+export default function TripModal({ trip, preset, staffList, trips, suggest, mileageRate = 0, saving, onSave, onClose }) {
   const editing = !!trip
   const [staffId, setStaffId] = useState(trip?.staff_id || preset?.staffId || '')
   const [direction, setDirection] = useState(trip?.direction || preset?.direction || 'in')
   const [mode, setMode] = useState(trip?.mode || 'flying')
   const [tripType, setTripType] = useState(trip?.trip_type || '')
-  const [status, setStatus] = useState(trip?.status || 'not_started')
+  const [status, setStatus] = useState(trip?.status || 'hold')
   const [confirmation, setConfirmation] = useState(trip?.confirmation || '')
   const [notes, setNotes] = useState(trip?.notes || '')
   const [segments, setSegments] = useState(() => (trip && trip.segments?.length ? fromTrip(trip) : [blankSegment(trip?.mode || 'flying')]))
+  const [costs, setCosts] = useState(() => (trip?.costs || []).map(c => ({ category: c.category, miles: c.miles ?? '', estimated: formatMoneyInput(c.estimated), actual: c.actual === null || c.actual === undefined ? '' : formatMoneyInput(c.actual), note: c.note || '' })))
   const [prefs, setPrefs] = useState({ homeAirport: '', preferredAirline: '', airlines: [], airports: [] })
   const [badTimes, setBadTimes] = useState(0)
   const [error, setError] = useState('')
@@ -108,6 +111,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
       return hasFlightFields(m) ? next : [{ ...blankSegment(m), depart_date: next[0]?.depart_date || '', depart_time: next[0]?.depart_time || '', arrive_date: next[0]?.arrive_date || '', arrive_time: next[0]?.arrive_time || '' }]
     })
   }
+  const setCost = (i, patch) => setCosts(prev => prev.map((c, j) => (j === i ? { ...c, ...patch } : c)))
   const setSeg = (i, k, v) => setSegments(prev => prev.map((s, j) => (j === i ? { ...s, [k]: v } : s)))
 
   const submit = () => {
@@ -116,8 +120,9 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
     if (duplicate) { setError('This person already has a trip in this direction. Edit that trip instead.'); return }
     if (badTimes > 0) { setError('Check the times: use a format like 2:30 PM or 1430.'); return }
     const kept = segments.filter(s => segmentHasData(s, flight)).map(s => (flight ? s : { mode: s.mode, depart_date: s.depart_date, depart_time: s.depart_time, arrive_date: s.arrive_date, arrive_time: s.arrive_time }))
-    if (status === 'not_started' && kept.length === 0 && !confirmation.trim()) { setError('Enter a segment, a confirmation, or set a status to save this trip.'); return }
-    onSave({ tripId: trip?.id || null, staffId, direction, fields: { mode, trip_type: tripType || null, status, confirmation: confirmation.trim() || null, notes: notes.trim() || null }, segments: kept })
+    if (status === 'hold' && kept.length === 0 && !confirmation.trim()) { setError('Enter a segment, a confirmation, or set a status to save this trip.'); return }
+    const keptCosts = costs.filter(c => String(c.estimated).trim() || String(c.actual).trim() || String(c.note).trim())
+    onSave({ tripId: trip?.id || null, staffId, direction, costs: keptCosts, fields: { mode, trip_type: tripType || null, status, confirmation: confirmation.trim() || null, notes: notes.trim() || null }, segments: kept })
   }
 
   const airlineOpts = [...new Set([...prefs.airlines, ...(suggest?.airlines || [])])]
@@ -149,7 +154,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
             </Fld>
             <Fld label="Mode" basis="160px"><select value={mode} onChange={e => changeMode(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{TRIP_MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
             <Fld label="Trip Type" basis="170px"><select value={tripType} onChange={e => setTripType(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}><option value="">None</option>{TRIP_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
-            <Fld label="Status" basis="170px"><select value={status} onChange={e => setStatus(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{TRIP_STATUSES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
+            <Fld label="Status" basis="170px"><select value={status} onChange={e => setStatus(e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>{(trip?.status === 'pending_approval' ? TRIP_STATUSES : TRIP_STATUS_MENU).map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></Fld>
           </div>
 
           {staffId && (
@@ -187,6 +192,24 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
               </div>
             ))}
             <div style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Times are local to each airport, as printed on the itinerary.</div>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={SMALL_LABEL}>Costs · {costs.length}</div>
+              <button type="button" onClick={() => setCosts(prev => [...prev, { category: 'airfare', miles: '', estimated: '', actual: '', note: '' }])} style={BTN_S}>+ Add Cost</button>
+            </div>
+            {costs.map((c, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', marginBottom: 8 }}>
+                <Fld label="Category" basis="150px"><select value={c.category} onChange={e => setCost(i, { category: e.target.value })} style={{ ...INPUT, cursor: 'pointer' }}>{COST_CATEGORIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Fld>
+                {c.category === 'mileage' && <Fld label="Miles" basis="100px"><input style={INPUT} inputMode="decimal" value={c.miles} onChange={e => { const m = e.target.value.replace(/[^0-9.]/g, ''); setCost(i, { miles: m, estimated: m ? formatMoneyInput(mileageAmount(m, mileageRate)) : c.estimated }) }} placeholder="0" /></Fld>}
+                <Fld label="Estimated" basis="140px"><MoneyInput inputStyle={INPUT} prefixLeft={10} value={c.estimated} onChange={v => setCost(i, { estimated: v })} /></Fld>
+                <Fld label="Actual" basis="140px"><MoneyInput inputStyle={INPUT} prefixLeft={10} value={c.actual} onChange={v => setCost(i, { actual: v })} /></Fld>
+                <Fld label="Note"><input style={INPUT} value={c.note} onChange={e => setCost(i, { note: e.target.value })} /></Fld>
+                <button type="button" tabIndex={-1} onClick={() => setCosts(prev => prev.filter((_, j) => j !== i))} style={{ ...BTN_S, color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>Remove</button>
+              </div>
+            ))}
+            {costs.some(c => c.category === 'mileage') && <div style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Mileage is filled from the company rate of ${Number(mileageRate).toFixed(2)} per mile and saved on the line, so later rate changes do not change it.</div>}
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>

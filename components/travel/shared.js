@@ -4,8 +4,6 @@ export const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
 export const LINE = 'var(--border-default)'
 export const CARD = { background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 8 }
 export const SMALL_LABEL = { fontSize: 11.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted-legible)' }
-export const TH = { ...SMALL_LABEL, textAlign: 'left', padding: '9px 10px', borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', whiteSpace: 'nowrap' }
-export const TD = { padding: '9px 10px', borderBottom: `1px solid ${LINE}`, verticalAlign: 'middle', fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 export const INPUT = { fontSize: 15, padding: '8px 10px', borderRadius: 6, border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }
 export const BTN = { fontFamily: 'inherit', fontSize: 15, fontWeight: 600, borderRadius: 6, padding: '8px 14px', border: `1px solid ${LINE}`, background: 'var(--surface-card)', color: 'var(--text-primary)', cursor: 'pointer' }
 export const BTN_P = { ...BTN, background: 'var(--color-info)', borderColor: 'var(--color-info)', color: 'var(--text-on-info)' }
@@ -14,10 +12,10 @@ export const BTN_S = { ...BTN, padding: '5px 10px', fontSize: 13 }
 // Chips (mockup .chip / c-g / c-b / c-a / c-p / c-n / c-r)
 const tone = (c, text = c) => ({ color: text, background: `color-mix(in srgb, ${c} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 38%, transparent)` })
 export const CHIP_TONES = {
-  green: tone('var(--color-success)'), blue: tone('var(--color-info)'), amber: tone('var(--color-warning)', 'var(--text-warning-legible)'),
+  green: tone('var(--color-success)'), blue: tone('var(--color-info)'), yellow: { color: '#1a1a1a', background: '#FFD60A', border: '1px solid #FFD60A' },
   purple: tone('#a855f7', 'var(--text-purple-legible)'), grey: { color: 'var(--text-muted-legible)', background: 'rgba(100,116,139,0.10)', border: `1px solid ${LINE}` }, red: tone('var(--color-danger)'),
 }
-export const STATUS_TONE = { not_started: 'amber', good_to_book: 'blue', pending_approval: 'purple', booked: 'green', cancelled: 'red' }
+export const STATUS_TONE = { hold: 'yellow', good_to_book: 'blue', pending_approval: 'purple', booked: 'green', cancelled: 'red' }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -26,11 +24,38 @@ export function fmtDay(d) {
   if (!m) return '—'
   return `${DAYS[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()]}, ${MONTHS[+m[2] - 1]} ${+m[3]}`
 }
+// Money is always a dollar amount: $1,234.50 (a dash when empty)
+export const money = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? '—' : '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 export const personName = (s) => (s ? (s.display_name?.trim() || `${s.first_name || ''} ${s.last_name || ''}`.trim()) : '') || 'Unnamed'
 
 export function Chip({ tone: t = 'grey', children, onClick, anchorRef, title }) {
   return (
     <span ref={anchorRef} title={title} role={onClick ? 'button' : undefined} onClick={onClick}
       style={{ display: 'inline-block', fontSize: 12.5, fontWeight: 600, padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap', cursor: onClick ? 'pointer' : 'default', userSelect: 'none', ...CHIP_TONES[t] }}>{children}</span>
+  )
+}
+
+// Round pill used for the Both / Travel To / Travel From control and the status filters: same height and radius, selected = filled
+export function Pill({ children, selected, onClick, tone: t = 'blue', title }) {
+  const c = CHIP_TONES[t] || CHIP_TONES.blue
+  const yellow = t === 'yellow'
+  return (
+    <button type="button" title={title} onClick={onClick} aria-pressed={!!selected}
+      style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 600, height: 28, padding: '0 14px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+        border: `1px solid ${yellow ? '#c9a400' : c.color}`, background: selected ? (yellow ? '#FFD60A' : c.color) : 'transparent', color: selected ? (yellow ? '#1a1a1a' : 'var(--text-on-info)') : (yellow ? 'var(--text-primary)' : c.color) }}>{children}</button>
+  )
+}
+
+// Checkbox: identical 18px box everywhere (Room, Per Diem, Rental, eligibility)
+export function Check({ checked, onChange, disabled, label }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div role="checkbox" aria-checked={checked} aria-label={label} tabIndex={disabled ? -1 : 0}
+        onClick={(e) => { e.stopPropagation(); if (!disabled) onChange() }}
+        onKeyDown={(e) => { if (!disabled && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); onChange() } }}
+        style={{ width: 18, height: 18, boxSizing: 'border-box', borderRadius: 4, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1, background: checked ? 'color-mix(in srgb, var(--color-success) 22%, transparent)' : 'transparent', border: `1.5px solid ${checked ? 'var(--color-success)' : 'var(--border-stronger)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {checked && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="var(--color-success)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+      </div>
+    </div>
   )
 }

@@ -1,40 +1,42 @@
 'use client'
 
 // The Travelers tab, built from the approved mockup: one row per person, Inbound and Outbound side by side, grouped by department,
-// a row opens to the full schedule. Colors and type come from the app's tokens.
+// a row opens to the full schedule and costs. Colors and type come from the app's tokens.
 import { useMemo, useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { quickToast } from '@/lib/quickToast'
 import { getSupabase } from '@/lib/supabase'
-import { TRIP_STATUSES, statusLabel, modeLabel, isEntered, tripDate, tripTime, tripAirport, hasFlightFields,
-  upsertTrip, saveSegments, setTripStatus, deleteTrip, resolveRework, copyToReturnTrip } from '@/lib/travel/trips'
+import { TRIP_STATUS_MENU, statusLabel, modeLabel, isEntered, tripDate, tripTime, tripAirport, hasFlightFields, COST_CATEGORIES,
+  upsertTrip, saveSegments, saveCosts, setTripStatus, deleteTrip, resolveRework, copyToReturnTrip } from '@/lib/travel/trips'
+import { setTravelerFlag } from '@/lib/travel/travelers'
 import { formatTime } from '@/lib/travel/time'
 import { describeTrip } from '@/lib/travelRework'
 import { useAnchoredMenu } from '@/components/staffing/popup'
 import { Z_MENU } from '@/components/staffing/shared'
 import TripModal from './TripModal'
-import { CARD, LINE, SMALL_LABEL, TH, TD, BTN_S, Chip, STATUS_TONE, fmtDay, personName } from './shared'
+import { TableShell, BodyRow, GroupRow, ExpandRow, EmptyRow } from './DataTable'
+import { CARD, LINE, SMALL_LABEL, BTN_S, Chip, Pill, STATUS_TONE, fmtDay, personName, money, Check } from './shared'
 
 const DIRS = [{ key: 'both', label: 'Both' }, { key: 'in', label: 'Travel To' }, { key: 'out', label: 'Travel From' }]
-const FILTERS = [{ key: 'not_started', label: 'Not Started' }, { key: 'good_to_book', label: 'Good To Book' }, { key: 'pending_approval', label: 'Pending Approval' }, { key: 'booked', label: 'Booked' }]
-const RANK = { not_started: 0, good_to_book: 1, pending_approval: 2, booked: 3 }
+const RANK = { hold: 0, good_to_book: 1, pending_approval: 2, booked: 3 }
 const flyerRank = (t) => (t && !hasFlightFields(t.mode) ? 1 : 0)
 const link = { color: 'var(--text-muted-legible)' }
 const LOCAL_TIME_HINT = 'Times are local to each airport, as printed on the itinerary.'
+const catLabel = (v) => COST_CATEGORIES.find(c => c.value === v)?.label || v
 
 // one pill for a person: the least advanced of their live trips (Cancelled only when every trip is cancelled)
 function personStatus(list) {
-  if (!list.length) return 'not_started'
+  if (!list.length) return 'hold'
   const live = list.filter(t => t.status !== 'cancelled')
   if (!live.length) return 'cancelled'
   return live.reduce((m, t) => (RANK[t.status] < RANK[m] ? t.status : m), 'booked')
 }
 
-function StatusMenu({ trips, canEdit, onChange, status }) {
+function StatusMenu({ canEdit, onChange, status, enabled = true }) {
   const [open, setOpen] = useState(false)
   const anchorRef = useRef(null)
   const menuRef = useRef(null)
-  const style = useAnchoredMenu(anchorRef, open, 190, TRIP_STATUSES.length * 34 + 12)
+  const style = useAnchoredMenu(anchorRef, open, 190, TRIP_STATUS_MENU.length * 34 + 12)
   useEffect(() => {
     if (!open) return
     const onDown = (e) => { if (!menuRef.current?.contains(e.target) && !anchorRef.current?.contains(e.target)) setOpen(false) }
@@ -42,13 +44,13 @@ function StatusMenu({ trips, canEdit, onChange, status }) {
     document.addEventListener('mousedown', onDown); document.addEventListener('keydown', onKey)
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
   }, [open])
-  const interactive = canEdit && trips.length > 0
+  const interactive = canEdit && enabled
   return (
     <>
-      <Chip tone={STATUS_TONE[status]} anchorRef={anchorRef} onClick={interactive ? (e) => { e.stopPropagation(); setOpen(o => !o) } : undefined}>{statusLabel(status)}</Chip>
+      <Chip tone={STATUS_TONE[status]} anchorRef={anchorRef} title={interactive ? 'Click To Change Status' : undefined} onClick={interactive ? (e) => { e.stopPropagation(); setOpen(o => !o) } : undefined}>{statusLabel(status)}{interactive ? ' ▾' : ''}</Chip>
       {open && style && createPortal(
         <div ref={menuRef} role="menu" style={{ ...style, zIndex: Z_MENU, background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 10, padding: 4, boxShadow: '0 8px 28px rgba(0,0,0,0.35)', boxSizing: 'border-box' }}>
-          {TRIP_STATUSES.map(o => (
+          {TRIP_STATUS_MENU.map(o => (
             <div key={o.value} role="menuitem" onClick={() => { setOpen(false); if (o.value !== status) onChange(o.value) }}
               style={{ padding: '6px 8px', borderRadius: 6, cursor: 'pointer' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
@@ -79,7 +81,8 @@ function Leg({ trip }) {
   )
 }
 
-export default function TravelersTab({ eventId, people, tbdRoles, trips, staffList, canEdit, undoable, reload, modalRequest, onModalHandled, roomedIds, needsByStaff, suggest }) {
+export default function TravelersTab({ eventId, data, canEdit, undoable, reload, modalRequest, onModalHandled }) {
+  const { assignments, trips, staffList, travelers, rooms, legs, rentals, suggest, mileageRate } = data
   const [dir, setDir] = useState('both')
   const [filter, setFilter] = useState(null)
   const [search, setSearch] = useState('')
@@ -89,12 +92,17 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
 
   useEffect(() => { if (modalRequest) { setModal({ trip: null, preset: null }); onModalHandled?.() } }, [modalRequest, onModalHandled])
 
+  const people = useMemo(() => assignments.filter(a => a.staff_id), [assignments])
+  const tbdRoles = useMemo(() => assignments.filter(a => !a.staff_id && a.position.title), [assignments])
+  const flagsByStaff = useMemo(() => Object.fromEntries(travelers.map(t => [t.staff_id, t])), [travelers])
+  const roomedIds = useMemo(() => new Set(rooms.flatMap(r => [r.staff_id_1, r.staff_id_2]).filter(Boolean)), [rooms])
+  const rentalIds = useMemo(() => new Set([...rentals.map(r => r.staff_id), ...legs.filter(l => l.rental_car_id).map(l => l.staff_id)].filter(Boolean)), [rentals, legs])
+
   const nameOf = (staffId) => personName(staffList.find(s => s.id === staffId) || people.find(p => p.staff_id === staffId)?.staff)
   const entered = useMemo(() => trips.filter(t => isEntered(t) && !t.needs_rework), [trips])
   const rework = useMemo(() => trips.filter(t => t.needs_rework), [trips])
   const assignedIds = useMemo(() => new Set(people.map(p => p.staff_id)), [people])
 
-  // one record per person; assigned people first by department, then anyone else with entered travel, then open roles
   const persons = useMemo(() => {
     const mk = (base) => {
       const inT = entered.find(t => t.staff_id === base.staff_id && t.direction === 'in') || null
@@ -105,23 +113,28 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
     const assigned = people.map(p => mk({ key: p.id, staff_id: p.staff_id, staff: p.staff, role: p.position?.title || '—', dept: p.position?.department || 'Other', deptOrder: p.position?.deptSortOrder ?? 999, posOrder: p.position?.sortOrder ?? 999 }))
     const others = [...new Set(entered.filter(t => !assignedIds.has(t.staff_id)).map(t => t.staff_id))]
       .map(id => mk({ key: `o-${id}`, staff_id: id, staff: entered.find(t => t.staff_id === id)?.staff, role: '—', dept: 'Other Travelers', deptOrder: 10000, posOrder: 0 }))
-    const open = tbdRoles.map(r => ({ key: `tbd-${r.id}`, staff_id: null, staff: null, role: r.title, dept: r.department || 'Other', deptOrder: r.deptSortOrder ?? 999, posOrder: r.sortOrder ?? 999, inT: null, outT: null, list: [], status: 'not_started', tbd: true }))
+    const open = tbdRoles.map(r => ({ key: `tbd-${r.id}`, staff_id: null, staff: null, role: r.position.title, dept: r.position.department, deptOrder: r.position.deptSortOrder, posOrder: r.position.sortOrder, inT: null, outT: null, list: [], status: 'hold', tbd: true }))
     return [...assigned, ...others, ...open]
   }, [people, entered, assignedIds, tbdRoles])
 
-  const counts = useMemo(() => Object.fromEntries(FILTERS.map(f => [f.key, persons.filter(p => !p.tbd && p.status === f.key).length])), [persons])
+  const filters = useMemo(() => {
+    const base = [{ key: 'hold', label: 'Hold' }, { key: 'good_to_book', label: 'Good To Book' }, { key: 'booked', label: 'Booked' }]
+    if (persons.some(p => !p.tbd && p.status === 'cancelled')) base.push({ key: 'cancelled', label: 'Cancelled' })
+    return base
+  }, [persons])
+  const counts = useMemo(() => Object.fromEntries(filters.map(f => [f.key, persons.filter(p => !p.tbd && p.status === f.key).length])), [persons, filters])
 
   const groups = useMemo(() => {
     const q = search.trim().toLowerCase()
     const visible = persons.filter(p => (!filter || (!p.tbd && p.status === filter)) && (!q || [p.role, p.tbd ? 'tbd' : personName(p.staff), ...p.list.flatMap(t => [t.confirmation, ...t.segments.map(s => `${s.airline || ''} ${s.flight_number || ''}`)])].filter(Boolean).join(' ').toLowerCase().includes(q)))
     const by = {}
     for (const p of visible) (by[p.dept] ||= { dept: p.dept, order: p.deptOrder, rows: [] }).rows.push(p)
-    const key = (p) => p.inT || p.outT
+    const lead = (p) => p.inT || p.outT
     for (const g of Object.values(by)) g.rows.sort((a, b) => {
-      const ka = key(a), kb = key(b)
+      const ka = lead(a), kb = lead(b)
       if (!!ka !== !!kb) return ka ? -1 : 1 // people with travel first
       if (!ka) return a.posOrder - b.posOrder
-      return (tripDate(a.inT || a.outT) || '9999').localeCompare(tripDate(b.inT || b.outT) || '9999') || flyerRank(a.inT || a.outT) - flyerRank(b.inT || b.outT) || (tripTime(a.inT || a.outT) || '99').localeCompare(tripTime(b.inT || b.outT) || '99') || a.posOrder - b.posOrder
+      return (tripDate(ka) || '9999').localeCompare(tripDate(kb) || '9999') || flyerRank(ka) - flyerRank(kb) || (tripTime(ka) || '99').localeCompare(tripTime(kb) || '99') || a.posOrder - b.posOrder
     })
     return Object.values(by).sort((a, b) => a.order - b.order)
   }, [persons, filter, search])
@@ -143,20 +156,38 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
       const sb = getSupabase()
       const t = await upsertTrip(sb, eventId, p.staffId, p.direction, p.fields)
       await saveSegments(sb, t.id, p.segments)
+      await saveCosts(sb, t.id, p.costs)
     })
     setSaving(false)
     setModal(null)
   }
 
-  const showIn = dir !== 'out', showOut = dir !== 'in'
-  const widths = { role: 13, name: 14, mode: 9, status: 12, inn: showIn && showOut ? 17 : 29, out: showIn && showOut ? 17 : 29, room: 8, pd: 7, chev: 3 }
-  const colCount = 7 + (showIn ? 1 : 0) + (showOut ? 1 : 0) + 1
+  // Room, Per Diem and Rental boxes: checking adds the person to that list; unchecking someone already assigned asks first and never deletes the room or car
+  const toggle = (p, field, label) => {
+    const on = !flagsByStaff[p.staff_id]?.[field]
+    if (!on && field === 'needs_room' && roomedIds.has(p.staff_id) && !confirm(`${personName(p.staff)} is assigned a room. Uncheck Room anyway? The room is kept.`)) return
+    if (!on && field === 'needs_rental' && rentalIds.has(p.staff_id) && !confirm(`${personName(p.staff)} is on a rental car. Uncheck Rental anyway? The car is kept.`)) return
+    run(`${personName(p.staff)}: ${label} ${on ? 'Added' : 'Removed'}`, () => setTravelerFlag(getSupabase(), eventId, p.staff_id, field, on))
+  }
+  const box = (field, label) => (p) => (p.tbd ? null : <Check checked={!!flagsByStaff[p.staff_id]?.[field]} disabled={!canEdit} label={`${label} For ${personName(p.staff)}`} onChange={() => toggle(p, field, label)} />)
 
-  const roomChip = (p) => (p.tbd ? <Chip tone="grey">Hold</Chip> : roomedIds.has(p.staff_id) ? <Chip tone="green">Room</Chip> : needsByStaff[p.staff_id]?.needs_hotel ? <Chip tone="blue">Unassigned</Chip> : <Chip tone="grey">—</Chip>)
-  const pdChip = (p) => (p.tbd ? <Chip tone="grey">—</Chip> : needsByStaff[p.staff_id]?.needs_perdiem ? <Chip tone="green">Eligible</Chip> : <Chip tone="grey">—</Chip>)
+  const showIn = dir !== 'out', showOut = dir !== 'in'
+  const both = showIn && showOut
+  const cols = [
+    { key: 'role', label: 'Role', width: 12, render: p => p.role },
+    { key: 'name', label: 'Name', width: 13, render: p => (p.tbd ? <span style={{ ...link, fontStyle: 'italic', fontWeight: 600 }}>TBD</span> : <b>{personName(p.staff)}</b>) },
+    { key: 'mode', label: 'Mode', width: 8, render: p => { const m = [...new Set(p.list.map(t => modeLabel(t.mode)))]; return m.length ? m.join(' / ') : '—' } },
+    { key: 'status', label: 'Status', width: 11, render: p => <div onClick={e => e.stopPropagation()}><StatusMenu canEdit={canEdit} enabled={p.list.length > 0} status={p.status} onChange={(st) => setStatuses(p, st)} /></div> },
+    ...(showIn ? [{ key: 'in', label: 'Inbound · Final Arrival', width: both ? 16 : 32, wrap: true, render: p => <Leg trip={p.inT} /> }] : []),
+    ...(showOut ? [{ key: 'out', label: 'Outbound · First Departure', width: both ? 16 : 32, wrap: true, render: p => <Leg trip={p.outT} /> }] : []),
+    { key: 'room', label: 'Room', width: 6, align: 'center', render: box('needs_room', 'Room') },
+    { key: 'perdiem', label: 'Per Diem', width: 7, align: 'center', render: box('per_diem_eligible', 'Per Diem') },
+    { key: 'rental', label: 'Rental', width: 6, align: 'center', render: box('needs_rental', 'Rental') },
+    { key: 'chev', label: '', width: 5, align: 'center', render: p => (p.tbd ? '' : <span style={link}>{expanded[p.key] ? '▴' : '▾'}</span>) },
+  ]
 
   const legBox = (p, trip, direction) => (
-    <div style={{ ...CARD, padding: '10px 12px', background: 'var(--surface-card)' }}>
+    <div style={{ ...CARD, padding: '10px 12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
         <div style={SMALL_LABEL}>Full Schedule · {direction === 'in' ? 'Travel To' : 'Travel From'}</div>
         <div title={LOCAL_TIME_HINT} style={{ fontSize: 12.5, color: 'var(--text-muted-legible)' }}>{LOCAL_TIME_HINT}</div>
@@ -183,7 +214,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 0', marginTop: 8, borderTop: `1px solid ${LINE}` }}><span style={link}>Confirmation</span><b>{trip.confirmation || 'Not Booked Yet'}</b></div>
           {trip.notes && <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Notes: {trip.notes}</div>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <StatusMenu trips={[trip]} canEdit={canEdit} status={trip.status} onChange={(st) => run(`${nameOf(trip.staff_id)}: ${statusLabel(st)}`, () => setTripStatus(getSupabase(), trip.id, st))} />
+            <StatusMenu canEdit={canEdit} status={trip.status} onChange={(st) => run(`${nameOf(trip.staff_id)}: ${statusLabel(st)}`, () => setTripStatus(getSupabase(), trip.id, st))} />
             {canEdit && (
               <>
                 <button type="button" onClick={() => setModal({ trip })} style={BTN_S}>Edit Trip</button>
@@ -197,11 +228,35 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
     </div>
   )
 
+  const costBox = (p) => {
+    const lines = p.list.flatMap(t => (t.costs || []).map(c => ({ ...c, direction: t.direction })))
+    const est = lines.reduce((a, c) => a + (Number(c.estimated) || 0), 0)
+    const withActual = lines.filter(c => c.actual !== null && c.actual !== undefined)
+    return (
+      <div style={{ ...CARD, padding: '10px 12px', gridColumn: '1 / -1' }}>
+        <div style={{ ...SMALL_LABEL, marginBottom: 8 }}>Costs</div>
+        {lines.length === 0 ? <span style={link}>No costs entered.</span> : (
+          <>
+            {lines.map((c, i) => (
+              <div key={c.id || i} style={{ display: 'grid', gridTemplateColumns: '14% 12% 1fr 14% 14%', gap: 10, padding: '3px 0', fontSize: 15 }}>
+                <span>{catLabel(c.category)}</span><span style={link}>{c.direction === 'in' ? 'Travel To' : 'Travel From'}</span><span style={link}>{c.note || (c.category === 'mileage' && c.miles ? `${c.miles} Miles` : '')}</span>
+                <span style={{ textAlign: 'right' }}>{money(c.estimated)}</span><span style={{ textAlign: 'right' }}>{c.actual === null || c.actual === undefined ? '—' : money(c.actual)}</span>
+              </div>
+            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: '14% 12% 1fr 14% 14%', gap: 10, padding: '6px 0 0', marginTop: 4, borderTop: `1px solid ${LINE}`, fontWeight: 700 }}>
+              <span>Total</span><span /><span style={{ ...link, fontWeight: 500 }}>Estimated · Actual</span><span style={{ textAlign: 'right' }}>{money(est)}</span><span style={{ textAlign: 'right' }}>{withActual.length ? money(withActual.reduce((a, c) => a + Number(c.actual), 0)) : '—'}</span>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 12 }}>
       {rework.length > 0 && (
-        <div style={{ border: '1.5px solid color-mix(in srgb, var(--color-warning) 70%, transparent)', background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', borderRadius: 8, padding: '12px 16px', marginBottom: 12, flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-warning-legible)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
+        <div style={{ border: '1.5px solid #c9a400', background: 'color-mix(in srgb, #FFD60A 14%, transparent)', borderRadius: 8, padding: '12px 16px', marginBottom: 12, flexShrink: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
           {rework.map((t, i) => (
             <div key={t.id} data-rework-row="" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '6px 0', borderTop: i ? `1px solid ${LINE}` : 'none' }}>
               <div style={{ minWidth: 0 }}>
@@ -220,86 +275,43 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
       )}
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', flexShrink: 0 }}>
-        <div style={{ display: 'inline-flex', border: `1px solid ${LINE}`, borderRadius: 6, overflow: 'hidden', background: 'var(--surface-card)' }}>
-          {DIRS.map(d => (
-            <button key={d.key} type="button" onClick={() => setDir(d.key)} style={{ fontFamily: 'inherit', fontSize: 15, fontWeight: 600, border: 0, padding: '6px 14px', cursor: 'pointer', background: dir === d.key ? 'color-mix(in srgb, var(--color-info) 12%, transparent)' : 'transparent', color: dir === d.key ? 'var(--color-info)' : 'var(--text-muted-legible)' }}>{d.label}</button>
-          ))}
-        </div>
-        <button type="button" onClick={() => setFilter(null)} style={{ ...BTN_S, opacity: filter ? 0.7 : 1 }}>All</button>
-        {FILTERS.map(f => (
-          <Chip key={f.key} tone={STATUS_TONE[f.key]} onClick={() => setFilter(filter === f.key ? null : f.key)}>{f.label} · {counts[f.key]}</Chip>
-        ))}
+        {DIRS.map(d => <Pill key={d.key} selected={dir === d.key} onClick={() => setDir(d.key)}>{d.label}</Pill>)}
+        <span style={{ width: 12 }} />
+        <Pill selected={!filter} onClick={() => setFilter(null)}>All</Pill>
+        {filters.map(f => <Pill key={f.key} tone={STATUS_TONE[f.key]} selected={filter === f.key} onClick={() => setFilter(filter === f.key ? null : f.key)}>{f.label} · {counts[f.key]}</Pill>)}
         <span style={{ flex: 1 }} />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Name, Role, Flight, Confirmation" style={{ fontFamily: 'inherit', fontSize: 15, border: `1px solid ${LINE}`, borderRadius: 6, padding: '7px 12px', minWidth: 260, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none' }} />
       </div>
 
-      <div style={{ ...CARD, overflow: 'auto', flexShrink: 0 }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed', minWidth: 980 }}>
-          <colgroup>
-            <col style={{ width: `${widths.role}%` }} /><col style={{ width: `${widths.name}%` }} /><col style={{ width: `${widths.mode}%` }} /><col style={{ width: `${widths.status}%` }} />
-            {showIn && <col style={{ width: `${widths.inn}%` }} />}{showOut && <col style={{ width: `${widths.out}%` }} />}
-            <col style={{ width: `${widths.room}%` }} /><col style={{ width: `${widths.pd}%` }} /><col style={{ width: `${widths.chev}%` }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th style={TH}>Role</th><th style={TH}>Name</th><th style={TH}>Mode</th><th style={TH}>Status</th>
-              {showIn && <th style={TH}>Inbound · Final Arrival</th>}{showOut && <th style={TH}>Outbound · First Departure</th>}
-              <th style={TH}>Room</th><th style={TH}>Per Diem</th><th style={TH} />
-            </tr>
-          </thead>
-          <tbody>
-            {groups.length === 0 && <tr><td colSpan={colCount} style={{ ...TD, color: 'var(--text-muted-legible)' }}>{persons.length ? 'No travelers match.' : 'No one is assigned to this event yet.'}</td></tr>}
-            {groups.map(g => (
-              <FragmentGroup key={g.dept} dept={g.dept} colCount={colCount}>
-                {g.rows.map(p => {
-                  const open = !!expanded[p.key]
-                  const modes = [...new Set(p.list.map(t => modeLabel(t.mode)))]
-                  return (
-                    <RowPair key={p.key}>
-                      <tr onClick={() => !p.tbd && setExpanded(x => ({ ...x, [p.key]: !x[p.key] }))} style={{ cursor: p.tbd ? 'default' : 'pointer' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
-                        <td style={TD}>{p.role}</td>
-                        <td style={{ ...TD, fontWeight: 600, ...(p.tbd ? { color: 'var(--text-muted-legible)', fontStyle: 'italic' } : {}) }}>{p.tbd ? 'TBD' : personName(p.staff)}</td>
-                        <td style={TD}>{modes.length ? modes.join(' / ') : '—'}</td>
-                        <td style={TD} onClick={e => e.stopPropagation()}><StatusMenu trips={p.list} canEdit={canEdit} status={p.status} onChange={(st) => setStatuses(p, st)} /></td>
-                        {showIn && <td style={{ ...TD, whiteSpace: 'normal' }}><Leg trip={p.inT} /></td>}
-                        {showOut && <td style={{ ...TD, whiteSpace: 'normal' }}><Leg trip={p.outT} /></td>}
-                        <td style={TD}>{roomChip(p)}</td>
-                        <td style={TD}>{pdChip(p)}</td>
-                        <td style={{ ...TD, color: 'var(--text-muted-legible)', textAlign: 'center' }}>{p.tbd ? '' : open ? '▴' : '▾'}</td>
-                      </tr>
-                      {open && (
-                        <tr><td colSpan={colCount} style={{ padding: 0, background: 'var(--surface-raised, rgba(0,0,0,0.03))', borderBottom: `1px solid ${LINE}` }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: showIn && showOut ? '1fr 1fr' : '1fr', gap: 14, padding: '14px 16px' }}>
-                            {showIn && legBox(p, p.inT, 'in')}
-                            {showOut && legBox(p, p.outT, 'out')}
-                          </div>
-                        </td></tr>
-                      )}
-                    </RowPair>
-                  )
-                })}
-              </FragmentGroup>
+      <TableShell cols={cols} minWidth={1000}>
+        {groups.length === 0 && <EmptyRow cols={cols}>{persons.length ? 'No travelers match.' : 'No one is assigned to this event yet.'}</EmptyRow>}
+        {groups.map(g => (
+          <FragmentWith key={g.dept}>
+            <GroupRow cols={cols}>{g.dept}</GroupRow>
+            {g.rows.map(p => (
+              <FragmentWith key={p.key}>
+                <BodyRow cols={cols} row={p} onClick={p.tbd ? undefined : () => setExpanded(x => ({ ...x, [p.key]: !x[p.key] }))} />
+                {expanded[p.key] && !p.tbd && (
+                  <ExpandRow cols={cols}>
+                    <div style={{ display: 'grid', gridTemplateColumns: both ? '1fr 1fr' : '1fr', gap: 14, padding: '14px 16px' }}>
+                      {showIn && legBox(p, p.inT, 'in')}
+                      {showOut && legBox(p, p.outT, 'out')}
+                      {costBox(p)}
+                    </div>
+                  </ExpandRow>
+                )}
+              </FragmentWith>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <div style={{ marginTop: 10, color: 'var(--text-muted-legible)', fontSize: 13 }}>Click any row to open the full schedule. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
+          </FragmentWith>
+        ))}
+      </TableShell>
+      <div style={{ marginTop: 10, color: 'var(--text-muted-legible)', fontSize: 13 }}>Click any row to open the full schedule and costs. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
 
       {modal && (
-        <TripModal trip={modal.trip} preset={modal.preset} staffList={staffList} trips={trips.filter(isEntered)} suggest={suggest} saving={saving} onSave={save} onClose={() => setModal(null)} />
+        <TripModal trip={modal.trip} preset={modal.preset} staffList={staffList} trips={trips.filter(isEntered)} suggest={suggest} mileageRate={mileageRate} saving={saving} onSave={save} onClose={() => setModal(null)} />
       )}
     </div>
   )
 }
 
-// a department sub-header row followed by its rows
-function FragmentGroup({ dept, colCount, children }) {
-  return (
-    <>
-      <tr><td colSpan={colCount} style={{ ...SMALL_LABEL, fontSize: 12, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>{dept}</td></tr>
-      {children}
-    </>
-  )
-}
-function RowPair({ children }) { return <>{children}</> }
+function FragmentWith({ children }) { return <>{children}</> }

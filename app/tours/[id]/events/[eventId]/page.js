@@ -1005,7 +1005,7 @@ export default function EventPage() {
           )}
 
           {activeTab === 'staffing' && event && (
-            <TravelWorkspace eventId={eventId} event={event} tour={tour} />
+            <TravelWorkspace eventId={eventId} event={event} />
           )}
 
           {activeTab === 'schedule' && (
