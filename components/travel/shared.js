@@ -78,12 +78,12 @@ export function InlineInput({ value, onSave, placeholder = '—', disabled, type
 }
 
 // A dollar field that looks like a cell and saves (formatted, e.g. "450.00") when you leave it, only if it changed
-export function InlineMoney({ value, onSave, disabled, ariaLabel }) {
+export function InlineMoney({ value, onSave, disabled, ariaLabel, placeholder }) {
   const shown = value === null || value === undefined || value === '' ? '' : formatMoneyInput(value)
   const [v, setV] = useStateInline(shown)
   useEffectInline(() => { setV(shown) }, [shown])
   return (
-    <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={6}
+    <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={6} placeholder={placeholder}
       inputStyle={{ fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', textAlign: 'right' }}
       onBlur={(e, f) => { if (f !== shown) onSave(f) }} />
   )
