@@ -27,7 +27,7 @@ const TRAVEL_HEADER_CELL = { fontSize: 14, fontWeight: 700, textTransform: 'uppe
 const hoverBlue = e => { e.currentTarget.style.background = 'rgba(26,86,219,0.08)' }
 const unhoverBlue = e => { e.currentTarget.style.background = 'transparent' }
 const hoverDanger = e => { e.currentTarget.style.color = 'var(--color-danger)' }
-const unhoverDanger = e => { e.currentTarget.style.color = 'var(--text-muted)' }
+const unhoverDanger = e => { e.currentTarget.style.color = 'var(--text-muted-legible)' }
 const hoverRow = e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }
 const unhoverRow = e => { e.currentTarget.style.background = 'transparent' }
 
@@ -76,7 +76,7 @@ function EditableCell({ value, onSave, type = 'text', placeholder = '—', cente
   }
   return (
     <div onClick={() => setEditing(true)}
-      style={{ fontSize: 14, cursor: 'text', color: val ? 'var(--text-secondary)' : 'var(--text-muted)', minHeight: 18, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: centered ? 'center' : 'left' }}
+      style={{ fontSize: 14, cursor: 'text', color: val ? 'var(--text-secondary)' : 'var(--text-muted-legible)', minHeight: 18, padding: '2px 0', borderBottom: '0.5px solid transparent', transition: 'border-color 0.15s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: centered ? 'center' : 'left' }}
       onMouseEnter={e => { e.currentTarget.style.borderBottomColor = 'var(--border-default)' }}
       onMouseLeave={e => { e.currentTarget.style.borderBottomColor = 'transparent' }}
     >
@@ -475,7 +475,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     return total
   }
 
-  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div>
+  if (loading) return <div style={{ fontSize: 16, color: 'var(--text-muted-legible)' }}>Loading...</div>
 
   const ROOM_GRID = '1.2fr 1.2fr 0.8fr 0.7fr 0.7fr 1fr 24px'
   const eventDates = getEventDates()
@@ -518,7 +518,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {rentalCars.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No rental cars added yet.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted-legible)' }}>No rental cars added yet.</div>
               )}
               {rentalCars.map((car, idx) => {
                 const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -543,7 +543,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.vendor} centered onSave={v => handleUpdateRental(car.id, 'vendor', v)} placeholder="Vendor" /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={car.confirmation_number} centered onSave={v => handleUpdateRental(car.id, 'confirmation_number', v)} placeholder="Conf #" /></div>
                     <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveRental(car.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                      <div onClick={() => handleRemoveRental(car.id)} style={{ fontSize: 18, color: 'var(--text-muted-legible)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                     </div>
                   </div>
                 )
@@ -589,7 +589,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
             <div style={{ height: '100%', overflowY: 'auto' }}>
               {rooms.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No rooms added yet.</div>
+                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted-legible)' }}>No rooms added yet.</div>
               )}
               {rooms.map((room, idx) => {
                 const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -611,7 +611,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     <EditableCell value={room.check_in_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_in_date', v)} />
                     <EditableCell value={room.check_out_date} type="date" centered onSave={v => handleUpdateRoom(room.id, 'check_out_date', v)} />
                     <EditableCell value={room.notes} onSave={v => handleUpdateRoom(room.id, 'notes', v)} placeholder="Notes" />
-                    <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
+                    <div onClick={() => handleRemoveRoom(room.id)} style={{ fontSize: 18, color: 'var(--text-muted-legible)', cursor: 'pointer', textAlign: 'right' }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
                   </div>
                 )
               })}
@@ -659,7 +659,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
 
           {!perDiemRates ? (
             <div style={{ ...GLASS, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
-              <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>Set meal rates to get started.</div>
+              <div style={{ fontSize: 15, color: 'var(--text-muted-legible)' }}>Set meal rates to get started.</div>
               <button onClick={() => setShowRatesModal(true)} style={ADD_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Set Rates</button>
             </div>
           ) : (
@@ -679,7 +679,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                 {/* Scrollable rows */}
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                   {perDiemEligible.length === 0 && (
-                    <div style={{ padding: '16px', fontSize: 15, color: 'var(--text-muted)' }}>No eligible staff yet.</div>
+                    <div style={{ padding: '16px', fontSize: 15, color: 'var(--text-muted-legible)' }}>No eligible staff yet.</div>
                   )}
                   {perDiemEligible.map((entry, idx) => {
                     const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
@@ -716,7 +716,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                       { label: 'Dinner', value: perDiemRates.dinner_rate },
                     ].map(r => (
                       <div key={r.label} style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 3 }}>{r.label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted-legible)', textTransform: 'uppercase', marginBottom: 3 }}>{r.label}</div>
                         <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{fmtMoney(r.value)}</div>
                       </div>
                     ))}
@@ -728,7 +728,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                     >Adjust Rates</button>
                   </div>
                   <div style={{ borderTop: '0.5px solid var(--border-default)', paddingTop: 12, textAlign: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Grand Total</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted-legible)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Grand Total</div>
                     <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--color-info)' }}>{fmtMoney(grandTotal)}</div>
                   </div>
                   </div>
@@ -739,7 +739,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                   <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-info)', marginBottom: 6, paddingLeft: 2 }}>Meals Provided</div>
                   <div style={{ ...GLASS, padding: '16px', flexShrink: 0 }}>
                   {eventDates.length === 0 ? (
-                    <div style={{ fontSize: 15, color: 'var(--text-muted)' }}>No event dates.</div>
+                    <div style={{ fontSize: 15, color: 'var(--text-muted-legible)' }}>No event dates.</div>
                   ) : (
                     <div>
                       {/* Date headers */}
@@ -784,7 +784,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
             <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{hotel ? 'Edit Hotel' : 'Add Hotel'}</div>
             {[{ label: 'Hotel Name', key: 'hotel_name', type: 'text' }, { label: 'Address', key: 'address', type: 'text' }, { label: 'Check In', key: 'check_in_date', type: 'date' }, { label: 'Check Out', key: 'check_out_date', type: 'date' }, { label: 'Notes', key: 'notes', type: 'text' }].map(f => (
               <div key={f.key}>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>{f.label}</label>
                 <input type={f.type} style={SYSTEM_INPUT} value={hotelForm[f.key]} onChange={e => setHotelForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
@@ -808,7 +808,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Set Meal Rates</div>
             {[{ label: 'Breakfast Rate', key: 'breakfast_rate' }, { label: 'Lunch Rate', key: 'lunch_rate' }, { label: 'Dinner Rate', key: 'dinner_rate' }].map(f => (
               <div key={f.key}>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>{f.label}</label>
                 <input type="number" step="0.01" style={SYSTEM_INPUT} value={ratesForm[f.key]} onChange={e => setRatesForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
               </div>
             ))}
@@ -819,7 +819,7 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
                 onMouseEnter={hoverBlue}
                 onMouseLeave={unhoverBlue}
               >Cancel</button>
-              <button onClick={handleSaveRates} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Save</button>
+              <button onClick={handleSaveRates} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: 'var(--text-on-info)', cursor: 'pointer' }}>Save</button>
             </div>
           </div>
         </div>
@@ -834,48 +834,48 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Add Rental Car</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Driver (Staff)</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Driver (Staff)</label>
                 <select style={SYSTEM_INPUT} value={rentalForm.staff_id} onChange={e => setRentalForm(p => ({ ...p, staff_id: e.target.value }))}>
                   <option value="">Unassigned</option>
                   {confirmedStaff.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Vendor</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Vendor</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.vendor} onChange={e => setRentalForm(p => ({ ...p, vendor: e.target.value }))} placeholder="Enterprise, Hertz, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Date</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Pickup Date</label>
                 <input type="date" style={SYSTEM_INPUT} value={rentalForm.pickup_date} onChange={e => setRentalForm(p => ({ ...p, pickup_date: e.target.value }))} />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Date</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Return Date</label>
                 <input type="date" style={SYSTEM_INPUT} value={rentalForm.return_date} onChange={e => setRentalForm(p => ({ ...p, return_date: e.target.value }))} />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Pickup Location</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Pickup Location</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.pickup_location} onChange={e => setRentalForm(p => ({ ...p, pickup_location: e.target.value }))} placeholder="Airport, hotel, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Return Location</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Return Location</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.return_location} onChange={e => setRentalForm(p => ({ ...p, return_location: e.target.value }))} placeholder="Airport, hotel, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Car Class</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Car Class</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.car_class} onChange={e => setRentalForm(p => ({ ...p, car_class: e.target.value }))} placeholder="Economy, SUV, Van, etc." />
               </div>
               <div>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Confirmation #</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Confirmation #</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.confirmation_number} onChange={e => setRentalForm(p => ({ ...p, confirmation_number: e.target.value }))} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 14, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Notes</label>
+                <label style={{ fontSize: 14, color: 'var(--text-muted-legible)', display: 'block', marginBottom: 5 }}>Notes</label>
                 <input style={SYSTEM_INPUT} value={rentalForm.notes} onChange={e => setRentalForm(p => ({ ...p, notes: e.target.value }))} placeholder="Optional notes..." />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditingRental(null)} style={CANCEL_BTN} onMouseEnter={hoverBlue} onMouseLeave={unhoverBlue}>Cancel</button>
-              <button onClick={handleAddRental} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: '#ffffff', cursor: 'pointer' }}>Add Rental Car</button>
+              <button onClick={handleAddRental} style={{ fontSize: 15, padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--color-info)', color: 'var(--text-on-info)', cursor: 'pointer' }}>Add Rental Car</button>
             </div>
           </div>
         </div>

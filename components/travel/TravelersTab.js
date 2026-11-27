@@ -19,7 +19,8 @@ const DIRS = [{ key: 'both', label: 'Both' }, { key: 'in', label: 'Travel To' },
 const FILTERS = [{ key: 'not_started', label: 'Not Started' }, { key: 'good_to_book', label: 'Good To Book' }, { key: 'pending_approval', label: 'Pending Approval' }, { key: 'booked', label: 'Booked' }]
 const RANK = { not_started: 0, good_to_book: 1, pending_approval: 2, booked: 3 }
 const flyerRank = (t) => (t && !hasFlightFields(t.mode) ? 1 : 0)
-const link = { color: 'var(--text-muted)' }
+const link = { color: 'var(--text-muted-legible)' }
+const LOCAL_TIME_HINT = 'Times are local to each airport, as printed on the itinerary.'
 
 // one pill for a person: the least advanced of their live trips (Cancelled only when every trip is cancelled)
 function personStatus(list) {
@@ -73,7 +74,7 @@ function Leg({ trip }) {
   return (
     <div style={{ lineHeight: 1.3 }}>
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{when}</div>
-      {detail && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>}
+      {detail && <div style={{ fontSize: 12.5, color: 'var(--text-muted-legible)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail}</div>}
     </div>
   )
 }
@@ -156,7 +157,10 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
 
   const legBox = (p, trip, direction) => (
     <div style={{ ...CARD, padding: '10px 12px', background: 'var(--surface-card)' }}>
-      <div style={{ ...SMALL_LABEL, marginBottom: 8 }}>Full Schedule · {direction === 'in' ? 'Travel To' : 'Travel From'}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
+        <div style={SMALL_LABEL}>Full Schedule · {direction === 'in' ? 'Travel To' : 'Travel From'}</div>
+        <div title={LOCAL_TIME_HINT} style={{ fontSize: 12.5, color: 'var(--text-muted-legible)' }}>{LOCAL_TIME_HINT}</div>
+      </div>
       {!trip ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={link}>No Travel Entered</span>
@@ -171,7 +175,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
                 <span style={{ fontWeight: 700, minWidth: 64 }}>{[s.airline, s.flight_number].filter(Boolean).join(' ') || `Leg ${i + 1}`}</span>
                 <div style={{ flex: 1, lineHeight: 1.3 }}>
                   {[s.from_airport, s.to_airport].filter(Boolean).join(' → ') || modeLabel(trip.mode)}
-                  <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{fmtDay(s.depart_date)}{s.depart_time ? ` · ${formatTime(s.depart_time)}` : ''}{(s.arrive_time || s.arrive_date) ? ` → ${s.arrive_date && s.arrive_date !== s.depart_date ? `${fmtDay(s.arrive_date)} · ` : ''}${formatTime(s.arrive_time)}` : ''}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-muted-legible)' }}>{fmtDay(s.depart_date)}{s.depart_time ? ` · ${formatTime(s.depart_time)}` : ''}{(s.arrive_time || s.arrive_date) ? ` → ${s.arrive_date && s.arrive_date !== s.depart_date ? `${fmtDay(s.arrive_date)} · ` : ''}${formatTime(s.arrive_time)}` : ''}</div>
                 </div>
               </div>
             ))}
@@ -197,7 +201,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 12 }}>
       {rework.length > 0 && (
         <div style={{ border: '1.5px solid color-mix(in srgb, var(--color-warning) 70%, transparent)', background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', borderRadius: 8, padding: '12px 16px', marginBottom: 12, flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-warning)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-warning-legible)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Needs Action · Removed From Event, Travel Still Booked</div>
           {rework.map((t, i) => (
             <div key={t.id} data-rework-row="" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '6px 0', borderTop: i ? `1px solid ${LINE}` : 'none' }}>
               <div style={{ minWidth: 0 }}>
@@ -218,7 +222,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', flexShrink: 0 }}>
         <div style={{ display: 'inline-flex', border: `1px solid ${LINE}`, borderRadius: 6, overflow: 'hidden', background: 'var(--surface-card)' }}>
           {DIRS.map(d => (
-            <button key={d.key} type="button" onClick={() => setDir(d.key)} style={{ fontFamily: 'inherit', fontSize: 15, fontWeight: 600, border: 0, padding: '6px 14px', cursor: 'pointer', background: dir === d.key ? 'color-mix(in srgb, var(--color-info) 12%, transparent)' : 'transparent', color: dir === d.key ? 'var(--color-info)' : 'var(--text-muted)' }}>{d.label}</button>
+            <button key={d.key} type="button" onClick={() => setDir(d.key)} style={{ fontFamily: 'inherit', fontSize: 15, fontWeight: 600, border: 0, padding: '6px 14px', cursor: 'pointer', background: dir === d.key ? 'color-mix(in srgb, var(--color-info) 12%, transparent)' : 'transparent', color: dir === d.key ? 'var(--color-info)' : 'var(--text-muted-legible)' }}>{d.label}</button>
           ))}
         </div>
         <button type="button" onClick={() => setFilter(null)} style={{ ...BTN_S, opacity: filter ? 0.7 : 1 }}>All</button>
@@ -244,7 +248,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
             </tr>
           </thead>
           <tbody>
-            {groups.length === 0 && <tr><td colSpan={colCount} style={{ ...TD, color: 'var(--text-muted)' }}>{persons.length ? 'No travelers match.' : 'No one is assigned to this event yet.'}</td></tr>}
+            {groups.length === 0 && <tr><td colSpan={colCount} style={{ ...TD, color: 'var(--text-muted-legible)' }}>{persons.length ? 'No travelers match.' : 'No one is assigned to this event yet.'}</td></tr>}
             {groups.map(g => (
               <FragmentGroup key={g.dept} dept={g.dept} colCount={colCount}>
                 {g.rows.map(p => {
@@ -255,14 +259,14 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
                       <tr onClick={() => !p.tbd && setExpanded(x => ({ ...x, [p.key]: !x[p.key] }))} style={{ cursor: p.tbd ? 'default' : 'pointer' }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
                         <td style={TD}>{p.role}</td>
-                        <td style={{ ...TD, fontWeight: 600, ...(p.tbd ? { color: 'var(--text-muted)', fontStyle: 'italic' } : {}) }}>{p.tbd ? 'TBD' : personName(p.staff)}</td>
+                        <td style={{ ...TD, fontWeight: 600, ...(p.tbd ? { color: 'var(--text-muted-legible)', fontStyle: 'italic' } : {}) }}>{p.tbd ? 'TBD' : personName(p.staff)}</td>
                         <td style={TD}>{modes.length ? modes.join(' / ') : '—'}</td>
                         <td style={TD} onClick={e => e.stopPropagation()}><StatusMenu trips={p.list} canEdit={canEdit} status={p.status} onChange={(st) => setStatuses(p, st)} /></td>
                         {showIn && <td style={{ ...TD, whiteSpace: 'normal' }}><Leg trip={p.inT} /></td>}
                         {showOut && <td style={{ ...TD, whiteSpace: 'normal' }}><Leg trip={p.outT} /></td>}
                         <td style={TD}>{roomChip(p)}</td>
                         <td style={TD}>{pdChip(p)}</td>
-                        <td style={{ ...TD, color: 'var(--text-muted)', textAlign: 'center' }}>{p.tbd ? '' : open ? '▴' : '▾'}</td>
+                        <td style={{ ...TD, color: 'var(--text-muted-legible)', textAlign: 'center' }}>{p.tbd ? '' : open ? '▴' : '▾'}</td>
                       </tr>
                       {open && (
                         <tr><td colSpan={colCount} style={{ padding: 0, background: 'var(--surface-raised, rgba(0,0,0,0.03))', borderBottom: `1px solid ${LINE}` }}>
@@ -280,7 +284,7 @@ export default function TravelersTab({ eventId, people, tbdRoles, trips, staffLi
           </tbody>
         </table>
       </div>
-      <div style={{ marginTop: 10, color: 'var(--text-muted)', fontSize: 13 }}>Click any row to open the full schedule. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
+      <div style={{ marginTop: 10, color: 'var(--text-muted-legible)', fontSize: 13 }}>Click any row to open the full schedule. Names and roles come from the staffing grid. Anyone not on the grid can be added by hand.</div>
 
       {modal && (
         <TripModal trip={modal.trip} preset={modal.preset} staffList={staffList} trips={trips.filter(isEntered)} suggest={suggest} saving={saving} onSave={save} onClose={() => setModal(null)} />

@@ -127,7 +127,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
   if (typeof document === 'undefined') return null
   return createPortal(
     <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }} style={{ position: 'fixed', inset: 0, zIndex: Z_POPUP, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(20,33,58,0.45)', padding: '36px 20px', overflowY: 'auto', fontFamily: FONT }}>
-      <div role="dialog" aria-modal="true" aria-label={editing ? 'Edit Trip' : 'Add Trip'} style={{ background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 10, width: 960, maxWidth: '100%', boxShadow: '0 20px 60px rgba(20,33,58,0.3)', color: 'var(--text-primary)' }}>
+      <div role="dialog" className="travel-modal" aria-modal="true" aria-label={editing ? 'Edit Trip' : 'Add Trip'} style={{ background: 'var(--surface-card)', border: `1px solid ${LINE}`, borderRadius: 10, width: 960, maxWidth: '100%', boxShadow: '0 20px 60px rgba(20,33,58,0.3)', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: `1px solid ${LINE}` }}>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{editing ? 'Edit Trip' : 'Add Trip'}{person ? ` · ${personName(person)}` : ''}</div>
           <button type="button" onClick={onClose} style={BTN_S}>Close</button>
@@ -186,6 +186,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
                 </div>
               </div>
             ))}
+            <div style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Times are local to each airport, as printed on the itinerary.</div>
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
@@ -197,7 +198,7 @@ export default function TripModal({ trip, preset, staffList, trips, suggest, sav
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${LINE}`, background: 'var(--surface-raised, rgba(0,0,0,0.03))', borderRadius: '0 0 10px 10px', gap: 12 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Times are saved as entered, in local time. Enter on the last field saves.</span>
+          <span style={{ fontSize: 13, color: 'var(--text-muted-legible)' }}>Enter on the last field saves.</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={onClose} style={BTN}>Cancel</button>
             <button type="button" onClick={submit} disabled={saving || duplicate} style={{ ...BTN_P, opacity: saving || duplicate ? 0.6 : 1, cursor: saving || duplicate ? 'default' : 'pointer' }}>{saving ? 'Saving…' : 'Save Trip'}</button>

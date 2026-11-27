@@ -6,7 +6,7 @@ import { getSupabase } from '@/lib/supabase'
 import { quickToast } from '@/lib/quickToast'
 import { CARD, LINE, SMALL_LABEL, TH, TD, personName } from './shared'
 
-const statusColor = (status) => (status === 'pending' ? 'var(--color-warning)' : status === 'needs_attention' ? 'var(--color-danger)' : 'var(--text-primary)')
+const statusColor = (status) => (status === 'pending' ? 'var(--text-warning-legible)' : status === 'needs_attention' ? 'var(--color-danger)' : 'var(--text-primary)')
 
 function Check({ checked, onClick, disabled }) {
   return (
@@ -55,7 +55,7 @@ export default function RosterTab({ eventId, people, canEdit }) {
           <colgroup><col style={{ width: '24%' }} /><col style={{ width: '34%' }} /><col style={{ width: '14%' }} /><col style={{ width: '14%' }} /><col style={{ width: '14%' }} /></colgroup>
           <thead><tr><th style={TH}>Position</th><th style={TH}>Staff Member</th><th style={{ ...TH, textAlign: 'center' }}>Hotel</th><th style={{ ...TH, textAlign: 'center' }}>Per Diem</th><th style={{ ...TH, textAlign: 'center' }}>Rental</th></tr></thead>
           <tbody>
-            {people.length === 0 && <tr><td colSpan={5} style={{ ...TD, color: 'var(--text-muted)' }}>No one is assigned to this event yet.</td></tr>}
+            {people.length === 0 && <tr><td colSpan={5} style={{ ...TD, color: 'var(--text-muted-legible)' }}>No one is assigned to this event yet.</td></tr>}
             {grouped.map(([dept, members]) => (
               <Group key={dept} dept={dept}>
                 {members.map(s => {

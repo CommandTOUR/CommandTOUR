@@ -19,8 +19,6 @@ const TABS = [
   { key: 'rental', label: 'Rental Cars' },
   { key: 'perdiem', label: 'Per Diem' },
 ]
-const fmtShort = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '')
-const fmtWeekdayShort = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '')
 
 export default function TravelWorkspace({ eventId, event, tour }) {
   const { role } = useProfile()
@@ -96,52 +94,36 @@ export default function TravelWorkspace({ eventId, event, tour }) {
   }, [people, trips])
 
   const color = tour?.color || 'var(--color-info)'
-  if (!canSee) return <div style={{ fontSize: 15, color: 'var(--text-muted)', padding: 16 }}>You do not have access to travel.</div>
-
-  const shows = event?.saturday_date || event?.sunday_date ? [event.saturday_date, event.sunday_date].filter(Boolean) : []
-  const sub = [
-    event?.venue_name,
-    event?.load_in_date && `Load-In ${fmtWeekdayShort(event.load_in_date)}`,
-    shows.length && `Shows ${shows.map(fmtShort).join(' – ')}`,
-  ].filter(Boolean).join('  ·  ')
+  if (!canSee) return <div style={{ fontSize: 15, color: 'var(--text-muted-legible)', padding: 16 }}>You do not have access to travel.</div>
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <div style={{ border: `2.5px solid ${color}`, borderRadius: 10, background: 'var(--surface-card)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, flexShrink: 0 }}>
-        <div style={{ minWidth: 0 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: 999, background: `color-mix(in srgb, ${color} 14%, transparent)`, color: 'var(--text-primary)' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, border: '1px solid rgba(0,0,0,0.3)' }} />{tour?.name || 'Tour'}
-          </span>
-          <div style={{ fontSize: 24, fontWeight: 700, margin: '6px 0 2px', color: 'var(--text-primary)' }}>{[event?.city, event?.state].filter(Boolean).join(', ') || 'Event'}</div>
-          <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>{sub}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          {[
-            { label: 'Travelers', value: stats.travelers, color: 'var(--text-primary)' },
-            { label: 'Booked', value: stats.booked, color: 'var(--color-success)' },
-            { label: 'Good To Book', value: stats.good, color: 'var(--color-info)' },
-            { label: 'Needs Action', value: stats.action, color: 'var(--color-warning)' },
-          ].map(s => (
-            <div key={s.label} style={{ border: `1px solid ${LINE}`, borderRadius: 6, padding: '6px 12px', minWidth: 104, textAlign: 'center', background: 'var(--surface-card)' }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 11.5, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
+    <div className="travel-workspace" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ border: `2.5px solid ${color}`, borderRadius: 10, background: 'var(--surface-card)', overflow: 'hidden', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', flexShrink: 0 }}>
+        {[
+          { label: 'Travelers', value: stats.travelers, color: 'var(--text-primary)' },
+          { label: 'Booked', value: stats.booked, color: 'var(--color-success)' },
+          { label: 'Good To Book', value: stats.good, color: 'var(--color-info)' },
+          { label: 'Needs Action', value: stats.action, color: 'var(--text-warning-legible)' },
+        ].map((st, i) => (
+          <div key={st.label} style={{ padding: '10px 16px', textAlign: 'center', borderLeft: i ? `1px solid ${LINE}` : 'none' }}>
+            <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, color: st.color }}>{st.value}</div>
+            <div style={{ fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-muted-legible)', fontWeight: 600 }}>{st.label}</div>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0 12px', gap: 12, flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${LINE}`, flex: 1 }}>
           {TABS.map(t => (
             <div key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
-              style={{ padding: '9px 16px', fontSize: 16, fontWeight: 600, cursor: 'pointer', marginBottom: -1, color: tab === t.key ? 'var(--color-info)' : 'var(--text-muted)', borderBottom: `3px solid ${tab === t.key ? 'var(--color-info)' : 'transparent'}` }}>{t.label}</div>
+              style={{ padding: '9px 16px', fontSize: 16, fontWeight: 600, cursor: 'pointer', marginBottom: -1, color: tab === t.key ? 'var(--color-info)' : 'var(--text-muted-legible)', borderBottom: `3px solid ${tab === t.key ? 'var(--color-info)' : 'transparent'}` }}>{t.label}</div>
           ))}
         </div>
         {tab === 'travelers' && canEdit && <button type="button" onClick={() => setModalRequest(n => n + 1)} style={BTN_P}>+ Add Traveler</button>}
       </div>
 
       {error && <div role="alert" style={{ fontSize: 15, color: 'var(--color-danger)', marginBottom: 8 }}>{error}</div>}
-      {loading ? <div style={{ fontSize: 16, color: 'var(--text-muted)' }}>Loading...</div> : (
+      {loading ? <div style={{ fontSize: 16, color: 'var(--text-muted-legible)' }}>Loading...</div> : (
         <>
           {tab === 'travelers' && <TravelersTab eventId={eventId} people={people} tbdRoles={tbdRoles} trips={trips} staffList={staffList} canEdit={canEdit} undoable={undoable} reload={load} modalRequest={modalRequest} onModalHandled={() => setModalRequest(0)} roomedIds={roomedIds} needsByStaff={needsByStaff} suggest={suggest} />}
           {tab === 'roster' && <RosterTab eventId={eventId} people={people} canEdit={canEdit} />}

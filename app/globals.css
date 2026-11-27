@@ -31,6 +31,11 @@
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --text-muted: #999999;
+  /* Legible secondary text (4.5:1 or better on cards, tables and the page) and legible warning / purple text, used by the travel workspace */
+  --text-muted-legible: #666666;
+  --text-warning-legible: #8a5a00;
+  --text-purple-legible: #6d3fc4;
+  --text-on-info: #ffffff;
   --text-disabled: #cccccc;
 
   /* Brand */
@@ -110,6 +115,10 @@
   --text-primary: #f2f2f2;
   --text-secondary: #a8a8a8;
   --text-muted: #707070;
+  --text-muted-legible: #a0a0a0;
+  --text-warning-legible: #FFD60A;
+  --text-purple-legible: #c084fc;
+  --text-on-info: #06101f;
   --text-disabled: #333333;
 
   --glass-tile-bg: rgba(0, 0, 0, 0.55);
@@ -481,3 +490,6 @@ html, body {
 .status-dot-btn:focus-visible { outline: 2px solid var(--color-info); outline-offset: 1px; }
 /* touch: 44px hit area overlaps the tile padding (negative margin) instead of making the tile taller */
 @media (pointer: coarse) { .status-dot-btn { min-width: 44px; min-height: 44px; margin: -10px -6px; } }
+
+/* Travel workspace: placeholders must be as readable as muted text */
+.travel-workspace input::placeholder, .travel-workspace textarea::placeholder, .travel-modal input::placeholder, .travel-modal textarea::placeholder { color: var(--text-muted-legible); opacity: 1; }
