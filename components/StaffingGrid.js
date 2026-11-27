@@ -15,8 +15,9 @@ import StaffingBoard from './staffing/StaffingBoard'
 import SlotsPanel from './staffing/SlotsPanel'
 import MoveDialog, { SwapLayout } from './staffing/MoveDialogs'
 import ReworkPanel from './staffing/ReworkPanel'
-import { bookedTravelRows, releaseTravelRows, travelRowsOf, travelWarning, moveNote, removeNote, UNSUPPORTED_MESSAGE } from '@/lib/travelRework'
-import { takeSnapshot, diffSnapshots, applyUndo } from './staffing/undo'
+import { bookedTravelTrips, releaseTravel, travelWarning, moveNote, removeNote } from '@/lib/travelRework'
+import { resolveRework as resolveTrip, deleteTrip } from '@/lib/travel/trips'
+import useUndoable from './staffing/useUndoable'
 import useStaffingData, { cellKey } from './staffing/useStaffingData'
 import { toYMD, getWeekendGroup, getWeekendDates, fmtWeekend, isPastEvent } from './staffing/weekend'
 import StaffLegend from './staffing/StaffLegend'
@@ -716,37 +717,12 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const tmpSeq = useRef(0) // ids for optimistic rows
 
   // ── UNDO ────────────────────────────────────────────────────────────────
-  // Every change runs through undoable(): it snapshots the rows the change can touch, runs it, snapshots again and, if anything
-  // changed, shows a toast with an Undo button for 5 seconds. See components/staffing/undo.js.
-  const [undoToasts, setUndoToasts] = useState([])
-  const undoSeq = useRef(0)
-  const undoable = async (message, eventIds, fn) => {
-    const sb = getSupabase()
-    const evIds = [...new Set(eventIds.filter(Boolean))]
-    const tourIds = [...new Set(evIds.map(id => eventsById[id]?.tour_id).filter(Boolean))]
-    let before = null
-    try { before = await takeSnapshot(sb, evIds, tourIds) } catch (e) { console.error('undo snapshot failed:', e) }
-    const result = await fn()
-    if (!before) return result
-    try {
-      const after = await takeSnapshot(sb, evIds, tourIds)
-      const ops = diffSnapshots(before, after)
-      if (!ops.empty) {
-        const id = ++undoSeq.current
-        setUndoToasts(prev => [...prev, { id, message, ops }])
-        setTimeout(() => setUndoToasts(prev => prev.filter(t => t.id !== id)), 5000)
-      }
-    } catch (e) { console.error('undo snapshot failed:', e) }
-    return result
-  }
-  const runUndo = async (t) => {
-    setUndoToasts(prev => prev.filter(x => x.id !== t.id))
-    const res = await applyUndo(getSupabase(), t.ops)
-    if (res.ok) showToast('Undone')
-    else quickToast(res.reason)
-    reload()
-  }
-
+  // Every change runs through undoable() (see components/staffing/useUndoable.js).
+  const { undoable, toastElement: undoToastElement } = useUndoable({
+    tourIdsFor: (evIds) => evIds.map(id => eventsById[id]?.tour_id),
+    onUndone: () => reload(),
+    onMessage: (m) => showToast(m),
+  })
 
   // ── WRITE OPERATIONS ─────────────────────────────────────────────────────
 
@@ -881,23 +857,22 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const sameWeekend = (evA, evB) => !!evA && !!evB && !!getWeekendGroup(evA.load_in_date) && getWeekendGroup(evA.load_in_date) === getWeekendGroup(evB.load_in_date)
 
   // ── booked travel (see lib/travelRework.js) ──────────────────────────────
-  // Booked rows (any entered detail) are NEVER deleted here: they are kept and flagged "needs rework". Empty placeholder rows may be removed.
-  const leaveEventTravel = async (supabase, eventId, staffId, note, { deletePlaceholders = true } = {}) => {
-    const res = await releaseTravelRows(supabase, { eventId, staffId, note, deletePlaceholders })
-    if (res.unsupported) quickToast(UNSUPPORTED_MESSAGE, 'info')
-    return res
+  // Entered trips are NEVER deleted here: they are kept and flagged "needs rework". Empty trips are removed.
+  const leaveEventTravel = async (supabase, eventId, staffId, note) => {
+    try { return await releaseTravel(supabase, { eventId, staffId, note }) }
+    catch (e) { console.error('flagging travel failed:', e); quickToast('Booked travel was kept, but it could not be flagged. Please check it.'); return { flagged: 0 } }
   }
   // Flagged travel for one person, grouped by the event they left: [{ eventId, eventLabel, rows }]
   const reworkGroupsFor = (staffId, onlyEventId = null) => (reworkByStaff[staffId] || [])
     .filter(g => !onlyEventId || g.eventId === onlyEventId)
     .map(g => { const ev = eventsById[g.eventId]; return { eventId: g.eventId, eventLabel: ev ? `${ev.city} · ${fmtEventRange(ev)}` : 'Event', rows: g.rows } })
   // Mark resolved (clears the flag) or delete the row. Both undoable.
-  const resolveRework = async (r, dir) => {
-    await undoable('Travel marked resolved', [r.event_id], () => getSupabase().from(dir === 'arrivals' ? 'event_travel_arrivals' : 'event_travel_departures').update({ needs_rework: false, rework_note: null }).eq('id', r.id))
+  const resolveRework = async (r) => {
+    await undoable('Travel marked resolved', [r.event_id], () => resolveTrip(getSupabase(), r.id))
     reload()
   }
-  const deleteRework = async (r, dir) => {
-    await undoable('Travel row deleted', [r.event_id], () => getSupabase().from(dir === 'arrivals' ? 'event_travel_arrivals' : 'event_travel_departures').delete().eq('id', r.id))
+  const deleteRework = async (r) => {
+    await undoable('Travel row deleted', [r.event_id], () => deleteTrip(getSupabase(), r.id))
     reload()
   }
 
@@ -905,7 +880,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const reworkTooltip = (staffId) => {
     const groups = reworkGroupsFor(staffId)
     if (!groups.length) return null
-    const notes = groups.map(g => g.rows[0]?.r.rework_note).filter(Boolean)
+    const notes = groups.map(g => g.rows[0]?.rework_note).filter(Boolean)
     return `Travel Needs Rework${notes.length ? `: ${notes.join('; ')}` : ''}`
   }
 
@@ -913,8 +888,8 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const travelWarningsFor = async (people) => {
     const sb = getSupabase(); const out = []
     for (const { name, event, staffId } of people) {
-      const rows = await bookedTravelRows(sb, event.id, staffId)
-      if (rows.length) out.push(travelWarning(name, event.city, rows))
+      const trips = await bookedTravelTrips(sb, event.id, staffId)
+      if (trips.length) out.push(travelWarning(name, event.city, trips))
     }
     return out
   }
@@ -966,7 +941,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const moveStaffToCell = async (staffId, source, target) => {
     const supabase = getSupabase()
     const crossEvent = source.event.id !== target.event.id
-    const booked = crossEvent ? await bookedTravelRows(supabase, source.event.id, staffId) : []
+    const booked = crossEvent ? await bookedTravelTrips(supabase, source.event.id, staffId) : []
     const needs = booked.length > 0
     const placed = await placeStaffInCell(supabase, { staffId, tpId: target.tp.id, slotIndex: target.slotIndex, eventId: target.event.id, status: needs ? 'needs_attention' : 'confirmed' })
     if (placed.error) {
@@ -993,8 +968,8 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
       return false
     }
     const cross = src.event.id !== tgt.event.id
-    const bookedA = cross ? await bookedTravelRows(supabase, src.event.id, sId) : []
-    const bookedB = cross ? await bookedTravelRows(supabase, tgt.event.id, tId) : []
+    const bookedA = cross ? await bookedTravelTrips(supabase, src.event.id, sId) : []
+    const bookedB = cross ? await bookedTravelTrips(supabase, tgt.event.id, tId) : []
     // each person keeps their own status, except someone who had booked travel on the event they leave: they arrive as Needs Attention
     const tStatus = bookedB.length ? NEEDS : { status: tgt.row.status || 'confirmed', confirmed: !!tgt.row.confirmed } // B's status at A's old cell
     const sStatus = bookedA.length ? NEEDS : { status: src.row.status || 'confirmed', confirmed: !!src.row.confirmed } // A's status at B's old cell
@@ -1031,7 +1006,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
     if (tgt.row.event_id !== tgt.event.id) { quickToast('That assignment is tour-wide and cannot be replaced here. Nothing changed.'); return false }
     const replacedId = tgt.row.staff_id
     const crossEvent = !!source && source.event.id !== tgt.event.id
-    const bookedIn = crossEvent ? await bookedTravelRows(supabase, source.event.id, staffId) : []
+    const bookedIn = crossEvent ? await bookedTravelTrips(supabase, source.event.id, staffId) : []
     const needs = bookedIn.length > 0
     const { error } = await supabase.from('staff_assignments').update({ staff_id: staffId, ...(needs ? NEEDS : { status: 'confirmed', confirmed: true }) }).eq('id', tgt.row.id)
     if (error) { console.error(error); quickToast('Could not replace. Nothing changed.'); return false }
@@ -1041,7 +1016,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
     }
     await confirmStaffMember({ supabase, eventId: tgt.event.id, staffId, confirm: !needs })
     if (crossEvent) await leaveEventTravel(supabase, source.event.id, staffId, moveNote(source.event.city, tgt.event.city))
-    if (replacedId) await leaveEventTravel(supabase, tgt.event.id, replacedId, removeNote(tgt.event.city), { deletePlaceholders: false })
+    if (replacedId) await leaveEventTravel(supabase, tgt.event.id, replacedId, removeNote(tgt.event.city))
     return true
   }
 
@@ -1137,7 +1112,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
     if (src.event.id !== tgt.event.id && !(await guardOrToast(src.row.staff_id, tgt.event.id, [src.row.id], who))) return false
     return undoable(`Unlocked and moved ${who} to ${tgt.event.city || 'the event'}`, [src.event.id, tgt.event.id], async () => {
       const crossEvent = src.event.id !== tgt.event.id
-      const needs = crossEvent && (await bookedTravelRows(supabase, src.event.id, src.row.staff_id)).length > 0
+      const needs = crossEvent && (await bookedTravelTrips(supabase, src.event.id, src.row.staff_id)).length > 0
       const { error } = await supabase.from('staff_assignments').update({ staff_id: src.row.staff_id, ...(needs ? NEEDS : { status: 'confirmed', confirmed: true }), locked: false }).eq('id', tgt.row.id)
       if (error) { console.error(error); quickToast('Could not unlock and move. Nothing changed.'); return false }
       const removed = await clearAssignment(src.tp, src.slotIndex, src.event, src.row)
@@ -1196,7 +1171,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
     const sb = getSupabase(); let ok = 0, failed = 0
     for (const it of items) {
       const done = await clearAssignment(it.tp, it.slotIndex, it.event, it.assignment)
-      if (done) { ok++; await leaveEventTravel(sb, it.event.id, it.assignment.staff_id, removeNote(it.event.city), { deletePlaceholders: false }) } else failed++
+      if (done) { ok++; await leaveEventTravel(sb, it.event.id, it.assignment.staff_id, removeNote(it.event.city)) } else failed++
     }
     return { ok, failed }
   })
@@ -1316,7 +1291,6 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
       const travel = await travelWarningsFor([{ name: who, event: srcEv, staffId: incomingStaff.id }])
       const notes = [`Leaves ${oldLabel} open on ${srcEv.city}.`]
       if (travel.length) notes.push(flaggedNote(srcEv.city), `${who} arrives as Needs Attention.`)
-      else if ((await travelRowsOf(supabase, c.event_id, incomingStaff.id)).length) notes.push(`Travel rows for ${srcEv.city} will be removed.`) // only empty placeholders: as before
       setMoveDialog({
         kind: 'move', title: `Move ${who} from ${srcEv.city} to ${targetEvent.city}?`, primary: 'Move',
         from: { name: who, position: oldLabel, event: eventInfo(srcEv) },
@@ -1330,7 +1304,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
           if (!srcRow || srcRow.staff_id !== incomingStaff.id) { quickToast('Their other assignment changed. Nothing changed.'); reload(); return }
           await undoable(`Moved ${who} from ${srcEv.city} to ${targetEvent.city}`, [targetEventId, c.event_id], async () => {
             // target first, original removed only after that succeeded
-            const needs = (await bookedTravelRows(supabase, c.event_id, incomingStaff.id)).length > 0
+            const needs = (await bookedTravelTrips(supabase, c.event_id, incomingStaff.id)).length > 0
             const placed = await placeStaffInCell(supabase, { staffId: incomingStaff.id, tpId: targetTp.id, slotIndex: targetSlotIndex, eventId: targetEventId, status: needs ? 'needs_attention' : 'confirmed' })
             if (placed.error) { quickToast(`Could not move: ${placed.error.message || 'cell not available'}. Nothing changed.`); return }
             await confirmStaffMember({ supabase, eventId: targetEventId, staffId: incomingStaff.id, confirm: !needs })
@@ -1831,7 +1805,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
   const reworkPerEvent = Object.fromEntries(visibleEvents.map(ev => [ev.id, ghostsByEvent[ev.id] || []]).filter(([, g]) => g.length))
   const reworkSection = Object.keys(reworkPerEvent).length ? { name: 'Travel Needs Rework', label: 'Left The Event', perEvent: reworkPerEvent } : null
   const renderGhost = (g, ev) => {
-    const note = g.rows[0]?.r.rework_note
+    const note = g.rows[0]?.rework_note
     return <GhostTile key={g.staffId} name={staffDisplayName(g.staff) || 'Staff'} reason={`Travel Needs Rework${note ? `: ${note}` : ''}`} onClick={() => setReworkFor({ staffId: g.staffId, eventId: ev.id })} />
   }
   // "+ Slots": pick an event first, then any position that event's tour has
@@ -2099,17 +2073,7 @@ export default function StaffingGrid({ tourId, year, searchQuery = '' }) {
         />
       )}
 
-      {undoToasts.length > 0 && typeof document !== 'undefined' && ReactDOM.createPortal(
-        <div role="status" aria-live="polite" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: Z_TOAST, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-          {undoToasts.map(t => (
-            <div key={t.id} data-undo-toast="" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface-card)', color: 'var(--text-primary)', border: '1.5px solid var(--tile-trim)', borderRadius: 10, padding: '8px 10px 8px 16px', fontSize: 14, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.35)', fontFamily: 'inherit', maxWidth: 'calc(100vw - 32px)' }}>
-              <span>{t.message}</span>
-              <button type="button" onClick={() => runUndo(t)} style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '5px 12px', borderRadius: 7, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer' }}>Undo</button>
-            </div>
-          ))}
-        </div>,
-        document.body
-      )}
+      {undoToastElement}
 
       {toast && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', zIndex: Z_TOAST, background: '#33FF99', color: '#0a1628', borderRadius: 10, padding: '10px 20px', fontSize: 15, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
