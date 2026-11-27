@@ -20,18 +20,18 @@ export function TableShell({ cols, minWidth = 900, children, tableRef }) {
   )
 }
 
-export function BodyRow({ cols, row, onClick, hover = true }) {
+export function BodyRow({ cols, row, onClick, hover = true, rowProps = {}, rowStyle = {} }) {
   return (
-    <tr onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}
+    <tr {...rowProps} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', ...rowStyle }}
       onMouseEnter={hover ? (e => { e.currentTarget.style.background = 'var(--glass-tile-hover)' }) : undefined} onMouseLeave={hover ? (e => { e.currentTarget.style.background = 'transparent' }) : undefined}>
       {cols.map(c => <td key={c.key} data-col={c.key} style={tdStyle(c)}>{c.render(row)}</td>)}
     </tr>
   )
 }
 
-export function GroupRow({ cols, children, right }) {
+export function GroupRow({ cols, children, right, rowProps = {}, rowStyle = {}, onClick }) {
   return (
-    <tr><td colSpan={cols.length} style={{ ...SMALL_LABEL, fontSize: FS.header, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>
+    <tr {...rowProps} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', ...rowStyle }}><td colSpan={cols.length} style={{ ...SMALL_LABEL, fontSize: FS.header, padding: '6px 10px', background: 'color-mix(in srgb, var(--color-info) 6%, transparent)', borderBottom: `1px solid ${LINE}`, color: 'var(--color-info)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{children}</span>{right ? <span>{right}</span> : null}</div>
     </td></tr>
   )

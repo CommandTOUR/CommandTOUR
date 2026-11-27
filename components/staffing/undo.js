@@ -28,10 +28,11 @@ const byId = (rows) => new Map(rows.map(r => [r.id, r]))
 export async function takeSnapshot(supabase, eventIds, tourIds) {
   const ev = [...new Set(eventIds)]
   const tours = [...new Set(tourIds)]
-  const [assignments, trips, travelers, tourPositions] = await Promise.all([
+  const [assignments, trips, travelers, rooms, tourPositions] = await Promise.all([
     ev.length ? fetchAll(() => supabase.from('staff_assignments').select('*').in('event_id', ev)) : [],
     ev.length ? fetchAll(() => supabase.from('trips').select('*').in('event_id', ev)) : [],
     ev.length ? fetchAll(() => supabase.from('event_travelers').select('*').in('event_id', ev)) : [],
+    ev.length ? fetchAll(() => supabase.from('event_hotel_rooms').select('*').in('event_id', ev)) : [],
     tours.length ? fetchAll(() => supabase.from('tour_positions').select('*').in('tour_id', tours)) : [],
   ])
   const tripIds = trips.map(t => t.id)
@@ -41,7 +42,7 @@ export async function takeSnapshot(supabase, eventIds, tourIds) {
     segments.push(...await fetchAll(() => supabase.from('trip_segments').select('*').in('trip_id', chunk)))
     costs.push(...await fetchAll(() => supabase.from('trip_costs').select('*').in('trip_id', chunk)))
   }
-  return { assignments: byId(assignments), trips: byId(trips), segments: byId(segments), costs: byId(costs), travelers: byId(travelers), tourPositions: byId(tourPositions) }
+  return { assignments: byId(assignments), trips: byId(trips), segments: byId(segments), costs: byId(costs), travelers: byId(travelers), rooms: byId(rooms), tourPositions: byId(tourPositions) }
 }
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -63,6 +64,7 @@ export function diffSnapshots(before, after) {
     segments: diffTable(before.segments, after.segments),
     costs: diffTable(before.costs, after.costs),
     travelers: diffTable(before.travelers, after.travelers),
+    rooms: diffTable(before.rooms, after.rooms),
     tourPositions: diffTable(before.tourPositions, after.tourPositions),
   }
   ops.empty = Object.values(ops).every(t => !t.created.length && !t.deleted.length && !t.changed.length)
@@ -105,6 +107,9 @@ export async function applyUndo(supabase, ops) {
   for (const r of ops.travelers.deleted) await run('traveler', supabase.from('event_travelers').insert([r]))
   for (const c of ops.travelers.changed) await run('traveler', supabase.from('event_travelers').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
   if (ops.travelers.created.length) await run('traveler', supabase.from('event_travelers').delete().in('id', ops.travelers.created.map(r => r.id)))
+  for (const r of ops.rooms.deleted) await run('room', supabase.from('event_hotel_rooms').insert([r]))
+  for (const c of ops.rooms.changed) await run('room', supabase.from('event_hotel_rooms').update(withoutKeys(c.before, ['id', 'created_at'])).eq('id', c.before.id))
+  if (ops.rooms.created.length) await run('room', supabase.from('event_hotel_rooms').delete().in('id', ops.rooms.created.map(r => r.id)))
   if (ops.trips.created.length) await run('trip', supabase.from('trips').delete().in('id', ops.trips.created.map(r => r.id)))
   if (A.created.length) await run('assignment', supabase.from('staff_assignments').delete().in('id', A.created.map(r => r.id)))
   if (ops.tourPositions.created.length) await run('tour position', supabase.from('tour_positions').delete().in('id', ops.tourPositions.created.map(r => r.id)))
