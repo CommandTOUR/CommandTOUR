@@ -26,7 +26,10 @@ import {
   IconFolder,
   IconTicket,
   IconMapPin,
+  IconDownload,
+  IconLoader2,
 } from '@tabler/icons-react'
+import { quickToast } from '@/lib/quickToast'
 
 const GLASS = {
   background: 'var(--glass-tile-bg)',
@@ -279,6 +282,7 @@ export default function EventPage() {
   const [venue, setVenue] = useState(null)
   const [venueContacts, setVenueContacts] = useState([])
   const [venueModal, setVenueModal] = useState(false)
+  const [exportingPacket, setExportingPacket] = useState(false)
   const [venuePatch, setVenuePatch] = useState(null)
   const [venueSaving, setVenueSaving] = useState(false)
   const [venueError, setVenueError] = useState('')
@@ -646,6 +650,39 @@ export default function EventPage() {
     fetchAssignedStaff()
   }
 
+  const handleExportPacket = async () => {
+    if (exportingPacket) return
+    setExportingPacket(true)
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const res = await fetch(`/api/event-packet/${eventId}?tz=${encodeURIComponent(tz)}`)
+      // A redirect to /login (expired session) comes back as 200 HTML, so check the content type too
+      if (!res.ok || !(res.headers.get('Content-Type') || '').includes('zip')) {
+        let msg = res.redirected ? 'Your session expired. Sign in again.' : 'Could not build the event packet'
+        if (!res.redirected) { try { msg = (await res.json()).error || msg } catch {} }
+        throw new Error(msg)
+      }
+      const disposition = res.headers.get('Content-Disposition') || ''
+      const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition)
+      const fileName = star ? decodeURIComponent(star[1]) : 'Event Packet.zip'
+      let missing = []
+      try { missing = JSON.parse(decodeURIComponent(res.headers.get('X-Packet-Missing') || '[]')) } catch {}
+      const url = URL.createObjectURL(await res.blob())
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10000)
+      quickToast(missing.length ? `Packet downloaded. Missing: ${missing.join(', ')}.` : 'Packet downloaded. Nothing missing.', 'info')
+    } catch (e) {
+      quickToast(`Export failed: ${e.message}`)
+    } finally {
+      setExportingPacket(false)
+    }
+  }
+
   const handleDeleteEvent = async () => {
     if (!confirm('Delete this event and all its shows? This cannot be undone.')) return
     const supabase = getSupabase()
@@ -797,6 +834,16 @@ export default function EventPage() {
                 style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: 'pointer' }}
               >
                 {event.venue_name ? 'Change venue' : 'Add venue'}
+              </button>
+              <button
+                onClick={handleExportPacket}
+                disabled={exportingPacket}
+                style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-info)', background: 'transparent', color: 'var(--color-info)', cursor: exportingPacket ? 'default' : 'pointer', opacity: exportingPacket ? 0.7 : 1, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                {exportingPacket
+                  ? <IconLoader2 size={16} stroke={1.75} style={{ animation: 'spin 0.8s linear infinite' }} />
+                  : <IconDownload size={16} stroke={1.75} />}
+                {exportingPacket ? 'Building packet...' : 'Export Event Packet'}
               </button>
               <button onClick={handleDeleteEvent} style={{ fontSize: 15, padding: '7px 14px', borderRadius: 8, border: '0.5px solid var(--color-danger)', background: 'transparent', color: 'var(--color-danger)', cursor: 'pointer' }}>
                 Delete Event
