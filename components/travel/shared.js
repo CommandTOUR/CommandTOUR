@@ -1,3 +1,7 @@
+'use client'
+
+import { useEffect as useEffectInline, useState as useStateInline } from 'react'
+import MoneyInput, { formatMoneyInput } from '@/components/MoneyInput'
 // Shared look and helpers for the Travel Workspace. Structure, proportions and spacing follow docs/mockups/travel-workspace.html;
 // colors and type come from the app's own tokens.
 export const FONT = "var(--font-dm-sans), 'DM Sans', system-ui, sans-serif"
@@ -57,5 +61,30 @@ export function Check({ checked, onChange, disabled, label }) {
         {checked && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="var(--color-success)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
       </div>
     </div>
+  )
+}
+
+// A text field that looks like a cell and saves when you leave it (only if the value changed)
+export function InlineInput({ value, onSave, placeholder = '—', disabled, type = 'text', style, ariaLabel }) {
+  const [v, setV] = useStateInline(value ?? '')
+  useEffectInline(() => { setV(value ?? '') }, [value])
+  return (
+    <input type={type} aria-label={ariaLabel} value={v} disabled={disabled} placeholder={placeholder}
+      onChange={e => setV(e.target.value)}
+      onBlur={() => { if (String(v) !== String(value ?? '')) onSave(v) }}
+      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+      style={{ fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', ...style }} />
+  )
+}
+
+// A dollar field that looks like a cell and saves (formatted, e.g. "450.00") when you leave it, only if it changed
+export function InlineMoney({ value, onSave, disabled, ariaLabel }) {
+  const shown = value === null || value === undefined || value === '' ? '' : formatMoneyInput(value)
+  const [v, setV] = useStateInline(shown)
+  useEffectInline(() => { setV(shown) }, [shown])
+  return (
+    <MoneyInput aria-label={ariaLabel} disabled={disabled} value={v} onChange={setV} prefixLeft={6}
+      inputStyle={{ fontFamily: 'inherit', fontSize: 15, width: '100%', boxSizing: 'border-box', padding: '4px 8px', border: `1px solid ${LINE}`, borderRadius: 6, background: 'var(--surface-card)', color: 'var(--text-primary)', outline: 'none', textAlign: 'right' }}
+      onBlur={(e, f) => { if (f !== shown) onSave(f) }} />
   )
 }
