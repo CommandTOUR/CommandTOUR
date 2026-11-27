@@ -4,15 +4,15 @@
 //   cols: [{ key, label, width (percent), align: 'left' | 'center' | 'right', render(row) }]
 import { LINE, SMALL_LABEL, CARD, FS } from './shared'
 
-const CELL_PAD = '8px 8px'
+const CELL_PAD = 'var(--cell-pad, 8px 8px)'
 export const thStyle = (col) => ({ ...SMALL_LABEL, textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, background: 'var(--surface-raised)', position: 'sticky', top: 0, zIndex: 2, whiteSpace: 'normal', overflowWrap: 'normal', lineHeight: 1.25, verticalAlign: 'bottom', boxSizing: 'border-box' })
 export const tdStyle = (col) => ({ textAlign: col.align || 'left', padding: CELL_PAD, borderBottom: `1px solid ${LINE}`, verticalAlign: 'middle', fontSize: FS.body, color: 'var(--text-primary)', boxSizing: 'border-box', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: col.wrap ? 'normal' : 'nowrap' })
 
 // A card tile with its own scroll container; the header row stays locked while the body scrolls (same pattern as the staffing grid).
 // Short tables shrink to fit. minWidth is only for tables that cannot be narrower.
-export function TableShell({ cols, minWidth = 0, children, tableRef, maxHeight = 'calc(100vh - 260px)' }) {
+export function TableShell({ cols, minWidth = 0, children, tableRef, maxHeight = 'calc(100vh - 260px)', compact = false }) {
   return (
-    <div data-table-card="" style={{ ...CARD, overflow: 'auto', flexShrink: 0, maxHeight }}>
+    <div data-table-card="" style={{ ...CARD, overflow: 'auto', flexShrink: 0, maxHeight, ...(compact ? { '--cell-pad': '8px 5px' } : {}) }}>
       <table ref={tableRef} style={{ borderCollapse: 'separate', borderSpacing: 0, width: '100%', tableLayout: 'fixed', minWidth: minWidth || undefined }}>
         <colgroup>{cols.map(c => <col key={c.key} style={{ width: `${c.width}%` }} />)}</colgroup>
         <thead><tr>{cols.map(c => <th key={c.key} data-col={c.key} style={thStyle(c)}>{c.label}</th>)}</tr></thead>

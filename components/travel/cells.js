@@ -90,9 +90,9 @@ export function PickText({ value, options, onPick, disabled, placeholder = '—'
 }
 
 // Plain text that moves to the next value each click (Type, Parking)
-export function CycleText({ value, values, onChange, disabled, format = (v) => v, title = 'Click To Change' }) {
+export function CycleText({ value, values, onChange, disabled, format = (v) => v, title = 'Click To Change', ariaLabel }) {
   const i = Math.max(0, values.indexOf(value))
-  return <button type="button" className="plain-text-btn" title={disabled ? undefined : title} disabled={disabled} onClick={() => onChange(values[(i + 1) % values.length])} style={{ cursor: disabled ? 'default' : 'pointer' }}>{format(values.includes(value) ? value : values[0])}</button>
+  return <button type="button" className="plain-text-btn" aria-label={ariaLabel} title={disabled ? undefined : title} disabled={disabled} onClick={() => onChange(values[(i + 1) % values.length])} style={{ cursor: disabled ? 'default' : 'pointer' }}>{format(values.includes(value) ? value : values[0])}</button>
 }
 
 // ── date picker ─────────────────────────────────────────────────────────

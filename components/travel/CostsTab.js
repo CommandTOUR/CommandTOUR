@@ -12,6 +12,7 @@ import { COST_CATEGORIES, isLive, updateTripCost } from '@/lib/travel/trips'
 import { updateRentalCar } from '@/lib/travel/ground'
 import { saveBudget } from '@/lib/travel/budget'
 import { TableShell, BodyRow, ExpandRow, EmptyRow } from './DataTable'
+import { Chevron } from './cells'
 import { FS, LINE, SMALL_LABEL, CARD, BTN_S, InlineInput, InlineMoney, personName, money } from './shared'
 
 const muted = { color: 'var(--text-muted-legible)' }
@@ -75,10 +76,10 @@ export default function CostsTab({ eventId, event, data, canEdit, reload, openTa
 
   const cols = [
     { key: 'label', label: 'Category', width: 44, wrap: true, render: x => {
-      if (x.kind === 'cat') return <button type="button" onClick={() => toggle(x.key)} style={{ ...textBtn, color: 'var(--text-primary)', fontSize: FS.body, display: 'flex', gap: 8, alignItems: 'center' }}><span style={muted}>{open[x.key] ? '▾' : '▸'}</span><b>{x.label}</b></button>
+      if (x.kind === 'cat') return <button type="button" onClick={() => toggle(x.key)} style={{ ...textBtn, color: 'var(--text-primary)', fontSize: FS.body, display: 'flex', gap: 8, alignItems: 'center' }}><Chevron open={!!open[x.key]} /><b>{x.label}</b></button>
       if (x.kind === 'cost') return <div style={indent(2)}><span style={{ ...muted, whiteSpace: 'nowrap' }}>{nameOf(x.line.trip.staff_id, x.line.trip.staff)} · {catLabel(x.line.category)}</span><InlineInput ariaLabel="Note" disabled={!canEdit} value={x.line.note} placeholder="Note" onSave={v => save(() => updateTripCost(getSupabase(), x.line.id, { note: v }))} /></div>
       if (x.kind === 'rental') return <div style={indent(2)}><span style={{ whiteSpace: 'nowrap' }}>Rental Car · {x.car.vendor || 'No Vendor'}</span><span style={muted}>{x.car.staff_id ? nameOf(x.car.staff_id) : 'No Driver'}</span></div>
-      if (x.kind === 'hgroup') return <button type="button" onClick={() => toggle(x.key)} style={{ ...textBtn, color: 'var(--text-primary)', fontSize: FS.body, paddingLeft: 18, display: 'flex', gap: 8, alignItems: 'center' }}><span style={muted}>{open[x.key] ? '▾' : '▸'}</span>{x.group.group || 'No Cost Group'}<span style={muted}> · {x.group.count} {x.group.count === 1 ? 'Room' : 'Rooms'} · {x.group.nights} Nights</span></button>
+      if (x.kind === 'hgroup') return <button type="button" onClick={() => toggle(x.key)} style={{ ...textBtn, color: 'var(--text-primary)', fontSize: FS.body, paddingLeft: 18, display: 'flex', gap: 8, alignItems: 'center' }}><Chevron open={!!open[x.key]} />{x.group.group || 'No Cost Group'}<span style={muted}> · {x.group.count} {x.group.count === 1 ? 'Room' : 'Rooms'} · {x.group.nights} Nights</span></button>
       if (x.kind === 'room') return <div style={indent(4)}><span>{guestLabel(x.info)}</span><span style={muted}>· {x.data.nights} Nights</span>{canEdit && <button type="button" onClick={() => openTab?.('hotel')} style={textBtn}>Edit In Hotel</button>}</div>
       if (x.kind === 'pd') return <div style={indent(2)}><span>{nameOf(x.row.staff_id)}</span><span style={muted}>· {roleOf(x.row.staff_id)}</span>{canEdit && <button type="button" onClick={() => openTab?.('perdiem')} style={textBtn}>Edit In Per Diem</button>}</div>
       return null
@@ -116,7 +117,7 @@ export default function CostsTab({ eventId, event, data, canEdit, reload, openTa
     { key: 'role', label: 'Role', width: 22, render: r => roleOf(r.staff_id) },
     { key: 'budget', label: 'Budget', width: 16, align: 'right', render: r => money(r.estimated) },
     { key: 'actual', label: 'Actual', width: 16, align: 'right', render: r => (r.actual === null ? <span style={muted}>—</span> : money(r.actual)) },
-    { key: 'chev', label: '', width: 16, align: 'right', render: r => <span style={muted}>{openTraveler[r.staff_id] ? '▴' : '▾'}</span> },
+    { key: 'chev', label: '', width: 16, align: 'right', render: r => <span style={{ display: 'inline-flex' }}><Chevron open={!!openTraveler[r.staff_id]} /></span> },
   ]
 
   return (

@@ -190,15 +190,15 @@ export default function TravelersTab({ eventId, data, canEdit, undoable, reload,
   const showIn = dir !== 'out', showOut = dir !== 'in'
   const both = showIn && showOut
   const cols = [
-    { key: 'role', label: 'Role', width: 11, wrap: true, render: p => p.role },
-    { key: 'name', label: 'Name', width: 16, wrap: true, render: p => (p.tbd ? <span style={{ ...link, fontStyle: 'italic', fontWeight: 600 }}>TBD</span> : <b>{personName(p.staff)}</b>) },
-    { key: 'mode', label: 'Mode', width: 6, render: p => <ModeIcons toMode={p.inT?.mode} fromMode={p.outT?.mode} /> },
+    { key: 'role', label: 'Role', width: 10, wrap: true, render: p => p.role },
+    { key: 'name', label: 'Name', width: 18, wrap: true, render: p => (p.tbd ? <span style={{ ...link, fontStyle: 'italic', fontWeight: 600 }}>TBD</span> : <b>{personName(p.staff)}</b>) },
+    { key: 'mode', label: 'Mode', width: 5, render: p => <ModeIcons toMode={p.inT?.mode} fromMode={p.outT?.mode} /> },
     { key: 'status', label: 'Status', width: 11, render: p => <div onClick={e => e.stopPropagation()}><StatusMenu canEdit={canEdit} enabled={p.list.length > 0} status={p.status} onChange={(st) => setStatuses(p, st)} /></div> },
     ...(showIn ? [{ key: 'in', label: 'Inbound · Final Arrival', width: both ? 17 : 34, wrap: true, render: p => <Leg trip={p.inT} /> }] : []),
     ...(showOut ? [{ key: 'out', label: 'Outbound · First Departure', width: both ? 17 : 34, wrap: true, render: p => <Leg trip={p.outT} /> }] : []),
     { key: 'room', label: 'Room', width: 5, align: 'center', render: box('needs_room', 'Room') },
     { key: 'perdiem', label: 'Per Diem', width: 6, align: 'center', render: box('per_diem_eligible', 'Per Diem') },
-    { key: 'rental', label: 'Rental', width: 5, align: 'center', render: box('needs_rental', 'Rental') },
+    { key: 'rental', label: 'Rental', width: 7, align: 'center', render: box('needs_rental', 'Rental') },
     { key: 'chev', label: '', width: 4, align: 'center', render: p => (p.tbd ? '' : <span style={{ display: 'inline-flex' }}><Chevron open={!!expanded[p.key]} /></span>) },
   ]
 

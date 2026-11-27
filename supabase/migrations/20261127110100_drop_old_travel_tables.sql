@@ -19,3 +19,6 @@ alter table public.event_hotel_rooms
   drop column if exists staff_id,
   drop column if exists hotel_id,
   drop column if exists beds;
+
+-- The per-room rate override was removed from the Hotel tab (the rate comes from the room type).
+alter table public.event_hotel_rooms drop column if exists rate_override;

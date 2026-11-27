@@ -56,7 +56,7 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
   const byStaff = (id) => travelers.find(t => t.staff_id === id)
 
   const cols = [
-    { key: 'name', label: 'Name', width: 20, wrap: true, render: r => (<div style={{ lineHeight: 1.3 }}><b>{nameOf(r.staff_id)}</b><div style={{ fontSize: FS.small, ...muted }}>{roleOf(r.staff_id)}</div>{r.estimated && <Chip tone="yellow">Estimated From Event Dates</Chip>}</div>) },
+    { key: 'name', label: 'Name', width: 20, wrap: true, render: r => (<div style={{ lineHeight: 1.3 }}><b>{nameOf(r.staff_id)}</b><div style={{ fontSize: FS.small, ...muted }}>{roleOf(r.staff_id)}</div>{r.estimated && <div style={{ fontSize: FS.header, fontStyle: 'italic', ...muted }}>Estimated From Event Dates</div>}</div>) },
     { key: 'start', label: 'Travel Start', width: 14, render: r => stamp(r.start) },
     { key: 'end', label: 'Travel End', width: 14, render: r => stamp(r.end) },
     { key: 'strip', label: 'Day-By-Day', width: 34, wrap: true, render: r => (
@@ -67,9 +67,7 @@ export default function PerDiemTab({ eventId, event, data, canEdit, reload }) {
             <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               {MEALS.map(m => (
                 <span key={m} title={`${MEAL_LABEL[m]}: ${d.meals[m].provided ? 'Provided By The Venue' : d.meals[m].owed ? 'Owed' : 'Not Owed'}`}
-                  style={{ fontSize: FS.header, fontWeight: 700, width: 14, height: 18, lineHeight: '18px', borderRadius: 3, textAlign: 'center', boxSizing: 'border-box',
-                    background: d.meals[m].owed ? 'color-mix(in srgb, var(--color-success) 22%, transparent)' : 'transparent', color: d.meals[m].owed ? 'var(--text-primary)' : 'var(--text-muted-legible)',
-                    border: `1px solid ${d.meals[m].owed ? 'var(--color-success)' : LINE}`, textDecoration: d.meals[m].provided ? 'line-through' : 'none' }}>{LETTER[m]}</span>
+                  style={{ fontSize: FS.small, fontWeight: d.meals[m].owed ? 700 : 400, width: 12, textAlign: 'center', color: d.meals[m].owed ? 'var(--color-success)' : 'var(--text-muted-legible)', textDecoration: d.meals[m].provided ? 'line-through' : 'none' }}>{LETTER[m]}</span>
               ))}
             </div>
           </div>
