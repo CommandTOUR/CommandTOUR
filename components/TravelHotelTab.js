@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { getSupabase } from '../lib/supabase'
+import { listTripsForEvent, isLive, tripDate } from '../lib/travel/trips'
 import { IconAlertTriangle, IconAlertTriangleFilled } from '@tabler/icons-react'
 
 const GLASS = { background: 'var(--glass-tile-bg)', backdropFilter: 'blur(12px) saturate(1.4)', border: 'var(--tile-border)', borderRadius: 'var(--tile-radius)', boxShadow: 'var(--glass-tile-shadow)' }
@@ -20,14 +21,6 @@ const SYSTEM_INPUT = { fontSize: 16, padding: '9px 12px', borderRadius: 8, borde
 
 const SYSTEM_SELECT = { fontSize: 14, padding: '3px 6px', borderRadius: 5, border: '0.5px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-secondary)', outline: 'none', cursor: 'pointer', width: '100%', appearance: 'none', WebkitAppearance: 'none' }
 
-const TRAVEL_TYPE_STYLES = {
-  flight:  { label: 'Flight',  bg: 'rgba(26,86,219,0.12)',  color: 'var(--color-info)',    border: '0.5px solid rgba(26,86,219,0.35)' },
-  train:   { label: 'Train',   bg: 'rgba(0,208,132,0.12)',  color: 'var(--color-success)', border: '0.5px solid rgba(0,208,132,0.35)' },
-  bus:     { label: 'Bus',     bg: 'rgba(255,184,0,0.12)',  color: 'var(--color-warning)', border: '0.5px solid rgba(255,184,0,0.35)' },
-  driving: { label: 'Driving', bg: 'rgba(168,85,247,0.12)', color: '#A855F7',              border: '0.5px solid rgba(168,85,247,0.35)' },
-}
-
-const TRAVEL_GRID = '1.2fr 0.7fr 0.7fr 1fr 0.8fr 0.7fr 1fr 1fr 60px'
 const TRAVEL_CELL = { display: 'flex', alignItems: 'center', overflow: 'hidden' }
 const TRAVEL_HEADER_CELL = { fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-info)' }
 
@@ -165,61 +158,6 @@ function WarningTriangle() {
   )
 }
 
-function TravelTypeDropdown({ value, onChange }) {
-  const current = value || ''
-  const style = current && TRAVEL_TYPE_STYLES[current]
-    ? TRAVEL_TYPE_STYLES[current]
-    : { label: 'N/A', bg: 'rgba(100,116,139,0.10)', color: 'var(--text-muted)', border: '0.5px solid var(--border-default)' }
-  return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        padding: '3px 10px', borderRadius: 20,
-        fontSize: 13, fontWeight: 600, letterSpacing: '0.03em',
-        background: style.bg, color: style.color, border: style.border,
-        userSelect: 'none', whiteSpace: 'nowrap', pointerEvents: 'none',
-      }}>
-        {style.label}
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 5, flexShrink: 0, opacity: 0.8 }}>
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-      <select
-        value={current}
-        onChange={e => onChange(e.target.value)}
-        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-      >
-        <option value="">N/A</option>
-        <option value="flight">Flight</option>
-        <option value="train">Train</option>
-        <option value="bus">Bus</option>
-        <option value="driving">Driving</option>
-      </select>
-    </div>
-  )
-}
-
-function TravelTableHeader({ sortField, sortDir, onSort, type, onQuickSort }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', padding: '14px 12px 0', alignItems: 'center' }}>
-      <div style={TRAVEL_HEADER_CELL}>Name</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center' }}>Travel Type</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('travel_date')}>Date {sortField === 'travel_date' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('airline')}>Airline / Op {sortField === 'airline' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('flight_number')}>Flight / Route # {sortField === 'flight_number' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort(type === 'arrival' ? 'arrival_time' : 'departure_time')}>Time {sortField === (type === 'arrival' ? 'arrival_time' : 'departure_time') ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('airport')}>Airport / Station {sortField === 'airport' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ ...TRAVEL_HEADER_CELL, textAlign: 'center', cursor: 'pointer' }} onClick={() => onSort('transport')}>Transport {sortField === 'transport' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</div>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <button
-          onClick={onQuickSort}
-          style={{ fontSize: 13, fontWeight: 700, padding: '3px 8px', borderRadius: 5, border: 'none', background: '#FFD60A', color: '#0a1628', cursor: 'pointer', whiteSpace: 'nowrap' }}
-        >Quick Sort</button>
-      </div>
-    </div>
-  )
-}
-
 function RateField({ label, value }) {
   return (
     <div>
@@ -234,27 +172,15 @@ function FieldDivider() {
 }
 
 export default function TravelHotelTab({ eventId, event, initialTab }) {
-  const [arrivals, setArrivals] = useState([])
-  const [departures, setDepartures] = useState([])
+  const [arrivals, setArrivals] = useState([]) // [{ staff_id, travel_date }] from trips to the event (used for room dates)
+  const [departures, setDepartures] = useState([]) // from trips out of the event
   const [hotel, setHotel] = useState(null)
   const [rooms, setRooms] = useState([])
   const [tour, setTour] = useState(null)
   const [confirmedStaff, setConfirmedStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const fetchIdRef = useRef(0)
-  const travelTab = initialTab || 'arrivals'
-  const [arrivalSort, setArrivalSort] = useState(() => {
-    try { const s = localStorage.getItem(`arrival_sort_${eventId}`); return s ? JSON.parse(s) : { field: 'travel_date', dir: 'asc' } } catch { return { field: 'travel_date', dir: 'asc' } }
-  })
-  const [departureSort, setDepartureSort] = useState(() => {
-    try { const s = localStorage.getItem(`departure_sort_${eventId}`); return s ? JSON.parse(s) : { field: 'travel_date', dir: 'asc' } } catch { return { field: 'travel_date', dir: 'asc' } }
-  })
-  const [arrivalSorted, setArrivalSorted] = useState(() => {
-    try { return !!localStorage.getItem(`arrival_sort_${eventId}`) } catch { return false }
-  })
-  const [departureSorted, setDepartureSorted] = useState(() => {
-    try { return !!localStorage.getItem(`departure_sort_${eventId}`) } catch { return false }
-  })
+  const travelTab = initialTab || 'hotel'
   const [roomStaffPicker, setRoomStaffPicker] = useState(null)
   const [editingHotel, setEditingHotel] = useState(false)
   const [hotelForm, setHotelForm] = useState({ hotel_name: '', address: '', check_in_date: '', check_out_date: '', notes: '' })
@@ -264,8 +190,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
   const [perDiemMeals, setPerDiemMeals] = useState([])
   const [showRatesModal, setShowRatesModal] = useState(false)
   const [ratesForm, setRatesForm] = useState({ breakfast_rate: '', lunch_rate: '', dinner_rate: '' })
-  const [displayArrivals, setDisplayArrivals] = useState([])
-  const [displayDepartures, setDisplayDepartures] = useState([])
   const [rentalCars, setRentalCars] = useState([])
   const [staffTravelEntries, setStaffTravelEntries] = useState([])
   const [editingRental, setEditingRental] = useState(null) // null | 'new' | row object
@@ -288,9 +212,8 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     const fetchId = ++fetchIdRef.current
     const supabase = getSupabase()
     try {
-    const [arrRes, depRes, hotelRes, roomsRes] = await Promise.all([
-      supabase.from('event_travel_arrivals').select('*, staff(first_name, last_name)').eq('event_id', eventId),
-      supabase.from('event_travel_departures').select('*, staff(first_name, last_name)').eq('event_id', eventId),
+    const [tripsRes, hotelRes, roomsRes] = await Promise.all([
+      listTripsForEvent(supabase, eventId).catch(e => { console.error('Failed to load trips:', e); return [] }),
       supabase.from('event_hotel').select('*').eq('event_id', eventId).maybeSingle(),
       supabase.from('event_hotel_rooms').select('*, s1:staff_id_1(id, first_name, last_name), s2:staff_id_2(id, first_name, last_name)').eq('event_id', eventId),
     ])
@@ -315,85 +238,10 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     const confirmedRows = (staffRes.data || []).filter(r => r.confirmed === true || r.status === 'confirmed')
     const confirmedStaffIds = new Set(confirmedRows.map(r => r.staff_id).filter(Boolean))
 
-    const existingArrivalStaffIds = new Set((arrRes.data || []).map(r => r.staff_id))
-    const missingArrivals = confirmedRows
-      .filter(r => !existingArrivalStaffIds.has(r.staff_id))
-      .map(r => ({
-        id: null,
-        event_id: eventId,
-        staff_id: r.staff_id,
-        staff: r.staff,
-        travel_type: '',
-        travel_date: null,
-        airline: null,
-        flight_number: null,
-        arrival_time: null,
-        airport: null,
-        transport: null,
-        flagged: true,
-        _synthetic: true
-      }))
-    const computedArrivals = [
-      ...(arrRes.data || [])
-        .filter(r => confirmedStaffIds.has(r.staff_id))
-        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
-      ...missingArrivals
-        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
-    ]
-    setArrivals(computedArrivals)
-    const arrivalKey = r => r.id ?? `synthetic-${r.staff_id}`
-    const savedArrivalSort = (() => { try { const s = localStorage.getItem(`arrival_sort_${eventId}`); return s ? JSON.parse(s) : null } catch { return null } })()
-    setDisplayArrivals(prev => {
-      const byKey = new Map(computedArrivals.map(a => [arrivalKey(a), a]))
-      if (prev.length === 0) {
-        return savedArrivalSort ? sortRows(computedArrivals, savedArrivalSort) : computedArrivals
-      }
-      const merged = prev.map(p => byKey.get(arrivalKey(p))).filter(Boolean)
-      const seenKeys = new Set(merged.map(arrivalKey))
-      const added = computedArrivals.filter(a => !seenKeys.has(arrivalKey(a)))
-      const updated = [...merged, ...added]
-      return savedArrivalSort ? sortRows(updated, savedArrivalSort) : updated
-    })
-
-    const existingDepartureStaffIds = new Set((depRes.data || []).map(r => r.staff_id))
-    const missingDepartures = confirmedRows
-      .filter(r => !existingDepartureStaffIds.has(r.staff_id))
-      .map(r => ({
-        id: null,
-        event_id: eventId,
-        staff_id: r.staff_id,
-        staff: r.staff,
-        travel_type: '',
-        travel_date: null,
-        airline: null,
-        flight_number: null,
-        departure_time: null,
-        airport: null,
-        transport: null,
-        flagged: true,
-        _synthetic: true
-      }))
-    const computedDepartures = [
-      ...(depRes.data || [])
-        .filter(r => confirmedStaffIds.has(r.staff_id))
-        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null })),
-      ...missingDepartures
-        .map(r => ({ ...r, staff_name: r.staff ? `${r.staff.first_name} ${r.staff.last_name}` : null }))
-    ]
-    setDepartures(computedDepartures)
-    const departureKey = r => r.id ?? `synthetic-${r.staff_id}`
-    const savedDepartureSort = (() => { try { const s = localStorage.getItem(`departure_sort_${eventId}`); return s ? JSON.parse(s) : null } catch { return null } })()
-    setDisplayDepartures(prev => {
-      const byKey = new Map(computedDepartures.map(a => [departureKey(a), a]))
-      if (prev.length === 0) {
-        return savedDepartureSort ? sortRows(computedDepartures, savedDepartureSort) : computedDepartures
-      }
-      const merged = prev.map(p => byKey.get(departureKey(p))).filter(Boolean)
-      const seenKeys = new Set(merged.map(departureKey))
-      const added = computedDepartures.filter(a => !seenKeys.has(departureKey(a)))
-      const updated = [...merged, ...added]
-      return savedDepartureSort ? sortRows(updated, savedDepartureSort) : updated
-    })
+    // the date each person arrives / leaves, from their live trips (drives the room check-in and check-out dates)
+    const liveTrips = tripsRes.filter(isLive)
+    setArrivals(liveTrips.filter(t => t.direction === 'in').map(t => ({ staff_id: t.staff_id, travel_date: tripDate(t) })))
+    setDepartures(liveTrips.filter(t => t.direction === 'out').map(t => ({ staff_id: t.staff_id, travel_date: tripDate(t) })))
     if (!hotelRes.error && hotelRes.data) {
       setHotel(hotelRes.data)
       setHotelForm({ hotel_name: hotelRes.data.hotel_name || '', address: hotelRes.data.address || '', check_in_date: hotelRes.data.check_in_date || '', check_out_date: hotelRes.data.check_out_date || '', notes: hotelRes.data.notes || '' })
@@ -438,93 +286,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     } finally {
       if (fetchId === fetchIdRef.current) setLoading(false)
     }
-  }
-
-  const sortRows = (rows, sort) => [...rows].sort((a, b) => {
-    if (sort.field === 'travel_date') {
-      const aDate = a.travel_date || ''
-      const bDate = b.travel_date || ''
-      const aTime = a.arrival_time || a.departure_time || ''
-      const bTime = b.arrival_time || b.departure_time || ''
-      const aHasDate = !!aDate
-      const bHasDate = !!bDate
-      const aHasTime = !!aTime
-      const bHasTime = !!bTime
-      // Empty dates sink to bottom
-      if (!aHasDate && !bHasDate) return 0
-      if (!aHasDate) return 1
-      if (!bHasDate) return -1
-      // Both have dates — compare dates first
-      const dateCmp = aDate.localeCompare(bDate)
-      if (dateCmp !== 0) return sort.dir === 'asc' ? dateCmp : -dateCmp
-      // Same date — date+time floats above date-only
-      if (aHasTime && !bHasTime) return -1
-      if (!aHasTime && bHasTime) return 1
-      // Both have time — sort by time
-      return aTime.localeCompare(bTime)
-    }
-    const av = a[sort.field] || ''
-    const bv = b[sort.field] || ''
-    return sort.dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
-  })
-
-  const handleSort = (table, field) => {
-    if (table === 'arrival') {
-      const newSort = { field, dir: arrivalSort.field === field && arrivalSort.dir === 'asc' ? 'desc' : 'asc' }
-      try { localStorage.setItem(`arrival_sort_${eventId}`, JSON.stringify(newSort)) } catch {}
-      setArrivalSorted(true)
-      setArrivalSort(newSort)
-      setDisplayArrivals(sortRows(arrivals, newSort))
-    } else {
-      const newSort = { field, dir: departureSort.field === field && departureSort.dir === 'asc' ? 'desc' : 'asc' }
-      try { localStorage.setItem(`departure_sort_${eventId}`, JSON.stringify(newSort)) } catch {}
-      setDepartureSorted(true)
-      setDepartureSort(newSort)
-      setDisplayDepartures(sortRows(departures, newSort))
-    }
-  }
-
-  const handleUpdateArrival = async (row, field, value) => {
-    const s = getSupabase()
-    if (row.id == null) {
-      const { data, error: insertError } = await s.from('event_travel_arrivals')
-        .insert([{ event_id: eventId, staff_id: row.staff_id }])
-        .select().single()
-      if (insertError || !data) { console.error('Failed to create arrival:', insertError); setSaveError('Failed to save. Please try again.'); return }
-      const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', data.id)
-      if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
-    } else {
-      const { error } = await s.from('event_travel_arrivals').update({ [field]: value || null }).eq('id', row.id)
-      if (error) { console.error('Failed to update arrival:', error); setSaveError('Failed to save. Please try again.') }
-    }
-    fetchAll()
-  }
-  const handleUpdateDeparture = async (row, field, value) => {
-    const s = getSupabase()
-    if (row.id == null) {
-      const { data, error: insertError } = await s.from('event_travel_departures')
-        .insert([{ event_id: eventId, staff_id: row.staff_id }])
-        .select().single()
-      if (insertError || !data) { console.error('Failed to create departure:', insertError); setSaveError('Failed to save. Please try again.'); return }
-      const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', data.id)
-      if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
-    } else {
-      const { error } = await s.from('event_travel_departures').update({ [field]: value || null }).eq('id', row.id)
-      if (error) { console.error('Failed to update departure:', error); setSaveError('Failed to save. Please try again.') }
-    }
-    fetchAll()
-  }
-  const handleRemoveArrival = async (id) => {
-    const s = getSupabase()
-    const { error } = await s.from('event_travel_arrivals').delete().eq('id', id)
-    if (error) { console.error('Failed to remove arrival:', error); setSaveError('Failed to remove. Please try again.') }
-    fetchAll()
-  }
-  const handleRemoveDeparture = async (id) => {
-    const s = getSupabase()
-    const { error } = await s.from('event_travel_departures').delete().eq('id', id)
-    if (error) { console.error('Failed to remove departure:', error); setSaveError('Failed to remove. Please try again.') }
-    fetchAll()
   }
 
   const handleAddRental = async () => {
@@ -731,125 +492,6 @@ export default function TravelHotelTab({ eventId, event, initialTab }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', gap: 0 }}>
       {saveError && <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{saveError}</p>}
 
-      {/* ARRIVALS */}
-      {travelTab === 'arrivals' && (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          {/* Sticky header block — does not scroll */}
-          <div style={{ flexShrink: 0, paddingBottom: 8, background: 'var(--page-bg, var(--surface-card))' }}>
-            <TravelTableHeader
-              sortField={arrivalSort.field}
-              sortDir={arrivalSort.dir}
-              onSort={(f) => handleSort('arrival', f)}
-              type="arrival"
-              onQuickSort={() => {
-                const sort = { field: 'travel_date', dir: 'asc' }
-                try { localStorage.setItem(`arrival_sort_${eventId}`, JSON.stringify(sort)) } catch {}
-                setArrivalSorted(true)
-                setArrivalSort(sort)
-                setDisplayArrivals(sortRows(arrivals, sort))
-              }}
-            />
-          </div>
-          {/* Scrollable tile */}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
-            <div style={{ height: '100%', overflowY: 'auto' }}>
-              {displayArrivals.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No arrivals yet. Confirm staff on the Staffing tab to auto-populate.</div>
-              )}
-              {displayArrivals.map((row, idx) => {
-                const isDriving = row.travel_type === 'driving'
-                const showWarning = isDriving
-                  ? (!row.travel_date || !row.travel_type)
-                  : (!row.travel_date || !row.travel_type || !row.airline || !row.flight_number || !row.arrival_time || !row.airport || !row.transport)
-                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
-                return (
-                  <div key={row.id ?? `synthetic-${row.staff_id}`}
-                    style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: isDriving ? 'rgba(168,85,247,0.06)' : rowBg, transition: 'background 0.12s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.10)' : 'var(--glass-tile-hover)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.06)' : rowBg }}
-                  >
-                    <div style={{ ...TRAVEL_CELL, gap: 6 }}>
-                      {showWarning && <WarningTriangle />}
-                      <span style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
-                    </div>
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateArrival(row, 'travel_type', v)} /></div>
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateArrival(row, 'travel_date', v)} /></div>
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airline} onSave={v => handleUpdateArrival(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : row.travel_type === 'bus' ? 'Operator' : 'Airline'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.flight_number} onSave={v => handleUpdateArrival(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : row.travel_type === 'bus' ? 'Route #' : 'Flight #'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.arrival_time} type="time" onSave={v => handleUpdateArrival(row, 'arrival_time', v)} centered /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateArrival(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateArrival(row, 'transport', v)} placeholder="Transport" centered /></div>}
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveArrival(row.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DEPARTURES */}
-      {travelTab === 'departures' && (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          {/* Sticky header block — does not scroll */}
-          <div style={{ flexShrink: 0, paddingBottom: 8, background: 'var(--page-bg, var(--surface-card))' }}>
-            <TravelTableHeader
-              sortField={departureSort.field}
-              sortDir={departureSort.dir}
-              onSort={(f) => handleSort('departure', f)}
-              type="departure"
-              onQuickSort={() => {
-                const sort = { field: 'travel_date', dir: 'asc' }
-                try { localStorage.setItem(`departure_sort_${eventId}`, JSON.stringify(sort)) } catch {}
-                setDepartureSorted(true)
-                setDepartureSort(sort)
-                setDisplayDepartures(sortRows(departures, sort))
-              }}
-            />
-          </div>
-          {/* Scrollable tile */}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', ...GLASS }}>
-            <div style={{ height: '100%', overflowY: 'auto' }}>
-              {displayDepartures.length === 0 && (
-                <div style={{ padding: '16px 12px', fontSize: 15, color: 'var(--text-muted)' }}>No departures yet. Confirm staff on the Staffing tab to auto-populate.</div>
-              )}
-              {displayDepartures.map((row, idx) => {
-                const isDriving = row.travel_type === 'driving'
-                const showWarning = isDriving
-                  ? (!row.travel_date || !row.travel_type)
-                  : (!row.travel_date || !row.travel_type || !row.airline || !row.flight_number || !row.departure_time || !row.airport || !row.transport)
-                const rowBg = idx % 2 === 0 ? (isLightMode ? '#ffffff' : 'var(--surface-card)') : (isLightMode ? 'rgba(0,0,0,0.025)' : 'rgba(255,255,255,0.025)')
-                return (
-                  <div key={row.id ?? `synthetic-${row.staff_id}`}
-                    style={{ display: 'grid', gridTemplateColumns: TRAVEL_GRID, gap: '0 6px', alignItems: 'center', padding: '7px 12px', borderTop: idx === 0 ? 'none' : '0.5px solid var(--border-default)', background: isDriving ? 'rgba(168,85,247,0.06)' : rowBg, transition: 'background 0.12s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.10)' : 'var(--glass-tile-hover)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = isDriving ? 'rgba(168,85,247,0.06)' : rowBg }}
-                  >
-                    <div style={{ ...TRAVEL_CELL, gap: 6 }}>
-                      {showWarning && <WarningTriangle />}
-                      <span style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.staff_name || '—'}</span>
-                    </div>
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><TravelTypeDropdown value={row.travel_type} onChange={v => handleUpdateDeparture(row, 'travel_type', v)} /></div>
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.travel_date} type="date" centered onSave={v => handleUpdateDeparture(row, 'travel_date', v)} /></div>
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airline} onSave={v => handleUpdateDeparture(row, 'airline', v)} placeholder={row.travel_type === 'train' ? 'Operator' : row.travel_type === 'bus' ? 'Operator' : 'Airline'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.flight_number} onSave={v => handleUpdateDeparture(row, 'flight_number', v)} placeholder={row.travel_type === 'train' ? 'Train #' : row.travel_type === 'bus' ? 'Route #' : 'Flight #'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.departure_time} type="time" onSave={v => handleUpdateDeparture(row, 'departure_time', v)} centered /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.airport} onSave={v => handleUpdateDeparture(row, 'airport', v)} placeholder={row.travel_type === 'train' ? 'Station' : row.travel_type === 'bus' ? 'Terminal / Stop' : 'Airport'} centered={true} /></div>}
-                    {isDriving ? <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }} /> : <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}><EditableCell value={row.transport} onSave={v => handleUpdateDeparture(row, 'transport', v)} placeholder="Transport" centered /></div>}
-                    <div style={{ ...TRAVEL_CELL, justifyContent: 'center' }}>
-                      <div onClick={() => handleRemoveDeparture(row.id)} style={{ fontSize: 18, color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }} onMouseEnter={hoverDanger} onMouseLeave={unhoverDanger}>×</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* RENTAL CARS */}
       {travelTab === 'rental' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {/* Header */}
